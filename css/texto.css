@@ -1,0 +1,28 @@
+body{
+	color: #333;
+}
+p {
+	margin:0px; 
+	font-size: 11pt; 
+	font-family:Arial;
+	
+}
+p.recuo{
+	margin-left:120px;
+	text-align:justify;
+} 
+.titulos{
+	width:99%;
+	border:1px solid #000000;
+	font-weight:bold;
+	font-family:Arial;
+	font-size: 11pt;
+	text-align:center;
+	position:relative;
+}
+span.tabs{
+	margin-left:60px
+}
+.cke_1{
+	border:0;
+}
