@@ -1,14 +1,16 @@
 <?php
 
+require_once __DIR__ . '/bootstrap.php';
+
 session_start();
 
 $_SG['conectaServidor'] = true;
 $_SG['caseSensitive'] 	= false;
 $_SG['validaSempre'] 	= true;
-$_SG['servidor'] 		= '10.81.11.202';
-$_SG['usuario'] 		= 'admin';
-$_SG['senha'] 			= 'bvaa@2025!';
-$_SG['banco'] 			= 'peticaofacil';
+$_SG['servidor'] 		= getenv('DB_HOST') ?: '10.81.11.202';
+$_SG['usuario'] 		= getenv('DB_USER') ?: 'admin';
+$_SG['senha'] 			= getenv('DB_PASS') ?: 'bvaa@2025!';
+$_SG['banco'] 			= getenv('DB_NAME') ?: 'peticaofacil';
 $_SG['paginaLogin'] 	= 'index.php';
 $_SG['tabela'] 			= 'tp_usu_tb';
 
