@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/bootstrap.php';
+use App\Infra\Database;
 
 session_start();
 
@@ -15,7 +16,11 @@ $_SG['paginaLogin'] 	= 'index.php';
 $_SG['tabela'] 			= 'tp_usu_tb';
 
 if ($_SG['conectaServidor'] == true){
-	$conexao1 = mysqli_connect($_SG['servidor'],$_SG['usuario'],$_SG['senha'],$_SG['banco'])or die("MySQL: Não foi possível conectar-se ao servidor [".$_SG['servidor']."].");
+	if (class_exists(Database::class)) {
+		$conexao1 = Database::mysql();
+	} else {
+		$conexao1 = mysqli_connect($_SG['servidor'],$_SG['usuario'],$_SG['senha'],$_SG['banco'])or die("MySQL: Não foi possível conectar-se ao servidor [".$_SG['servidor']."].");
+	}
 }
 function validaUsuario($usuario, $senha, $conex){
 	global $_SG;
