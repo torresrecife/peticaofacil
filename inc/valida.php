@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
 		$qpass = mysqli_query($conexao1,"SELECT acesso_usu FROM tp_usu_tb where id_usu = " . $_SESSION['usuarioID'] . " ");
 		$wpass = mysqli_fetch_assoc($qpass);
 		//echo $wpass['acesso_usu'];
-		if($wpass['acesso_usu']=="" || $wpass['acesso_usu']=="0000-00-00 00:00:00"){
+		if(empty($wpass['acesso_usu']) || $wpass['acesso_usu']=="0000-00-00 00:00:00"){
 			echo "	<script> $(function() {	new_pass(); }); </script> ";
 		}else{
 			mysqli_query($conexao1,"UPDATE tp_usu_tb SET acesso_usu = '" . date("Y-m-d H:i:s") . "' where id_usu = " . $_SESSION['usuarioID'] . " ");

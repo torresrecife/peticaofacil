@@ -2,3 +2,17 @@
 # IDEs / Editors
 # ===============================
 .idea/
+.vscode/
+
+# Composer
+vendor/
+composer.lock
+
+# Local env
+config/env.local
+
+# Node
+node_modules/
+
+# CKFinder uploads (user content)
+public/ckfinder/userfiles/

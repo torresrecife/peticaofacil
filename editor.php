@@ -206,8 +206,8 @@ $(window).load(function(){
 	ver_title();
 	$("#ger_rtf").attr("disabled",true);
 	$("#ger_pdf").attr("disabled",true);
-	$("#ger_rtf").css("background","url('/peticaofacil/img/doc-c.png') no-repeat");
-	$("#ger_pdf").css("background","url('/peticaofacil/img/pdf-c.png') no-repeat");
+	$("#ger_rtf").css("background","url('img/doc-c.png') no-repeat");
+	$("#ger_pdf").css("background","url('img/pdf-c.png') no-repeat");
 })
 
 function fc_focus(valor){
@@ -226,7 +226,7 @@ function fc_salvar_pet(valor){
     CKEDITOR.instances[instance].updateElement();
 	
 	$("#ger_sav").attr("disabled",true);	
-	$("#ger_sav").css("background","url('/peticaofacil/img/progress.gif') no-repeat");
+	$("#ger_sav").css("background","url('img/progress.gif') no-repeat");
 	var name_text = $("#name_text").val();
 	name_text = replaceAll(name_text,"&","_|_");
 	// alert($("#name_text").val());
@@ -245,14 +245,14 @@ function fc_salvar_pet(valor){
 			
 	   success: function(retorno_ajax){
 			
-			$("#ger_sav").css("background","url('/peticaofacil/img/salvar_ok.png') no-repeat");
+			$("#ger_sav").css("background","url('img/salvar_ok.png') no-repeat");
 			$("#id_sav").val(retorno_ajax);
 			$("#id_sav").attr("flag",2);
 			$("#ger_sav").attr("disabled",false);
 			$("#ger_rtf").attr("disabled",false);
 			$("#ger_pdf").attr("disabled",false);
-			$("#ger_rtf").css("background","url('/peticaofacil/img/doc.png') no-repeat");
-			$("#ger_pdf").css("background","url('/peticaofacil/img/pdf.png') no-repeat");
+			$("#ger_rtf").css("background","url('img/doc.png') no-repeat");
+			$("#ger_pdf").css("background","url('img/pdf.png') no-repeat");
 			$("#ger_rtf").css("cursor","pointer");
 			$("#ger_pdf").css("cursor","pointer");
 		}
@@ -389,3 +389,4 @@ function fc_salvar_auto(){
 		</tr>
 	</table>
 </div>
+

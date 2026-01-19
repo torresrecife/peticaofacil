@@ -8,7 +8,7 @@ function formata_data_extenso($strDate){
 }
 
 function fc_select($p_tb,$p_id,$val_id,$val_nome,$usu,$conex,$p_setor=""){
-	$q = mysqli_query($conex,"SELECT $val_id , $val_nome FROM " . $p_tb. " where 1=1 " . ($usu!="" ? "and id_cliente in (0," . $usu  . ")" : "") . " " . ($p_setor!=0 ? "and id_setor = " . $p_setor : "") . " GROUP BY " . $val_nome . " ORDER BY " . $val_nome. " ");
+	$q = mysqli_query($conex,"SELECT MIN($val_id) AS $val_id, $val_nome FROM " . $p_tb. " where 1=1 " . ($usu!="" ? "and id_cliente in (0," . $usu  . ")" : "") . " " . ($p_setor!=0 ? "and id_setor = " . $p_setor : "") . " GROUP BY " . $val_nome . " ORDER BY " . $val_nome. " ");
 	echo "<option></option>";
 	
 	while($w = mysqli_fetch_array($q)){
@@ -17,7 +17,7 @@ function fc_select($p_tb,$p_id,$val_id,$val_nome,$usu,$conex,$p_setor=""){
 }
 function fc_select_li($p_tb,$p_id,$val_id,$val_nome,$usu_cliente,$conex,$p_setor=""){
 	$r=0;
-	$q = mysqli_query($conex,"SELECT $val_id , $val_nome FROM " . $p_tb. "  where 1=1 " . ($usu_cliente!=0 ? "and id_cliente in (0," . $usu_cliente  . ")" : "") . " " . ($p_setor!=0 ? "and id_setor = " . $p_setor : "") . " GROUP BY " . $val_nome . " ORDER BY " . $val_nome. " ");	
+	$q = mysqli_query($conex,"SELECT MIN($val_id) AS $val_id, $val_nome FROM " . $p_tb. "  where 1=1 " . ($usu_cliente!=0 ? "and id_cliente in (0," . $usu_cliente  . ")" : "") . " " . ($p_setor!=0 ? "and id_setor = " . $p_setor : "") . " GROUP BY " . $val_nome . " ORDER BY " . $val_nome. " ");	
 	$n = mysqli_num_rows($q);
 	$li = array();
 	$t=18;
@@ -26,7 +26,7 @@ function fc_select_li($p_tb,$p_id,$val_id,$val_nome,$usu_cliente,$conex,$p_setor
 		if($r%18==0){
 			$t=18+$t;
 		}
-		$li[$r] = "<li style='width:280px'><a class='icon-16-copy' href='#' onclick='EnviarDados(\"index.php\",\"$p_id\",".$w[$val_id].");'>" . $w[$val_nome] . "</a></li>";
+		$li[$r] = "<li style='width:280px'><a class='icon-16-copy' href='#' onclick='return EnviarDados(\"index.php\",\"$p_id\",".$w[$val_id].");'>" . $w[$val_nome] . "</a></li>";
 		//str_pad($w[$val_id], 3, '0', STR_PAD_LEFT);
 	}
 	$s=0;
@@ -50,7 +50,7 @@ function fc_select_div($p_tb,$p_id,$val_id,$val_nome,$usu,$se,$conex,$p_setor=""
 	$q = mysqli_query($conex, "	SELECT *, a.$val_id , a.$val_nome, a.nome_pre, a.nome_pos, a.id_setor FROM " . $p_tb. " as a 
 						left join tp_clientes_db as c on a.id_cliente=c.cliente_id 
 						left join tp_setor_tb AS s ON s.id_setor=a.id_setor 
-						where 1=1 " . ($usu!=0 ? "and a.id_cliente in (0," . $usu  . ")" : "") . " " . ($p_setor!=0 ? "and a.id_setor = " . $p_setor : "") . " GROUP BY a." . $val_id . " ORDER BY a.id_setor asc, c.cliente_name, a." . $val_nome. " ");
+						where 1=1 " . ($usu!=0 ? "and a.id_cliente in (0," . $usu  . ")" : "") . " " . ($p_setor!=0 ? "and a.id_setor = " . $p_setor : "") . " ORDER BY a.id_setor asc, c.cliente_name, a." . $val_nome. " ");
 	$n=0;
 	while($w = mysqli_fetch_array($q)){	
 			$n++;
@@ -64,7 +64,7 @@ function fc_select_div($p_tb,$p_id,$val_id,$val_nome,$usu,$se,$conex,$p_setor=""
 									}else{
 										$bgcor = "#F0F4FF";
 									}
-									$SETOR[$w['id_setor']] .= "<a href='#' onclick='EnviarDados(\"index.php\",\"$p_id\",".$w[$val_id].");' style='background:$bgcor'>";
+									$SETOR[$w['id_setor']] .= "<a href='#' onclick='return EnviarDados(\"index.php\",\"$p_id\",".$w[$val_id].");' style='background:$bgcor'>";
 								}
                             $SETOR[$w['id_setor']] .= "<table width='100%'>";
                                 $SETOR[$w['id_setor']] .= "<tr height='20px'>";
@@ -236,3 +236,4 @@ function cabecalhoerodape($tipoid,$rodcab,$rtfpdf,$conex){
 //	return $navegador;
 //}
 ?>
+

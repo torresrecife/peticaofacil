@@ -2,9 +2,9 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" dir="ltr" >
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<base href="/bvaa/peticaofacil/public/">
 	<title>Petição - Fácil</title>
 	<link href="css/images/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon" />
-	<link rel="stylesheet" href="css/system.css" type="text/css" />
 	<link rel="stylesheet" href="css/template.css" type="text/css" />
 	<!--[if IE 7]><link href="templates/bluestork/css/ie7.css" rel="stylesheet" type="text/css" /><![endif]-->
 </head>
@@ -56,3 +56,5 @@
 	</div>
 </body>
 </html>
+
+

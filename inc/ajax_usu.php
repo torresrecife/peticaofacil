@@ -5,6 +5,9 @@ protegePagina();
 
 if($_POST['flag']=="E"){
 	$id_usu = $_POST['id_usu'];
+	if ($id_usu === "" || !is_numeric($id_usu)) {
+		exit;
+	}
 	$return = "";
 	$i = 0;
 	$q  = " SELECT * FROM tp_usu_tb";
@@ -29,7 +32,7 @@ elseif($_POST['flag']=="I")
 	$i .= " nivel_usu  = '"	. $_POST['nivel_usu'] . "', " ;
 	$i .= " id_setor   = '"	. $_POST['setor_usu'] . "', " ;
 	$i .= " id_cliente = '"	. $_POST['banco_neo']  . "', " ;
-	$i .= " acesso_usu = '0000-00-00 00:00:00', " ;
+	$i .= " acesso_usu = NULL, " ;
 	$i .= " data_cad   = '"	. date("Y-m-d H:i:s") . "' " ;
 	$query = mysqli_query($conexao1,$i);
 	echo 1;

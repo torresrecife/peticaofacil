@@ -7,13 +7,12 @@ session_start();
 $_SG['conectaServidor'] = true;
 $_SG['caseSensitive'] 	= false;
 $_SG['validaSempre'] 	= true;
-$_SG['servidor'] 		= getenv('DB_HOST') ?: '10.81.11.202';
-$_SG['usuario'] 		= getenv('DB_USER') ?: 'admin';
-$_SG['senha'] 			= getenv('DB_PASS') ?: 'bvaa@2025!';
+$_SG['servidor'] 		= getenv('DB_HOST') ?: '127.0.0.1';
+$_SG['usuario'] 		= getenv('DB_USER') ?: 'root';
+$_SG['senha'] 			= getenv('DB_PASS') ?: 'root';
 $_SG['banco'] 			= getenv('DB_NAME') ?: 'peticaofacil';
 $_SG['paginaLogin'] 	= 'index.php';
 $_SG['tabela'] 			= 'tp_usu_tb';
-
 
 if ($_SG['conectaServidor'] == true){
 	$conexao1 = mysqli_connect($_SG['servidor'],$_SG['usuario'],$_SG['senha'],$_SG['banco'])or die("MySQL: Não foi possível conectar-se ao servidor [".$_SG['servidor']."].");
@@ -64,13 +63,23 @@ function expulsaVisitante(){
 	global $_SG;
 	unset($_SESSION['usuarioID'], $_SESSION['usuarioNome'], $_SESSION['usuarioLogin'], $_SESSION['usuarioSenha']);
 	echo ('<script language="javascript">alert("Usuário ou senha Inválidos!")</script>');
-	exit ('<SCRIPT LANGUAGE="JavaScript">window.location="http://'.$_SERVER['HTTP_HOST'].'/peticaofacil/login.php";</script>');
+	$baseUrl = getenv('APP_URL');
+	if (!$baseUrl) {
+		$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+		$baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
+	}
+	exit ('<SCRIPT LANGUAGE="JavaScript">window.location="'.rtrim($baseUrl, '/').'/login.php";</script>');
 }
 
 function expulsaVisitante2(){
 	global $_SG;
 	unset($_SESSION['usuarioID'], $_SESSION['usuarioNome'], $_SESSION['usuarioLogin'], $_SESSION['usuarioSenha']);
-	exit ('<SCRIPT LANGUAGE="JavaScript">window.location="http://'.$_SERVER['HTTP_HOST'].'/peticaofacil/login.php";</script>');
+	$baseUrl = getenv('APP_URL');
+	if (!$baseUrl) {
+		$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+		$baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
+	}
+	exit ('<SCRIPT LANGUAGE="JavaScript">window.location="'.rtrim($baseUrl, '/').'/login.php";</script>');
 }
 
 ?>

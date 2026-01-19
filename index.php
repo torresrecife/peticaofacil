@@ -2,7 +2,6 @@
 <?php
 	error_reporting(1);
 	ini_set("display_errors", 1 );
-	// echo ">>>>>>>>><br><br><br><br>".$_POST['hid_enviar']."<<<<<<<<<";
 	header('Cache-Control: no cache'); //no cache 
 	session_cache_limiter('private_no_expire'); // works //
 	session_cache_limiter('public'); // works too session_start(); 
@@ -10,6 +9,15 @@
 	include("inc/seguranca.php");
 	include("inc/functions.php");
 	protegePagina();
+
+	if (!empty($_POST) && getenv('APP_DEBUG') === 'true') {
+		$logDir = __DIR__ . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'logs';
+		if (is_dir($logDir) && is_writable($logDir)) {
+			$logFile = $logDir . DIRECTORY_SEPARATOR . 'post.log';
+			$payload = date('Y-m-d H:i:s') . " POST=" . json_encode($_POST, JSON_UNESCAPED_UNICODE) . PHP_EOL;
+			file_put_contents($logFile, $payload, FILE_APPEND);
+		}
+	}
 
 	$qdb = mysqli_query($conexao1,"SELECT * FROM tp_config_db as c join tp_tipo_tb as t on t.id_db=c.id_db  WHERE t.tipo_id = '" . $_POST['TIPOPET'] . "' and c.stt='Y' ");
 	$wdb = mysqli_fetch_assoc($qdb);
@@ -75,7 +83,8 @@
 ?>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" dir="ltr" >
 	<head>
-		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<base href="/bvaa/peticaofacil/public/">
 		<title>Apresentação - Administração</title>
 		<link href="css/images/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon" />
 		<link rel="stylesheet" href="css/template.css" type="text/css" />
@@ -88,6 +97,34 @@
         <script type="text/javascript" src="ckfinder/ckfinder.js">			</script>
 		<script type="text/javascript" src="ckeditor/adapters/jquery.js">	</script>		
 		<script type="text/javascript" src="js/default.js">					</script>   	
+		<script type="text/javascript">
+			if (typeof EnviarDados !== 'function') {
+				function EnviarDados(form, hid, pet) {
+					var hidInput = document.getElementById('hid_enviar');
+					var tipoInput = document.getElementById('TIPOPET');
+					if (hidInput) { hidInput.value = hid; }
+					if (tipoInput) { tipoInput.value = pet; }
+					if (document.form_iniciais) {
+						document.form_iniciais.action = form || window.location.pathname;
+						document.form_iniciais.submit();
+					}
+					return false;
+				}
+			}
+			if (typeof PetiDados !== 'function') {
+				function PetiDados(valor1, valor2, valor3, valor4, valor5, valor6) {
+					var idPecas = document.getElementById('id_pecas');
+					var tipoId = document.getElementById('tipo_id');
+					var nomepet = document.getElementById('nomepet');
+					var nomecli = document.getElementById('nomecli');
+					if (idPecas) { idPecas.value = valor3; }
+					if (tipoId) { tipoId.value = valor4; }
+					if (nomepet) { nomepet.value = valor5; }
+					if (nomecli) { nomecli.value = valor6; }
+					return EnviarDados(valor1, valor2, valor4);
+				}
+			}
+		</script>
 		<!--[if IE 7]><link href="templates/bluestork/css/ie7.css" rel="stylesheet" type="text/css" /><![endif]-->
 	</head>
 <body id="minwidth-body">
@@ -99,7 +136,7 @@
 			<span class="title"><a href="index.php">Petição Fácil - NEO</a></span>
 		</div>
 		<?php
-		//echo ">>>>>>>>>>>>>>>>>>>".$_POST['hid_enviar']."<<<<<<<";
+		// echo ">>>>>>>>>>>>>>>>>>>".$_POST['hid_enviar']."<<<<<<<";
 		if($_POST['hid_enviar']==2 || $_POST['hid_enviar']==3 || $_POST['hid_enviar']==4){
 			?>
 			<div id="header-box">
@@ -231,7 +268,7 @@
 						<li class="node" <?php echo $style; ?>><table><tr><td>Pesquisa: <input type="text" name="TIPOCHA" id="TIPOCHA" class="inputbox"></td></tr></table></li>
 						<li class="node" <?php echo $style; ?>><a href="#">Buscar</a>
 							<ul>
-								<li><a class="icon-16-help" href="#" onclick="EnviarDados('index.php','1','<?php echo $_POST['TIPOPET']; ?>');"><?php echo $wdb['chave_db']; ?></a></li>
+								<li><a class="icon-16-help" href="#" onclick="return EnviarDados('index.php','1','<?php echo $_POST['TIPOPET']; ?>');"><?php echo $wdb['chave_db']; ?></a></li>
 								<li class="separator"><span></span></li>
 							</ul>
 						</li>
@@ -318,8 +355,7 @@
 												$pslv2 .= " AND month(p.data_cad)='" . date('m') . "'";
 												$pslv2 .= " AND year(p.data_cad)='"  . date('Y') . "'";
 												
-												$pslv3  = " GROUP BY p.id_pecas ";
-												$pslv3 .= " ORDER BY p.data_cad DESC";
+												$pslv3  = " ORDER BY p.data_cad DESC";
 												$pslv4  = " LIMIT 10 ";
 												
 												$qpet1 = mysqli_query($conexao1,$pslv1.$pslv3.$pslv4);
@@ -590,3 +626,4 @@
 	?>
 </body>
 </html>
+

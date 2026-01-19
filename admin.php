@@ -15,28 +15,28 @@ if($_POST['hid_enviar']==5){
 					?>
 					<div class="icon-wrapper">
 						<div class="icon">
-							<a href="#" onclick="EnviarDados('index.php','11','')">
+							<a href="#" onclick="return EnviarDados('index.php','11','')">
 								<img src="css/images/header/icon-48-sql.png" alt=""  /><span>Servidor</span>
 							</a>
 						</div>
 					</div>
 					<div class="icon-wrapper">
 						<div class="icon">
-							<a href="#" onclick="EnviarDados('index.php','9','')">
+							<a href="#" onclick="return EnviarDados('index.php','9','')">
 								<img src="css/images/header/icon-48-move.png" alt=""  /><span>Setores</span>
 							</a>
 						</div>
 					</div>
 					<div class="icon-wrapper">
 						<div class="icon">
-							<a href="#" onclick="EnviarDados('index.php','13','')">
+							<a href="#" onclick="return EnviarDados('index.php','13','')">
 								<img src="css/images/header/icon-48-module.png" alt=""  /><span>Clientes</span>
 							</a>
 						</div>
 					</div>
 					<div class="icon-wrapper">
 						<div class="icon">
-							<a href="#" onclick="EnviarDados('index.php','8','')">
+							<a href="#" onclick="return EnviarDados('index.php','8','')">
 								<img src="css/images/header/icon-48-user.png" alt=""  /><span>Usuários</span>
 							</a>
 						</div>
@@ -53,7 +53,7 @@ if($_POST['hid_enviar']==5){
 				</div>
 				<div class="icon-wrapper">
 					<div class="icon">
-						<a href="#" onclick="EnviarDados('index.php','12','')">
+						<a href="#" onclick="return EnviarDados('index.php','12','')">
 							<img src="css/images/header/icon-48-list.png" alt=""  /><span>Lista</span>
 						</a>
 					</div>
@@ -209,3 +209,4 @@ function novo_tipo(){
 		</center>	
 	</div>
 </div>
+

@@ -1,0 +1,7 @@
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+	RewriteBase /bvaa/peticaofacil/
+
+	RewriteCond %{REQUEST_URI} !^/bvaa/peticaofacil/public/
+	RewriteRule ^(.*)$ /bvaa/peticaofacil/public/$1 [L]
+</IfModule>

@@ -25,11 +25,9 @@ $(document).ready(function(){
 	<div align="left" id="accordion" style="width:880px;" >
 		<?php	
 		$tipo_tb   = $_POST['TIPOPET'] ? $_POST['TIPOPET'] : "''";
-		$sel_text  = " SELECT * FROM tp_funda_tb as tf";
+		$sel_text  = " SELECT tf.*, tt.tipo_arq FROM tp_funda_tb as tf";
 		$sel_text .= " JOIN tp_tipo_tb as tt on tt.tipo_id = tf.tipo_id ";
-		$sel_text .= " JOIN tp_inputs_tb AS ti ON ti.tipo_id = tt.tipo_id";
 		$sel_text .= " WHERE tt.tipo_id = " . $tipo_tb;
-		$sel_text .= " GROUP BY tf.fund_id";
 		$sel_text .= " ORDER BY tf.fund_order ASC";
 		$que_text = mysqli_query($conexao1,$sel_text);
 		$n=0;
@@ -175,3 +173,4 @@ $(document).ready(function(){
 		</div>
 	</div>
 </div>
+

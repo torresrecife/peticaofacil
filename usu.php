@@ -14,9 +14,9 @@
 	</tr>
 <?php
 
-$query = mysqli_query($conexao1,"SELECT *,u.data_cad as 'datacad' from tp_usu_tb as u join tp_setor_tb as s on s.id_setor=u.id_setor LEFT JOIN tp_clientes_db AS c ON c.cliente_id=u.id_cliente group by u.id_usu ORDER by u.id_usu") or die(mysqli_error());
+$query = mysqli_query($conexao1,"SELECT *,u.data_cad as 'datacad' from tp_usu_tb as u LEFT JOIN tp_setor_tb as s on s.id_setor=u.id_setor LEFT JOIN tp_clientes_db AS c ON c.cliente_id=u.id_cliente ORDER by u.id_usu") or die(mysqli_error());
 while ($arr = mysqli_fetch_array($query)){
-	$acesso = $arr['acesso_usu']=="0000-00-00 00:00:00"?"":strftime("%d/%m/%Y %H:%M:%S", strtotime($arr['acesso_usu']));
+$acesso = empty($arr['acesso_usu']) || $arr['acesso_usu']=="0000-00-00 00:00:00" ? "" : strftime("%d/%m/%Y %H:%M:%S", strtotime($arr['acesso_usu']));
 	?>
 	<tr >
 		<td class="order"><?PHP echo $arr['id_usu'];		?>	</td>
@@ -24,7 +24,7 @@ while ($arr = mysqli_fetch_array($query)){
 		<td class="order"><?php echo $arr['email_usu']; 	?>	</td>
 		<td class="order"><?php echo $arr['login_usu']; 	?>	</td>
 		<td class="order"><?php echo $arr['nivel_usu'];		?>	</td>
-		<td class="order"><?php echo $arr['nome_setor']; ?></td>
+		<td class="order"><?php echo ($arr['nome_setor'] ? $arr['nome_setor'] : 'TODOS'); ?></td>
 		<td class="order"><?php echo ($arr['cliente_name']?$arr['cliente_name']:"TODAS"); ?></td>
 		<td class="order"><?php echo $acesso;  ?>	</td>
 		<td class="order"><?php echo strftime("%d/%m/%Y %H:%M:%S", strtotime($arr['datacad'])); 	?>	</td>
@@ -96,7 +96,7 @@ while ($arr = mysqli_fetch_array($query)){
 						<div id="banco_0">
 						<select class="cls_usu input-default cls_usu2" name="banco_usu_1" id="banco_usu_1" obrigatorio="1" title="Cliente" style="height:22px">
 						</select>
-						<button id="inp1_1" class="bts" onclick="inserir_banco($('#banco_usu_1').html(),1);" >+</button>
+						<button id="inp1_1" type="button" class="bts" onclick="inserir_banco($('#banco_usu_1').html(),1);">+</button>
 						</div>
 						<div id="banco_1"></div>
 					</td>
