@@ -7,7 +7,14 @@ if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
 	$baseUrl = getenv('APP_URL');
 	$basePath = $baseUrl ? parse_url($baseUrl, PHP_URL_PATH) : '';
 	$cookiePath = $basePath ? rtrim($basePath, '/') . '/' : '/';
-	session_set_cookie_params(array('path' => $cookiePath));
+	$cookieParams = session_get_cookie_params();
+	session_set_cookie_params(
+		$cookieParams['lifetime'] ?? 0,
+		$cookiePath,
+		$cookieParams['domain'] ?? '',
+		$cookieParams['secure'] ?? false,
+		$cookieParams['httponly'] ?? false
+	);
 }
 
 session_start();

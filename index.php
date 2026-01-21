@@ -290,7 +290,7 @@
 					if($usu_nivel=='ADM' || $usu_nivel=='GER'){
 						if($_POST['hid_enviar']==12){
 						?>
-						<span class="new_list"><a href="#" onclick="fc_edit_list('','I');">Nova Lista</a></span>
+						<span class="new_list"><a href="javascript:void(0)" onclick="return fc_edit_list('','I');">Nova Lista</a></span>
 						<?php 
 						}else{
 						?>

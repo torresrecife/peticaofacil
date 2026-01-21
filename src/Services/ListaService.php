@@ -37,6 +37,7 @@ class ListaService
 		}
 
 		$keep = array();
+		$hasRows = false;
 		$ok = true;
 
 		foreach ($rows as $row) {
@@ -44,6 +45,7 @@ class ListaService
 			if ($nomeLista === '') {
 				continue;
 			}
+			$hasRows = true;
 
 			$idLista = (int) ($row['id_lista'] ?? 0);
 			$idSetor = (int) ($row['id_setor'] ?? 1);
@@ -82,10 +84,14 @@ class ListaService
 					. "id_setor = " . $idSetor . ", "
 					. "data_cad = now()";
 				$ok = mysqli_query($this->db, $sql) && $ok;
+				$newId = mysqli_insert_id($this->db);
+				if ($newId) {
+					$keep[] = (int) $newId;
+				}
 			}
 		}
 
-		if (empty($keep)) {
+		if (!$hasRows) {
 			$ok = mysqli_query($this->db, "DELETE FROM tp_lista_tb WHERE id_grupo = " . $idGrupo) && $ok;
 			return $ok;
 		}
