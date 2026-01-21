@@ -66,6 +66,17 @@ class ClienteService
 		return $result;
 	}
 
+	public function getRow($id)
+	{
+		$id = $this->esc($id);
+		$result = mysqli_query($this->db, "SELECT * FROM tp_clientes_db WHERE cliente_id = " . $id);
+		if (!$result) {
+			$this->lastError = mysqli_error($this->db);
+			return null;
+		}
+		return mysqli_fetch_row($result) ?: null;
+	}
+
 	public function getLastError()
 	{
 		return $this->lastError;

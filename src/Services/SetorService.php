@@ -47,6 +47,16 @@ class SetorService
 		return mysqli_query($this->db, "DELETE FROM tp_setor_tb WHERE id_setor = " . $id . " LIMIT 1");
 	}
 
+	public function getRow($id)
+	{
+		$id = $this->esc($id);
+		$result = mysqli_query($this->db, "SELECT * FROM tp_setor_tb WHERE id_setor = " . $id);
+		if (!$result) {
+			return null;
+		}
+		return mysqli_fetch_row($result) ?: null;
+	}
+
 	private function esc($value)
 	{
 		return Database::escape($this->db, $value);

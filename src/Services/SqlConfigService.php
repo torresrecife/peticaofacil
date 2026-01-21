@@ -77,6 +77,16 @@ class SqlConfigService
 		return mysqli_query($this->db, "DELETE FROM tp_config_db WHERE id_db = " . $id . " LIMIT 1");
 	}
 
+	public function getRow($id)
+	{
+		$id = $this->esc($id);
+		$result = mysqli_query($this->db, "SELECT * FROM tp_config_db WHERE id_db = " . $id);
+		if (!$result) {
+			return null;
+		}
+		return mysqli_fetch_row($result) ?: null;
+	}
+
 	private function esc($value)
 	{
 		return Database::escape($this->db, $value);
