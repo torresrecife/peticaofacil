@@ -177,6 +177,12 @@ class ListaRepository
 		return mysqli_query($this->db, $sql);
 	}
 
+	public function deleteGroup($idGrupo)
+	{
+		$idGrupo = (int) $idGrupo;
+		return mysqli_query($this->db, "DELETE FROM tp_grupo_tb WHERE id_grupo = " . $idGrupo . " LIMIT 1");
+	}
+
 	private function esc($value)
 	{
 		return mysqli_real_escape_string($this->db, (string) $value);

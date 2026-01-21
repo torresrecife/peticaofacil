@@ -43,67 +43,35 @@ function parseListaRows($numList, $post)
 }
 
 if($_POST['flag']=="U" || $_POST['flag']=="I"){
-	if (!empty($_POST['lista_json'])) {
-		$decoded = json_decode($_POST['lista_json'], true);
-		if (!is_array($decoded)) {
-			echo 0;
-			exit;
-		}
-		if (class_exists(\App\Services\ListaService::class)) {
-			$service = new \App\Services\ListaService($conexao1);
-			$numGrupo = $_POST['num_grupo'];
-			$isNew = $_POST['novo_grupo'] === 'sim';
-			$okGroup = $service->saveGrupo($numGrupo, $_POST['nome_grupo'], $isNew);
-			$okRows = $service->saveItens($numGrupo, $decoded);
-			echo ($okGroup && $okRows) ? 1 : 0;
-			exit;
-		}
-	}
 	if (class_exists(\App\Services\ListaService::class)) {
 		$service = new \App\Services\ListaService($conexao1);
 		$numGrupo = $_POST['num_grupo'];
-		$rows = parseListaRows((int) $_POST['num_list'], $_POST);
+		if (!empty($_POST['lista_json'])) {
+			$rows = json_decode($_POST['lista_json'], true);
+			if (!is_array($rows)) {
+				echo 0;
+				exit;
+			}
+		} else {
+			$rows = parseListaRows((int) $_POST['num_list'], $_POST);
+		}
 		$isNew = $_POST['novo_grupo'] === 'sim';
 		$okGroup = $service->saveGrupo($numGrupo, $_POST['nome_grupo'], $isNew);
 		$okRows = $service->saveItens($numGrupo, $rows);
 		echo ($okGroup && $okRows) ? 1 : 0;
 		exit;
 	}
-
-	if($_POST['novo_grupo']=="sim"){
-		$query = mysqli_query($conexao1," INSERT INTO tp_grupo_tb SET nome_grupo = '" . $_POST['nome_grupo'] . "', id_grupo=" . $_POST['num_grupo'] . ", data_cad=now() ");
-	}elseif($_POST['novo_grupo']=="nao"){
-		$query = mysqli_query($conexao1," UPDATE tp_grupo_tb SET nome_grupo = '" . $_POST['nome_grupo'] . "', data_cad=now() WHERE id_grupo=" . $_POST['num_grupo'] . " ");
-	}
-	
-	$listas_1 = explode("-|-", $_POST['listas_1']);
-	
-	mysqli_query($conexao1,"DELETE FROM `tp_lista_tb` WHERE `id_grupo`='" . $listas_1[1] . "' ");
-	
-	$n 	 = 0;
-	$ins = "";
-	for ($i = 1; $i <= $_POST['num_list']; $i++) {
-		
-		if(isset($_POST['listas_'.$i])){
-			$all_list = explode("-|-",$_POST['listas_'.$i]);
-			$n++;
-			$ins .= $all_list[0]." = '".$all_list[1]."' ";
-			if($n<9){
-				$ins .= ", ";
-			}
-			if($n==9){
-				$query = mysqli_query($conexao1," INSERT INTO tp_lista_tb SET " . $ins . ", data_cad=now() ");
-				$n =0;
-				$ins = "";
-			}
-		}
-	}
-	if($query){
-		echo 1;
-	}
+	echo 0;
+	exit;
 }
 elseif($_POST['flag']=="D")
 {
+	if (class_exists(\App\Services\ListaService::class)) {
+		$service = new \App\Services\ListaService($conexao1);
+		$ok = $service->deleteGroup($_POST['num_grupo']);
+		echo $ok ? 1 : 0;
+		exit;
+	}
 	mysqli_query($conexao1,"DELETE FROM tp_grupo_tb WHERE id_grupo=" . $_POST['num_grupo'] . " LIMIT 1");
 	mysqli_query($conexao1,"DELETE FROM tp_lista_tb WHERE id_grupo=" . $_POST['num_grupo'] . " LIMIT 1");
 	echo 1;

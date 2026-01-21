@@ -8,14 +8,11 @@
 <?php
 	
 $rows = array();
-if (class_exists(\App\Repositories\ListaRepository::class)) {
+if (!class_exists(\App\Repositories\ListaRepository::class)) {
+	echo '<tr><td colspan="4" class="order">Erro ao carregar lista.</td></tr>';
+} else {
 	$repo = new \App\Repositories\ListaRepository($conexao1);
 	$rows = $repo->listGroups();
-} else {
-	$query = mysqli_query($conexao1,"SELECT * from tp_grupo_tb as g ORDER by g.id_grupo") or die(mysqli_error());
-	while ($arr = mysqli_fetch_array($query)){
-		$rows[] = $arr;
-	}
 }
 foreach ($rows as $arr){
 	?>

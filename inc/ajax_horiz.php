@@ -14,6 +14,12 @@
 	$inputdb_4 = $_POST['inputdb_4'];
 	$inputdb_5 = $_POST['inputdb_5'];
 	
+	if (class_exists(\App\Services\HorizService::class)) {
+		$service = new \App\Services\HorizService($conexao1);
+		echo $service->buildOptions($_POST, $dd_input ?? null);
+		exit;
+	}
+
 	if($inputdb_4=="vert"){
 		$conca = "*";
 		$where = $inputdb_3 ? $inputdb_3 : '1=1';

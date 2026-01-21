@@ -62,6 +62,15 @@ class ListaService
 		return $ok;
 	}
 
+	public function deleteGroup($idGrupo)
+	{
+		$idGrupo = (int) $idGrupo;
+		$repo = new ListaRepository($this->db);
+		$okItems = $repo->deleteItemsByGroup($idGrupo);
+		$okGroup = $repo->deleteGroup($idGrupo);
+		return $okItems && $okGroup;
+	}
+
 	private function esc($value)
 	{
 		return Database::escape($this->db, $value);

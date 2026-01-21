@@ -542,9 +542,9 @@
 					<tr>
 						<td align="left" style="width:106px">
 							<div id="tdInputs" >
-								<a href="#" class="add">	<img src="img/add.png" 	  alt="add" 		 height="24" width="24" title="add input"></a> 
-								<a href="#" class="remove">	<img src="img/remove.png" alt="remove input" height="24" width="24"></a>
-								<a href="#" class="reset">	<img src="img/reset.png"  alt="reset" 		 height="24" width="24"></a>
+								<a href="javascript:void(0)" class="add" onclick="return false;">	<img src="img/add.png" 	  alt="add" 		 height="24" width="24" title="add input"></a> 
+								<a href="javascript:void(0)" class="remove" onclick="return false;">	<img src="img/remove.png" alt="remove input" height="24" width="24"></a>
+								<a href="javascript:void(0)" class="reset" onclick="return false;">	<img src="img/reset.png"  alt="reset" 		 height="24" width="24"></a>
 							</div>
 						</td>
 						<td align="right" style="width:60px">Retorno:</td>
