@@ -7,8 +7,17 @@
 	</tr>
 <?php
 	
-$query = mysqli_query($conexao1,"SELECT * from tp_grupo_tb as g ORDER by g.id_grupo") or die(mysqli_error());
-while ($arr = mysqli_fetch_array($query)){
+$rows = array();
+if (class_exists(\App\Repositories\ListaRepository::class)) {
+	$repo = new \App\Repositories\ListaRepository($conexao1);
+	$rows = $repo->listGroups();
+} else {
+	$query = mysqli_query($conexao1,"SELECT * from tp_grupo_tb as g ORDER by g.id_grupo") or die(mysqli_error());
+	while ($arr = mysqli_fetch_array($query)){
+		$rows[] = $arr;
+	}
+}
+foreach ($rows as $arr){
 	?>
 	<tr >
 		<td class="order"><?php echo $arr['id_grupo'];	?></td>
