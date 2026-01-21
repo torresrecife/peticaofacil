@@ -14,8 +14,18 @@
 	</tr>
 <?php
 
-$query = mysqli_query($conexao1,"SELECT *,u.data_cad as 'datacad' from tp_usu_tb as u LEFT JOIN tp_setor_tb as s on s.id_setor=u.id_setor LEFT JOIN tp_clientes_db AS c ON c.cliente_id=u.id_cliente ORDER by u.id_usu") or die(mysqli_error());
-while ($arr = mysqli_fetch_array($query)){
+$rows = null;
+if (class_exists(\App\Repositories\UsuarioRepository::class)) {
+	$repo = new \App\Repositories\UsuarioRepository($conexao1);
+	$rows = $repo->listAllWithRelations();
+} else {
+	$query = mysqli_query($conexao1,"SELECT *,u.data_cad as 'datacad' from tp_usu_tb as u LEFT JOIN tp_setor_tb as s on s.id_setor=u.id_setor LEFT JOIN tp_clientes_db AS c ON c.cliente_id=u.id_cliente ORDER by u.id_usu") or die(mysqli_error());
+	$rows = array();
+	while ($row = mysqli_fetch_array($query)) {
+		$rows[] = $row;
+	}
+}
+foreach ($rows as $arr){
 $acesso = empty($arr['acesso_usu']) || $arr['acesso_usu']=="0000-00-00 00:00:00" ? "" : strftime("%d/%m/%Y %H:%M:%S", strtotime($arr['acesso_usu']));
 	?>
 	<tr >

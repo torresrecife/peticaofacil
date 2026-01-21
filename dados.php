@@ -279,7 +279,7 @@ if($TIPOPET!=""){
 	<tr>
 		<?php if(mysqli_num_rows($q)>0) { ?>
 		<td height="30px" align="center">
-			<button type="button" onclick="EnviarDados('index.php','2','<?php echo $_POST['TIPOPET']; ?>')" style="height:25px" id="bt-enviar-dados" class="input-default">Enviar Dados</button>
+			<button type="button" onclick="return EnviarDados('index.php','2','<?php echo $_POST['TIPOPET']; ?>')" style="height:25px" id="bt-enviar-dados" class="input-default">Enviar Dados</button>
 			<br/><br/>
 			<div id="msg-enviar-dados" style="display:none;color:red">Esse contrato não poderá ser ajuizado!</div>
 		</td>
@@ -293,4 +293,5 @@ if($TIPOPET!=""){
 		<td class="sub_title_tb_r"><?php echo $cntdo; ?></td>
 	</tr>
 </table>
+
 

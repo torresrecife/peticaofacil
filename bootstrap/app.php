@@ -14,3 +14,19 @@ if (class_exists(\Dotenv\Dotenv::class)) {
 		$dotenv->safeLoad();
 	}
 }
+
+if (getenv('APP_DEBUG') === false) {
+	$envPath = $rootPath . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'env.local';
+	if (file_exists($envPath)) {
+		$envValues = @parse_ini_file($envPath, false, INI_SCANNER_RAW);
+		if (is_array($envValues)) {
+			foreach ($envValues as $key => $value) {
+				if (getenv($key) === false) {
+					putenv($key . '=' . $value);
+					$_ENV[$key] = $value;
+					$_SERVER[$key] = $value;
+				}
+			}
+		}
+	}
+}

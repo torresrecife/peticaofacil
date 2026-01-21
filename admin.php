@@ -46,7 +46,7 @@ if($_POST['hid_enviar']==5){
 				?>
 				<div class="icon-wrapper">
 					<div class="icon">
-						<a href="#" id="prg" onclick="novo_tipo()">
+						<a href="#" id="prg" onclick="return novo_tipo()">
 							<img src="css/images/header/icon-48-article-add.png" alt=""  /><span>Novo Modelo</span>
 						</a>
 					</div>
@@ -64,21 +64,21 @@ if($_POST['hid_enviar']==5){
 			<div class="cpanel">
 				<div class="icon-wrapper">
 					<div class="icon">
-						<a href="#" id="frm" onclick="mark_edit(7,0)" style="border:1px solid red">
+						<a href="#" id="frm" onclick="return mark_edit(7,0)" style="border:1px solid red">
 							<img src="css/images/header/icon-48-themes.png" alt=""  /><span>Formulário</span>
 						</a>
 					</div>
 				</div>	
 				<div class="icon-wrapper">
 					<div class="icon">
-						<a href="#" id="prg" onclick="mark_edit(6,0)" style="border:1px solid red">
+						<a href="#" id="prg" onclick="return mark_edit(6,0)" style="border:1px solid red">
 							<img src="css/images/header/icon-48-article-edit.png" alt=""  /><span>Parágrafos</span>
 						</a>
 					</div>
 				</div>
 				<div class="icon-wrapper">
 					<div class="icon">
-						<a href="#" id="prg" onclick="mark_edit('',1)" style="border:1px solid red">
+						<a href="#" id="prg" onclick="return mark_edit('',1)" style="border:1px solid red">
 							<img src="css/images/header/icon-48-deny.png" alt=""  /><span>Excluir</span>
 						</a>
 					</div>
@@ -132,6 +132,7 @@ function novo_tipo(){
 	
 		
 	});
+	return false;
 }
 </script>
 

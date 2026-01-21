@@ -1,4 +1,4 @@
 <IfModule mod_rewrite.c>
 	RewriteEngine On
-	RewriteBase /bvaa/peticaofacil/
+	RewriteBase /peticaofacil/
 </IfModule>

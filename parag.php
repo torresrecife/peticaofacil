@@ -72,6 +72,12 @@ $(document).ready(function(){
 										}
 									}										
 								}
+							$baseUrl = getenv('APP_URL') ?: '';
+							$basePath = $baseUrl ? rtrim(parse_url($baseUrl, PHP_URL_PATH), '/') . '/' : '';
+							if ($basePath) {
+								$para_text = str_replace("/peticaofacil/", $basePath, $para_text);
+								$para_text = str_replace("/bvaa/peticaofacil/", $basePath, $para_text);
+							}
 							echo str_replace(", ,",",",str_replace(", , ,",", ,",str_replace("972&nbsp;DA","VARA DE FEITOS DE RELAÇÃO DE CONSUMO CÍVEL E COMERCIAIS DA",$para_text)));
 						?>
 					</textarea>
@@ -126,7 +132,7 @@ $(document).ready(function(){
 		<br/>
 		<!--button type="button" onclick="javascript:history.back();" class="input-default" style="height:25px;">Voltar</button>
 		<button type="button" onclick="gerar_texto();" 	class="input-default" style="height:25px;">Gerar</button-->
-		<input type="submit" value="Unir Parágrafos" onclick="EnviarDados('index.php','3','');" class="input-default" style="height: 30px; cursor:pointer;" />
+		<input type="submit" value="Unir Parágrafos" onclick="return EnviarDados('index.php','3','');" class="input-default" style="height: 30px; cursor:pointer;" />
 	</div>
 	<input type="hidden" name="tipo_id"   id="tipo_id"   value="<?php echo $tipo_tb; ?>" />
 	<input type="hidden" name="name_text" id="name_text">
@@ -173,4 +179,5 @@ $(document).ready(function(){
 		</div>
 	</div>
 </div>
+
 

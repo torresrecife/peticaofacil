@@ -276,6 +276,7 @@ function inputs_checkeds(valor){
 				}
 			}
 		});
+		return false;
 	}
 	function mark_active(valor){
 		
@@ -298,7 +299,7 @@ function inputs_checkeds(valor){
 			}
 			
 		});
-		
+	return false;
 	}
 	
 	function mark_css(valor,valor2){
@@ -861,7 +862,8 @@ function inputs_checkeds(valor){
 						Add: function(){
 							dh = dh + 20;
 							$('<tr class="slInputs">'+
-								'<td><input type="text" class="cls_list" name="id_grupo" id="id_grupo" value="'+$("#num_grupo").val()+'" title="Id do grupo" style="margin:0;width:30px" /></td>' +
+								'<td><input type="hidden" class="cls_list" name="id_lista" value="" />' +
+								'<input type="text" class="cls_list" name="id_grupo" id="id_grupo" value="'+$("#num_grupo").val()+'" title="Id do grupo" style="margin:0;width:30px" /></td>' +
 								'<td><input type="text" class="cls_list" name="nome_lista" id="nome_lista" value="" title="Nome da lista" style="margin:0;width:100px" /></td>'+
 								'<td><input type="text" class="cls_list" name="return_1" id="return_1" value="" title="return_1" style="margin:0;width:194px" /></td>'+
 								'<td><input type="text" class="cls_list" name="return_2" id="return_2" value="" title="return_2" style="margin:0;width:194px" /></td>'+
@@ -886,33 +888,27 @@ function inputs_checkeds(valor){
 							}
 						},
 						Salvar: function() {
-							var mdados="";
-							var n = 0;
+							var rows = [];
 							
 							if($("#nome_grupo").val()==""){
 								alert("O campo " + $("#nome_grupo").attr("title") + " é obrigatório ");
 								$("#nome_grupo").focus();
 								return false;
 							}
-							$('.cls_list').each(function(){
-								n++;
-								mdados += "listas_"+n+"="+ $(this).attr("name")+"-|-"+escape($(this).val())+"&";
-								
-								if($(this).attr("name")=="nome_lista" && $(this).val()==""){
-									msgbox("<div style='text-align:center;margin-top:30px;font-size:10pt'>O campo 'Nome' não pode ficar vazio!</div>", {
-										Fechar: function(){
-											$( this ).dialog( "close" );
-										}
-									});
-									$(this).focus();
-									n=10000;
-									return false;
+
+							$('.slInputs').each(function(){
+								var row = {};
+								$(this).find('input.cls_list').each(function(){
+									var name = $(this).attr("name");
+									row[name] = $(this).val();
+								});
+								if (!row.id_grupo) {
+									row.id_grupo = $("#num_grupo").val();
 								}
+								rows.push(row);
 							});
-							if(n==10000){
-								return false;
-							}
-							if(n==0){
+
+							if (rows.length === 0) {
 								msgbox("<div style='text-align:center;margin-top:30px;font-size:10pt'>Você tem que ao menos criar uma linha!</div>", {
 									Fechar: function(){
 										$( this ).dialog( "close" );
@@ -920,10 +916,28 @@ function inputs_checkeds(valor){
 								});
 								return false;
 							}
+
+							for (var r = 0; r < rows.length; r++) {
+								if (!rows[r].nome_lista) {
+									msgbox("<div style='text-align:center;margin-top:30px;font-size:10pt'>O campo 'Nome' não pode ficar vazio!</div>", {
+										Fechar: function(){
+											$( this ).dialog( "close" );
+										}
+									});
+									return false;
+								}
+							}
+
 							$.ajax({
 								type: "POST",
 								url:  "inc/ajax_list_edit.php",
-								data: "flag=" + valor2 + "&num_grupo="+$("#num_grupo").val()+"&novo_grupo="+$("#novo_grupo").val()+"&nome_grupo="+$("#nome_grupo").val()+"&num_list="+n+"&" + mdados,
+								data: {
+									flag: valor2,
+									num_grupo: $("#num_grupo").val(),
+									novo_grupo: $("#novo_grupo").val(),
+									nome_grupo: $("#nome_grupo").val(),
+									lista_json: JSON.stringify(rows)
+								},
 								success: function(retorno_ajax){
 									if(retorno_ajax==1){
 										$( "#dialog-edit-list" ).dialog( "close" );
@@ -1060,7 +1074,7 @@ function inputs_checkeds(valor){
 			success: function(retorno_ajax){
 				var ret = retorno_ajax.split("-|-");
 				//alert(ret[1]);
-				//$("#cliente_id").val(ret[0]);
+				$("#cliente_id").val(ret[0]);
 				$("#cliente_name").val(ret[1]);
 				$("#cliente_cod").val(ret[2]);
 				$("#cliente_area option[value="+ret[4]+"]").attr("selected","selected");
@@ -1242,7 +1256,7 @@ function inputs_checkeds(valor){
 				$.ajax({
 					type: "POST",
 					url:  "inc/ajax_cliente.php",
-					data: "flag=D&id_setor=" + valor1,
+					data: "flag=D&cliente_id=" + valor1,
 					success: function(retorno_ajax){
 						$( this ).dialog( "close" );
 						if(retorno_ajax==1){

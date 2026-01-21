@@ -360,25 +360,25 @@ function fc_salvar_auto(){
 				<?php 
 				if($wdoc['tipo_arq']=='pdf'){
 				?>
-					<input type="submit" id="ger_pdf" name="ger_pdf" value="" onclick="EnviarDados('inc/getpdf.php','','');" >
+					<input type="submit" id="ger_pdf" name="ger_pdf" value="" onclick="return EnviarDados('inc/getpdf.php','','');" >
 				<?php
 				}elseif($wdoc['tipo_arq']=='word' || $wdoc['tipo_arq']=='pdf,word'){ 
 				?>
 					<textarea name='cod_cabec' id='cod_cabec' style='float:left;position:relative;margin-left:-1000px' ><?php echo cabecalhoerodape($_POST['tipo_id'],"cab","rtf",$conexao1); ?></textarea>
 					<textarea name='cod_rodap' id='cod_rodap' style='float:left;position:relative;margin-left:-1000px' ><?php echo str_replace(" \qc","\qc",cabecalhoerodape(($_POST['tipo_id']),"rod","rtf",$conexao1)); ?></textarea>
-					<input type="submit" id="ger_rtf" name="ger_rtf" value="" onclick="EnviarDados('inc/getrtf.php','','');" >
+					<input type="submit" id="ger_rtf" name="ger_rtf" value="" onclick="return EnviarDados('inc/getrtf.php','','');" >
 					<?php
 					if($wdoc['tipo_arq']=='pdf,word'){
 					?>
-						<input type="submit" id="ger_pdf" name="ger_pdf" value="" onclick="EnviarDados('inc/getpdf.php','','');" >
+						<input type="submit" id="ger_pdf" name="ger_pdf" value="" onclick="return EnviarDados('inc/getpdf.php','','');" >
 					<?php
 					}
 				}
 				
 				if($_SESSION['usuarioID']==2){
 					?>
-					<input type="submit" id="ger_pdf_2" name="ger_pdf_2" value="" onclick="EnviarDados('inc/getpdf_2.php','','');" >
-					<input type="submit" id="ger_wor_2" name="ger_wor_2" value="" onclick="EnviarDados('inc/getwor_2.php','','');" >
+					<input type="submit" id="ger_pdf_2" name="ger_pdf_2" value="" onclick="return EnviarDados('inc/getpdf_2.php','','');" >
+					<input type="submit" id="ger_wor_2" name="ger_wor_2" value="" onclick="return EnviarDados('inc/getwor_2.php','','');" >
 					<?php	
 				}
 				?>
@@ -389,4 +389,5 @@ function fc_salvar_auto(){
 		</tr>
 	</table>
 </div>
+
 

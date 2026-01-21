@@ -19,32 +19,53 @@
 		}
 	}
 
-	$qdb = mysqli_query($conexao1,"SELECT * FROM tp_config_db as c join tp_tipo_tb as t on t.id_db=c.id_db  WHERE t.tipo_id = '" . $_POST['TIPOPET'] . "' and c.stt='Y' ");
-	$wdb = mysqli_fetch_assoc($qdb);
+	$wdb = null;
+	if (class_exists(\App\Repositories\ConfigRepository::class)) {
+		$configRepo = new \App\Repositories\ConfigRepository($conexao1);
+		$wdb = $configRepo->findActiveByTipoId($_POST['TIPOPET'] ?? null);
+	} else {
+		$qdb = mysqli_query($conexao1,"SELECT * FROM tp_config_db as c join tp_tipo_tb as t on t.id_db=c.id_db  WHERE t.tipo_id = '" . $_POST['TIPOPET'] . "' and c.stt='Y' ");
+		$wdb = mysqli_fetch_assoc($qdb);
+	}
 	
 	if($_POST['TIPOCHA']!=""){
-		if(mysqli_num_rows($qdb)>0){
+		if(!empty($wdb)){
 			$serv2	= $wdb['ip_db'];
 			$user2 	= $wdb['usu_db'];
 			$senha2	= $wdb['senha_db'];
 			$db2	= $wdb['data_db'];
 			$query2	= $wdb['query_db'];
 			$where2	= $wdb['where_db'];
-			
-			$connectionInfo = array("UID" => $user2, "PWD" => $senha2, "Database"=>$db2); 
-			$conexao2 = sqlsrv_connect( $serv2,  $connectionInfo );
-			if($conexao2){
-				//$banco2   = mysql_select_db( $db2, $conexao2);
-				if($query2!=""){
-					$Cd = sqlsrv_query($conexao2, "$query2 $where2 AND " . $wdb['chave_db'] . " = '" . $_POST['TIPOCHA'] . "' ");
-				}else{
-					$Cd = sqlsrv_query($conexao2, "SELECT * FROM " . $wdb['table_db'] . "   WHERE " . $wdb['chave_db'] . " = '" . $_POST['TIPOCHA'] . "' ");
+
+			if (class_exists(\App\Services\PeticaoService::class)) {
+				$petService = new \App\Services\PeticaoService();
+				$dados = $petService->fetchDados($wdb, $_POST['TIPOCHA']);
+				$conexao2 = $dados ? true : null;
+			} else {
+				if (class_exists(\App\Infra\Database::class)) {
+					$conexao2 = \App\Infra\Database::sqlsrv(array(
+						'server' => $serv2,
+						'user' => $user2,
+						'password' => $senha2,
+						'database' => $db2
+					));
+				} else {
+					$connectionInfo = array("UID" => $user2, "PWD" => $senha2, "Database"=>$db2); 
+					$conexao2 = sqlsrv_connect( $serv2,  $connectionInfo );
 				}
-				$dados = sqlsrv_fetch_array($Cd,SQLSRV_FETCH_ASSOC);			
+				if($conexao2){
+					//$banco2   = mysql_select_db( $db2, $conexao2);
+					if($query2!=""){
+						$Cd = sqlsrv_query($conexao2, "$query2 $where2 AND " . $wdb['chave_db'] . " = '" . $_POST['TIPOCHA'] . "' ");
+					}else{
+						$Cd = sqlsrv_query($conexao2, "SELECT * FROM " . $wdb['table_db'] . "   WHERE " . $wdb['chave_db'] . " = '" . $_POST['TIPOCHA'] . "' ");
+					}
+					$dados = sqlsrv_fetch_array($Cd,SQLSRV_FETCH_ASSOC);			
+				}
 			}
 		}
 	} elseif($_POST['TIPOPET']!=""){
-		if(mysqli_num_rows($qdb)>0){
+		if(!empty($wdb)){
 			
 			$serv2	  = $wdb['ip_db'];
 			$user2 	  = $wdb['usu_db'];
@@ -52,17 +73,32 @@
 			$db2	  = $wdb['data_db'];
 			$query2	  = $wdb['query_db'];
 			$where2	  = $wdb['where_db'];
-			
-			$connectionInfo = array("UID" => $user2, "PWD" => $senha2, "Database"=>$db2); 
-			$conexao2 = sqlsrv_connect( $serv2,  $connectionInfo );
-			if($conexao2){
-				//$banco2   = mysql_select_db( $db2, $conexao2);
-				if($query2!=""){
-					$Cd = sqlsrv_query($conexao2, "$query2 $where2 ");
-				}else{
-					$Cd = sqlsrv_query($conexao2, "SELECT top1 * FROM " . $wdb['table_db'] . " ");
+
+			if (class_exists(\App\Services\PeticaoService::class)) {
+				$petService = new \App\Services\PeticaoService();
+				$dados2 = $petService->fetchSample($wdb);
+				$conexao2 = $dados2 ? true : null;
+			} else {
+				if (class_exists(\App\Infra\Database::class)) {
+					$conexao2 = \App\Infra\Database::sqlsrv(array(
+						'server' => $serv2,
+						'user' => $user2,
+						'password' => $senha2,
+						'database' => $db2
+					));
+				} else {
+					$connectionInfo = array("UID" => $user2, "PWD" => $senha2, "Database"=>$db2); 
+					$conexao2 = sqlsrv_connect( $serv2,  $connectionInfo );
 				}
-				$dados2 = sqlsrv_fetch_array($Cd,SQLSRV_FETCH_ASSOC);
+				if($conexao2){
+					//$banco2   = mysql_select_db( $db2, $conexao2);
+					if($query2!=""){
+						$Cd = sqlsrv_query($conexao2, "$query2 $where2 ");
+					}else{
+						$Cd = sqlsrv_query($conexao2, "SELECT top1 * FROM " . $wdb['table_db'] . " ");
+					}
+					$dados2 = sqlsrv_fetch_array($Cd,SQLSRV_FETCH_ASSOC);
+				}
 			}
 		}
 	}
@@ -84,7 +120,11 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" dir="ltr" >
 	<head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-	<base href="/bvaa/peticaofacil/public/">
+	<?php
+		$baseUrl = getenv('APP_URL') ?: '/peticaofacil';
+		$basePath = rtrim(parse_url($baseUrl, PHP_URL_PATH), '/');
+	?>
+	<base href="<?php echo $basePath ? $basePath.'/' : '/'; ?>">
 		<title>Apresentação - Administração</title>
 		<link href="css/images/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon" />
 		<link rel="stylesheet" href="css/template.css" type="text/css" />
@@ -191,7 +231,7 @@
 							<?php
 						}
 						?>
-						<span class="viewconfig"><a href="#" onclick="EnviarDados('index.php','5','')">Administrar</a></span>
+						<span class="viewconfig"><a href="#" onclick="return EnviarDados('index.php','5','')">Administrar</a></span>
 						<?php
 					}
 					?>
@@ -212,8 +252,13 @@
 						<?php
 						if($_GET['TIPOPET']!='' || $_POST['TIPOPET']!=''){
 							$TIPOPET = $_POST['TIPOPET'] ? $_POST['TIPOPET'] : $_GET['TIPOPET'];
-							$t = mysqli_query($conexao1,"SELECT t.tipo_nome,t.tipo_id,cliente_name FROM tp_tipo_tb as t left join tp_clientes_db as c on c.cliente_id=t.id_cliente WHERE t.tipo_id = '" . $TIPOPET . "' ");
-							$tw = mysqli_fetch_array($t);
+							if (class_exists(\App\Repositories\TipoRepository::class)) {
+								$tipoRepo = new \App\Repositories\TipoRepository($conexao1);
+								$tw = $tipoRepo->findWithClienteById($TIPOPET);
+							} else {
+								$t = mysqli_query($conexao1,"SELECT t.tipo_nome,t.tipo_id,cliente_name FROM tp_tipo_tb as t left join tp_clientes_db as c on c.cliente_id=t.id_cliente WHERE t.tipo_id = '" . $TIPOPET . "' ");
+								$tw = mysqli_fetch_array($t);
+							}
 							//echo $tw[0];
 						}
 						?>
@@ -234,12 +279,12 @@
 					<?php 
 					if($usu_nivel=='ADM' || $usu_nivel=='GER'){
 						?>
-						<span class="viewconfig"><a href="#" onclick="EnviarDados('index.php','5','')">Administrar</a></span>
+						<span class="viewconfig"><a href="#" onclick="return EnviarDados('index.php','5','')">Administrar</a></span>
 						<?php
 					}
 					if($usu_nivel=='USU'){
 						?>
-						<span class="viewcopy"><a href="#" onclick="EnviarDados('index.php','10','')">Minhas Petições</a></span>
+						<span class="viewcopy"><a href="#" onclick="return EnviarDados('index.php','10','')">Minhas Petições</a></span>
 						<?php
 					}
 					if($usu_nivel=='ADM' || $usu_nivel=='GER'){
@@ -249,7 +294,7 @@
 						<?php 
 						}else{
 						?>
-						<span class="viewcopy"><a href="#" onclick="EnviarDados('index.php','10','')">Petições Salvas</a></span>
+						<span class="viewcopy"><a href="#" onclick="return EnviarDados('index.php','10','')">Petições Salvas</a></span>
 						<?php
 						}
 					}
@@ -281,8 +326,13 @@
 			<?php
 			if($_GET['TIPOPET']!='' || $_POST['TIPOPET']!=''){
 				$TIPOPET = $_POST['TIPOPET'] ? $_POST['TIPOPET'] : $_GET['TIPOPET'];
-				$t = mysqli_query($conexao1,"SELECT t.tipo_nome,t.tipo_id,cliente_name FROM tp_tipo_tb as t left join tp_clientes_db as c on c.cliente_id=t.id_cliente WHERE t.tipo_id = '" . $TIPOPET . "' ");
-				$tw = mysqli_fetch_array($t);
+				if (class_exists(\App\Repositories\TipoRepository::class)) {
+					$tipoRepo = new \App\Repositories\TipoRepository($conexao1);
+					$tw = $tipoRepo->findWithClienteById($TIPOPET);
+				} else {
+					$t = mysqli_query($conexao1,"SELECT t.tipo_nome,t.tipo_id,cliente_name FROM tp_tipo_tb as t left join tp_clientes_db as c on c.cliente_id=t.id_cliente WHERE t.tipo_id = '" . $TIPOPET . "' ");
+					$tw = mysqli_fetch_array($t);
+				}
 				//echo $tw[0];
 			}
 		}
@@ -626,4 +676,5 @@
 	?>
 </body>
 </html>
+
 

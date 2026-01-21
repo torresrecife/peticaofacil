@@ -59,7 +59,10 @@ if($_POST['flag']=="E")
 			while($while = mysqli_fetch_assoc($ql)){
 				?>
 				<tr class="slInputs">
-					<td><input type="text" class="cls_list" name="id_grupo"   id="id_grupo"   value="<?php echo $while['id_grupo'];   ?>" title="Id do grupo" 	style="margin:1px;width:30px"  readonly="readonly"/></td>
+					<td>
+						<input type="hidden" class="cls_list" name="id_lista" value="<?php echo $while['id_lista']; ?>" />
+						<input type="text" class="cls_list" name="id_grupo" id="id_grupo" value="<?php echo $while['id_grupo']; ?>" title="Id do grupo" style="margin:1px;width:30px" readonly="readonly"/>
+					</td>
 					<td><input type="text" class="cls_list" name="nome_lista" id="nome_lista" value="<?php echo $while['nome_lista']; ?>" title="Nome da lista" style="margin:1px;width:100px" /></td>
 					<td><input type="text" class="cls_list" name="return_1"   id="return_1"   value="<?php echo $while['return_1'];   ?>" title="return_1" 		style="margin:1px;width:160px" /></td>
 					<td><input type="text" class="cls_list" name="return_2"   id="return_2"   value="<?php echo $while['return_2'];   ?>" title="return_2" 		style="margin:1px;width:160px" /></td>

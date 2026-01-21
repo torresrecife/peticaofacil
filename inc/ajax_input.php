@@ -26,6 +26,12 @@ $inputArqui= $_POST['inputArqui']? $_POST['inputArqui']   : "";
 $campoId   = $_POST['campoId']	 !="" ? $_POST['campoId'] 	: "";
 
 if($_POST['flag']=="I"){
+	if (class_exists(\App\Services\InputService::class)) {
+		$service = new \App\Services\InputService($conexao1);
+		$status = $service->create($_POST);
+		echo $status;
+		exit;
+	}
 	
 	if($inputcol==1){$twidth=265;}elseif($inputcol==2){$twidth=560;}elseif($inputcol==3){$twidth=860;}
 	
@@ -145,6 +151,17 @@ if($_POST['flag']=="I"){
 		echo 1;
 	}
 }elseif($_POST['flag']=="E" && $_POST['campoId']!=''){
+	if (class_exists(\App\Services\InputService::class)) {
+		$service = new \App\Services\InputService($conexao1);
+		$row = $service->getInputRow($_POST['campoId']);
+		header("Content-Type: text/html; charset=ISO-8859-1",true);
+		if ($row) {
+			foreach ($row as $value) {
+				echo utf8_decode($value) . "-|-";
+			}
+		}
+		exit;
+	}
 	$campoId  = $_POST['campoId'];
 	$i = 0;
 	$q  = " SELECT * FROM tp_inputs_tb";
@@ -156,6 +173,12 @@ if($_POST['flag']=="I"){
 		echo utf8_decode($w) . "-|-";
 	}
 }elseif($_POST['flag']=="U" && $_POST['campoId']!=''){
+	if (class_exists(\App\Services\InputService::class)) {
+		$service = new \App\Services\InputService($conexao1);
+		$ok = $service->update($_POST['campoId'], $_POST);
+		echo $ok ? 1 : 0;
+		exit;
+	}
 	
 	if($inputcol==1){$twidth=265;}elseif($inputcol==2){$twidth=560;}elseif($inputcol==3){$twidth=860;}
 	
@@ -222,10 +245,24 @@ if($_POST['flag']=="I"){
 		echo 1;
 	}
 }elseif($_POST['flag']=="D"){
-	$query = mysqli_query($conexao1,"DELETE FROM `tp_inputs_tb` WHERE `id_input`= " . $_POST['idvalor'] . " AND listsel = 'N' LIMIT 1 ");
-	$query = mysqli_query($conexao1,"DELETE FROM `tp_dados_tb` WHERE `id_input`= " . $_POST['idvalor'] . " AND listsel = 'N' ");
-	echo 1;
+	if (class_exists(\App\Services\InputService::class)) {
+		$service = new \App\Services\InputService($conexao1);
+		$ok = $service->deleteInput($_POST['idvalor']);
+		echo $ok ? 1 : 0;
+	} else {
+		$query = mysqli_query($conexao1,"DELETE FROM `tp_inputs_tb` WHERE `id_input`= " . $_POST['idvalor'] . " AND listsel = 'N' LIMIT 1 ");
+		$query = mysqli_query($conexao1,"DELETE FROM `tp_dados_tb` WHERE `id_input`= " . $_POST['idvalor'] . " AND listsel = 'N' ");
+		echo 1;
+	}
 }elseif($_POST['flag']=="L"){
+	if (class_exists(\App\Services\InputService::class)) {
+		$service = new \App\Services\InputService($conexao1);
+		$ok = $service->createListSelect($_POST);
+		if ($ok) {
+			echo 1;
+		}
+		exit;
+	}
 	if($_POST['dadSel']=="TIPOSEL"){
 		$qIns  = "INSERT INTO tp_inputs_tb SET ";
 		$qIns .= "tipo_id 	 = 1, ";
@@ -253,6 +290,20 @@ if($_POST['flag']=="I"){
 	}
 }elseif($_POST['flag']=="G"){
 	$idvalor = $_POST['idvalor'];
+	if (class_exists(\App\Services\InputService::class)) {
+		$service = new \App\Services\InputService($conexao1);
+		header("Content-Type: text/html; charset=ISO-8859-1",true);
+		$rows = $service->listInputsByTipo($idvalor);
+		echo "<select name=\"inputLoad\" id=\"inputLoad\" class=\"input-default\" style=\"width:160px; height:20px\">";
+		echo "<option></option>";
+		foreach ($rows as $row) {
+			$id = $row['id_input'];
+			$title = $row['input_title'];
+			echo "<option value='$(this).val($(\"#campo" . $id . "\").val());'>" . $title . "</option>";
+		}
+		echo "</select>";
+		exit;
+	}
 	?>
 	<select name="inputLoad" id="inputLoad" class="input-default" style="width:160px; height:20px">
 		<?php

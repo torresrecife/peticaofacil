@@ -2,7 +2,11 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" dir="ltr" >
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-	<base href="/bvaa/peticaofacil/public/">
+	<?php
+		$baseUrl = getenv('APP_URL') ?: '/peticaofacil';
+		$basePath = rtrim(parse_url($baseUrl, PHP_URL_PATH), '/');
+	?>
+	<base href="<?php echo $basePath ? $basePath.'/' : '/'; ?>">
 	<title>Petição - Fácil</title>
 	<link href="css/images/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon" />
 	<link rel="stylesheet" href="css/template.css" type="text/css" />

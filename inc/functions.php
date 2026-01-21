@@ -57,7 +57,7 @@ function fc_select_div($p_tb,$p_id,$val_id,$val_nome,$usu,$se,$conex,$p_setor=""
         $SETOR[$w['id_setor']] .= "<div class='icon-wrapper'>";
             $SETOR[$w['id_setor']] .= "<div class='icon_pecas'>";
 								if($se=="E"){
-									$SETOR[$w['id_setor']] .= "<a href='#' onclick='mark_active(this)' class='clspet' grupo='0' numpet='" . $w[$val_id] . "'>";
+									$SETOR[$w['id_setor']] .= "<a href='#' onclick='return mark_active(this)' class='clspet' grupo='0' numpet='" . $w[$val_id] . "'>";
 								}elseif($se=="S"){
 									if($w['id_cliente']==0){
 										$bgcor = "#FFFFFF";

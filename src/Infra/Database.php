@@ -49,4 +49,15 @@ class Database
 
 		return sqlsrv_connect($server, $connectionInfo);
 	}
+
+	public static function escape($db, $value)
+	{
+		return mysqli_real_escape_string($db, (string) $value);
+	}
+
+	public static function trimOrNull($value)
+	{
+		$value = trim((string) $value);
+		return $value === '' ? null : $value;
+	}
 }
