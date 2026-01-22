@@ -13,9 +13,12 @@
 					</tr>
 					<?php
 						
-					$query = mysqli_query($conexao1,"SELECT * FROM tp_clientes_db AS c JOIN tp_setor_tb AS s ON s.id_setor=c.cliente_area ORDER BY c.cliente_id") or die(mysqli_error());
-					while ($arr = mysqli_fetch_array($query))
-					{
+					$rows = array();
+					if (class_exists(\App\Services\ClienteService::class)) {
+						$service = new \App\Services\ClienteService($conexao1);
+						$rows = $service->listAllWithSetor();
+					}
+					foreach ($rows as $arr) {
 						?>
 						<tr >
 							<td class="order"><?PHP echo $arr['cliente_id'];	 ?></td>
@@ -52,8 +55,12 @@
 					<select class="cls_cliente" name="cliente_area" id="cliente_area" obrigatorio="1" title="Setor do Cliente">
 							<option value="">  </option>                                                                             
 							<?php 
-							$qsetor = mysqli_query($conexao1,"SELECT * FROM tp_setor_tb");
-							while($wsetor = mysqli_fetch_array($qsetor)){
+							$setores = array();
+							if (class_exists(\App\Services\SetorService::class)) {
+								$setorService = new \App\Services\SetorService($conexao1);
+								$setores = $setorService->listAll();
+							}
+							foreach($setores as $wsetor){
 								
 								?>
 								<option value="<?php echo $wsetor[0]; ?>"> <?php echo $wsetor[1]; ?></option>

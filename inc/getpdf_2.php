@@ -66,9 +66,14 @@
 	echo '<div style="margin-left:20mm; margin-right:15mm; margin-bottom:-10mm; margin-top:5mm; color: #333333">'.cabecalhoerodape($tipo_id,"rod","pdf",$conexao1).'</div>';
 	echo '</page_footer>';
 	if($_POST['is_pecas']==1){
-		$query_pecas = mysqli_query($conexao1,"SELECT * from tp_pecas_tb where id_pecas='".$_POST['id_pecas']."' ") or die(mysqli_error());
-		$arr_pecas = mysqli_fetch_array($query_pecas);
-		echo $arr_pecas['cod_pecas'];
+		$arr_pecas = null;
+		if (class_exists(\App\Services\PecaService::class)) {
+			$pecaService = new \App\Services\PecaService($conexao1);
+			$arr_pecas = $pecaService->getById($_POST['id_pecas']);
+		}
+		if ($arr_pecas) {
+			echo $arr_pecas['cod_pecas'];
+		}
 	} else {
 		echo $doc_buffer;
 	}

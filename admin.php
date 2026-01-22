@@ -156,8 +156,12 @@ function novo_tipo(){
 						<select name="TIPOSQL" id="TIPOSQL" title="Setor" style="width:222px; height:21px; background: #e6e6e6" >
 							<option value="">  </option>                                       
 						<?php 
-						$qserver = mysqli_query($conexao1,"SELECT * FROM tp_config_db");
-						while($wserver = mysqli_fetch_array($qserver)){
+						$servers = array();
+						if (class_exists(\App\Repositories\SqlConfigRepository::class)) {
+							$repo = new \App\Repositories\SqlConfigRepository($conexao1);
+							$servers = $repo->listAll();
+						}
+						foreach ($servers as $wserver){
 							?>
 							<option value="<?php echo $wserver[0]; ?>"> <?php echo $wserver[1]; ?></option>
 							<?php 
@@ -171,8 +175,15 @@ function novo_tipo(){
 						<select name="TIPOSETOR" id="TIPOSETOR" title="Setor" style="width:222px; height:21px; background: #e6e6e6" >
 							<option value="">  </option>                                       
 						<?php 
-						$qsetor = mysqli_query($conexao1,"SELECT * FROM tp_setor_tb " . ($usu_setor!=0 ? "where id_setor = " . $usu_setor : "") . " ");
-						while($wsetor = mysqli_fetch_array($qsetor)){
+						$setores = array();
+						if (class_exists(\App\Services\SetorService::class)) {
+							$setorService = new \App\Services\SetorService($conexao1);
+							$setores = $setorService->listAll();
+						}
+						foreach ($setores as $wsetor){
+							if ($usu_setor != 0 && $wsetor[0] != $usu_setor) {
+								continue;
+							}
 							?>
 							<option value="<?php echo $wsetor[0]; ?>"> <?php echo $wsetor[1]; ?></option>
 							<?php 
@@ -186,8 +197,15 @@ function novo_tipo(){
 						<select name="TIPOCLIEN" id="TIPOCLIEN" title="Cliente" style="width:222px; height:21px; background: #e6e6e6" >
 							<option value="0">Todos do Setor</option>                                       
 						<?php 
-						$qcliente = mysqli_query($conexao1,"SELECT * FROM tp_clientes_db " . ($usu_cliente!=0 ? "where cliente_id in (" . $usu_cliente . ")" : "") . "");  
-						while($wcliente = mysqli_fetch_array($qcliente)){
+						$clientes = array();
+						if (class_exists(\App\Services\ClienteService::class)) {
+							$clienteService = new \App\Services\ClienteService($conexao1);
+							$clientes = $clienteService->listAll();
+						}
+						foreach ($clientes as $wcliente){
+							if ($usu_cliente != 0 && strpos(',' . $usu_cliente . ',', ',' . $wcliente[0] . ',') === false) {
+								continue;
+							}
 							?>
 							<option value="<?php echo $wcliente[0]; ?>"> <?php echo $wcliente[1]; ?></option>
 							<?php 

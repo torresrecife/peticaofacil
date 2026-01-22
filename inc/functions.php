@@ -8,20 +8,29 @@ function formata_data_extenso($strDate){
 }
 
 function fc_select($p_tb,$p_id,$val_id,$val_nome,$usu,$conex,$p_setor=""){
-	$q = mysqli_query($conex,"SELECT MIN($val_id) AS $val_id, $val_nome FROM " . $p_tb. " where 1=1 " . ($usu!="" ? "and id_cliente in (0," . $usu  . ")" : "") . " " . ($p_setor!=0 ? "and id_setor = " . $p_setor : "") . " GROUP BY " . $val_nome . " ORDER BY " . $val_nome. " ");
+	if (!class_exists(\App\Repositories\TipoRepository::class)) {
+		echo "<option></option>";
+		return;
+	}
+	$repo = new \App\Repositories\TipoRepository($conex);
+	$q = $repo->listForSelect($usu, $p_setor);
 	echo "<option></option>";
 	
-	while($w = mysqli_fetch_array($q)){
+	foreach($q as $w){
 		echo "<option value='" . $w[$val_id] . "' " . ($w[$val_id] == "$p_id" ? "selected" : "") . ">" . $w[$val_nome] . "</option>";
 	}
 }
 function fc_select_li($p_tb,$p_id,$val_id,$val_nome,$usu_cliente,$conex,$p_setor=""){
 	$r=0;
-	$q = mysqli_query($conex,"SELECT MIN($val_id) AS $val_id, $val_nome FROM " . $p_tb. "  where 1=1 " . ($usu_cliente!=0 ? "and id_cliente in (0," . $usu_cliente  . ")" : "") . " " . ($p_setor!=0 ? "and id_setor = " . $p_setor : "") . " GROUP BY " . $val_nome . " ORDER BY " . $val_nome. " ");	
-	$n = mysqli_num_rows($q);
+	if (!class_exists(\App\Repositories\TipoRepository::class)) {
+		return;
+	}
+	$repo = new \App\Repositories\TipoRepository($conex);
+	$q = $repo->listForSelect($usu_cliente, $p_setor);
+	$n = count($q);
 	$li = array();
 	$t=18;
-	while($w = mysqli_fetch_array($q)){
+	foreach($q as $w){
 		$r++;
 		if($r%18==0){
 			$t=18+$t;
@@ -47,12 +56,13 @@ function fc_select_li($p_tb,$p_id,$val_id,$val_nome,$usu_cliente,$conex,$p_setor
 }
 function fc_select_div($p_tb,$p_id,$val_id,$val_nome,$usu,$se,$conex,$p_setor=""){
 	//$SETOR_1 = "";
-	$q = mysqli_query($conex, "	SELECT *, a.$val_id , a.$val_nome, a.nome_pre, a.nome_pos, a.id_setor FROM " . $p_tb. " as a 
-						left join tp_clientes_db as c on a.id_cliente=c.cliente_id 
-						left join tp_setor_tb AS s ON s.id_setor=a.id_setor 
-						where 1=1 " . ($usu!=0 ? "and a.id_cliente in (0," . $usu  . ")" : "") . " " . ($p_setor!=0 ? "and a.id_setor = " . $p_setor : "") . " ORDER BY a.id_setor asc, c.cliente_name, a." . $val_nome. " ");
+	if (!class_exists(\App\Repositories\TipoRepository::class)) {
+		return;
+	}
+	$repo = new \App\Repositories\TipoRepository($conex);
+	$q = $repo->listWithRelations($usu, $p_setor);
 	$n=0;
-	while($w = mysqli_fetch_array($q)){	
+	foreach($q as $w){	
 			$n++;
         $SETOR[$w['id_setor']] .= "<div class='icon-wrapper'>";
             $SETOR[$w['id_setor']] .= "<div class='icon_pecas'>";
@@ -86,34 +96,29 @@ function fc_select_div($p_tb,$p_id,$val_id,$val_nome,$usu,$se,$conex,$p_setor=""
 	}
 }
 function fc_select_dados($id_input,$conex,$p_setor=""){
-	$q = mysqli_query($conex,"SELECT id_dados, nome_dados FROM tp_dados_tb where id_input = '$id_input' " . ($p_setor!=0 ? "and id_setor = " . $p_setor : "") . " ORDER BY nome_dados asc ");
+	if (!class_exists(\App\Services\DadosService::class)) {
+		echo "<option></option>";
+		return;
+	}
+	$service = new \App\Services\DadosService($conex);
+	$q = $service->listByInput($id_input, $p_setor);
 	echo "<option></option>";
 	
-	while($w = mysqli_fetch_array($q)){
-		echo "<option value='" . $w['id_dados'] . "' " . ($w[$val_id] == "$p_id" ? "selected" : "") . ">" . $w['nome_dados'] . "</option>";
+	foreach($q as $w){
+		echo "<option value='" . $w['id_dados'] . "'>" . $w['nome_dados'] . "</option>";
 	}
 }
 
 function fc_select_name($cond,$where,$col,$banco,$conex){
-	if($where!='' && $col !='' && $banco !=''){
-		$campo = explode("|_|",$col);
-		$sel  = " SELECT ";
-		
-		for($i=0;$i<=count($campo);$i++){
-			if($campo[$i] != ''){
-				$sel .= ($i> 0 ? (',' . $campo[$i]) : $campo[$i] );
-			}
+	if($where!='' && $col !='' && $banco =='tp_tipo_tb' && $cond == 'tipo_id' && $col == 'tipo_nome'){
+		if (!class_exists(\App\Repositories\TipoRepository::class)) {
+			return '';
 		}
-		$sel .= " FROM $banco";
-		$sel .= " where $cond = $where";
-		$sel .= " limit 1";			
-		$q = mysqli_query($conex,$sel);
-		$w = mysqli_fetch_array($q);
-		return $w[0];
-		//return "SELECT $col FROM $banco where $cond = $where limit 1"; //$w[0];
-	}else{
-		return '';
+		$repo = new \App\Repositories\TipoRepository($conex);
+		$row = $repo->findWithClienteById($where);
+		return $row['tipo_nome'] ?? '';
 	}
+	return '';
 }
 
 //Maiúscula
@@ -191,26 +196,36 @@ function fc_botoes_cliente($cliente_id,$displ,$nome=""){
 function cabecalhoerodape($tipoid,$rodcab,$rtfpdf,$conex){
 	if($rtfpdf=="rtf"){
 		require_once("Html2Rtf/class_rtf_cab.php");
+		if (!class_exists(\App\Services\TipoService::class)) {
+			return "";
+		}
+		$tipoService = new \App\Services\TipoService($conex);
+		$codigos = $tipoService->getCabecRodapById($tipoid);
+		if (!$codigos) {
+			return "";
+		}
 		if($rodcab=="cab"){
 			$codcab = new rtf("Html2Rtf/rtf_config.php");
-			$queryc = mysqli_query($conex,"SELECT t.cod_cabec FROM tp_tipo_tb AS t WHERE t.tipo_id = '".$tipoid."' ");
-			$whilec = mysqli_fetch_array($queryc);
-			$codcab->addText($whilec['cod_cabec']);
+			$codcab->addText($codigos['cod_cabec'] ?? '');
 			return $codcab->getDocument();
 			
 		} elseif($rodcab=="rod"){
 			$codrod = new rtf("Html2Rtf/rtf_config.php");
-			$queryr = mysqli_query($conex,"SELECT t.cod_rodap FROM tp_tipo_tb AS t WHERE t.tipo_id = '".$tipoid."' ");
-			$whiler = mysqli_fetch_array($queryr);
-			$codrod->addText($whiler['cod_rodap']);
+			$codrod->addText($codigos['cod_rodap'] ?? '');
 			return $codrod->getDocument();
 		}else{
 			return "";
 		}
 	}elseif($rtfpdf=="pdf"){
 		require_once("seguranca.php");
-		$querycr = mysqli_query($conex,"SELECT t.cod_cabec, t.cod_rodap FROM tp_tipo_tb AS t WHERE t.tipo_id = '".$tipoid."' ");
-		$whilecr = mysqli_fetch_array($querycr);
+		if (!class_exists(\App\Services\TipoService::class)) {
+			return "";
+		}
+		$tipoService = new \App\Services\TipoService($conex);
+		$whilecr = $tipoService->getCabecRodapById($tipoid);
+		if (!$whilecr) {
+			return "";
+		}
 		//$dire = $_SERVER['DOCUMENT_ROOT'];
 		$dire = "http://10.81.11.202";
 		

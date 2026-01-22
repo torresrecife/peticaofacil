@@ -55,6 +55,41 @@ class TipoService
 		return mysqli_query($this->db, "UPDATE tp_tipo_tb SET cod_rodap = '" . $texto . "' WHERE tipo_id = " . $tipoId);
 	}
 
+	public function getSetorCodeByTipo($tipoId)
+	{
+		$tipoId = $this->esc($tipoId);
+		$sql = "SELECT s.cod_setor FROM tp_tipo_tb AS t "
+			. "JOIN tp_setor_tb AS s ON s.id_setor=t.id_setor "
+			. "WHERE t.tipo_id = '" . $tipoId . "'";
+		$query = mysqli_query($this->db, $sql);
+		if (!$query) {
+			return null;
+		}
+		$row = mysqli_fetch_array($query);
+		return $row['cod_setor'] ?? null;
+	}
+
+	public function getTipoArquivoById($tipoId)
+	{
+		$tipoId = $this->esc($tipoId);
+		$query = mysqli_query($this->db, "SELECT tipo_arq FROM tp_tipo_tb WHERE tipo_id = '" . $tipoId . "' LIMIT 1");
+		if (!$query) {
+			return null;
+		}
+		$row = mysqli_fetch_array($query);
+		return $row['tipo_arq'] ?? null;
+	}
+
+	public function getCabecRodapById($tipoId)
+	{
+		$tipoId = $this->esc($tipoId);
+		$query = mysqli_query($this->db, "SELECT cod_cabec, cod_rodap FROM tp_tipo_tb WHERE tipo_id = '" . $tipoId . "' LIMIT 1");
+		if (!$query) {
+			return null;
+		}
+		return mysqli_fetch_assoc($query) ?: null;
+	}
+
 	private function esc($value)
 	{
 		return Database::escape($this->db, $value);

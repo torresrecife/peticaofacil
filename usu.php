@@ -19,11 +19,7 @@ if (class_exists(\App\Repositories\UsuarioRepository::class)) {
 	$repo = new \App\Repositories\UsuarioRepository($conexao1);
 	$rows = $repo->listAllWithRelations();
 } else {
-	$query = mysqli_query($conexao1,"SELECT *,u.data_cad as 'datacad' from tp_usu_tb as u LEFT JOIN tp_setor_tb as s on s.id_setor=u.id_setor LEFT JOIN tp_clientes_db AS c ON c.cliente_id=u.id_cliente ORDER by u.id_usu") or die(mysqli_error());
 	$rows = array();
-	while ($row = mysqli_fetch_array($query)) {
-		$rows[] = $row;
-	}
 }
 foreach ($rows as $arr){
 $acesso = empty($arr['acesso_usu']) || $arr['acesso_usu']=="0000-00-00 00:00:00" ? "" : strftime("%d/%m/%Y %H:%M:%S", strtotime($arr['acesso_usu']));
@@ -90,8 +86,12 @@ $acesso = empty($arr['acesso_usu']) || $arr['acesso_usu']=="0000-00-00 00:00:00"
 						<select class="cls_usu" name="setor_usu" id="setor_usu" onchange="sel_tipo(1,this.value)" obrigatorio="1" title="Setor">                                  
 							<option value="0">Todos</option>                                       
 							<?php 
-							$qsetor = mysqli_query($conexao1,"SELECT * FROM tp_setor_tb");
-							while($wsetor = mysqli_fetch_array($qsetor)){
+							$setores = array();
+							if (class_exists(\App\Services\SetorService::class)) {
+								$setorService = new \App\Services\SetorService($conexao1);
+								$setores = $setorService->listAll();
+							}
+							foreach($setores as $wsetor){
 								?>
 								<option value="<?php echo $wsetor[0]; ?>"> <?php echo $wsetor[1]; ?></option>
 								<?php 

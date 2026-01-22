@@ -98,6 +98,20 @@ class InputService
 		return $rows;
 	}
 
+	public function listFullByTipo($tipoId)
+	{
+		$tipoId = (int) $tipoId;
+		$query = mysqli_query($this->db, "SELECT * FROM tp_inputs_tb where tipo_id = '" . $tipoId . "' ORDER BY input_order, id_input");
+		if (!$query) {
+			return array();
+		}
+		$rows = array();
+		while ($row = mysqli_fetch_array($query)) {
+			$rows[] = $row;
+		}
+		return $rows;
+	}
+
 	public function createListSelect(array $data)
 	{
 		$input = $this->normalizeInputData($data);

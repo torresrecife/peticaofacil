@@ -7,15 +7,17 @@
 
 <?php
 
-$qInp = mysqli_query($conexao1,"SELECT * FROM tp_inputs_tb where tipo_id = '" . $_POST['TIPOPET'] . "' ");
-$nu = 0;
 $campos = "";
-while($w = mysqli_fetch_array($qInp)){
-	$campos .= $nu>0 ? "|_|" : "";
+$inputs = array();
+if (class_exists(\App\Services\InputService::class)) {
+	$inputService = new \App\Services\InputService($conexao1);
+	$inputs = $inputService->listFullByTipo($_POST['TIPOPET']);
+}
+foreach ($inputs as $idx => $w) {
+	$campos .= $idx > 0 ? "|_|" : "";
 	$campos .= $w['input_title'];
 	$campos .= "_|_";
 	$campos .= "@campo" . $w['id_input'] . "@";
-	$nu++;
 }
 
 ?>
@@ -158,14 +160,15 @@ function novo_parag(){
 		<br>
 		<?php
 		$tipo_tb = $_POST['TIPOPET'] ? $_POST['TIPOPET'] : "''";
-		$sel_text  = " SELECT * FROM tp_funda_tb as tf";
-		$sel_text .= " JOIN tp_tipo_tb as tt on tt.tipo_id = tf.tipo_id ";
-		$sel_text .= " WHERE tt.tipo_id = " . $tipo_tb . " ORDER BY tf.fund_order ASC";
-		$que_text = mysqli_query($conexao1,$sel_text);
+		$rows = array();
+		if (class_exists(\App\Services\ParagrafoService::class)) {
+			$parService = new \App\Services\ParagrafoService($conexao1);
+			$rows = $parService->listByTipoWithArquivo($tipo_tb);
+		}
 		$obj_text = explode("_|_",$_POST['obj_text']);
 		$n=0;
 		$cod_rodap="";
-		while($wtext = mysqli_fetch_array($que_text)){
+		foreach ($rows as $wtext){
 			if($n==0 && $_POST['TIPOPET']!=""){
 				?>
 				<br>

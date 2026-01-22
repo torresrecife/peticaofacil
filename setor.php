@@ -11,9 +11,12 @@
 					</tr>
 					<?php
 						
-					$query = mysqli_query($conexao1,"SELECT * from tp_setor_tb as s ORDER by s.id_setor") or die(mysqli_error());
-					while ($arr = mysqli_fetch_array($query))
-					{
+					$rows = array();
+					if (class_exists(\App\Services\SetorService::class)) {
+						$service = new \App\Services\SetorService($conexao1);
+						$rows = $service->listAll();
+					}
+					foreach ($rows as $arr) {
 						?>
 						<tr >
 							<td class="order"><?PHP echo $arr['id_setor'];	 ?></td>

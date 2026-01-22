@@ -77,6 +77,35 @@ class ClienteService
 		return mysqli_fetch_row($result) ?: null;
 	}
 
+	public function listAllWithSetor()
+	{
+		$sql = "SELECT * FROM tp_clientes_db AS c "
+			. "JOIN tp_setor_tb AS s ON s.id_setor=c.cliente_area "
+			. "ORDER BY c.cliente_id";
+		$result = mysqli_query($this->db, $sql);
+		if (!$result) {
+			return array();
+		}
+		$rows = array();
+		while ($row = mysqli_fetch_array($result)) {
+			$rows[] = $row;
+		}
+		return $rows;
+	}
+
+	public function listAll()
+	{
+		$result = mysqli_query($this->db, "SELECT * FROM tp_clientes_db ORDER BY cliente_id");
+		if (!$result) {
+			return array();
+		}
+		$rows = array();
+		while ($row = mysqli_fetch_array($result)) {
+			$rows[] = $row;
+		}
+		return $rows;
+	}
+
 	public function getLastError()
 	{
 		return $this->lastError;

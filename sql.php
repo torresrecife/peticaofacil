@@ -20,11 +20,7 @@ if (class_exists(\App\Repositories\SqlConfigRepository::class)) {
 	$repo = new \App\Repositories\SqlConfigRepository($conexao1);
 	$rows = $repo->listAll();
 } else {
-	$query = mysqli_query($conexao1,"SELECT * from tp_config_db as u ORDER by u.id_db") or die(mysqli_error());
 	$rows = array();
-	while ($arr = mysqli_fetch_array($query)) {
-		$rows[] = $arr;
-	}
 }
 foreach ($rows as $arr){
 	?>

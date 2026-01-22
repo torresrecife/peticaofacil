@@ -12,30 +12,15 @@ $limit=$_POST['limit'];
 $search=$_POST['search'];
 
 if($_POST['flag']=="H"){
-	$q1 = " SELECT *, date_format(p.data_cad, '%d/%m/%Y %H:%i:%s') as dtcadastro ";
-	$q2 = " SELECT count(*) ";
-	$q  = " from tp_pecas_tb as p ";
-	$q .= " JOIN tp_usu_tb AS u on u.id_usu=p.id_usu ";
-	$q .= " where p.tipo_id='".$_POST['tipo_id']."' ";
-	if($usu_nivel!="ADM"){
-		$q .= "and p.id_usu = '".$usu_id."' ";
+	if (!class_exists(\App\Services\PecaService::class)) {
+		exit;
 	}
-	if($search!=""){
-		$q .= "and p.nome_cli like '%".$search."%' ";
-	}
-	$q .= " ORDER by p.id_pecas desc ";
+	$service = new \App\Services\PecaService($conexao1);
+	$result = $service->fetchList($_POST['tipo_id'], $limit, $search, $usu_nivel, $usu_id);
+	$rows = $result['rows'];
+	$qtd = array($result['total']);
 	
-	$pg = $limit*10;
-	$q3 = " limit " . $pg . ", 10";
-	
-	//select registros
-	$query = mysqli_query($conexao1,$q1.$q.$q3) or die(mysqli_error());
-	
-	//select paginação
-	$qpagi = mysqli_query($conexao1,$q2.$q) or die(mysqli_error());
-	$qtd = mysqli_fetch_array($qpagi);
-	
-	if(mysqli_num_rows($query)>0){
+	if(count($rows)>0){
 	?>
 	<div style="float:left; padding-bottom:5px; margin-left:13px"><label style="padding-top:3px; float:left;">Pesquisa:&nbsp;&nbsp;</label><input type="text" id="search_<?php echo $_POST['tipo_id']; ?>" value="" style="float:left; height:19px; width:260px"/><input type="button" onclick="ajax_pecas_search('<?php echo $_POST['tipo_id']; ?>')" value="Procurar" style="float:left; margin-left:5px; height:23px; cursor:pointer"/></div>
 	<table class="adminlist" width="70%" align="center">
@@ -54,13 +39,13 @@ if($_POST['flag']=="H"){
 		</tr>
 		<?php
 		$n=1;
-		while ($arr = mysqli_fetch_array($query)){
+		foreach ($rows as $arr){
 			?>
 			<tr>
 				<td class="order" width="50px"><span class="num"><?php echo $n++;?></span><span style="margin-left:20px"><?php echo $arr['id_pecas']; ?></span></td>
 				<td class="order" style="text-align:left">
-					<span style="padding-right:10px;"><a href="#" onclick="PetiDados('inc/getpdf.php','','<?php echo $arr['id_pecas'];?>','<?php echo $arr['tipo_id']; ?>','<?php echo ($arr['nome_pecas']); ?>','<?php echo ($arr['nome_cli']); ?>'); " style="float:left"><img src="img/pdf2.png" style="padding-right:10px;margin-top:-10px"></a></span>
-					<span style="padding-right:10px;"><a href="#" onclick="PetiDados('inc/getrtf.php','','<?php echo $arr['id_pecas'];?>','<?php echo $arr['tipo_id']; ?>','<?php echo ($arr['nome_pecas']); ?>','<?php echo ($arr['nome_cli']); ?>'); " style="float:left"><img src="img/word.png" style="padding-right:10px;margin-top:-10px"></a></span>
+					<span style="padding-right:10px;"><a href="javascript:void(0)" onclick="return PetiDados('inc/getpdf.php','','<?php echo $arr['id_pecas'];?>','<?php echo $arr['tipo_id']; ?>','<?php echo ($arr['nome_pecas']); ?>','<?php echo ($arr['nome_cli']); ?>');" style="float:left"><img src="img/pdf2.png" style="padding-right:10px;margin-top:-10px"></a></span>
+					<span style="padding-right:10px;"><a href="javascript:void(0)" onclick="return PetiDados('inc/getrtf.php','','<?php echo $arr['id_pecas'];?>','<?php echo $arr['tipo_id']; ?>','<?php echo ($arr['nome_pecas']); ?>','<?php echo ($arr['nome_cli']); ?>');" style="float:left"><img src="img/word.png" style="padding-right:10px;margin-top:-10px"></a></span>
 					<?php echo ($arr['nome_pecas']."-".$arr['nome_cli']); ?>
 				</td>
 				<td class="order" width="100px"><?php echo $arr['dtcadastro']; ?></td>
@@ -71,7 +56,7 @@ if($_POST['flag']=="H"){
 					<?php
 				}
 				?>
-				<td class="order" width="100px"><input type="button" value="Editar" onclick="PetiDados('index.php','3','<?php echo $arr['id_pecas'];?>','<?php echo $arr['tipo_id']; ?>','<?php echo ($arr['nome_pecas']); ?>','<?php echo ($arr['nome_cli']); ?>'); "></td>
+				<td class="order" width="100px"><input type="button" value="Editar" onclick="return PetiDados('index.php','3','<?php echo $arr['id_pecas'];?>','<?php echo $arr['tipo_id']; ?>','<?php echo ($arr['nome_pecas']); ?>','<?php echo ($arr['nome_cli']); ?>');"></td>
 			</tr>
 			
 			<?php

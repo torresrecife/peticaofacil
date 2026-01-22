@@ -50,6 +50,24 @@ class ParagrafoService
 		return mysqli_query($this->db, "DELETE FROM tp_funda_tb WHERE fund_id = " . $fundId . " LIMIT 1");
 	}
 
+	public function listByTipoWithArquivo($tipoId)
+	{
+		$tipoId = $this->esc($tipoId);
+		$sql = "SELECT tf.*, tt.tipo_arq, tt.cod_cabec, tt.cod_rodap FROM tp_funda_tb as tf "
+			. "JOIN tp_tipo_tb as tt on tt.tipo_id = tf.tipo_id "
+			. "WHERE tt.tipo_id = " . $tipoId . " "
+			. "ORDER BY tf.fund_order ASC";
+		$query = mysqli_query($this->db, $sql);
+		if (!$query) {
+			return array();
+		}
+		$rows = array();
+		while ($row = mysqli_fetch_array($query)) {
+			$rows[] = $row;
+		}
+		return $rows;
+	}
+
 	private function esc($value)
 	{
 		return Database::escape($this->db, $value);

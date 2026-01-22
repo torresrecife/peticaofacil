@@ -7,15 +7,16 @@ protegePagina();
 
 if($_POST['flag']=="S" && $_POST['campoId']!='')
 {
+	if (!class_exists(\App\Services\SelectService::class)) {
+		echo 0;
+		exit;
+	}
 	$campoId  = $_POST['campoId'];
-	$i = 0;
-	$q  = " SELECT nome_dados FROM tp_dados_tb";
-	$q .= " WHERE id_input = " . $campoId . " ";
+	$service = new \App\Services\SelectService($conexao1);
 	$nomes = "";
-	$query = mysqli_query($conexao1,$q);
 	header("Content-Type: text/html; charset=ISO-8859-1",true);
-	while($while = mysqli_fetch_assoc($query)){
-		$nomes .= $while['nome_dados'] . "-|-";
+	foreach ($service->listDadosByInput($campoId) as $nome) {
+		$nomes .= $nome . "-|-";
 	}
 	echo trim($nomes);
 }

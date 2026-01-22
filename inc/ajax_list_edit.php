@@ -72,8 +72,7 @@ elseif($_POST['flag']=="D")
 		echo $ok ? 1 : 0;
 		exit;
 	}
-	mysqli_query($conexao1,"DELETE FROM tp_grupo_tb WHERE id_grupo=" . $_POST['num_grupo'] . " LIMIT 1");
-	mysqli_query($conexao1,"DELETE FROM tp_lista_tb WHERE id_grupo=" . $_POST['num_grupo'] . " LIMIT 1");
-	echo 1;
+	echo 0;
+	exit;
 }
 ?>

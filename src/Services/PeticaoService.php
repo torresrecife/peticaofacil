@@ -25,7 +25,8 @@ class PeticaoService
 			return null;
 		}
 
-		return sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
+		$row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
+		return $this->normalizeEncoding($row);
 	}
 
 	public function fetchSample(array $wdb)
@@ -49,7 +50,8 @@ class PeticaoService
 			return null;
 		}
 
-		return sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
+		$row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC);
+		return $this->normalizeEncoding($row);
 	}
 
 	private function connectSqlsrv(array $wdb)
@@ -70,5 +72,19 @@ class PeticaoService
 		);
 
 		return sqlsrv_connect($wdb['ip_db'] ?? null, $connectionInfo);
+	}
+
+	private function normalizeEncoding($value)
+	{
+		if (is_array($value)) {
+			foreach ($value as $key => $item) {
+				$value[$key] = $this->normalizeEncoding($item);
+			}
+			return $value;
+		}
+		if (!is_string($value) || $value === '') {
+			return $value;
+		}
+		return preg_match('//u', $value) ? $value : utf8_encode($value);
 	}
 }

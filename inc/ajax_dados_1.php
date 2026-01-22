@@ -22,15 +22,12 @@ elseif($_POST['conex']==2)
 	$conex 	= $conexao2;
 }
 
-$sel  = " SELECT $campo0";
-$sel .= " FROM $tabela";
-$sel .= " where ";
-$sel .= " $id_ref = $id_val";
-$sel = str_replace("\'","'",$sel);
+if (!class_exists(\App\Services\CompService::class)) {
+	echo 0;
+	exit;
+}
 
-$query = mysqli_query($conex,$sel);
-$while = mysqli_fetch_array($query);
-$result=$while[0];
-echo $result;
+$service = new \App\Services\CompService($conex);
+echo $service->fetchSingleValue($tabela, $campo0, $id_ref, $id_val);
 
 ?>

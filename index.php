@@ -19,13 +19,15 @@
 		}
 	}
 
-	$wdb = null;
+$wdb = null;
+$conexao2 = null;
+$serv2 = '';
+$db2 = '';
+$dados = null;
+$dados2 = null;
 	if (class_exists(\App\Repositories\ConfigRepository::class)) {
 		$configRepo = new \App\Repositories\ConfigRepository($conexao1);
 		$wdb = $configRepo->findActiveByTipoId($_POST['TIPOPET'] ?? null);
-	} else {
-		$qdb = mysqli_query($conexao1,"SELECT * FROM tp_config_db as c join tp_tipo_tb as t on t.id_db=c.id_db  WHERE t.tipo_id = '" . $_POST['TIPOPET'] . "' and c.stt='Y' ");
-		$wdb = mysqli_fetch_assoc($qdb);
 	}
 	
 	if($_POST['TIPOCHA']!=""){
@@ -42,26 +44,8 @@
 				$dados = $petService->fetchDados($wdb, $_POST['TIPOCHA']);
 				$conexao2 = $dados ? true : null;
 			} else {
-				if (class_exists(\App\Infra\Database::class)) {
-					$conexao2 = \App\Infra\Database::sqlsrv(array(
-						'server' => $serv2,
-						'user' => $user2,
-						'password' => $senha2,
-						'database' => $db2
-					));
-				} else {
-					$connectionInfo = array("UID" => $user2, "PWD" => $senha2, "Database"=>$db2); 
-					$conexao2 = sqlsrv_connect( $serv2,  $connectionInfo );
-				}
-				if($conexao2){
-					//$banco2   = mysql_select_db( $db2, $conexao2);
-					if($query2!=""){
-						$Cd = sqlsrv_query($conexao2, "$query2 $where2 AND " . $wdb['chave_db'] . " = '" . $_POST['TIPOCHA'] . "' ");
-					}else{
-						$Cd = sqlsrv_query($conexao2, "SELECT * FROM " . $wdb['table_db'] . "   WHERE " . $wdb['chave_db'] . " = '" . $_POST['TIPOCHA'] . "' ");
-					}
-					$dados = sqlsrv_fetch_array($Cd,SQLSRV_FETCH_ASSOC);			
-				}
+				$dados = null;
+				$conexao2 = null;
 			}
 		}
 	} elseif($_POST['TIPOPET']!=""){
@@ -79,26 +63,8 @@
 				$dados2 = $petService->fetchSample($wdb);
 				$conexao2 = $dados2 ? true : null;
 			} else {
-				if (class_exists(\App\Infra\Database::class)) {
-					$conexao2 = \App\Infra\Database::sqlsrv(array(
-						'server' => $serv2,
-						'user' => $user2,
-						'password' => $senha2,
-						'database' => $db2
-					));
-				} else {
-					$connectionInfo = array("UID" => $user2, "PWD" => $senha2, "Database"=>$db2); 
-					$conexao2 = sqlsrv_connect( $serv2,  $connectionInfo );
-				}
-				if($conexao2){
-					//$banco2   = mysql_select_db( $db2, $conexao2);
-					if($query2!=""){
-						$Cd = sqlsrv_query($conexao2, "$query2 $where2 ");
-					}else{
-						$Cd = sqlsrv_query($conexao2, "SELECT top1 * FROM " . $wdb['table_db'] . " ");
-					}
-					$dados2 = sqlsrv_fetch_array($Cd,SQLSRV_FETCH_ASSOC);
-				}
+				$dados2 = null;
+				$conexao2 = null;
 			}
 		}
 	}
@@ -256,8 +222,7 @@
 								$tipoRepo = new \App\Repositories\TipoRepository($conexao1);
 								$tw = $tipoRepo->findWithClienteById($TIPOPET);
 							} else {
-								$t = mysqli_query($conexao1,"SELECT t.tipo_nome,t.tipo_id,cliente_name FROM tp_tipo_tb as t left join tp_clientes_db as c on c.cliente_id=t.id_cliente WHERE t.tipo_id = '" . $TIPOPET . "' ");
-								$tw = mysqli_fetch_array($t);
+								$tw = null;
 							}
 							//echo $tw[0];
 						}
@@ -330,8 +295,7 @@
 					$tipoRepo = new \App\Repositories\TipoRepository($conexao1);
 					$tw = $tipoRepo->findWithClienteById($TIPOPET);
 				} else {
-					$t = mysqli_query($conexao1,"SELECT t.tipo_nome,t.tipo_id,cliente_name FROM tp_tipo_tb as t left join tp_clientes_db as c on c.cliente_id=t.id_cliente WHERE t.tipo_id = '" . $TIPOPET . "' ");
-					$tw = mysqli_fetch_array($t);
+					$tw = null;
 				}
 				//echo $tw[0];
 			}
@@ -432,7 +396,7 @@
 													<tr>
 														<td class="order" style="border-bottom:1px dotted #ccc;text-align:left"><span><img src="img/pdf2.png" style="padding-right:10px;margin-top:-10px"></span></td>
 														<td style="border-bottom:1px dotted #ccc;">
-															<a href="#" onclick="PetiDados('index.php','3','<?php echo $wpet['id_pecas'];?>','<?php echo $wpet['tipo_id']; ?>','<?php echo $wpet['nome_pecas']; ?>','<?php echo $wpet['nome_cli']; ?>'); " title="<?php echo strftime("%d/%m/%Y %H:%M:%S", strtotime($wpet['datacad'])); ?>">
+															<a href="javascript:void(0)" onclick="return PetiDados('index.php','3','<?php echo $wpet['id_pecas'];?>','<?php echo $wpet['tipo_id']; ?>','<?php echo $wpet['nome_pecas']; ?>','<?php echo $wpet['nome_cli']; ?>');" title="<?php echo strftime("%d/%m/%Y %H:%M:%S", strtotime($wpet['datacad'])); ?>">
 																<?php echo $wpet['nome_cli']; ?>
 															</a>
 														</td>

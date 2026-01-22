@@ -32,13 +32,13 @@ function ajax_pecas_search(valor1){
 				<div align="left" id="accordion" style="width:1080px;" >
 					
 				<?php
-				$id_setor="";
-				if($usu_nivel!="ADM"){
-					$id_setor = "where id_setor = '$usu_setor'";
+				$rows = array();
+				if (class_exists(\App\Repositories\TipoRepository::class)) {
+					$repo = new \App\Repositories\TipoRepository($conexao1);
+					$setorId = $usu_nivel != "ADM" ? $usu_setor : null;
+					$rows = $repo->listBySetor($setorId);
 				}
-				$qTipo = mysqli_query($conexao1,"SELECT * from tp_tipo_tb as t $id_setor ORDER by t.tipo_id ") or die(mysqli_error());					
-				while ($arTipo = mysqli_fetch_array($qTipo))
-				{
+				foreach ($rows as $arTipo) {
 					?>
 					<div class="group">
 						<h3><a href="#" style="cursor: move;" onclick="ajax_pecas('<?php echo $arTipo['tipo_id']; ?>','0','')" ><?php echo $arTipo['tipo_nome']; ?></a></h3>

@@ -117,13 +117,17 @@ var config3 = {
 
 if($TIPOPET!=""){
 	$displ = $_POST['hid_enviar']==7?'block':'none';
-	$q = mysqli_query($conexao1,"SELECT * FROM tp_inputs_tb where tipo_id = '" . $TIPOPET . "' ORDER BY input_order, id_input");
-	if(mysqli_num_rows($q)>0) {
+	$inputs = array();
+	if (class_exists(\App\Services\InputService::class)) {
+		$inputService = new \App\Services\InputService($conexao1);
+		$inputs = $inputService->listFullByTipo($TIPOPET);
+	}
+	if(count($inputs)>0) {
 		echo "<tr>";
 		$n = 0;
 		$onFuncoes = "";
 		$nomepet = "";
-		while($w = mysqli_fetch_array($q)){
+		foreach ($inputs as $w){
 			
 			$onFuncoes .= ($w['input_focu']!='' ? (" onfocus='" . $w['input_focu'] . "' ") : "");
 			$onFuncoes .= ($w['input_load']!='' ? (" onload='"  . $w['input_load'] . "' ") : "");
@@ -171,10 +175,14 @@ if($TIPOPET!=""){
 						}
 					}
 				}else{
-					$qsel = mysqli_query($conexao1,"SELECT * FROM tp_dados_tb where id_input = '" . $w['id_input'] . "' ORDER BY nome_dados asc ");
+					$dadosRows = array();
+					if (class_exists(\App\Services\DadosService::class)) {
+						$dadosService = new \App\Services\DadosService($conexao1);
+						$dadosRows = $dadosService->listByInput($w['id_input']);
+					}
 					$option = "";
 					$select = "";
-					while($wsel = mysqli_fetch_array($qsel)){
+					foreach($dadosRows as $wsel){
 						if($dados[$dd]==$wsel['nome_dados']){
 							$select = "selected";
 						}
@@ -218,10 +226,14 @@ if($TIPOPET!=""){
 				//Exemplo abaixo - tem que ser alterado posteriormente
 				echo "<td colspan='" . $w['input_cols'] . "' class='td_title'>
 						<label><b>" . $w['input_title'] . ": </b></label><label style='float:right;margin-right:30px;display:" . $displ . "'>" . $w['input_order'] . " - Campo" . $w['id_input'] . "</label><br>";						
-						$qsel = mysqli_query($conexao1,"SELECT * FROM tp_dados_tb where id_input = '" . $w['id_input'] . "' ORDER BY nome_dados asc ");
+						$dadosRows = array();
+						if (class_exists(\App\Services\DadosService::class)) {
+							$dadosService = new \App\Services\DadosService($conexao1);
+							$dadosRows = $dadosService->listByInput($w['id_input']);
+						}
 						$option = "<div>";
 						$select = "";
-						while($wsel = mysqli_fetch_array($qsel)){
+						foreach($dadosRows as $wsel){
 							if($dados[$dd]==$wsel['nome_dados']){
 								$select = "selected";
 							}
@@ -277,7 +289,7 @@ if($TIPOPET!=""){
 		<td height="30px" align="right"><button type="button" value="" class="input-default cls_campos" onclick="fc_inputs('I',this)" style="height:25px; display:<?php echo $displ; ?>">+ Campos</button></td>
 	</tr>
 	<tr>
-		<?php if(mysqli_num_rows($q)>0) { ?>
+	<?php if(count($inputs)>0) { ?>
 		<td height="30px" align="center">
 			<button type="button" onclick="return EnviarDados('index.php','2','<?php echo $_POST['TIPOPET']; ?>')" style="height:25px" id="bt-enviar-dados" class="input-default">Enviar Dados</button>
 			<br/><br/>

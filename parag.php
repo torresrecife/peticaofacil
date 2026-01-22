@@ -1,7 +1,8 @@
 <?php
-$qu = mysqli_query($conexao1,"SELECT id_dados, nome_dados FROM tp_dados_tb ");
-while($wl = mysqli_fetch_array($qu)){
-	$arr_cp[$wl['id_dados']] = $wl['nome_dados'];
+$arr_cp = array();
+if (class_exists(\App\Services\DadosService::class)) {
+	$dadosService = new \App\Services\DadosService($conexao1);
+	$arr_cp = $dadosService->listDadosMap();
 }
 ?>
 <script language="javascript">	
@@ -25,13 +26,13 @@ $(document).ready(function(){
 	<div align="left" id="accordion" style="width:880px;" >
 		<?php	
 		$tipo_tb   = $_POST['TIPOPET'] ? $_POST['TIPOPET'] : "''";
-		$sel_text  = " SELECT tf.*, tt.tipo_arq FROM tp_funda_tb as tf";
-		$sel_text .= " JOIN tp_tipo_tb as tt on tt.tipo_id = tf.tipo_id ";
-		$sel_text .= " WHERE tt.tipo_id = " . $tipo_tb;
-		$sel_text .= " ORDER BY tf.fund_order ASC";
-		$que_text = mysqli_query($conexao1,$sel_text);
+		$rows = array();
+		if (class_exists(\App\Services\ParagrafoService::class)) {
+			$parService = new \App\Services\ParagrafoService($conexao1);
+			$rows = $parService->listByTipoWithArquivo($tipo_tb);
+		}
 		$n=0;
-		while($wtext = mysqli_fetch_array($que_text)){
+		foreach ($rows as $wtext){
 			if($n==0){
 				?>
 				<input type="hidden" name="tipo_arq" value="<?php echo $wtext['tipo_arq']; ?>" />
@@ -149,10 +150,11 @@ $(document).ready(function(){
 	$npet = explode("_|_",$_POST['nomepet']);
 	
 	//pega o código do setor
-	$Qcodset =  mysqli_query($conexao1,"SELECT s.cod_setor FROM tp_tipo_tb AS t JOIN tp_setor_tb AS s ON s.id_setor=t.id_setor WHERE t.tipo_id = '$tipo_tb' ");
-	$Wcodset = mysqli_fetch_array($Qcodset);
-	
-	$nomepet = $Wcodset['cod_setor'];
+	$nomepet = '';
+	if (class_exists(\App\Services\TipoService::class)) {
+		$tipoService = new \App\Services\TipoService($conexao1);
+		$nomepet = (string) $tipoService->getSetorCodeByTipo($tipo_tb);
+	}
 	foreach($npet as $nm){
 		if($nm!=""){
 			$nomepet .= ".".$_POST[$nm];

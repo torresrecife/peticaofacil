@@ -5,21 +5,25 @@ for($i=0;$i<=$_POST['edit_text'];$i++){
 }
 
 if(isset($_POST['is_pecas'])==1){
-	$query_pecas = mysqli_query($conexao1," SELECT 
-											cod_pecas,cod_sav,id_usu, 
-											(DATE_FORMAT(NOW(),'%Y%m%d%H%i')-DATE_FORMAT(data_cad,'%Y%m%d%H%i')) AS 'minutos' 
-											from tp_pecas_tb 
-											where id_pecas='".$_POST['id_pecas']."' 
-											") or die(mysqli_error());
-	$arr_pecas = mysqli_fetch_array($query_pecas);
-	$cls_text = $arr_pecas['cod_pecas'];
-	$flag = 2;
-	$id_pecas=$_POST['id_pecas'];
-	
-	//VERIFICAR SE É O MESMO USUÁRIO E SE TEM MENOS DE 10 MIN PARA EDITAR A MESMA PEÇA
-	if($arr_pecas['minutos']<=10 && $arr_pecas['id_usu']==$_SESSION['usuarioID']){
-		$codsav = $arr_pecas["cod_sav"];
-	}else{
+	if (class_exists(\App\Services\PecaService::class)) {
+		$pecaService = new \App\Services\PecaService($conexao1);
+		$arr_pecas = $pecaService->getEditInfo($_POST['id_pecas']);
+	} else {
+		$arr_pecas = null;
+	}
+	if ($arr_pecas) {
+		$cls_text = $arr_pecas['cod_pecas'];
+		$flag = 2;
+		$id_pecas=$_POST['id_pecas'];
+		//VERIFICAR SE É O MESMO USUÁRIO E SE TEM MENOS DE 10 MIN PARA EDITAR A MESMA PEÇA
+		if($arr_pecas['minutos']<=10 && $arr_pecas['id_usu']==$_SESSION['usuarioID']){
+			$codsav = $arr_pecas["cod_sav"];
+		}else{
+			$codsav = $_POST["codsav"];
+		}
+	} else {
+		$flag = 1;
+		$id_pecas="";
 		$codsav = $_POST["codsav"];
 	}
 }else{ 
@@ -28,8 +32,12 @@ if(isset($_POST['is_pecas'])==1){
 	$codsav = $_POST["codsav"];
 }
 
-$qdoc = mysqli_query($conexao1,"SELECT t.tipo_arq FROM tp_tipo_tb as t where t.tipo_id = '" . $_POST['tipo_id'] . "' ") or die(mysqli_error());
-$wdoc = mysqli_fetch_array($qdoc);
+$wdoc = array();
+if (class_exists(\App\Services\TipoService::class)) {
+	$tipoService = new \App\Services\TipoService($conexao1);
+	$tipoArq = $tipoService->getTipoArquivoById($_POST['tipo_id']);
+	$wdoc['tipo_arq'] = $tipoArq;
+}
 
 ?>
 <script language="javascript">	
