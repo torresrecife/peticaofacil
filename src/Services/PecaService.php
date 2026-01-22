@@ -60,6 +60,47 @@ class PecaService
 		);
 	}
 
+	public function listRecent($usuarioNivel, $usuarioId, $setorId, $clienteId, $limit = 10)
+	{
+		$where = $this->buildScopeWhere($usuarioNivel, $usuarioId, $setorId, $clienteId);
+		$sql = "SELECT p.id_pecas, u.nome_usu, p.tipo_id, p.nome_pecas, p.nome_cli, p.data_cad as datacad "
+			. "FROM tp_pecas_tb as p "
+			. "JOIN tp_usu_tb AS u ON u.id_usu=p.id_usu "
+			. $where
+			. "ORDER BY p.data_cad DESC "
+			. "LIMIT " . (int) $limit;
+		$query = mysqli_query($this->db, $sql);
+		if (!$query) {
+			return array();
+		}
+		$rows = array();
+		while ($row = mysqli_fetch_array($query)) {
+			$rows[] = $row;
+		}
+		return $rows;
+	}
+
+	public function listToday($usuarioNivel, $usuarioId, $setorId, $clienteId, $date = null)
+	{
+		$date = $date ?: date('Y-m-d');
+		$where = $this->buildScopeWhere($usuarioNivel, $usuarioId, $setorId, $clienteId);
+		$where .= ($where === '' ? 'WHERE ' : ' AND ') . "DATE(p.data_cad) = '" . $this->esc($date) . "'";
+		$sql = "SELECT p.id_pecas, u.nome_usu, p.tipo_id, p.nome_pecas, p.nome_cli, p.data_cad as datacad "
+			. "FROM tp_pecas_tb as p "
+			. "JOIN tp_usu_tb AS u ON u.id_usu=p.id_usu "
+			. $where
+			. "ORDER BY p.data_cad DESC";
+		$query = mysqli_query($this->db, $sql);
+		if (!$query) {
+			return array();
+		}
+		$rows = array();
+		while ($row = mysqli_fetch_array($query)) {
+			$rows[] = $row;
+		}
+		return $rows;
+	}
+
 	public function getEditInfo($id)
 	{
 		$id = $this->esc($id);
@@ -77,6 +118,24 @@ class PecaService
 	{
 		$id = $this->esc($id);
 		$query = mysqli_query($this->db, "SELECT * FROM tp_pecas_tb WHERE id_pecas = '" . $id . "'");
+		if (!$query) {
+			return null;
+		}
+		return mysqli_fetch_assoc($query) ?: null;
+	}
+
+	public function findByCodSavOrId($codSav, $idPecas)
+	{
+		$where = '';
+		if ($codSav !== '') {
+			$where = "t.cod_sav = '" . $this->esc($codSav) . "'";
+		} elseif ($idPecas !== '') {
+			$where = "t.id_pecas = '" . $this->esc($idPecas) . "'";
+		} else {
+			return null;
+		}
+		$sql = "SELECT id_pecas, cod_pecas FROM tp_pecas_tb as t WHERE " . $where . " LIMIT 1";
+		$query = mysqli_query($this->db, $sql);
 		if (!$query) {
 			return null;
 		}
@@ -128,5 +187,21 @@ class PecaService
 	private function esc($value)
 	{
 		return Database::escape($this->db, $value);
+	}
+
+	private function buildScopeWhere($usuarioNivel, $usuarioId, $setorId, $clienteId)
+	{
+		$where = '';
+		if ($usuarioNivel === 'USU') {
+			$where = "WHERE p.id_usu = '" . $this->esc($usuarioId) . "' ";
+		} else {
+			if ((int) $setorId !== 0) {
+				$where = "WHERE u.id_setor = '" . $this->esc($setorId) . "' ";
+				if ((int) $clienteId !== 0) {
+					$where .= "and u.id_cliente = '" . $this->esc($clienteId) . "' ";
+				}
+			}
+		}
+		return $where;
 	}
 }

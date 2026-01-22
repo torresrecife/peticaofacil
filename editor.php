@@ -322,25 +322,15 @@ function fc_salvar_auto(){
 					<?php echo cabecalhoerodape($_POST['tipo_id'],"cab","pdf",$conexao1); ?>
 				</div>
 				<?php 
-					$Scdsv  = " select id_pecas,cod_pecas ";
-					$Scdsv .= " from tp_pecas_tb as t";
-					if($_POST['codsav']!=""){
-						
-						$Scdsv .= " where t.cod_sav = '".$_POST['codsav']."' ";
-					}else{
-						$Scdsv .= " where t.id_pecas ='".$_POST['id_pecas']."' ";
+					$cls_text2 = $cls_text;
+					if (class_exists(\App\Services\PecaService::class)) {
+						$pecaService = new \App\Services\PecaService($conexao1);
+						$Wcdsv = $pecaService->findByCodSavOrId($_POST['codsav'] ?? '', $_POST['id_pecas'] ?? '');
+						if ($Wcdsv) {
+							$id_pecas = $Wcdsv['id_pecas'];
+							$cls_text2 = $Wcdsv['cod_pecas'];
+						}
 					}
-					$Scdsv .= " limit 1 ";
-					
-					$Qcdsv = mysqli_query($conexao1,$Scdsv);
-					if(mysqli_num_rows($Qcdsv)==1){
-						$Wcdsv = mysqli_fetch_array($Qcdsv);
-						$id_pecas=$Wcdsv['id_pecas'];
-						$cls_text2=$Wcdsv['cod_pecas'];
-					}else{
-						$cls_text2=$cls_text;
-					}
-					//	$cls_text2=$cls_text;
 				?>
 				<textarea id="name_text" name="name_text" border="0" ><?php echo $cls_text2; ?></textarea>
 				<div style="background: #fff;opacity: 0.2;position: relative;z-index: 99;margin-top:5px;margin-bottom:5px;"><?php echo cabecalhoerodape($_POST['tipo_id'],"rod","pdf",$conexao1); ?></div>

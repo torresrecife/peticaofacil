@@ -112,6 +112,44 @@ class InputService
 		return $rows;
 	}
 
+	public function getNextInputOrder($tipoId)
+	{
+		$tipoId = (int) $tipoId;
+		$query = mysqli_query($this->db, "SELECT MAX(i.input_order) AS input FROM tp_inputs_tb AS i WHERE i.tipo_id = '" . $tipoId . "'");
+		if (!$query) {
+			return 1;
+		}
+		if (mysqli_num_rows($query) == 0) {
+			return 1;
+		}
+		$row = mysqli_fetch_array($query);
+		return (int) ($row['input'] ?? 0) + 1;
+	}
+
+	public function getMaxInputId()
+	{
+		$query = mysqli_query($this->db, "SELECT MAX(id_input) AS id_input FROM tp_inputs_tb WHERE listsel = 'N' limit 1");
+		if (!$query) {
+			return null;
+		}
+		$row = mysqli_fetch_array($query);
+		return $row['id_input'] ?? null;
+	}
+
+	public function getNextInputOrderForTipo($tipoId)
+	{
+		$tipoId = (int) $tipoId;
+		$query = mysqli_query($this->db, "SELECT (MAX(input_order)+1) as oinput FROM tp_inputs_tb WHERE listsel='N' and tipo_id='" . $tipoId . "' limit 1");
+		if (!$query) {
+			return 1;
+		}
+		if (mysqli_num_rows($query) > 0) {
+			$row = mysqli_fetch_array($query);
+			return (int) ($row['oinput'] ?? 1);
+		}
+		return 1;
+	}
+
 	public function createListSelect(array $data)
 	{
 		$input = $this->normalizeInputData($data);

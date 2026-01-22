@@ -167,10 +167,19 @@ if($TIPOPET!=""){
 						  </script>";
 					}else if($inputdb_4=="vert"){
 						$where = $inputdb_3 ? $inputdb_3 : '1=1';
-						$qsel = mysqli_query($conexao1,"SELECT * FROM " . $inputdb_0 . " WHERE $where $and ORDER BY '" . ($inputdb_5?$inputdb_5:$inputdb_1) . "' asc ");
-						//echo "SELECT $conca FROM " . $inputdb_0 . " WHERE $where $and ORDER BY " . $inputdb_1 . " asc ";
+						$andClause = isset($and) ? $and : '';
+						$rows = array();
+						if (class_exists(\App\Services\SelectService::class)) {
+							$selectService = new \App\Services\SelectService($conexao1);
+							$rows = $selectService->listRowsByTable(
+								$inputdb_0,
+								$where,
+								$andClause,
+								($inputdb_5 ? $inputdb_5 : $inputdb_1)
+							);
+						}
 						echo "<option></option>";
-						while($wsel = mysqli_fetch_array($qsel)){
+						foreach($rows as $wsel){
 							echo "<option value='" . $wsel[2] . "' ident='" . $wsel[0] . "' " . ( trim(str_replace(" ","",$dd_input))==trim(str_replace(" ","",$wsel[$inputdb_1])) ? 'selected' : '') . " >" . $wsel[$inputdb_1] . "</option>";
 						}
 					}

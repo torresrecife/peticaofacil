@@ -51,6 +51,32 @@ class SelectService
 		return $rows;
 	}
 
+	public function listRowsByTable($table, $where, $andClause, $orderByField)
+	{
+		$sql = "SELECT * FROM " . $table;
+		if ($where !== '') {
+			$sql .= " WHERE " . $where;
+		}
+		if ($andClause !== '') {
+			$sql .= " " . $andClause;
+		}
+		if ($orderByField !== '') {
+			$sql .= " ORDER BY '" . $orderByField . "' asc ";
+		}
+
+		$query = mysqli_query($this->db, $sql);
+		if (!$query) {
+			return array();
+		}
+
+		$rows = array();
+		while ($row = mysqli_fetch_array($query)) {
+			$rows[] = $row;
+		}
+
+		return $rows;
+	}
+
 	private function esc($value)
 	{
 		return Database::escape($this->db, $value);

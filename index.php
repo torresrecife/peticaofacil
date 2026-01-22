@@ -346,44 +346,31 @@ $dados2 = null;
 											<?php
 												
 												$texto_peças="";
-												$pslv1  = " SELECT p.id_pecas,u.nome_usu,p.tipo_id,p.nome_pecas,p.nome_cli,p.data_cad as datacad";
-												$pslv1 .= " from tp_pecas_tb as p ";
-												$pslv1 .= " JOIN tp_usu_tb AS u ON u.id_usu=p.id_usu";
-												
 												if($usu_nivel=='USU'){
-													$pslv1 .= " WHERE p.id_usu = '$usu_id' ";
 													$texto_peças="Suas últimas petições salvas:";
 												}else{
 													if($usu_setor!=0){
-														$pslv1 .= " WHERE u.id_setor   = '$usu_setor' ";
 														$texto_peças="Últimas petições do setor:";
 														if($usu_cliente!=0){
 															$texto_peças="Últimas petições da carteira:";
-															$pslv1 .= " and u.id_cliente = '$usu_cliente' ";
 														}
 													}else{
 														$texto_peças="Últimas petições:";
 													}
 												}
-												$pslv2  = " AND day(p.data_cad)='" 	 . date('d') . "'";
-												$pslv2 .= " AND month(p.data_cad)='" . date('m') . "'";
-												$pslv2 .= " AND year(p.data_cad)='"  . date('Y') . "'";
-												
-												$pslv3  = " ORDER BY p.data_cad DESC";
-												$pslv4  = " LIMIT 10 ";
-												
-												$qpet1 = mysqli_query($conexao1,$pslv1.$pslv3.$pslv4);
-												
-												$qpet2 = mysqli_query($conexao1,$pslv1.$pslv2.$pslv3);
-												
-												$qnum  = mysqli_num_rows($qpet2);
-												$a=0;
+												$qpet1 = array();
+												$qpet2 = array();
+												if (class_exists(\App\Services\PecaService::class)) {
+													$pecaService = new \App\Services\PecaService($conexao1);
+													$qpet1 = $pecaService->listRecent($usu_nivel, $usu_id, $usu_setor, $usu_cliente, 10);
+													$qpet2 = $pecaService->listToday($usu_nivel, $usu_id, $usu_setor, $usu_cliente);
+												}
+												$a = 0;
 												$usu = array();
 												$set = array();
 												$crt = array();
-												while($wpet2 = mysqli_fetch_array($qpet2)){
-													
-													$usu[$wpet2["nome_usu"]] += 1;
+												foreach ($qpet2 as $wpet2) {
+													$usu[$wpet2["nome_usu"]] = ($usu[$wpet2["nome_usu"]] ?? 0) + 1;
 													$a++;
 												}
 											?>
@@ -391,7 +378,7 @@ $dados2 = null;
 												<td colspan="3" style="height:30px;border-bottom:1px dotted #ccc;"><label><?php echo $texto_peças; ?></label></td>
 											</tr>
 											<?php 
-												while($wpet = mysqli_fetch_array($qpet1)){
+												foreach ($qpet1 as $wpet){
 													?>
 													<tr>
 														<td class="order" style="border-bottom:1px dotted #ccc;text-align:left"><span><img src="img/pdf2.png" style="padding-right:10px;margin-top:-10px"></span></td>
@@ -571,9 +558,13 @@ $dados2 = null;
 						<td colspan="2" align="left" class="tb_addSel" style="display:none">Associar com Base existente:<br/>
 							<select name="tbBase" id="tbBase" class="input-default" style="width:194px;height:20px">
 								<?php
-								$qlist = mysqli_query($conexao1,"SELECT * FROM tp_grupo_tb ");
+								$listGroups = array();
+								if (class_exists(\App\Repositories\ListaRepository::class)) {
+									$listRepo = new \App\Repositories\ListaRepository($conexao1);
+									$listGroups = $listRepo->listGroups();
+								}
 								echo "<option></option>";
-								while($wlist = mysqli_fetch_array($qlist)){
+								foreach($listGroups as $wlist){
 									echo "<option value='tp_lista_tb_|_nome_lista_|_return_1_|_id_grupo=" . $wlist['id_grupo'] . "_|_vert'>" . $wlist['nome_grupo'] . "</option>";
 								}
 								?>
@@ -618,12 +609,10 @@ $dados2 = null;
 						<td align="left">Ordenar:<br/>
 								<?php
 								
-								$qord = mysqli_query($conexao1," SELECT MAX(i.input_order) AS input FROM tp_inputs_tb AS i WHERE i.tipo_id = '".$_POST['TIPOPET']."' ");
-								if(mysqli_num_rows($qord)==0){
-									$wlinput=1;
-								}else{
-									$wlist = mysqli_fetch_array($qord);
-									$wlinput = ($wlist['input']+1);
+								$wlinput = 1;
+								if (class_exists(\App\Services\InputService::class)) {
+									$inputService = new \App\Services\InputService($conexao1);
+									$wlinput = $inputService->getNextInputOrder($_POST['TIPOPET']);
 								}
 								?>
 							<div id="div_InOrdn">

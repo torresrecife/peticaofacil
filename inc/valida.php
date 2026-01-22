@@ -74,13 +74,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
 				header("Location: ../index.php");
 			}
 		} else {
-			$qpass = mysqli_query($conexao1,"SELECT acesso_usu FROM tp_usu_tb where id_usu = " . $_SESSION['usuarioID'] . " ");
-			$wpass = mysqli_fetch_assoc($qpass);
-			//echo $wpass['acesso_usu'];
-			if(empty($wpass['acesso_usu']) || $wpass['acesso_usu']=="0000-00-00 00:00:00"){
+			if (!class_exists(\App\Services\LoginService::class) || !class_exists(\App\Repositories\UsuarioAuthRepository::class)) {
+				expulsaVisitante();
+				exit;
+			}
+			$repo = new \App\Repositories\UsuarioAuthRepository($conexao1);
+			$service = new \App\Services\LoginService($repo);
+			$acesso = $service->getAcesso($_SESSION['usuarioID']);
+			if(empty($acesso) || $acesso=="0000-00-00 00:00:00"){
 				echo "	<script> $(function() {	new_pass(); }); </script> ";
 			}else{
-				mysqli_query($conexao1,"UPDATE tp_usu_tb SET acesso_usu = '" . date("Y-m-d H:i:s") . "' where id_usu = " . $_SESSION['usuarioID'] . " ");
+				$service->updateAcesso($_SESSION['usuarioID'], date("Y-m-d H:i:s"));
 				header("Location: ../index.php");
 			}
 		}

@@ -71,34 +71,7 @@ function validaUsuario($usuario, $senha, $conex){
 		$service = new \App\Services\LoginService($repo, $_SG['caseSensitive'], $_SG['validaSempre']);
 		return $service->authenticate($usuario, $senha);
 	}
-
-	$cS 		= ($_SG['caseSensitive']) ? 'BINARY' : '';
-	$nusuario 	= addslashes($usuario);
-	$nsenha   	= addslashes($senha);
-	$sql 	  	= "SELECT * FROM `".$_SG['tabela']."` WHERE " . $cS . " `login_usu` = '" . $nusuario . "' AND ".$cS." `senha_usu` = '".$nsenha."' LIMIT 1";
-	$query 	    = mysqli_query($conex,$sql);
-	if($query === FALSE) {
-		die(mysqli_error());
-	}
-	$resultado 	= mysqli_fetch_assoc($query);
-	
-	if (empty($resultado)){
-		return false;
-	}else{
-		$_SESSION['usuarioID'] 	  	= $resultado['id_usu']; 
-		$_SESSION['usuarioNome']  	= $resultado['nome_usu']; 
-		$_SESSION['usuarioNivel'] 	= $resultado['nivel_usu'];
-		$_SESSION['usuarioST'] 	  	= $resultado['status_usu'];
-		$_SESSION['usuarioSetor'] 	= $resultado['id_setor'];
-		$_SESSION['usuarioCliente']	= $resultado['id_cliente'];
-
-		if ($_SG['validaSempre'] == true){
-			$_SESSION['usuarioLogin'] = $usuario;
-			$_SESSION['usuarioSenha'] = $senha;
-		}
-		return true;
-	}
-	mysqli_close($conexao10);
+	return false;
 }
 function protegePagina(){
 	global $_SG;
