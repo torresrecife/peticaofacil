@@ -200,7 +200,12 @@ class rtf {
 
 			$dir_cont = $_POST['url_dir'];
 			$tipo_id = $_POST['tipo_id'];
-			$nomtipo = fc_select_name('tipo_id',$tipo_id,'tipo_nome','tp_tipo_tb',$conexao1);
+			$nomtipo = '';
+			if (class_exists(\App\Repositories\TipoRepository::class)) {
+				$tipoRepo = new \App\Repositories\TipoRepository($conexao1);
+				$tipoRow = $tipoRepo->findWithClienteById($tipo_id);
+				$nomtipo = $tipoRow['tipo_nome'] ?? '';
+			}
 			$nomtipo = limita_caracteres($nomtipo,20,false);
 			 
 			$nomecli = ereg_replace("[^a-zA-Z0-9_]", "", strtr($_POST['nomecli'], "áàãâéêíóôõúüçÁÀÃÂÉÊÍÓÔÕÚÜÇ ", "aaaaeeiooouucAAAAEEIOOOUUC_"));
