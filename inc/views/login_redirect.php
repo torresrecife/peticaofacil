@@ -2,9 +2,6 @@
 /** @var string $target */
 /** @var string $message */
 ?>
-<script language="javascript">
-<?php if ($message !== '') { ?>
-	alert("<?php echo $message; ?>");
-<?php } ?>
-	window.location="<?php echo $target; ?>";
-</script>
+<input type="hidden" id="login_redirect_message" value="<?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>" />
+<input type="hidden" id="login_redirect_target" value="<?php echo htmlspecialchars($target, ENT_QUOTES, 'UTF-8'); ?>" />
+<script type="text/javascript" src="../js/pages/login_redirect.min.js"></script>

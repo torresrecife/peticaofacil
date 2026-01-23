@@ -9,7 +9,7 @@
 	<base href="<?php echo $basePath ? $basePath.'/' : '/'; ?>">
 	<title>Petição - Fácil</title>
 	<link href="css/images/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon" />
-	<link rel="stylesheet" href="css/template.css" type="text/css" />
+	<link rel="stylesheet" href="css/template.min.css" type="text/css" />
 	<!--[if IE 7]><link href="templates/bluestork/css/ie7.css" rel="stylesheet" type="text/css" /><![endif]-->
 </head>
 <body>

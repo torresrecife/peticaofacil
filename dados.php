@@ -8,7 +8,7 @@
 	</tr>
 </table>
 
-<script type="text/javascript" src="js/pages/dados.js"></script>
+<script type="text/javascript" src="js/pages/dados.min.js"></script>
 
 <table align="center" class="content_form">
 <?php
@@ -39,7 +39,6 @@ if($TIPOPET!=""){
 				$selectClass = "input-default " . $w['add_class'] . " js-combobox";
 				$dataAttrs = "";
 				
-				echo "<select type='text' id='" . $tag . "' name='" . $tag . "' class='" . $selectClass . "' style='width:" . $w['input_width'] . "px' " . $onFuncoes . " obrigatorio='" . $w['input_req'] . "' descricao='" . strtoupper($w['input_title']) . "'" . $dataAttrs . ">";
 				$optionsHtml = "";
 				if($w['input_db']!=""){
 					$input_db = explode("_|_",$w['input_db']);

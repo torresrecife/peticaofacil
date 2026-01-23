@@ -1,0 +1,26 @@
+{
+  "name": "peticaofacil",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:prod": "node scripts/minify.js",
+    "minify": "node scripts/minify.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/torresrecife/peticaofacil.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/torresrecife/peticaofacil/issues"
+  },
+  "homepage": "https://github.com/torresrecife/peticaofacil#readme",
+  "devDependencies": {
+    "clean-css-cli": "^5.6.3",
+    "terser": "^5.46.0"
+  }
+}

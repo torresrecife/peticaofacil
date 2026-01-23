@@ -31,7 +31,7 @@ function normalize_title($value)
 	return upwords(convertemin($value));
 }
 ?>
-<script type="text/javascript" src="js/pages/parag.js"></script>
+<script type="text/javascript" src="js/pages/parag.min.js"></script>
 <div align="center" class="include_arq">		
 	<div align="left" id="accordion" style="width:880px;" >
 		<?php	

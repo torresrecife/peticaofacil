@@ -100,7 +100,7 @@ foreach ($inputs as $idx => $w) {
 	<input type="hidden" name="name_text" id="name_text" >
 	<input type="hidden" name="act_parag" id="act_parag" value="<?php echo $_POST['act_parag'] ? $_POST['act_parag'] : 0; ?>" >
 	<input type="hidden" id="str_retorno_ajax" value="<?php echo $campos; ?>">
-	<script type="text/javascript" src="js/pages/config2.js"></script>
+	<script type="text/javascript" src="js/pages/config2.min.js"></script>
 </div>
 <div id="dialog_parag" title="Novo Tópico" style="display:none">
 	<div style="height:80px">
