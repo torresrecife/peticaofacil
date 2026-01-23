@@ -195,7 +195,7 @@ function fc_botoes_cliente($cliente_id,$displ,$nome=""){
 }
 function cabecalhoerodape($tipoid,$rodcab,$rtfpdf,$conex){
 	if($rtfpdf=="rtf"){
-		require_once("Html2Rtf/class_rtf_cab.php");
+		require_once __DIR__ . "/../Html2Rtf/class_rtf_cab.php";
 		if (!class_exists(\App\Services\TipoService::class)) {
 			return "";
 		}
@@ -217,7 +217,7 @@ function cabecalhoerodape($tipoid,$rodcab,$rtfpdf,$conex){
 			return "";
 		}
 	}elseif($rtfpdf=="pdf"){
-		require_once("seguranca.php");
+		require_once __DIR__ . "/seguranca.php";
 		if (!class_exists(\App\Services\TipoService::class)) {
 			return "";
 		}

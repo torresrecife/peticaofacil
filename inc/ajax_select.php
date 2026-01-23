@@ -2,7 +2,7 @@
 error_reporting(0);
 ini_set("display_errors", 0 );
 	
-include("seguranca.php");
+require_once __DIR__ . "/seguranca.php";
 protegePagina();
 
 if($_POST['flag']=="S" && $_POST['campoId']!='')

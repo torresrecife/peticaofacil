@@ -83,8 +83,10 @@ class PecaService
 	public function listToday($usuarioNivel, $usuarioId, $setorId, $clienteId, $date = null)
 	{
 		$date = $date ?: date('Y-m-d');
+		$start = $this->esc($date . ' 00:00:00');
+		$end = $this->esc(date('Y-m-d 00:00:00', strtotime($date . ' +1 day')));
 		$where = $this->buildScopeWhere($usuarioNivel, $usuarioId, $setorId, $clienteId);
-		$where .= ($where === '' ? 'WHERE ' : ' AND ') . "DATE(p.data_cad) = '" . $this->esc($date) . "'";
+		$where .= ($where === '' ? 'WHERE ' : ' AND ') . "p.data_cad >= '" . $start . "' AND p.data_cad < '" . $end . "'";
 		$sql = "SELECT p.id_pecas, u.nome_usu, p.tipo_id, p.nome_pecas, p.nome_cli, p.data_cad as datacad "
 			. "FROM tp_pecas_tb as p "
 			. "JOIN tp_usu_tb AS u ON u.id_usu=p.id_usu "
@@ -96,6 +98,31 @@ class PecaService
 		}
 		$rows = array();
 		while ($row = mysqli_fetch_array($query)) {
+			$rows[] = $row;
+		}
+		return $rows;
+	}
+
+	public function listTodayCounts($usuarioNivel, $usuarioId, $setorId, $clienteId, $date = null)
+	{
+		$date = $date ?: date('Y-m-d');
+		$start = $this->esc($date . ' 00:00:00');
+		$end = $this->esc(date('Y-m-d 00:00:00', strtotime($date . ' +1 day')));
+		$where = $this->buildScopeWhere($usuarioNivel, $usuarioId, $setorId, $clienteId);
+		$where .= ($where === '' ? 'WHERE ' : ' AND ') . "p.data_cad >= '" . $start . "' AND p.data_cad < '" . $end . "'";
+
+		$sql = "SELECT u.nome_usu, COUNT(*) as total "
+			. "FROM tp_pecas_tb as p "
+			. "JOIN tp_usu_tb AS u ON u.id_usu=p.id_usu "
+			. $where
+			. "GROUP BY u.nome_usu "
+			. "ORDER BY total DESC";
+		$query = mysqli_query($this->db, $sql);
+		if (!$query) {
+			return array();
+		}
+		$rows = array();
+		while ($row = mysqli_fetch_assoc($query)) {
 			$rows[] = $row;
 		}
 		return $rows;

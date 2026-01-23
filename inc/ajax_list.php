@@ -1,6 +1,6 @@
 <?php
 
-include("seguranca.php");
+require_once __DIR__ . "/seguranca.php";
 protegePagina();
 
 if($_POST['flag']=="E")

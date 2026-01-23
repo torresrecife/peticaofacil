@@ -3,8 +3,8 @@
 	error_reporting(0);
 	ini_set("display_errors", 0);
 
-include("../Html2Rtf/class_rtf.php");
-$rtf = new rtf("../Html2Rtf/rtf_config.php");
+require_once __DIR__ . "/../Html2Rtf/class_rtf.php";
+$rtf = new rtf(__DIR__ . "/../Html2Rtf/rtf_config.php");
 $rtf->setPaperSize(5);
 $rtf->setPaperOrientation(1);
 $rtf->setDefaultFontFace(1);
@@ -17,7 +17,7 @@ $rtf->addColour("#000000");
 	
 if($_POST['is_pecas']==1){
 	
-	include("../inc/seguranca.php");
+	require_once __DIR__ . "/seguranca.php";
 	protegePagina();
 	
 	$arr_pecas = null;

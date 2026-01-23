@@ -6,13 +6,18 @@ use App\Infra\Database;
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
 	$baseUrl = getenv('APP_URL');
 	$basePath = $baseUrl ? parse_url($baseUrl, PHP_URL_PATH) : '';
+	$scheme = $baseUrl ? parse_url($baseUrl, PHP_URL_SCHEME) : '';
 	$cookiePath = $basePath ? rtrim($basePath, '/') . '/' : '/';
 	$cookieParams = session_get_cookie_params();
+	$secure = $cookieParams['secure'] ?? false;
+	if ($scheme === 'http') {
+		$secure = false;
+	}
 	session_set_cookie_params(
 		$cookieParams['lifetime'] ?? 0,
 		$cookiePath,
 		$cookieParams['domain'] ?? '',
-		$cookieParams['secure'] ?? false,
+		$secure,
 		$cookieParams['httponly'] ?? false
 	);
 }

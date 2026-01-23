@@ -111,23 +111,6 @@ $acesso = empty($arr['acesso_usu']) || $arr['acesso_usu']=="0000-00-00 00:00:00"
 						<div id="banco_1"></div>
 					</td>
 				</tr>
-				<!--tr>
-					<td><label>Cliente</label></td>
-					<td>
-						<select class="cls_usu" name="cliente_id" id="cliente_id" obrigatorio="1" title="Cliente">
-							<option value="">  </option>   
-							<option value="0">TODOS</option>  							
-							<?php 
-							//$qcliente = mysqli_query($conexao1,"SELECT * FROM tp_clientes_db");
-							//while($wcliente = mysqli_fetch_array($qcliente)){
-								?>
-								<option value="<?php //echo $wcliente[0]; ?>"> <?php //echo ($wcliente[1]); ?></option>
-								<?php 
-							//}
-							?>
-						</select>
-					</td>
-				</tr-->
 				<tr>
 					<td><label>Status </label></td>
 					<td>

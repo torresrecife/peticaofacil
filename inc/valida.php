@@ -1,3 +1,46 @@
+<?php
+
+require_once __DIR__ . '/seguranca.php';
+
+$showNewPass = false;
+if ($_SERVER['REQUEST_METHOD'] == 'POST'){
+	$usuario = (isset($_POST['username'])) ? $_POST['username'] : '';
+	$senha2  = (isset($_POST['passwd'])) ? $_POST['passwd'] : '';
+	$senha   = md5($senha2);
+	if (validaUsuario($usuario, $senha, $conexao1) == true){
+		if (class_exists(\App\Services\LoginService::class) && class_exists(\App\Repositories\UsuarioAuthRepository::class)) {
+			$repo = new \App\Repositories\UsuarioAuthRepository($conexao1);
+			$service = new \App\Services\LoginService($repo);
+			$acesso = $service->getAcesso($_SESSION['usuarioID']);
+			if(empty($acesso) || $acesso=="0000-00-00 00:00:00"){
+				$showNewPass = true;
+			}else{
+				$service->updateAcesso($_SESSION['usuarioID'], date("Y-m-d H:i:s"));
+				header("Location: ../index.php");
+				exit;
+			}
+		} else {
+			if (!class_exists(\App\Services\LoginService::class) || !class_exists(\App\Repositories\UsuarioAuthRepository::class)) {
+				expulsaVisitante();
+				exit;
+			}
+			$repo = new \App\Repositories\UsuarioAuthRepository($conexao1);
+			$service = new \App\Services\LoginService($repo);
+			$acesso = $service->getAcesso($_SESSION['usuarioID']);
+			if(empty($acesso) || $acesso=="0000-00-00 00:00:00"){
+				$showNewPass = true;
+			}else{
+				$service->updateAcesso($_SESSION['usuarioID'], date("Y-m-d H:i:s"));
+				header("Location: ../index.php");
+				exit;
+			}
+		}
+	}else{
+		expulsaVisitante();
+		exit;
+	}
+}
+?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <script type="text/javascript" src="../js/jquery-1.8.0.min.js">		</script>
 <script type="text/javascript" src="../js/jquery-ui-1.8.23.custom.min.js"></script>
@@ -54,45 +97,9 @@ function new_pass(){
 	});
 }
 </script>
-<?php
-
-include("seguranca.php");
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST'){
-	$usuario = (isset($_POST['username'])) ? $_POST['username'] : '';
-	$senha2  = (isset($_POST['passwd'])) ? $_POST['passwd'] : '';
-	$senha   = md5($senha2);
-	if (validaUsuario($usuario, $senha, $conexao1) == true){
-		if (class_exists(\App\Services\LoginService::class) && class_exists(\App\Repositories\UsuarioAuthRepository::class)) {
-			$repo = new \App\Repositories\UsuarioAuthRepository($conexao1);
-			$service = new \App\Services\LoginService($repo);
-			$acesso = $service->getAcesso($_SESSION['usuarioID']);
-			if(empty($acesso) || $acesso=="0000-00-00 00:00:00"){
-				echo "	<script> $(function() {	new_pass(); }); </script> ";
-			}else{
-				$service->updateAcesso($_SESSION['usuarioID'], date("Y-m-d H:i:s"));
-				header("Location: ../index.php");
-			}
-		} else {
-			if (!class_exists(\App\Services\LoginService::class) || !class_exists(\App\Repositories\UsuarioAuthRepository::class)) {
-				expulsaVisitante();
-				exit;
-			}
-			$repo = new \App\Repositories\UsuarioAuthRepository($conexao1);
-			$service = new \App\Services\LoginService($repo);
-			$acesso = $service->getAcesso($_SESSION['usuarioID']);
-			if(empty($acesso) || $acesso=="0000-00-00 00:00:00"){
-				echo "	<script> $(function() {	new_pass(); }); </script> ";
-			}else{
-				$service->updateAcesso($_SESSION['usuarioID'], date("Y-m-d H:i:s"));
-				header("Location: ../index.php");
-			}
-		}
-	}else{
-		expulsaVisitante();
-	}
-}
-?>
+<?php if ($showNewPass) { ?>
+	<script> $(function() { new_pass(); }); </script>
+<?php } ?>
 <div id="dialog-new-pass" title="Editar Usuário" style="display:none; text-align:left;">
 	<p class="validateTips"><?php echo "Alteração de senha obrigatória!"; ?></p>
 	<fieldset>

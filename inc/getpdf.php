@@ -3,8 +3,8 @@
 	error_reporting(0);
 	ini_set("display_errors", 0 );
 
-	require_once("functions.php");
-	include("seguranca.php");
+	require_once __DIR__ . "/functions.php";
+	require_once __DIR__ . "/seguranca.php";
 	protegePagina();
 	$doc_buffer = $_POST['name_text']."<div align='right' style='color:#ccc;'><i>".$_SESSION['usuarioLogin']."</i></div>";
 	
@@ -45,9 +45,12 @@
 	echo '</page>';
     $content = ob_get_clean();
     // convert in PDF
-    require_once('../html2pdf/html2pdf.class.php');
+    require_once __DIR__ . '/../html2pdf/html2pdf.class.php';
     try
     {
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
         $html2pdf = new HTML2PDF('P','A4','pt');
 	//  $html2pdf->setModeDebug();
         $html2pdf->setDefaultFont('arial');

@@ -195,8 +195,8 @@ class rtf {
 		
 		if(!isset($_POST['is_pecas'])){
 		
-			include("../inc/functions.php");
-			include("../inc/seguranca.php");
+			require_once __DIR__ . "/../inc/functions.php";
+			require_once __DIR__ . "/../inc/seguranca.php";
 			protegePagina();
 			
 			$dir_cont = $_POST['url_dir'];
@@ -204,8 +204,8 @@ class rtf {
 			//$nomtipo = fc_select_name('tipo_id',$tipo_id,'tipo_nome','tp_tipo_tb',$conexao1);
 			//$nomtipo = limita_caracteres($nomtipo,20,false);
 			 
-			$nomecli = preg_replace("[^a-zA-Z0-9_]", "", strtr($_POST['nomepet'], "·‡„‚ÈÍÌÛÙı˙¸Á¡¿√¬… Õ”‘’⁄‹« ", "aaaaeeiooouucAAAAEEIOOOUUC_"));
-			//$nomtipo = preg_replace("[^a-zA-Z0-9_]", "", strtr($nomtipo, "·‡„‚ÈÍÌÛÙı˙¸Á¡¿√¬… Õ”‘’⁄‹«= ", "aaaaeeiooouucAAAAEEIOOOUUC-_"));
+			$nomecli = preg_replace("[^a-zA-Z0-9_]", "", strtr($_POST['nomepet'], "ùùùùùùùùùùùùùùùùùùùùùùùùùù ", "aaaaeeiooouucAAAAEEIOOOUUC_"));
+			//$nomtipo = preg_replace("[^a-zA-Z0-9_]", "", strtr($nomtipo, "ùùùùùùùùùùùùùùùùùùùùùùùùùù= ", "aaaaeeiooouucAAAAEEIOOOUUC-_"));
 			//$nompeca = $nomtipo."-".$nomecli;
 			$nompeca = $nomecli;
 			
@@ -213,19 +213,11 @@ class rtf {
 			$usu_nivel = $_SESSION['usuarioNivel'];
 			$usu_idusu = $_SESSION['usuarioID'];
 		
-			//$query_doc = mysqli_query("INSERT INTO tp_pecas_tb SET 
-			//tipo_id='".$tipo_id."', 
-			//id_usu='".$usu_idusu."', 
-			//nome_pecas='".$nomtipo."', 
-			//nome_cli='".$nomecli."', 
-			//cod_pecas='".$_POST['name_text']."', 
-			//data_cad='".date('Y-m-d H:i:s')."' ");
 			
 		} else {
 			$nompeca = $_POST['nomepet']."-".$_POST['nomecli'];
 		}
 		
-		//$query_doc = mysqli_query("INSERT INTO documentos_tb SET st=1, pasta='', dossie='', subpasta='Corpo Principal', tpdoc='CONTESTA«√O', url='" . $dir_cont . '/DEFESA_' . $nomecli . '_' . date('YmdHis') . '.rtf' . "', arquivo='" . 'DEFESA_' . $nomecli . '_' . date('YmdHis') . '.rtf' . "', data_hora_st1='" . date('Y-m-d H:i:s') . "', data_hora_st2='" . date('Y-m-d H:i:s') . "', data_hora_st3='" . date('Y-m-d H:i:s') . "' ");
 		//if(!file_exists($dir_cont))
 		//{
 		//	mkdir("$dir_cont", 0755);
@@ -347,7 +339,24 @@ class rtf {
 	
 	// Parse the text input to RTF
 	function parseDocument() {
-		$doc_buffer = $this->specialCharacters($this->document);
+		$doc_buffer = $this->document;
+		$doc_buffer = html_entity_decode($doc_buffer, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+		$doc_buffer = str_replace("\xC2\xA0", " ", $doc_buffer);
+		if (preg_match('//u', $doc_buffer)) {
+			$converted = @iconv('UTF-8', 'Windows-1252//TRANSLIT', $doc_buffer);
+			if ($converted !== false) {
+				$doc_buffer = $converted;
+			} else {
+				$doc_buffer = utf8_decode($doc_buffer);
+			}
+		}
+		$doc_buffer = str_replace("\xA0", " ", $doc_buffer);
+		$doc_buffer = $this->specialCharacters($doc_buffer);
+
+		$doc_buffer = str_replace("&nbsp;", " ", $doc_buffer);
+		$doc_buffer = preg_replace("/<br\s*\/?>/mi", "\\line ", $doc_buffer);
+		$doc_buffer = preg_replace("/<span[^>]*>/mi", "", $doc_buffer);
+		$doc_buffer = str_replace("</span>", "", $doc_buffer);
 		
 		if(preg_match("/<UL>(.*?)<\/UL>/mi", $doc_buffer)) {
 			$doc_buffer = str_replace("<UL>", "", $doc_buffer);
@@ -392,11 +401,11 @@ class rtf {
 		$doc_buffer = str_replace("&Ccedil;","\'c7", $doc_buffer);
 		
 		$doc_buffer = str_replace("&deg;","\'ba", $doc_buffer);
-		$doc_buffer = str_replace("&sect;","ß", $doc_buffer);
-		$doc_buffer = str_replace("&ordm;","∫", $doc_buffer);
+		$doc_buffer = str_replace("&sect;","ù", $doc_buffer);
+		$doc_buffer = str_replace("&ordm;","ù", $doc_buffer);
 		$doc_buffer = str_replace("&uuml;","u", $doc_buffer);
 		$doc_buffer = str_replace("&Uuml;","U", $doc_buffer);
-		$doc_buffer = str_replace("&ndash;","ñ", $doc_buffer);
+		$doc_buffer = str_replace("&ndash;","ù", $doc_buffer);
 		$doc_buffer = str_replace("&ldquo;","''", $doc_buffer);
 		$doc_buffer = str_replace("&rdquo;","''", $doc_buffer);
 		$doc_buffer = str_replace("&quot;","''", $doc_buffer);
@@ -431,6 +440,11 @@ class rtf {
 		$doc_buffer = preg_replace("/<p style=\"text-align: right;\">(.*?)<\/p>/mi", "\\qr \\1\\qr0\\par", $doc_buffer);
 		$doc_buffer = preg_replace("/<p style=\"text-align: left;\">(.*?)<\/p>/mi", "\\ql \\1\\ql0\\par", $doc_buffer);
 		$doc_buffer = preg_replace("/<p style=\"text-align: center;\">(.*?)<\/p>/mi", "\\qc \\1\\qc0\\par", $doc_buffer);
+
+		$doc_buffer = preg_replace("/<p style=\"text-align:justify;?\">(.*?)<\/p>/mi", "\\qj \\1\\qj0\\par", $doc_buffer);
+		$doc_buffer = preg_replace("/<p style=\"text-align:right;?\">(.*?)<\/p>/mi", "\\qr \\1\\qr0\\par", $doc_buffer);
+		$doc_buffer = preg_replace("/<p style=\"text-align:left;?\">(.*?)<\/p>/mi", "\\ql \\1\\ql0\\par", $doc_buffer);
+		$doc_buffer = preg_replace("/<p style=\"text-align:center;?\">(.*?)<\/p>/mi", "\\qc \\1\\qc0\\par", $doc_buffer);
 		
 		
 		
@@ -582,7 +596,7 @@ class rtf {
 		$doc_buffer = preg_replace("/<p style=\"margin-left: 7cm; text-align: center;\">(.*?)<\/p>/mi", "\\lin2000 \\qj \\1 \\qj0\\par \lin0", $doc_buffer);
 		$doc_buffer = preg_replace("/<p style=\"margin-left: 8cm; text-align: center;\">(.*?)<\/p>/mi", "\\lin2300 \\qj \\1 \\qj0\\par \lin0", $doc_buffer);
 		
-		//Sem ·spas
+		//Sem ùspas
 		$doc_buffer = preg_replace("/<p style=margin-left: 3cm; text-align: justify;>(.*?)<\/p>/mi", "\\lin900 \\qj \\1 \\qj0\\par \lin0", $doc_buffer);
 		$doc_buffer = preg_replace("/<p style=margin-left: 4cm; text-align: justify;>(.*?)<\/p>/mi", "\\lin1100 \\qj \\1 \\qj0\\par \lin0", $doc_buffer);
 		$doc_buffer = preg_replace("/<p style=margin-left: 5cm; text-align: justify;>(.*?)<\/p>/mi", "\\lin1400 \\qj \\1 \\qj0\\par \lin0", $doc_buffer);

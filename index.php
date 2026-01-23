@@ -1,4 +1,3 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <?php
 	error_reporting(1);
 	ini_set("display_errors", 1 );
@@ -83,6 +82,7 @@ $dados2 = null;
 	$usu_nivel 	 = $_SESSION['usuarioNivel'];
 	$usu_id    	 = $_SESSION['usuarioID'];
 ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" dir="ltr" >
 	<head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -341,86 +341,12 @@ $dados2 = null;
 								</div>
 								
 								<div class="cpanel-right">
-									<div class="cpanel">
-										<table border="0" width="100%" align="center" style="padding-left: 8px;padding: 4px; border-spacing: 1px;background-color: #FFF;color: #666;">
-											<?php
-												
-												$texto_peças="";
-												if($usu_nivel=='USU'){
-													$texto_peças="Suas últimas petições salvas:";
-												}else{
-													if($usu_setor!=0){
-														$texto_peças="Últimas petições do setor:";
-														if($usu_cliente!=0){
-															$texto_peças="Últimas petições da carteira:";
-														}
-													}else{
-														$texto_peças="Últimas petições:";
-													}
-												}
-												$qpet1 = array();
-												$qpet2 = array();
-												if (class_exists(\App\Services\PecaService::class)) {
-													$pecaService = new \App\Services\PecaService($conexao1);
-													$qpet1 = $pecaService->listRecent($usu_nivel, $usu_id, $usu_setor, $usu_cliente, 10);
-													$qpet2 = $pecaService->listToday($usu_nivel, $usu_id, $usu_setor, $usu_cliente);
-												}
-												$a = 0;
-												$usu = array();
-												$set = array();
-												$crt = array();
-												foreach ($qpet2 as $wpet2) {
-													$usu[$wpet2["nome_usu"]] = ($usu[$wpet2["nome_usu"]] ?? 0) + 1;
-													$a++;
-												}
-											?>
-											<tr>
-												<td colspan="3" style="height:30px;border-bottom:1px dotted #ccc;"><label><?php echo $texto_peças; ?></label></td>
-											</tr>
-											<?php 
-												foreach ($qpet1 as $wpet){
-													?>
-													<tr>
-														<td class="order" style="border-bottom:1px dotted #ccc;text-align:left"><span><img src="img/pdf2.png" style="padding-right:10px;margin-top:-10px"></span></td>
-														<td style="border-bottom:1px dotted #ccc;">
-															<a href="javascript:void(0)" onclick="return PetiDados('index.php','3','<?php echo $wpet['id_pecas'];?>','<?php echo $wpet['tipo_id']; ?>','<?php echo $wpet['nome_pecas']; ?>','<?php echo $wpet['nome_cli']; ?>');" title="<?php echo strftime("%d/%m/%Y %H:%M:%S", strtotime($wpet['datacad'])); ?>">
-																<?php echo $wpet['nome_cli']; ?>
-															</a>
-														</td>
-														<td style="border-bottom:1px dotted #ccc;"><?php echo $wpet['nome_usu']; ?></td>
-													</tr>
-													<?php 
-												}
-												
-											?>
-										</table>
-									</div>								
-									<div style="margin-top:30px;width:100%;text-align:center;">
-										<?php 
-										echo "<div style='border-bottom:1px dotted #ccc;margin-bottom:10px;height:20px;width:100%;text-align:center;'>";
-											echo "<div style='float:left;width:80%;text-align:left;padding-left:30px;'>Petições elaboradas hoje:</div>";
-											echo "<div style='float:left;width:auto;text-align:center;'>"  . $a  . " </div>";
-											echo "</div>";
-										arsort($usu);
-										foreach($usu as $us => $u){
-											echo "<div style='height:20px;width:100%;text-align:center;'>";
-											echo "<div style='float:left;width:80%;text-align:left;padding-left:30px;'>" . $us . ":</div>";
-											echo "<div style='float:left;width:auto;text-align:center;'>"  . $u  . " </div>";
-											echo "</div>";
-										}
-										?>
+									<div id="recent-pecas" style="min-height:120px;">
+										<div class="cpanel">
+											<div style="padding:10px;color:#666;">Carregando últimas petições...</div>
+										</div>
 									</div>
-									<div style="width:100%;text-align:center;">
-										<?php 
-										//foreach($set as $us => $u){
-										//	echo "<div style='height:20px;width:100%;text-align:center;'>";
-										//	echo "<div style='float:left;width:80%;text-align:left;padding-left:30px;'>" . $us . ":</div>";
-										//	echo "<div style='float:left;width:auto;text-align:center;'>"  . $u  . " </div>";
-										//	echo "</div>";
-										//}
-										?>
-									</div>										
-								</div>								
+								</div>
 							</div>	
 							<input type="hidden" name="is_pecas" id="is_pecas" value="1" />
 							<input type="hidden" name="id_pecas" id="id_pecas" value=""  />
@@ -437,6 +363,22 @@ $dados2 = null;
 	</div>
 	
 	<input type="hidden" name="hid_enviar" id="hid_enviar" value="<?php echo $_POST['hid_enviar']; ?>" />
+	<script type="text/javascript">
+		$(function () {
+			if ($('#recent-pecas').length) {
+				$.ajax({
+					type: 'POST',
+					url: 'inc/ajax_last_pecas.php',
+					success: function (html) {
+						$('#recent-pecas').html(html);
+					},
+					error: function () {
+						$('#recent-pecas').html("<div class='cpanel'><div style='padding:10px;color:#666;'>Não foi possível carregar as últimas petições.</div></div>");
+					}
+				});
+			}
+		});
+	</script>
 	<input type="hidden" id="TIPOPET" name="TIPOPET" value="<?php echo $TIPOPET; ?>">
 	<div id="footer">
 		<p class="copyright">

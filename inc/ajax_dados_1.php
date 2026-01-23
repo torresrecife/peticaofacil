@@ -5,7 +5,7 @@ ini_set("display_errors", 0 );
 
 header("Content-Type: text/html; charset=ISO-8859-1",true);
 
-include("seguranca.php");
+require_once __DIR__ . "/seguranca.php";
 protegePagina();
 
 $tabela = $_POST['tabela'] 	? $_POST['tabela'] : "''";

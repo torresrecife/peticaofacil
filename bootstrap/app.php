@@ -5,6 +5,20 @@ $autoloadPath = $rootPath . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR
 
 if (file_exists($autoloadPath)) {
 	require_once $autoloadPath;
+} else {
+	spl_autoload_register(function ($class) use ($rootPath) {
+		$prefix = 'App\\';
+		$prefixLen = strlen($prefix);
+		if (strncmp($prefix, $class, $prefixLen) !== 0) {
+			return;
+		}
+		$relativeClass = substr($class, $prefixLen);
+		$file = $rootPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR
+			. str_replace('\\', DIRECTORY_SEPARATOR, $relativeClass) . '.php';
+		if (file_exists($file)) {
+			require_once $file;
+		}
+	});
 }
 
 if (class_exists(\Dotenv\Dotenv::class)) {
