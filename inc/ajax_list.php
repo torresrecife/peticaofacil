@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . "/seguranca.php";
+require_once __DIR__ . "/response.php";
 protegePagina();
 
 if($_POST['flag']=="E")
@@ -8,8 +9,7 @@ if($_POST['flag']=="E")
 	$id_grupo  = $_POST['id_lista'];
 	$return = "";
 	if (!class_exists(\App\Repositories\ListaRepository::class)) {
-		echo 0;
-		exit;
+		json_err("Servico indisponivel.");
 	}
 
 	$wg = null;
@@ -25,8 +25,10 @@ if($_POST['flag']=="E")
 		$nun_grupo = $repo->nextGroupId();
 	}
 	
-	header("Content-Type: text/html; charset=ISO-8859-1",true);
+	ob_start();
 	require __DIR__ . "/views/ajax_list.php";
+	$html = ob_get_clean();
+	json_ok(array('html' => $html));
 }
 
 ?>

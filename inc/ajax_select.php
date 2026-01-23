@@ -1,23 +1,19 @@
 <?php
-error_reporting(0);
-ini_set("display_errors", 0 );
-	
 require_once __DIR__ . "/seguranca.php";
+require_once __DIR__ . "/response.php";
 protegePagina();
 
 if($_POST['flag']=="S" && $_POST['campoId']!='')
 {
 	if (!class_exists(\App\Services\SelectService::class)) {
-		echo 0;
-		exit;
+		json_err("Servico indisponivel.");
 	}
 	$campoId  = $_POST['campoId'];
 	$service = new \App\Services\SelectService($conexao1);
-	$nomes = "";
-	header("Content-Type: text/html; charset=ISO-8859-1",true);
+	$items = array();
 	foreach ($service->listDadosByInput($campoId) as $nome) {
-		$nomes .= $nome . "-|-";
+		$items[] = $nome;
 	}
-	echo trim($nomes);
+	json_ok(array('items' => $items));
 }
 ?>

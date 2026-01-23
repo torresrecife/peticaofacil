@@ -14,9 +14,14 @@ function ajax_pecas(valor1,valor2,valor3){
 	   type: "POST",
 	   url:  "inc/ajax_pecas.php",
 	   data: "flag=H&tipo_id=" + valor1 + "&limit="+valor2+"&search="+valor3,
-	   success: function(retorno_ajax){
-		   //alert(retorno_ajax);
-			$("#html_pecas_"+valor1).html(retorno_ajax);
+	   dataType: "json",
+	   success: function(response){
+		   if(!response || !response.ok){
+			   var msg = response && response.message ? response.message : "Erro ao carregar pecas.";
+			   alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+			   return;
+		   }
+			$("#html_pecas_"+valor1).html(response.data ? response.data.html : "");
 		}
 	});
 }

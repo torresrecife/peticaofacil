@@ -4,6 +4,32 @@ if (class_exists(\App\Services\DadosService::class)) {
 	$dadosService = new \App\Services\DadosService($conexao1);
 	$arr_cp = $dadosService->listDadosMap();
 }
+
+function normalize_utf8($value)
+{
+	if (!is_string($value) || $value === '') {
+		return $value;
+	}
+	return preg_match('//u', $value) ? $value : utf8_encode($value);
+}
+
+function normalize_upper($value)
+{
+	$value = normalize_utf8($value);
+	if (function_exists('mb_strtoupper')) {
+		return mb_strtoupper($value, 'UTF-8');
+	}
+	return strtoupper($value);
+}
+
+function normalize_title($value)
+{
+	$value = normalize_utf8($value);
+	if (function_exists('mb_convert_case')) {
+		return mb_convert_case($value, MB_CASE_TITLE, 'UTF-8');
+	}
+	return upwords(convertemin($value));
+}
 ?>
 <script language="javascript">	
 //Demo
@@ -45,31 +71,36 @@ $(document).ready(function(){
 				<div align="center">
 					<textarea id="cls_text_<?php echo $n; ?>" name="cls_text_<?php echo $n; ?>" class="cls_text" style="width:690px;" >
 						<?php
-							$para_text = $wtext['fund_text'];
+						$para_text = normalize_utf8($wtext['fund_text']);
 								//Pegando o valor dos names do POST
 								foreach($_POST as $obj => $val){
+								$val_utf = normalize_utf8($val);
+								$map_val = isset($arr_cp[$val]) ? normalize_utf8($arr_cp[$val]) : null;
 									//Definindo o valor do name (se existir)
 									
 									//Definindo quanto a marcação '@CAMPO@' for maiúscula
-									if(strpos($para_text, "@" . mb_strtoupper($obj) . "@") != false){
+								if(strpos($para_text, "@" . mb_strtoupper($obj) . "@") != false){
 										$i=1;
 										while ($i <= substr_count($para_text, "@" . mb_strtoupper($obj) . "@")) {
 											$i++;										
-											$para_text = str_replace("@" . mb_strtoupper($obj) . "@",($arr_cp[$val] ? $arr_cp[mb_strtoupper($val)] : mb_strtoupper($val)),$para_text);
+										$replacement = $map_val ? normalize_upper($map_val) : normalize_upper($val_utf);
+										$para_text = str_replace("@" . mb_strtoupper($obj) . "@", $replacement, $para_text);
 										}
 									}elseif(strpos($para_text, "@" . upwords(convertemin($obj)) . "@") != false){
 										//Definindo quanto a marcação '@Campo@' for a primeira letra maiúscula
 										$f=1;
 										while ($f <= substr_count($para_text, "@" . upwords(convertemin($obj)) . "@")) {
 											$f++;										
-											$para_text = str_replace("@" . upwords(convertemin($obj)) . "@",($arr_cp[$val] ? $arr_cp[upwords(convertemin($val))] : upwords(convertemin($val))),$para_text);
+										$replacement = $map_val ? normalize_title($map_val) : normalize_title($val_utf);
+										$para_text = str_replace("@" . upwords(convertemin($obj)) . "@", $replacement, $para_text);
 										}										
 									}else{
 										//Definindo quanto a marcação '@campo@' mesmo tamanho
 										$g=1;
 										while ($g <= substr_count($para_text, "@" . $obj . "@")) {
 											$g++;										
-											$para_text = str_replace("@$obj@",($arr_cp[$val] ? $arr_cp[$val] : $val),$para_text);
+										$replacement = $map_val ? $map_val : $val_utf;
+										$para_text = str_replace("@$obj@", $replacement, $para_text);
 										}
 									}										
 								}

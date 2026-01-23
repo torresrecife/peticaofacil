@@ -1,11 +1,7 @@
 <?php
 
-error_reporting(0);
-ini_set("display_errors", 0 );
-
-header("Content-Type: text/html; charset=ISO-8859-1",true);
-
 require_once __DIR__ . "/seguranca.php";
+require_once __DIR__ . "/response.php";
 protegePagina();
 
 $tabela = $_POST['tabela'] 	? $_POST['tabela'] : "''";
@@ -14,8 +10,7 @@ $id_ref = $_POST['id_ref']	? $_POST['id_ref'] : "''";
 $id_val = $_POST['id_val']	? $_POST['id_val'] : "''";
 
 if (!class_exists(\App\Services\CompService::class)) {
-	echo 0;
-	exit;
+	json_err("Servico indisponivel.");
 }
 
 if($_POST['conex']==1)
@@ -28,5 +23,5 @@ elseif($_POST['conex']==2)
 }
 
 $service = new \App\Services\CompService($conex);
-echo $service->fetchResult($tabela, $campo0, $id_ref, $id_val);
+json_ok(array('value' => $service->fetchResult($tabela, $campo0, $id_ref, $id_val)));
 ?>

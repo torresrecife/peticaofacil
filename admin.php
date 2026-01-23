@@ -112,8 +112,9 @@ function novo_tipo(){
 						 "&tipoclien=" + escape($("#TIPOCLIEN").val()) +
 						 "&tipoarqui=" + escape($("#TIPOARQUI").val()) 
 						 ,
-				   success: function(retorno_ajax){
-						if(retorno_ajax=1){
+				   dataType: "json",
+				   success: function(response){
+						if(response && response.ok){
 							$( "#dialog_tipo" ).dialog( "close" );
 							msgbox("<br> Modelo criado com sucesso !", {
 								Fechar: function(){
@@ -121,6 +122,9 @@ function novo_tipo(){
 									EnviarDados('index.php','5','');
 								}
 							});
+						}else{
+							var msg = response && response.message ? response.message : "Erro ao criar modelo.";
+							alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 						}
 					}
 				});

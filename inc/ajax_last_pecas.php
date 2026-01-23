@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/seguranca.php';
+require_once __DIR__ . "/response.php";
 protegePagina();
 
 $usu_setor = $_SESSION['usuarioSetor'];
@@ -38,4 +39,7 @@ foreach ($qpet2 as $wpet2) {
 	$usu[$nomeUsu] = $total;
 	$a += $total;
 }
+ob_start();
 require __DIR__ . "/views/ajax_last_pecas.php";
+$html = ob_get_clean();
+json_ok(array('html' => $html));

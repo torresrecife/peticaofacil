@@ -1,10 +1,6 @@
 <?php
-header("Content-Type: text/html; charset=ISO-8859-1",true);
-
-error_reporting(0);
-ini_set("display_errors", 0 );
-	
 require_once __DIR__ . "/seguranca.php";
+require_once __DIR__ . "/response.php";
 
 protegePagina();
 
@@ -12,11 +8,10 @@ $tipoid = $_POST['tipoid'] ? $_POST['tipoid']:"";
 
 if($_POST['flag']=="I"){
 	if (!class_exists(\App\Services\CampoPadraoService::class)) {
-		echo 0;
-		exit;
+		json_err("Servico indisponivel.");
 	}
 	$service = new \App\Services\CampoPadraoService($conexao1);
 	$ok = $service->createForTipo($tipoid);
-	echo $ok ? 1 : 0;
+	$ok ? json_ok() : json_err("Erro ao criar campo padrao.");
 }
 ?>

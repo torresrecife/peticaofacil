@@ -42,8 +42,56 @@
 	require_once __DIR__ . "/seguranca.php";
 	protegePagina();
 	$doc_buffer = $_POST['name_text']."<div align='right' style='color:#ccc;'><i>".$_SESSION['usuarioLogin']."</i></div>";
-	
-	$doc_buffer = str_replace('src="','src="'.$_SERVER['DOCUMENT_ROOT'].'',$doc_buffer);
+
+	function normalize_pdf_image_src($html)
+	{
+		$baseUrl = getenv('APP_URL') ?: '';
+		$basePath = $baseUrl ? rtrim(parse_url($baseUrl, PHP_URL_PATH), '/') . '/' : '/';
+		return preg_replace_callback('/src="([^"]+)"/i', function ($matches) use ($basePath) {
+			$src = $matches[1];
+			if ($src === '' || strpos($src, 'data:') === 0 || preg_match('#^https?://#i', $src)) {
+				return 'src="' . $src . '"';
+			}
+			$normalized = $src;
+			if (strpos($normalized, $basePath) === 0) {
+				$normalized = '/' . ltrim(substr($normalized, strlen($basePath)), '/');
+			}
+			if ($normalized[0] === '/') {
+				$path = $_SERVER['DOCUMENT_ROOT'] . $normalized;
+			} else {
+				$path = $normalized;
+			}
+			$real = realpath($path);
+			if (!$real) {
+				$docRoot = rtrim($_SERVER['DOCUMENT_ROOT'], '/\\');
+				$prefix = $basePath !== '/' ? rtrim($basePath, '/') : '';
+				$subpath = $normalized;
+				if ($prefix !== '' && strpos($normalized, '/' . ltrim($prefix, '/')) === 0) {
+					$subpath = substr($normalized, strlen('/' . ltrim($prefix, '/')));
+				}
+				$subpath = ltrim($subpath, '/');
+				$candidate = $docRoot . DIRECTORY_SEPARATOR . $prefix . DIRECTORY_SEPARATOR . $subpath;
+				$real = realpath($candidate);
+			}
+			if (!$real) {
+				$publicCandidate = rtrim($_SERVER['DOCUMENT_ROOT'], '/\\') . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . ltrim($normalized, '/');
+				$real = realpath($publicCandidate);
+			}
+			if (!$real) {
+				$projectRoot = dirname(__DIR__);
+				$publicCandidate = $projectRoot . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . ltrim($normalized, '/');
+				$real = realpath($publicCandidate);
+			}
+			if ($real) {
+				$path = $real;
+			}
+			$path = str_replace('\\', '/', $path);
+			if (preg_match('/^[A-Za-z]:\//', $path)) {
+				return 'src="file:///' . $path . '"';
+			}
+			return 'src="file://' . $path . '"';
+		}, $html);
+	}
 	//	echo $doc_buffer;
 	//	
 	//	exit;
@@ -72,10 +120,10 @@
 			$arr_pecas = $pecaService->getById($_POST['id_pecas']);
 		}
 		if ($arr_pecas) {
-			echo $arr_pecas['cod_pecas'];
+			echo normalize_pdf_image_src($arr_pecas['cod_pecas']);
 		}
 	} else {
-		echo $doc_buffer;
+		echo normalize_pdf_image_src($doc_buffer);
 	}
 	echo '</page>';
     $content = ob_get_clean();
@@ -86,9 +134,9 @@
         if (ob_get_length()) {
             ob_end_clean();
         }
-        $html2pdf = new HTML2PDF('P','A4','pt');
+        $html2pdf = new HTML2PDF('P','A4','pt', true, 'UTF-8');
 	//  $html2pdf->setModeDebug();
-        $html2pdf->setDefaultFont('arial');
+        $html2pdf->setDefaultFont('dejavusans');
         $html2pdf->writeHTML($content, isset($_GET['vuehtml']));
         $html2pdf->Output($nompeca.'.pdf','D');
     }

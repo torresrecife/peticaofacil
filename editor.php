@@ -250,8 +250,17 @@ function fc_salvar_pet(valor){
 			 "&nomepet="   + $("#nomepet").val()+
 			 "&codsav="	   + $("#codsav").val()	+ 
 			 "&name_text=" + name_text,
+	   dataType: "json",
 			
-	   success: function(retorno_ajax){
+	   success: function(response){
+			if(!response || !response.ok){
+				var msg = response && response.message ? response.message : "Erro ao salvar peça.";
+				alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+				$("#ger_sav").attr("disabled",false);
+				$("#ger_sav").css("background","url('img/salvar.png') no-repeat");
+				return;
+			}
+			var retorno_ajax = response.data ? response.data.id : "";
 			
 			$("#ger_sav").css("background","url('img/salvar_ok.png') no-repeat");
 			$("#id_sav").val(retorno_ajax);
@@ -330,6 +339,9 @@ function fc_salvar_auto(){
 							$id_pecas = $Wcdsv['id_pecas'];
 							$cls_text2 = $Wcdsv['cod_pecas'];
 						}
+					}
+					if (is_string($cls_text2) && $cls_text2 !== '' && !preg_match('//u', $cls_text2)) {
+						$cls_text2 = utf8_encode($cls_text2);
 					}
 				?>
 				<textarea id="name_text" name="name_text" border="0" ><?php echo $cls_text2; ?></textarea>

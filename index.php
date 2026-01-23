@@ -369,8 +369,13 @@ $dados2 = null;
 				$.ajax({
 					type: 'POST',
 					url: 'inc/ajax_last_pecas.php',
-					success: function (html) {
-						$('#recent-pecas').html(html);
+					dataType: 'json',
+					success: function (response) {
+						if (!response || !response.ok) {
+							$('#recent-pecas').html("<div class='cpanel'><div style='padding:10px;color:#666;'>Não foi possível carregar as últimas petições.</div></div>");
+							return;
+						}
+						$('#recent-pecas').html(response.data ? response.data.html : '');
 					},
 					error: function () {
 						$('#recent-pecas').html("<div class='cpanel'><div style='padding:10px;color:#666;'>Não foi possível carregar as últimas petições.</div></div>");

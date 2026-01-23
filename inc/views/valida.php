@@ -31,7 +31,13 @@ function new_pass(){
 						data: "flag=U" + 
 							  "&id_usu=" + $("#id_usu").val() +
 							  "&senha_usu1=" + $("#senha_usu1").val(),  
-						success: function(x){
+						dataType: "json",
+						success: function(response){
+							if(!response || !response.ok){
+								var msg = response && response.message ? response.message : "Erro ao alterar senha.";
+								alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+								return;
+							}
 							
 							var $dialog = $('<div></div>')
 							.html("<br><table align='center'><tr><td>Senha alterada com sucesso!</td></tr></table>")

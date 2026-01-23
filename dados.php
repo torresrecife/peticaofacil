@@ -158,9 +158,12 @@ if($TIPOPET!=""){
 									type: 'POST',
 									url:  'inc/ajax_horiz.php',
 									data: 'flag=H&dd_input=$dd_input&hinput='+$('#campo$inputdb_5').val()+'&inputdb_0=".$inputdb_0."&inputdb_1=".$inputdb_1."&inputdb_2=".$inputdb_2."&inputdb_3=".$inputdb_3."&inputdb_4=".$inputdb_4."&inputdb_5=".$inputdb_5."',
-									success: function(retorno_ajax){
-										//alert(retorno_ajax);
-										$('#" . $tag . "').html(retorno_ajax);
+									dataType: 'json',
+									success: function(response){
+										if (!response || !response.ok) {
+											return;
+										}
+										$('#" . $tag . "').html(response.data ? response.data.html : '');
 									}
 								});
 							});

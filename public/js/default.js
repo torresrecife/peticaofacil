@@ -251,9 +251,10 @@ function inputs_checkeds(valor){
 								//url:  "inc/ajax_parag.php",
 								url:  "inc/ajax_tipo.php",
 								data: "flag=DT&tipoid=" + $(object).attr("numpet"),
-								success: function(retorno_ajax){
+								dataType: "json",
+								success: function(response){
 									$( this ).dialog( "close" );
-									if(retorno_ajax=="OK"){
+									if(response && response.ok){
 										msgbox("<br><table align='center'><tr><td>Modelo deletado com sucesso !</td></tr></table><br>",{
 											Fechar: function(){
 												$( this ).dialog( "close" );
@@ -261,7 +262,8 @@ function inputs_checkeds(valor){
 											}
 										});
 									}else{
-										alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+										var msg = response && response.message ? response.message : "Erro ao deletar modelo.";
+										alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 									}
 								}
 							});
@@ -354,8 +356,15 @@ function inputs_checkeds(valor){
 			      "&id_ref=" + id_ref +
 			      "&id_val=" + str	  +
 			      "&conex="  + conex,
+			dataType: "json",
 				  
-			success: function(x){
+			success: function(response){
+				if(!response || !response.ok){
+					var msg = response && response.message ? response.message : "Erro ao carregar dados.";
+					alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+					return;
+				}
+				var x = response.data ? response.data.value : "";
 			
 				var quebra="";
 				var iSinput="";
@@ -439,16 +448,27 @@ function inputs_checkeds(valor){
 							 "&inputArqui="	+ $("#inputArqui").attr("checked")	+ 
 							 "&dadSel="   	+ $(".SELEINPUT:checked").val()	+ dadInp +
 							 "&campoId="  	+ campoId,
-							 
-					   success: function(retorno_ajax){
-							if(retorno_ajax==1){
+					   dataType: "json",
+					   success: function(response){
+							if(response && response.data && response.data.status == 2){
+								alert("Campo já existente!");
+								return;
+							}
+							if(response && response.ok){
 								$( "#dialog_inputs" ).dialog( "close" );
 								if(valor3==1){
 									$.ajax({
 										type: "POST",
 										url:  "inc/val_ajax.php",
 										data: "flag=1",
-										success: function(retorno_inp){
+										dataType: "json",
+										success: function(response){
+											if(!response || !response.ok){
+												var msg = response && response.message ? response.message : "Erro ao carregar campo.";
+												alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+												return;
+											}
+											var retorno_inp = response.data ? response.data.value : "";
 											$(".cke_button__smiley").each(function(){
 												if($(this).is(":visible")==true){
 													$(this).click();
@@ -483,10 +503,16 @@ function inputs_checkeds(valor){
 										}
 									});
 								}
-							}else if(retorno_ajax==2){
-								alert("Campo já existente!");
 							}else{
-								alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+								var msg = response && response.message ? response.message : "Erro ao salvar campo.";
+								if (msg && typeof msg === "object") {
+									try {
+										msg = JSON.stringify(msg);
+									} catch (e) {
+										msg = "Erro ao salvar campo.";
+									}
+								}
+								alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 							}
 						}
 					});
@@ -498,51 +524,65 @@ function inputs_checkeds(valor){
 			}			
 		});
 		//carregar campos existentes para editar inputs
-		$.ajax({
-				   type: "POST",
-				   url:  "inc/ajax_input.php",
-				   data: "flag=E&campoId="  + campoId,
-			success: function(retorno_ajax){
-				var ret = retorno_ajax.split("-|-");
-				$("#INPTITLE_PRE").val(ret[2]);
-				$("#INPTITLE_POS").val(ret[3]);
-				$("#INPTITLE").val(ret[4]);
-				$("#db_col").val(ret[7]);
-				$(".SELEINPUT[TIPO="+ret[5]+"]").attr("checked","true");
-				$(".SELEINPUT[TIPO="+ret[5]+"]").click();
-				if(ret[5]=="SELECT"){
-					$.ajax({
-						type: "POST",
-						url:  "inc/ajax_select.php",
-						data: "flag=S&campoId="  + campoId,
-						success: function(retorno_sel){
-							var nsel = retorno_sel.split("-|-");
-							var nhtml = "";
-							for(a in nsel){
-								if(nsel[a]!=""){
-									nhtml += '<p style="display: block;"><input type="text" class="slInputs input-default" value="'+nsel[a]+'" style="width:220px"></p>';
+		if (campoId) {
+			$.ajax({
+					   type: "POST",
+					   url:  "inc/ajax_input.php",
+					   data: "flag=E&campoId="  + campoId,
+					   dataType: "json",
+				success: function(response){
+					if(!response || !response.ok){
+						var msg = response && response.message ? response.message : "Erro ao carregar campo.";
+						alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+						return;
+					}
+					var ret = response.data && response.data.items ? response.data.items : [];
+					$("#INPTITLE_PRE").val(ret[2]);
+					$("#INPTITLE_POS").val(ret[3]);
+					$("#INPTITLE").val(ret[4]);
+					$("#db_col").val(ret[7]);
+					$(".SELEINPUT[TIPO="+ret[5]+"]").attr("checked","true");
+					$(".SELEINPUT[TIPO="+ret[5]+"]").click();
+					if(ret[5]=="SELECT"){
+						$.ajax({
+							type: "POST",
+							url:  "inc/ajax_select.php",
+							data: "flag=S&campoId="  + campoId,
+							dataType: "json",
+							success: function(responseSel){
+								if(!responseSel || !responseSel.ok){
+									var msg = responseSel && responseSel.message ? responseSel.message : "Erro ao carregar opcoes.";
+									alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+									return;
 								}
+								var nsel = responseSel.data && responseSel.data.items ? responseSel.data.items : [];
+								var nhtml = "";
+								for(a in nsel){
+									if(nsel[a] !== ""){
+										nhtml += '<p style="display: block;"><input type="text" class="slInputs input-default" value="'+nsel[a]+'" style="width:220px"></p>';
+									}
+								}
+								$("#inputs").html(nhtml);
 							}
-							$("#inputs").html(nhtml);
-						}
-					});
+						});
+					}
+					$(".INPCHECK[INALT="+ret[8]+"]").attr("checked","true");
+					$(".INPCHECK[INALT="+ret[8]+"]").click();
+					$("#inputcol").val(ret[10]);
+					$("#inputrol").val(ret[11]);
+					$("#inputReq").val(ret[16]);
+					$("#inputLoad").val(ret[13]);
+					$("#inputFocu ").val(ret[12]);
+					$("#inputBlur").val(ret[14]);
+					$("#inputOrdn").val(ret[17]);
+					if(ret[19]=="Y"){
+						$("#inputArqui").attr("checked",true);
+					}else{
+						$("#inputArqui").attr("checked",false);
+					}
 				}
-				$(".INPCHECK[INALT="+ret[8]+"]").attr("checked","true");
-				$(".INPCHECK[INALT="+ret[8]+"]").click();
-				$("#inputcol").val(ret[10]);
-				$("#inputrol").val(ret[11]);
-				$("#inputReq").val(ret[16]);
-				$("#inputLoad").val(ret[13]);
-				$("#inputFocu ").val(ret[12]);
-				$("#inputBlur").val(ret[14]);
-				$("#inputOrdn").val(ret[17]);
-				if(ret[19]=="Y"){
-					$("#inputArqui").attr("checked",true);
-				}else{
-					$("#inputArqui").attr("checked",false);
-				}
-			}
-		});
+			});
+		}
 	}
 	//função editar usuário
 	function fc_edit_usu(valor1,valor2){
@@ -613,8 +653,9 @@ function inputs_checkeds(valor){
 							   type: "POST",
 							   url:  "inc/ajax_usu.php",
 							   data: "flag=" + valor2 + "&" + mdados + "&banco_neo=" + usus,
-							   success: function(retorno_ajax){
-									if(retorno_ajax==1){
+							   dataType: "json",
+							   success: function(response){
+									if(response && response.ok){
 										$( "#dialog-edit-usu" ).dialog( "close" );
 										msgbox("<br><table align='center'><tr><td>Usuário " + tu + " com sucesso !</td></tr></table><br>", {
 											Fechar: function(){
@@ -622,10 +663,9 @@ function inputs_checkeds(valor){
 												EnviarDados('index.php','8','');
 											}
 										});
-									}else if(retorno_ajax==2){
-										alert("Usuário já cadastrado!");
 									}else{
-										alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+										var msg = response && response.message ? response.message : "Erro ao salvar usuario.";
+										alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 									}
 								}
 							});
@@ -647,8 +687,14 @@ function inputs_checkeds(valor){
 			type: "POST",
 			url:  "inc/ajax_usu.php",
 			data: "flag=E&id_usu=" + valor1,
-			success: function(retorno_ajax){
-				var ret = retorno_ajax.split("-|-");
+			dataType: "json",
+			success: function(response){
+				if(!response || !response.ok){
+					var msg = response && response.message ? response.message : "Erro ao carregar usuario.";
+					alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+					return;
+				}
+				var ret = response.data && response.data.items ? response.data.items : [];
 				
 				$("#id_usu").val(ret[0]);
 				$("#nome_usu").val(ret[2]);
@@ -700,8 +746,9 @@ function inputs_checkeds(valor){
 								   type: "POST",
 								   url:  "inc/ajax_usu.php",
 								   data: "flag=" + valor2 + "&" + mdados + "&banco_neo=" + usus,
-								   success: function(retorno_ajax){
-										if(retorno_ajax==1){
+								   dataType: "json",
+								   success: function(response){
+										if(response && response.ok){
 											$( "#dialog-edit-usu" ).dialog( "close" );
 											msgbox(valor2=="I"?"<br><table align='center'><tr><td>Usuário " + tu + " com sucesso !</td></tr></table><br>":"<br><table align='center'><tr><td>Campo editado com sucesso !</td></tr></table><br>", {
 												Fechar: function(){
@@ -709,10 +756,9 @@ function inputs_checkeds(valor){
 													EnviarDados('index.php','8','');
 												}
 											});
-										}else if(retorno_ajax==2){
-											alert("Usuário já cadastrado!");
 										}else{
-											alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+											var msg = response && response.message ? response.message : "Erro ao salvar usuario.";
+											alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 										}
 									}
 								});
@@ -751,8 +797,14 @@ function inputs_checkeds(valor){
 			type: "POST",
 			url:  "inc/ajax_sql.php",
 			data: "flag=E&id_db=" + valor1,
-			success: function(retorno_ajax){
-				var ret = retorno_ajax.split("-|-");
+		dataType: "json",
+		success: function(response){
+			if(!response || !response.ok){
+				var msg = response && response.message ? response.message : "Erro ao carregar servidor.";
+				alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+				return;
+			}
+			var ret = response.data && response.data.items ? response.data.items : [];
 				//alert(ret[1]);
 				$("#id_db").val(ret[0]);
 				$("#nome_db").val(ret[1]);
@@ -792,8 +844,9 @@ function inputs_checkeds(valor){
 							   type: "POST",
 							   url:  "inc/ajax_sql.php",
 							   data: "flag=" + valor2 + "&" + mdados,
-							   success: function(retorno_ajax){
-									if(retorno_ajax==1){
+							   dataType: "json",
+							   success: function(response){
+									if(response && response.ok){
 										$( "#dialog-edit-sql" ).dialog( "close" );
 										msgbox(valor2=="I"?"<br><table align='center'><tr><td>Servidor " + tu + " com sucesso !</td></tr></table><br>":"<br><table align='center'><tr><td>Servidor editado com sucesso !</td></tr></table><br>", {
 											Fechar: function(){
@@ -801,10 +854,9 @@ function inputs_checkeds(valor){
 												EnviarDados('index.php','11','');
 											}
 										});
-									}else if(retorno_ajax==2){
-										alert("Servidor já cadastrado!");
 									}else{
-										alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+										var msg = response && response.message ? response.message : "Erro ao salvar servidor.";
+										alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 									}
 								}
 							});
@@ -842,9 +894,14 @@ function inputs_checkeds(valor){
 			type: "POST",
 			url:  "inc/ajax_list.php",
 			data: "flag=E&id_lista=" + valor1,
-			success: function(retorno_ajax){
-				
-				$("#return_lista").html(retorno_ajax);
+		dataType: "json",
+		success: function(response){
+			if(!response || !response.ok){
+				var msg = response && response.message ? response.message : "Erro ao carregar lista.";
+				alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+				return;
+			}
+			$("#return_lista").html(response.data ? response.data.html : "");
 				var dh = 440;
 				var i = $('input').size() + 1;
 				$( "#dialog-edit-list" ).dialog({
@@ -938,8 +995,9 @@ function inputs_checkeds(valor){
 									nome_grupo: $("#nome_grupo").val(),
 									lista_json: JSON.stringify(rows)
 								},
-								success: function(retorno_ajax){
-									if(retorno_ajax==1){
+								dataType: "json",
+								success: function(response){
+									if(response && response.ok){
 										$( "#dialog-edit-list" ).dialog( "close" );
 										msgbox(valor2=="I"?"<br><table align='center'><tr><td>Servidor " + tu + " com sucesso !</td></tr></table><br>":"<br><table align='center'><tr><td>Servidor editado com sucesso !</td></tr></table><br>", {
 											Fechar: function(){
@@ -947,8 +1005,9 @@ function inputs_checkeds(valor){
 												EnviarDados('index.php','12','');
 											}
 										});
-									}else if(retorno_ajax!=1){
-										msgbox("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)", {
+									}else{
+										var msg = response && response.message ? response.message : "Erro ao salvar lista.";
+										msgbox("Erro: " + msg + ". (Copie esse erro e informe ao administrador)", {
 											Fechar: function(){
 												$( this ).dialog( "close" );
 												EnviarDados('index.php','12','');
@@ -988,8 +1047,14 @@ function inputs_checkeds(valor){
 			type: "POST",
 			url:  "inc/ajax_setor.php",
 			data: "flag=E&id_setor=" + valor1,
-			success: function(retorno_ajax){
-				var ret = retorno_ajax.split("-|-");
+		dataType: "json",
+		success: function(response){
+			if(!response || !response.ok){
+				var msg = response && response.message ? response.message : "Erro ao carregar setor.";
+				alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+				return;
+			}
+			var ret = response.data && response.data.items ? response.data.items : [];
 				//alert(ret[1]);
 				$("#id_setor").val(ret[0]);
 				$("#nome_setor").val(ret[1]);
@@ -1021,8 +1086,9 @@ function inputs_checkeds(valor){
 							   type: "POST",
 							   url:  "inc/ajax_setor.php",
 							   data: "flag=" + valor2 + "&" + mdados,
-							   success: function(retorno_ajax){
-									if(retorno_ajax==1){
+							   dataType: "json",
+							   success: function(response){
+									if(response && response.ok){
 										$( "#dialog-edit-setor" ).dialog( "close" );
 										msgbox(valor2=="I"?"<br><table align='center'><tr><td>Setor " + tu + " com sucesso !</td></tr></table><br>":"<br><table align='center'><tr><td>Campo editado com sucesso !</td></tr></table><br>", {
 											Fechar: function(){
@@ -1030,10 +1096,9 @@ function inputs_checkeds(valor){
 												EnviarDados('index.php','9','');
 											}
 										});
-									}else if(retorno_ajax==2){
-										alert("Setor já cadastrado!");
 									}else{
-										alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+										var msg = response && response.message ? response.message : "Erro ao salvar setor.";
+										alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 									}
 								}
 							});
@@ -1071,8 +1136,14 @@ function inputs_checkeds(valor){
 			type: "POST",
 			url:  "inc/ajax_cliente.php",
 			data: "flag=E&cliente_id=" + valor1,
-			success: function(retorno_ajax){
-				var ret = retorno_ajax.split("-|-");
+		dataType: "json",
+		success: function(response){
+			if(!response || !response.ok){
+				var msg = response && response.message ? response.message : "Erro ao carregar cliente.";
+				alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+				return;
+			}
+			var ret = response.data && response.data.items ? response.data.items : [];
 				//alert(ret[1]);
 				$("#cliente_id").val(ret[0]);
 				$("#cliente_name").val(ret[1]);
@@ -1106,8 +1177,9 @@ function inputs_checkeds(valor){
 							   type: "POST",
 							   url:  "inc/ajax_cliente.php",
 							   data: "flag=" + valor2 + "&" + mdados,
-							   success: function(retorno_ajax){
-									if(retorno_ajax==1){
+							   dataType: "json",
+							   success: function(response){
+									if(response && response.ok){
 										$( "#dialog-edit-cliente" ).dialog( "close" );
 										msgbox(valor2=="I"?"<br><table align='center'><tr><td>Cliente " + tu + " com sucesso !</td></tr></table><br>":"<br><table align='center'><tr><td>Campo editado com sucesso !</td></tr></table><br>", {
 											Fechar: function(){
@@ -1115,10 +1187,9 @@ function inputs_checkeds(valor){
 												EnviarDados('index.php','13','');
 											}
 										});
-									}else if(retorno_ajax==2){
-										alert("Cliente já cadastrado!");
 									}else{
-										alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+										var msg = response && response.message ? response.message : "Erro ao salvar cliente.";
+										alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 									}
 								}
 							});
@@ -1145,9 +1216,10 @@ function inputs_checkeds(valor){
 					type: "POST",
 					url:  "inc/ajax_usu.php",
 					data: "flag=D&id_usu=" + valor1,
-					success: function(retorno_ajax){
+					dataType: "json",
+					success: function(response){
 						$( this ).dialog( "close" );
-						if(retorno_ajax==1){
+						if(response && response.ok){
 							msgbox("<br><table align='center'><tr><td>Usuário deletado com sucesso !</td></tr></table><br>",{
 								Fechar: function(){
 									$( this ).dialog( "close" );
@@ -1155,7 +1227,8 @@ function inputs_checkeds(valor){
 								}
 							});
 						}else{
-							alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+							var msg = response && response.message ? response.message : "Erro ao deletar usuario.";
+							alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 						}
 					}
 				});
@@ -1174,9 +1247,10 @@ function inputs_checkeds(valor){
 					type: "POST",
 					url:  "inc/ajax_sql.php",
 					data: "flag=D&id_db=" + valor1,
-					success: function(retorno_ajax){
+					dataType: "json",
+					success: function(response){
 						$( this ).dialog( "close" );
-						if(retorno_ajax==1){
+						if(response && response.ok){
 							msgbox("<br><table align='center'><tr><td>Servidor deletado com sucesso !</td></tr></table><br>",{
 								Fechar: function(){
 									$( this ).dialog( "close" );
@@ -1184,7 +1258,8 @@ function inputs_checkeds(valor){
 								}
 							});
 						}else{
-							alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+							var msg = response && response.message ? response.message : "Erro ao deletar servidor.";
+							alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 						}
 					}
 				});
@@ -1202,9 +1277,10 @@ function inputs_checkeds(valor){
 					type: "POST",
 					url:  "inc/ajax_list_edit.php",
 					data: "flag=D&num_grupo=" + valor1,
-					success: function(retorno_ajax){
+					dataType: "json",
+					success: function(response){
 						$( this ).dialog( "close" );
-						if(retorno_ajax==1){
+						if(response && response.ok){
 							msgbox("<br><table align='center'><tr><td>Lista deletada com sucesso !</td></tr></table><br>",{
 								Fechar: function(){
 									$( this ).dialog( "close" );
@@ -1212,7 +1288,8 @@ function inputs_checkeds(valor){
 								}
 							});
 						}else{
-							alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+							var msg = response && response.message ? response.message : "Erro ao deletar lista.";
+							alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 						}
 					}
 				});
@@ -1229,9 +1306,10 @@ function inputs_checkeds(valor){
 					type: "POST",
 					url:  "inc/ajax_setor.php",
 					data: "flag=D&id_setor=" + valor1,
-					success: function(retorno_ajax){
+					dataType: "json",
+					success: function(response){
 						$( this ).dialog( "close" );
-						if(retorno_ajax==1){
+						if(response && response.ok){
 							msgbox("<br><table align='center'><tr><td>Setor deletado com sucesso !</td></tr></table><br>",{
 								Fechar: function(){
 									$( this ).dialog( "close" );
@@ -1239,7 +1317,8 @@ function inputs_checkeds(valor){
 								}
 							});
 						}else{
-							alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+							var msg = response && response.message ? response.message : "Erro ao deletar setor.";
+							alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 						}
 					}
 				});
@@ -1257,9 +1336,10 @@ function inputs_checkeds(valor){
 					type: "POST",
 					url:  "inc/ajax_cliente.php",
 					data: "flag=D&cliente_id=" + valor1,
-					success: function(retorno_ajax){
+					dataType: "json",
+					success: function(response){
 						$( this ).dialog( "close" );
-						if(retorno_ajax==1){
+						if(response && response.ok){
 							msgbox("<br><table align='center'><tr><td>Cliente deletado com sucesso !</td></tr></table><br>",{
 								Fechar: function(){
 									$( this ).dialog( "close" );
@@ -1267,7 +1347,8 @@ function inputs_checkeds(valor){
 								}
 							});
 						}else{
-							alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+							var msg = response && response.message ? response.message : "Erro ao deletar cliente.";
+							alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 						}
 					}
 				});
@@ -1327,14 +1408,18 @@ function inputs_checkeds(valor){
 				   url:  "inc/ajax_input.php",
 				   data: "flag=D" + 
 						 "&idvalor=" + valor,
-				   success: function(retorno_ajax){
-						if(retorno_ajax ==1){
+				   dataType: "json",
+				   success: function(response){
+						if(response && response.ok){
 							msgbox("<br><table align='center'><tr><td> Campo excluir com sucesso !</td></tr></table>", {
 								Fechar: function() {
 									$( this ).dialog( "close" );
 									EnviarDados('index.php','7',$('#TIPOPET').val());
 								}
 							});
+						}else{
+							var msg = response && response.message ? response.message : "Erro ao excluir campo.";
+							alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 						}
 					}
 				});
@@ -1433,8 +1518,14 @@ function inputs_checkeds(valor){
 			   type: "POST",
 			   url:  "inc/ajax_input.php",
 			   data: "flag=G&idvalor=" + $("#TIPOPET").val(),
-			   success: function(retorno_ajax){
-				   $("#div_InLoad").html(retorno_ajax);
+			   dataType: "json",
+			   success: function(response){
+				   if(!response || !response.ok){
+					   var msg = response && response.message ? response.message : "Erro ao carregar campos.";
+					   alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+					   return;
+				   }
+				   $("#div_InLoad").html(response.data ? response.data.html : "");
 				}
 			});
 			$( "#dialog_inputs" ).dialog({height:440});
@@ -1898,8 +1989,14 @@ function add_dado(){
 		type: "POST",
 		url:  "inc/val_ajax.php",
 		data: "flag=2&tipoid="+tipopeti,
-		success: function(retorno_sel){
-			$("#inputOrdn").val(retorno_sel);
+		dataType: "json",
+		success: function(response){
+			if(!response || !response.ok){
+				var msg = response && response.message ? response.message : "Erro ao carregar ordem.";
+				alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+				return;
+			}
+			$("#inputOrdn").val(response.data ? response.data.value : "");
 		}
 	});
 }
@@ -1908,8 +2005,9 @@ function Cpadrao(valor){
 		type: "POST",
 		url:  "inc/ajax_cpadrao.php",
 		data: "flag=I&tipoid="+valor,
-		success: function(retorno_ajax){
-			if(retorno_ajax==1){
+		dataType: "json",
+		success: function(response){
+			if(response && response.ok){
 				msgbox("<br><table align='center'><tr><td>Campos padrão criados com sucesso !</td></tr></table><br>", {
 					Fechar: function(){
 						$( this ).dialog( "close" );
@@ -1917,7 +2015,8 @@ function Cpadrao(valor){
 					}
 				});
 			}else{
-				alert("Erro: " + retorno_ajax + ". (Copie esse erro e informe ao administrador)");
+				var msg = response && response.message ? response.message : "Erro ao criar campos padrao.";
+				alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 			}
 				
 		}
@@ -1950,7 +2049,14 @@ function sel_tipo(valor1,valor2,selected){
 		type: "POST",
 		url:  "inc/ajax_select2.php",
 		data: "flag=" + valor2 + "&dados=" + valor1,
-		success: function(retorno_ajax){
+		dataType: "json",
+		success: function(response){
+			if(!response || !response.ok){
+				var msg = response && response.message ? response.message : "Erro ao carregar selecao.";
+				alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
+				return;
+			}
+			var retorno_ajax = response.data ? response.data.html : "";
 			if(valor1==0){
 				$(".cls_andam").html(retorno_ajax);
 				if(valor2==1){

@@ -1,51 +1,44 @@
 <?php
 
 require_once __DIR__ . "/seguranca.php";
+require_once __DIR__ . "/response.php";
 protegePagina();
 
 if($_POST['flag']=="I"){
-	header("Content-Type: text/html; charset=UTF-8");
 	$toptitle = $_POST['toptitle'] ? (strtoupper($_POST['toptitle'])) : "''";
 	$tipo_id =  $_POST['tipo_id']  ? $_POST['tipo_id']  : "''";
 	$title = '<div class="titulos">' . $toptitle . '</div><p>&nbsp;</p><p align="left"></p>';
 	if (!class_exists(\App\Services\ParagrafoService::class)) {
-		print "ERRO";
-		exit;
+		json_err("Servico indisponivel.");
 	}
 	$service = new \App\Services\ParagrafoService($conexao1);
 	$ok = $service->create($tipo_id, $toptitle);
-	print $ok ? "OK" : "ERRO";
+	$ok ? json_ok(array('title' => $title)) : json_err("Erro ao criar paragrafo.");
 	
 }elseif($_POST['flag']=="S"){
-	header("Content-Type: text/html; charset=UTF-8");
 	$fund_id   = $_POST['fund_id']   ? $_POST['fund_id']   : "''";
 	$fund_text = $_POST['fund_text'] ? str_replace("%u2013","-",$_POST['fund_text']) : "''";
 	if (!class_exists(\App\Services\ParagrafoService::class)) {
-		print "ERRO";
-		exit;
+		json_err("Servico indisponivel.");
 	}
 	$service = new \App\Services\ParagrafoService($conexao1);
 	$ok = $service->updateText($fund_id, $fund_text);
-	print $ok ? "OK" : "ERRO";
-	exit;
+	$ok ? json_ok() : json_err("Erro ao salvar paragrafo.");
 }elseif($_POST['flag']=="T"){
-	print "ERRO";
+	json_err("Operacao invalida.");
 }elseif($_POST['flag']=="D"){
 	if (!class_exists(\App\Services\ParagrafoService::class)) {
-		print "ERRO";
-		exit;
+		json_err("Servico indisponivel.");
 	}
 	$service = new \App\Services\ParagrafoService($conexao1);
 	$ok = $service->delete($_POST['idvalor']);
-	print $ok ? "OK" : "ERRO";
+	$ok ? json_ok() : json_err("Erro ao remover paragrafo.");
 }elseif($_POST['flag']=="DT"){
-	print "ERRO";
+	json_err("Operacao invalida.");
 }elseif($_POST['flag']=="C"){
-	print "ERRO";
-	exit;
+	json_err("Operacao invalida.");
 }elseif($_POST['flag']=="R"){
-	print "ERRO";
-	exit;
+	json_err("Operacao invalida.");
 }
 
 ?>

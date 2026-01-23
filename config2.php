@@ -63,15 +63,18 @@ function del_parag(valor){
 			   url:  "inc/ajax_parag.php",
 			   data: "flag=D" + 
 					 "&idvalor=" + valor,
-					 
-			   success: function(retorno_ajax){
-					if(retorno_ajax =='OK'){
+			   dataType: "json",
+			   success: function(response){
+					if(response && response.ok){
 						msgbox("<br><table align='center'><tr><td> Input deletado com sucesso !</td></tr></table>", {
 							Fechar: function() {
 								$( this ).dialog( "close" );
 								EnviarDados('index.php','6',$('#TIPOPET').val());
 							}
 						});
+					}else{
+						var msg = response && response.message ? response.message : "Erro ao deletar topico.";
+						alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 					}
 				}
 			});
@@ -92,9 +95,9 @@ function save_parag(id,valor1,valor2){
 			   data: "flag=" + valor2 + 
 					 "&fund_id=" 	+ id + 
 					 "&fund_text=" 	+ escape($(valor1).val()),
-					 
-			   success: function(retorno_ajax){
-					if(retorno_ajax == 'OK'){
+			   dataType: "json",
+			   success: function(response){
+					if(response && response.ok){
 						// msgbox("<br><table align='center'><tr><td> Texto salvo com sucesso !</td></tr></table>", {
 						// 	Fechar: function() {
 						// 		$( this ).dialog( "close" );
@@ -105,6 +108,9 @@ function save_parag(id,valor1,valor2){
                         setTimeout(function (){
                             $("#cke_notifications_area_input_cabec").remove();
                         },1000);
+					}else{
+						var msg = response && response.message ? response.message : "Erro ao salvar topico.";
+						alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 					}
 				}
 			});
@@ -132,8 +138,9 @@ function novo_parag(){
 				   data: "flag=I" + 
 						 "&toptitle=" + escape($("#TOPTITLE").val()) +
 						 "&tipo_id=" + escape($("#tipo_id").val()),
-				   success: function(retorno_ajax){
-						if(retorno_ajax =1){
+				   dataType: "json",
+				   success: function(response){
+						if(response && response.ok){
 							$( "#dialog_parag" ).dialog( "close" );
 							msgbox("<br> Tópico criado com sucesso !", {
 								Fechar: function(){
@@ -141,6 +148,9 @@ function novo_parag(){
 									EnviarDados('index.php','6',$('#TIPOPET').val());
 								}
 							});
+						}else{
+							var msg = response && response.message ? response.message : "Erro ao criar topico.";
+							alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 						}
 					}
 				});

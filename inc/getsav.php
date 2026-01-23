@@ -2,6 +2,7 @@
 	
 	require_once __DIR__ . "/functions.php";
 	require_once __DIR__ . "/seguranca.php";
+	require_once __DIR__ . "/response.php";
 	protegePagina();
 	
 $tipo_id = $_POST['tipo_id'];
@@ -26,8 +27,11 @@ $texto = str_replace("_|_","&",$_POST['name_text']);
 if (class_exists(\App\Services\PecaService::class)) {
 	$pecaService = new \App\Services\PecaService($conexao1);
 	$id = $pecaService->savePeca($tipo_id, $idpecas, $nomtipo, $nomecli, $texto, $_POST['codsav'], $usu_idusu);
-	echo $id ? $id : 0;
+	if ($id) {
+		json_ok(array('id' => $id));
+	}
+	json_err("Erro ao salvar peça.");
 } else {
-	echo 0;
+	json_err("Servico indisponivel.");
 }
 ?>

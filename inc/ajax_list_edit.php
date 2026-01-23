@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . "/seguranca.php";
+require_once __DIR__ . "/response.php";
 protegePagina();
 
 function parseListaRows($numList, $post)
@@ -49,8 +50,7 @@ if($_POST['flag']=="U" || $_POST['flag']=="I"){
 		if (!empty($_POST['lista_json'])) {
 			$rows = json_decode($_POST['lista_json'], true);
 			if (!is_array($rows)) {
-				echo 0;
-				exit;
+				json_err("Lista invalida.");
 			}
 		} else {
 			$rows = parseListaRows((int) $_POST['num_list'], $_POST);
@@ -58,21 +58,17 @@ if($_POST['flag']=="U" || $_POST['flag']=="I"){
 		$isNew = $_POST['novo_grupo'] === 'sim';
 		$okGroup = $service->saveGrupo($numGrupo, $_POST['nome_grupo'], $isNew);
 		$okRows = $service->saveItens($numGrupo, $rows);
-		echo ($okGroup && $okRows) ? 1 : 0;
-		exit;
+		($okGroup && $okRows) ? json_ok() : json_err("Erro ao salvar lista.");
 	}
-	echo 0;
-	exit;
+	json_err("Servico indisponivel.");
 }
 elseif($_POST['flag']=="D")
 {
 	if (class_exists(\App\Services\ListaService::class)) {
 		$service = new \App\Services\ListaService($conexao1);
 		$ok = $service->deleteGroup($_POST['num_grupo']);
-		echo $ok ? 1 : 0;
-		exit;
+		$ok ? json_ok() : json_err("Erro ao remover lista.");
 	}
-	echo 0;
-	exit;
+	json_err("Servico indisponivel.");
 }
 ?>
