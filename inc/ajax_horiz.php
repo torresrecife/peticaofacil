@@ -6,13 +6,11 @@
 	require_once __DIR__ . "/seguranca.php";
 	protegePagina();
 	
-	if (!class_exists(\App\Services\HorizService::class)) {
-		echo "<option></option>";
-		exit;
+	$options = "<option></option>";
+	if (class_exists(\App\Services\HorizService::class)) {
+		$service = new \App\Services\HorizService($conexao1);
+		$options = $service->buildOptions($_POST, $dd_input ?? null);
 	}
-
-	$service = new \App\Services\HorizService($conexao1);
-	echo $service->buildOptions($_POST, $dd_input ?? null);
+	require __DIR__ . "/views/ajax_horiz_options.php";
 	exit;
-	
 ?>

@@ -101,13 +101,15 @@ function expulsaVisitante(){
 		}
 		session_destroy();
 	}
-	echo ('<script language="javascript">alert("Usuário ou senha Inválidos!")</script>');
 	$baseUrl = getenv('APP_URL');
 	if (!$baseUrl) {
 		$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 		$baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
 	}
-	exit ('<SCRIPT LANGUAGE="JavaScript">window.location="'.rtrim($baseUrl, '/').'/login.php";</script>');
+	$message = "Usuário ou senha Inválidos!";
+	$target = rtrim($baseUrl, '/') . '/login.php';
+	require __DIR__ . "/views/login_redirect.php";
+	exit;
 }
 
 function expulsaVisitante2(){
@@ -126,7 +128,10 @@ function expulsaVisitante2(){
 		$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 		$baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
 	}
-	exit ('<SCRIPT LANGUAGE="JavaScript">window.location="'.rtrim($baseUrl, '/').'/login.php";</script>');
+	$message = "";
+	$target = rtrim($baseUrl, '/') . '/login.php';
+	require __DIR__ . "/views/login_redirect.php";
+	exit;
 }
 
 ?>

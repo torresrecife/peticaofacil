@@ -67,14 +67,7 @@ if ($_POST['flag'] == "I") {
 	$service = new \App\Services\InputService($conexao1);
 	header("Content-Type: text/html; charset=ISO-8859-1", true);
 	$rows = $service->listInputsByTipo($idvalor);
-	echo "<select name=\"inputLoad\" id=\"inputLoad\" class=\"input-default\" style=\"width:160px; height:20px\">";
-	echo "<option></option>";
-	foreach ($rows as $row) {
-		$id = $row['id_input'];
-		$title = $row['input_title'];
-		echo "<option value='$(this).val($(\"#campo" . $id . "\").val());'>" . $title . "</option>";
-	}
-	echo "</select>";
+	require __DIR__ . "/views/ajax_input_select.php";
 	exit;
 }
 ?>
