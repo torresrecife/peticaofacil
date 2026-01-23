@@ -1,0 +1,47 @@
+$(function() {
+	$("#accordion").accordion({
+		autoHeight: false,
+		navigation: true,
+		header: "> div > h3"
+	});
+
+	$(".group .delete").click(function() {
+		$(this).parents(".group").fadeOut('slow', function() {
+			$(this).remove();
+		});
+	});
+
+	var config2 = {
+		extraPlugins: 'autogrow,myplugin,sharedspace,uploadimage',
+		removePlugins: 'floatingspace,resize',
+		sharedSpaces: {
+			top: 'topSpace',
+			bottom: 'bottomSpace'
+		},
+		language: 'pt_BR',
+		contentsCss: 'css/texto.css'
+	};
+	CKEDITOR.config.skin = 'moono-lisa';
+	CKEDITOR.config.tabSpaces = 4;
+	CKEDITOR.config.removePlugins = 'elementspath';
+	CKEDITOR.config.width = 618.7;
+	CKEDITOR.config.defaultLanguage = 'pt_BR';
+	CKEDITOR.config.toolbarGroups = [
+		{ name: 'basicstyles', groups: ['basicstyles', 'cleanup'] },
+		{ name: 'clipboard', groups: ['clipboard', 'undo'] },
+		{ name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph'] },
+		{ name: 'insert', groups: ['insert', 'Image'] },
+		{ name: 'editing', groups: ['find', 'selection', 'spellchecker', 'editing'] },
+		{ name: 'styles', groups: ['styles'] },
+		{ name: 'document', groups: ['mode', 'document', 'doctools'] },
+		{ name: 'colors', groups: ['colors'] },
+		{ name: 'tools', groups: ['tools'] },
+		{ name: 'links', groups: ['links'] },
+		{ name: 'forms', groups: ['forms'] },
+		{ name: 'others', groups: ['others'] },
+		{ name: 'about', groups: ['about'] }
+	];
+	CKEDITOR.config.removeButtons = 'Save,NewPage,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Flash,Smiley,SpecialChar,Iframe,About,ShowBlocks,Templates,Anchor,Unlink,Link,Language,BidiRtl,BidiLtr,Styles,Blockquote,CreateDiv,PageBreak,Print,Preview,Maximize';
+
+	$('.cls_text').ckeditor(config2);
+});

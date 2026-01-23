@@ -8,109 +8,7 @@
 	</tr>
 </table>
 
-<script>
-var rand = 0;
-var config3 = {
-	extraPlugins: 'autogrow,myplugin,sharedspace,uploadimage',
-	removePlugins: 'floatingspace,resize',
-	sharedSpaces: {
-		top: 'topSpace',
-		bottom: 'bottomSpace'
-	},
-	language: 'pt_BR',
-	contentsCss : 'css/texto.css'
-	};
-	CKEDITOR.config.skin = 'moono-lisa';
-	CKEDITOR.config.tabSpaces = 4;
-	CKEDITOR.config.removePlugins = 'elementspath';
-	// CKEDITOR.config.width = 618.7;
-	CKEDITOR.config.defaultLanguage = 'pt_BR';
-	CKEDITOR.config.toolbarGroups = [
-		{ name: 'basicstyles', groups: [ 'basicstyles', 'cleanup' ] },
-		{ name: 'clipboard', groups: [ 'clipboard', 'undo' ] },
-		{ name: 'paragraph', groups: [ 'list', 'indent', 'blocks', 'align', 'bidi', 'paragraph' ] },
-		{ name: 'insert', groups: [ 'insert' ] },
-		{ name: 'editing', groups: [ 'find', 'selection', 'spellchecker', 'editing' ] },
-		{ name: 'styles', groups: [ 'styles' ] },
-		{ name: 'document', groups: [ 'mode', 'document', 'doctools' ] },
-		{ name: 'colors', groups: [ 'colors' ] },
-		{ name: 'tools', groups: [ 'tools' ] },
-		{ name: 'links', groups: [ 'links' ] },
-		{ name: 'forms', groups: [ 'forms' ] },
-		{ name: 'others', groups: [ 'others' ] },
-		{ name: 'about', groups: [ 'about' ] }
-	];
-	CKEDITOR.config.removeButtons = 'Save,NewPage,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Image,Flash,Smiley,SpecialChar,Iframe,About,ShowBlocks,Templates,Anchor,Unlink,Link,Language,BidiRtl,BidiLtr,Styles,Blockquote,CreateDiv,PageBreak,Print,Preview';
-	
-	function fc_textarea(valor,texto,editor){
-		rand = parseInt(rand) + 1;
-		var $dialog = $('<div></div>')
-			.html(
-				"<textarea id='id_text_"+rand+"' style='width:99%;height:200px'>" + valor.value + "</textarea>"
-				)
-			.dialog({
-				position: ["60%",145],
-				width: "700px",
-				modal: true,
-				autoOpen: true,
-				close: function(){
-					///apaga o editor de texto CKE
-					$("#topSpace").html("");
-				},
-				buttons: {
-					Sim: function() {
-						$( this ).dialog( "close" );
-						$('#'+valor.id).val($('#id_text_'+rand).val());
-					},	
-					"Não": function() {
-						$( this ).dialog( "close" );
-					}
-				},
-				title: texto,
-			});
-		if(editor==2){
-			$('#id_text_'+rand).ckeditor(config3);
-		}
-	}
-	
-	function validate_peticao(args=""){
-		//alert(1);
-		var dd = 0;
-		$('.new_required').each(function(index,object) {
-			
-			if(args!=""){
-				if($(object).val()=="AUSENTE" || $(object).val()=="MUDOU-SE" || $(object).val()=="DESCONHECIDO"  ){
-					dd=1;
-				}
-			}else{
-				if($(object).val()=="NÃO" && $(object).attr("type")!="radio"){
-					dd=1;	
-				}else if($(object).attr("type")=="radio"){
-					setTimeout(function(){
-						//console.log($(object).is(":checked"));
-						if($(object).is(":checked")==true && $(object).val()=="NÃO"){
-							dd=1;
-						}
-						
-					},200);
-				}
-			}
-			
-		});
-		
-		setTimeout(function(){		
-			if(dd==1){
-				$("#bt-enviar-dados").attr("disabled",true).css("border","1px solid red");
-				$(".content_form").css("border","1px solid red");
-				$("#msg-enviar-dados").show();
-			}else{
-				$("#bt-enviar-dados").attr("disabled",false).css("border","1px solid #d3d3d3");
-				$(".content_form").css("border","0");
-				$("#msg-enviar-dados").hide();
-			}
-		},500);
-	}
-</script>
+<script type="text/javascript" src="js/pages/dados.js"></script>
 
 <table align="center" class="content_form">
 <?php
@@ -138,10 +36,12 @@ if($TIPOPET!=""){
 			$dd = $w['input_val'];			
 			if($w['input_tipo']=='SELECT') {
 				echo "<td colspan='" . $w['input_cols'] . "' class='td_title dis_" . $tag . "' style='display:" . $w['hide'] . "'><label>" . $w['input_title'] . "</label><label style='float:right;margin-right:30px;display:" . $displ . "'>" . $w['input_order'] . " - Campo" . $w['id_input'] . "</label><br>";					  
-				echo "<select type='text' id='" . $tag . "' name='" . $tag . "' class='input-default " . $w['add_class'] . "' style='width:" . $w['input_width'] . "px' " . $onFuncoes . " obrigatorio='" . $w['input_req'] . "' descricao='" . strtoupper($w['input_title']) . "' >";
+				$selectClass = "input-default " . $w['add_class'] . " js-combobox";
+				$dataAttrs = "";
 				
+				echo "<select type='text' id='" . $tag . "' name='" . $tag . "' class='" . $selectClass . "' style='width:" . $w['input_width'] . "px' " . $onFuncoes . " obrigatorio='" . $w['input_req'] . "' descricao='" . strtoupper($w['input_title']) . "'" . $dataAttrs . ">";
+				$optionsHtml = "";
 				if($w['input_db']!=""){
-					
 					$input_db = explode("_|_",$w['input_db']);
 					$inputdb_0 = $input_db[0];
 					$inputdb_1 = $input_db[1];
@@ -150,24 +50,18 @@ if($TIPOPET!=""){
 					$inputdb_4 = $input_db[4];
 					$inputdb_5 = isset($input_db[5])?$input_db[5]:'';
 					$dd_input  = $dados[$w['input_val']];
-					
+
 					if($inputdb_4=="hori"){
-						///passado algum tempo deve remover esse ajax e deletar o arquivo ajax_horiz.php
-						echo "<script>$(function() { 
-								$.ajax({
-									type: 'POST',
-									url:  'inc/ajax_horiz.php',
-									data: 'flag=H&dd_input=$dd_input&hinput='+$('#campo$inputdb_5').val()+'&inputdb_0=".$inputdb_0."&inputdb_1=".$inputdb_1."&inputdb_2=".$inputdb_2."&inputdb_3=".$inputdb_3."&inputdb_4=".$inputdb_4."&inputdb_5=".$inputdb_5."',
-									dataType: 'json',
-									success: function(response){
-										if (!response || !response.ok) {
-											return;
-										}
-										$('#" . $tag . "').html(response.data ? response.data.html : '');
-									}
-								});
-							});
-						  </script>";
+						$selectClass .= " js-horiz-select";
+						$dataAttrs .= " data-dd-input='" . htmlspecialchars((string) $dd_input, ENT_QUOTES, 'UTF-8') . "'";
+						$dataAttrs .= " data-inputdb-0='" . htmlspecialchars((string) $inputdb_0, ENT_QUOTES, 'UTF-8') . "'";
+						$dataAttrs .= " data-inputdb-1='" . htmlspecialchars((string) $inputdb_1, ENT_QUOTES, 'UTF-8') . "'";
+						$dataAttrs .= " data-inputdb-2='" . htmlspecialchars((string) $inputdb_2, ENT_QUOTES, 'UTF-8') . "'";
+						$dataAttrs .= " data-inputdb-3='" . htmlspecialchars((string) $inputdb_3, ENT_QUOTES, 'UTF-8') . "'";
+						$dataAttrs .= " data-inputdb-4='" . htmlspecialchars((string) $inputdb_4, ENT_QUOTES, 'UTF-8') . "'";
+						$dataAttrs .= " data-inputdb-5='" . htmlspecialchars((string) $inputdb_5, ENT_QUOTES, 'UTF-8') . "'";
+						$dataAttrs .= " data-hinput-source='campo" . htmlspecialchars((string) $inputdb_5, ENT_QUOTES, 'UTF-8') . "'";
+						$optionsHtml .= "<option></option>";
 					}else if($inputdb_4=="vert"){
 						$where = $inputdb_3 ? $inputdb_3 : '1=1';
 						$andClause = isset($and) ? $and : '';
@@ -181,9 +75,9 @@ if($TIPOPET!=""){
 								($inputdb_5 ? $inputdb_5 : $inputdb_1)
 							);
 						}
-						echo "<option></option>";
+						$optionsHtml .= "<option></option>";
 						foreach($rows as $wsel){
-							echo "<option value='" . $wsel[2] . "' ident='" . $wsel[0] . "' " . ( trim(str_replace(" ","",$dd_input))==trim(str_replace(" ","",$wsel[$inputdb_1])) ? 'selected' : '') . " >" . $wsel[$inputdb_1] . "</option>";
+							$optionsHtml .= "<option value='" . $wsel[2] . "' ident='" . $wsel[0] . "' " . ( trim(str_replace(" ","",$dd_input))==trim(str_replace(" ","",$wsel[$inputdb_1])) ? 'selected' : '') . " >" . $wsel[$inputdb_1] . "</option>";
 						}
 					}
 				}else{
@@ -200,11 +94,12 @@ if($TIPOPET!=""){
 						}
 						$option .= "<option value='" . $wsel['nome_dados'] . "' ident='" . $wsel['id_dados'] . "' $select >" . $wsel['nome_dados'] . "</option>";
 					}
-					echo ($select!="selected"?("<option>" . ( $dados[$dd]!="" ?  $dados[$dd] : "" ) . "</option>"):"");
-					echo $option;
+					$optionsHtml .= ($select!="selected"?("<option>" . ( $dados[$dd]!="" ?  $dados[$dd] : "" ) . "</option>"):"");
+					$optionsHtml .= $option;
 				}
+				echo "<select type='text' id='" . $tag . "' name='" . $tag . "' class='" . $selectClass . "' style='width:" . $w['input_width'] . "px' " . $onFuncoes . " obrigatorio='" . $w['input_req'] . "' descricao='" . strtoupper($w['input_title']) . "'" . $dataAttrs . ">";
+				echo $optionsHtml;
 				echo "</select><br>" . fc_botoes($w['id_input'],$displ) . "</td>";
-				echo "<script>$(function() { $('#$tag').combobox(); });</script>";
 			}elseif($w['input_tipo']=='TEXT'){
 				$valor_text = ($dados[$dd]!="" ? $dados[$dd] : "");
 				$valor_text = str_replace("BUSCA E APREENSÃO EM ALIENAÇÃO FIDUCIÁRIA","BUSCA E APREENSÃO",$valor_text);

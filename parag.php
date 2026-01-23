@@ -31,23 +31,7 @@ function normalize_title($value)
 	return upwords(convertemin($value));
 }
 ?>
-<script language="javascript">	
-//Demo
-$(function() {
-	$( "#accordion" )
-	.accordion({
-		autoHeight: false,
-		navigation: true,
-		header: "> div > h3"
-	})
-});
-$(document).ready(function(){
-	$(".group .delete").click(function(){
-		$(this).parents(".group").fadeOut('slow', function(){ $(this).remove();});
-	});
-});
-
-</script>
+<script type="text/javascript" src="js/pages/parag.js"></script>
 <div align="center" class="include_arq">		
 	<div align="left" id="accordion" style="width:880px;" >
 		<?php	
@@ -121,45 +105,6 @@ $(document).ready(function(){
 		?>
 	</div>
 	<div align="center" id="bottomSpace" style="width:880px;"></div>
-	<script language="javascript">
-		
-		$(function() {			
-			var config2 = {
-				extraPlugins: 'autogrow,myplugin,sharedspace,uploadimage',
-				removePlugins: 'floatingspace,resize',
-				sharedSpaces: {
-					top: 'topSpace',
-					bottom: 'bottomSpace'
-				},
-				language: 'pt_BR',
-				contentsCss : 'css/texto.css'
-			};
-			CKEDITOR.config.skin = 'moono-lisa';
-			CKEDITOR.config.tabSpaces = 4;
-			CKEDITOR.config.removePlugins = 'elementspath';
-			CKEDITOR.config.width = 618.7;
-			CKEDITOR.config.defaultLanguage = 'pt_BR';
-			CKEDITOR.config.toolbarGroups = [
-				{ name: 'basicstyles', groups: [ 'basicstyles', 'cleanup' ] },
-				{ name: 'clipboard', groups: [ 'clipboard', 'undo' ] },
-				{ name: 'paragraph', groups: [ 'list', 'indent', 'blocks', 'align', 'bidi', 'paragraph' ] },
-				{ name: 'insert', groups: [ 'insert','Image' ] },
-				{ name: 'editing', groups: [ 'find', 'selection', 'spellchecker', 'editing' ] },
-				{ name: 'styles', groups: [ 'styles' ] },
-				{ name: 'document', groups: [ 'mode', 'document', 'doctools' ] },
-				{ name: 'colors', groups: [ 'colors' ] },
-				{ name: 'tools', groups: [ 'tools' ] },
-				{ name: 'links', groups: [ 'links' ] },
-				{ name: 'forms', groups: [ 'forms' ] },
-				{ name: 'others', groups: [ 'others' ] },
-				{ name: 'about', groups: [ 'about' ] }
-			];
-			CKEDITOR.config.removeButtons = 'Save,NewPage,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Flash,Smiley,SpecialChar,Iframe,About,ShowBlocks,Templates,Anchor,Unlink,Link,Language,BidiRtl,BidiLtr,Styles,Blockquote,CreateDiv,PageBreak,Print,Preview,Maximize';
-			
-			$('.cls_text').ckeditor(config2);
-		});	
-		
-	</script>
 	<div align="center">
 		<br/>
 		<!--button type="button" onclick="javascript:history.back();" class="input-default" style="height:25px;">Voltar</button>

@@ -103,34 +103,6 @@ $dados2 = null;
         <script type="text/javascript" src="ckfinder/ckfinder.js">			</script>
 		<script type="text/javascript" src="ckeditor/adapters/jquery.js">	</script>		
 		<script type="text/javascript" src="js/default.js">					</script>   	
-		<script type="text/javascript">
-			if (typeof EnviarDados !== 'function') {
-				function EnviarDados(form, hid, pet) {
-					var hidInput = document.getElementById('hid_enviar');
-					var tipoInput = document.getElementById('TIPOPET');
-					if (hidInput) { hidInput.value = hid; }
-					if (tipoInput) { tipoInput.value = pet; }
-					if (document.form_iniciais) {
-						document.form_iniciais.action = form || window.location.pathname;
-						document.form_iniciais.submit();
-					}
-					return false;
-				}
-			}
-			if (typeof PetiDados !== 'function') {
-				function PetiDados(valor1, valor2, valor3, valor4, valor5, valor6) {
-					var idPecas = document.getElementById('id_pecas');
-					var tipoId = document.getElementById('tipo_id');
-					var nomepet = document.getElementById('nomepet');
-					var nomecli = document.getElementById('nomecli');
-					if (idPecas) { idPecas.value = valor3; }
-					if (tipoId) { tipoId.value = valor4; }
-					if (nomepet) { nomepet.value = valor5; }
-					if (nomecli) { nomecli.value = valor6; }
-					return EnviarDados(valor1, valor2, valor4);
-				}
-			}
-		</script>
 		<!--[if IE 7]><link href="templates/bluestork/css/ie7.css" rel="stylesheet" type="text/css" /><![endif]-->
 	</head>
 <body id="minwidth-body">

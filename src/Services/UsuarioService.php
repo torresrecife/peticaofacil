@@ -2,105 +2,44 @@
 
 namespace App\Services;
 
-use App\Infra\Database;
+use App\Repositories\UsuarioRepository;
 
 class UsuarioService
 {
-	private $db;
+	private $repo;
 
 	public function __construct($db)
 	{
-		$this->db = $db;
+		$this->repo = new UsuarioRepository($db);
 	}
 
 	public function getRow($id)
 	{
-		$id = $this->esc($id);
-		$result = mysqli_query($this->db, "SELECT * FROM tp_usu_tb WHERE id_usu = " . $id);
-		if (!$result) {
-			return null;
-		}
-		return mysqli_fetch_row($result) ?: null;
+		return $this->repo->getRow($id);
 	}
 
 	public function insert(array $data)
 	{
-		$nome = $this->esc($data['nome_usu'] ?? '');
-		$login = $this->esc($data['login_usu'] ?? '');
-		$email = $this->esc($data['email_usu'] ?? '');
-		$nivel = $this->esc($data['nivel_usu'] ?? '');
-		$setor = $this->esc($data['setor_usu'] ?? '');
-		$cliente = $this->esc($data['banco_neo'] ?? '');
-		$senha = $data['senha_usu1'] ?? '';
-		$now = date("Y-m-d H:i:s");
-
-		$sql = "INSERT INTO tp_usu_tb SET "
-			. "nome_usu = '" . $nome . "', "
-			. "login_usu = '" . $login . "', ";
-		if ($senha !== '') {
-			$sql .= "senha_usu = '" . md5($senha) . "', ";
-		}
-		$sql .= "email_usu = '" . $email . "', "
-			. "nivel_usu = '" . $nivel . "', "
-			. "id_setor = '" . $setor . "', "
-			. "id_cliente = '" . $cliente . "', "
-			. "acesso_usu = NULL, "
-			. "data_cad = '" . $now . "' ";
-
-		return mysqli_query($this->db, $sql);
+		return $this->repo->insert($data);
 	}
 
 	public function update($id, array $data)
 	{
-		$id = $this->esc($id);
-		$nome = $this->esc($data['nome_usu'] ?? '');
-		$login = $this->esc($data['login_usu'] ?? '');
-		$email = $this->esc($data['email_usu'] ?? '');
-		$nivel = $this->esc($data['nivel_usu'] ?? '');
-		$setor = $this->esc($data['setor_usu'] ?? '');
-		$cliente = $this->esc($data['banco_neo'] ?? '');
-		$senha = $data['senha_usu1'] ?? '';
-
-		$sql = "UPDATE tp_usu_tb SET "
-			. "nome_usu = '" . $nome . "', "
-			. "login_usu = '" . $login . "', ";
-		if ($senha !== '') {
-			$sql .= "senha_usu = '" . md5($senha) . "', ";
-		}
-		$sql .= "email_usu = '" . $email . "', "
-			. "nivel_usu = '" . $nivel . "', "
-			. "id_setor = '" . $setor . "', "
-			. "id_cliente = '" . $cliente . "' "
-			. "WHERE id_usu = " . $id;
-
-		return mysqli_query($this->db, $sql);
+		return $this->repo->update($id, $data);
 	}
 
 	public function delete($id)
 	{
-		$id = $this->esc($id);
-		return mysqli_query($this->db, "DELETE FROM tp_usu_tb WHERE id_usu = '" . $id . "' LIMIT 1");
+		return $this->repo->delete($id);
 	}
 
 	public function updatePassword($id, $senha)
 	{
-		$id = $this->esc($id);
-		if ($senha === '') {
-			return false;
-		}
-		$sql = "UPDATE tp_usu_tb SET senha_usu = '" . md5($senha) . "' WHERE id_usu = " . $id;
-		return mysqli_query($this->db, $sql);
+		return $this->repo->updatePassword($id, $senha);
 	}
 
 	public function updateAcesso($id, $datetime)
 	{
-		$id = $this->esc($id);
-		$datetime = $this->esc($datetime);
-		return mysqli_query($this->db, "UPDATE tp_usu_tb SET acesso_usu = '" . $datetime . "' where id_usu = " . $id);
-	}
-
-	private function esc($value)
-	{
-		return Database::escape($this->db, $value);
+		return $this->repo->updateAcesso($id, $datetime);
 	}
 }
