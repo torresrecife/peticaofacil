@@ -204,8 +204,8 @@ class rtf {
 			//$nomtipo = fc_select_name('tipo_id',$tipo_id,'tipo_nome','tp_tipo_tb',$conexao1);
 			//$nomtipo = limita_caracteres($nomtipo,20,false);
 			 
-			$nomecli = preg_replace("[^a-zA-Z0-9_]", "", strtr($_POST['nomepet'], " ", "aaaaeeiooouucAAAAEEIOOOUUC_"));
-			//$nomtipo = preg_replace("[^a-zA-Z0-9_]", "", strtr($nomtipo, "= ", "aaaaeeiooouucAAAAEEIOOOUUC-_"));
+			$nomecli = preg_replace("[^a-zA-Z0-9_]", "", strtr($_POST['nomepet'], "Ã¡Ã Ã£Ã¢Ã©ÃªÃ­Ã³Ã´ÃµÃºÃ¼Ã§ÃÃ€ÃƒÃ‚Ã‰ÃŠÃÃ“Ã”Ã•ÃšÃœÃ‡ ", "aaaaeeiooouucAAAAEEIOOOUUC_"));
+			//$nomtipo = preg_replace("[^a-zA-Z0-9_]", "", strtr($nomtipo, "Ã¡Ã Ã£Ã¢Ã©ÃªÃ­Ã³Ã´ÃµÃºÃ¼Ã§ÃÃ€ÃƒÃ‚Ã‰ÃŠÃÃ“Ã”Ã•ÃšÃœÃ‡= ", "aaaaeeiooouucAAAAEEIOOOUUC-_"));
 			//$nompeca = $nomtipo."-".$nomecli;
 			$nompeca = $nomecli;
 			
@@ -401,11 +401,11 @@ class rtf {
 		$doc_buffer = str_replace("&Ccedil;","\'c7", $doc_buffer);
 		
 		$doc_buffer = str_replace("&deg;","\'ba", $doc_buffer);
-		$doc_buffer = str_replace("&sect;","", $doc_buffer);
-		$doc_buffer = str_replace("&ordm;","", $doc_buffer);
+		$doc_buffer = str_replace("&sect;","ï¿½", $doc_buffer);
+		$doc_buffer = str_replace("&ordm;","ï¿½", $doc_buffer);
 		$doc_buffer = str_replace("&uuml;","u", $doc_buffer);
 		$doc_buffer = str_replace("&Uuml;","U", $doc_buffer);
-		$doc_buffer = str_replace("&ndash;","", $doc_buffer);
+		$doc_buffer = str_replace("&ndash;","ï¿½", $doc_buffer);
 		$doc_buffer = str_replace("&ldquo;","''", $doc_buffer);
 		$doc_buffer = str_replace("&rdquo;","''", $doc_buffer);
 		$doc_buffer = str_replace("&quot;","''", $doc_buffer);
@@ -596,7 +596,7 @@ class rtf {
 		$doc_buffer = preg_replace("/<p style=\"margin-left: 7cm; text-align: center;\">(.*?)<\/p>/mi", "\\lin2000 \\qj \\1 \\qj0\\par \lin0", $doc_buffer);
 		$doc_buffer = preg_replace("/<p style=\"margin-left: 8cm; text-align: center;\">(.*?)<\/p>/mi", "\\lin2300 \\qj \\1 \\qj0\\par \lin0", $doc_buffer);
 		
-		//Sem spas
+		//Sem Ã¡spas
 		$doc_buffer = preg_replace("/<p style=margin-left: 3cm; text-align: justify;>(.*?)<\/p>/mi", "\\lin900 \\qj \\1 \\qj0\\par \lin0", $doc_buffer);
 		$doc_buffer = preg_replace("/<p style=margin-left: 4cm; text-align: justify;>(.*?)<\/p>/mi", "\\lin1100 \\qj \\1 \\qj0\\par \lin0", $doc_buffer);
 		$doc_buffer = preg_replace("/<p style=margin-left: 5cm; text-align: justify;>(.*?)<\/p>/mi", "\\lin1400 \\qj \\1 \\qj0\\par \lin0", $doc_buffer);

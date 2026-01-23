@@ -2,76 +2,39 @@
 
 namespace App\Services;
 
-use App\Infra\Database;
+use App\Repositories\SetorRepository;
 
 class SetorService
 {
-	private $db;
+	private $repo;
 
 	public function __construct($db)
 	{
-		$this->db = $db;
+		$this->repo = new SetorRepository($db);
 	}
 
 	public function insert(array $data)
 	{
-		$nome = $this->esc($data['nome_setor'] ?? '');
-		$cod = $this->esc($data['cod_setor'] ?? '');
-		$now = date("Y-m-d H:i:s");
-
-		$sql = "INSERT INTO tp_setor_tb SET "
-			. "nome_setor = '" . $nome . "', "
-			. "cod_setor = '" . $cod . "', "
-			. "data_cad = '" . $now . "'";
-
-		return mysqli_query($this->db, $sql);
+		return $this->repo->insert($data);
 	}
 
 	public function update($id, array $data)
 	{
-		$id = $this->esc($id);
-		$nome = $this->esc($data['nome_setor'] ?? '');
-		$cod = $this->esc($data['cod_setor'] ?? '');
-
-		$sql = "UPDATE tp_setor_tb SET "
-			. "nome_setor = '" . $nome . "', "
-			. "cod_setor = '" . $cod . "' "
-			. "WHERE id_setor = " . $id;
-
-		return mysqli_query($this->db, $sql);
+		return $this->repo->update($id, $data);
 	}
 
 	public function delete($id)
 	{
-		$id = $this->esc($id);
-		return mysqli_query($this->db, "DELETE FROM tp_setor_tb WHERE id_setor = " . $id . " LIMIT 1");
+		return $this->repo->delete($id);
 	}
 
 	public function listAll()
 	{
-		$result = mysqli_query($this->db, "SELECT * FROM tp_setor_tb");
-		if (!$result) {
-			return array();
-		}
-		$rows = array();
-		while ($row = mysqli_fetch_array($result)) {
-			$rows[] = $row;
-		}
-		return $rows;
+		return $this->repo->listAll();
 	}
 
 	public function getRow($id)
 	{
-		$id = $this->esc($id);
-		$result = mysqli_query($this->db, "SELECT * FROM tp_setor_tb WHERE id_setor = " . $id);
-		if (!$result) {
-			return null;
-		}
-		return mysqli_fetch_row($result) ?: null;
-	}
-
-	private function esc($value)
-	{
-		return Database::escape($this->db, $value);
+		return $this->repo->getRow($id);
 	}
 }

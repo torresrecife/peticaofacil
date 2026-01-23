@@ -11,6 +11,9 @@ composer.lock
 # Local env
 config/env.local
 
+# Logs
+storage/logs/
+
 # Node
 node_modules/
 

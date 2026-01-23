@@ -2,96 +2,49 @@
 
 namespace App\Services;
 
-use App\Infra\Database;
+use App\Repositories\TipoRepository;
 
 class TipoService
 {
-	private $db;
+	private $repo;
 
 	public function __construct($db)
 	{
-		$this->db = $db;
+		$this->repo = new TipoRepository($db);
 	}
 
 	public function create(array $data)
 	{
-		$tiposetor = $this->esc($data['tiposetor'] ?? '');
-		$tipoclien = $this->esc($data['tipoclien'] ?? 0);
-		$tipoarqui = $this->esc($data['tipoarqui'] ?? '');
-		$tiposql = $this->esc($data['tiposql'] ?? '');
-		$tipotitle = strtoupper($data['tipotitle'] ?? '');
-		$tipotitlePre = strtoupper($data['tipotitle_pre'] ?? '');
-
-		$sql = "INSERT INTO tp_tipo_tb SET "
-			. "id_db = '" . $tiposql . "', "
-			. "tipo_nome = '" . $this->esc($tipotitle) . "', "
-			. "nome_pre = '" . $this->esc($tipotitlePre) . "', "
-			. "id_cliente = '" . $tipoclien . "', "
-			. "tipo_data = now(), "
-			. "tipo_stt = 'Y', "
-			. "id_setor = '" . $tiposetor . "', "
-			. "tipo_arq = '" . $tipoarqui . "'";
-
-		return mysqli_query($this->db, $sql);
+		return $this->repo->create($data);
 	}
 
 	public function deleteTipo($tipoId)
 	{
-		$tipoId = $this->esc($tipoId);
-		return mysqli_query($this->db, "DELETE FROM tp_tipo_tb WHERE tipo_id = " . $tipoId . " LIMIT 1");
+		return $this->repo->deleteTipo($tipoId);
 	}
 
 	public function updateCabec($tipoId, $texto)
 	{
-		$tipoId = $this->esc($tipoId);
-		$texto = $this->esc($texto);
-		return mysqli_query($this->db, "UPDATE tp_tipo_tb SET cod_cabec = '" . $texto . "' WHERE tipo_id = " . $tipoId);
+		return $this->repo->updateCabec($tipoId, $texto);
 	}
 
 	public function updateRodap($tipoId, $texto)
 	{
-		$tipoId = $this->esc($tipoId);
-		$texto = $this->esc($texto);
-		return mysqli_query($this->db, "UPDATE tp_tipo_tb SET cod_rodap = '" . $texto . "' WHERE tipo_id = " . $tipoId);
+		return $this->repo->updateRodap($tipoId, $texto);
 	}
 
 	public function getSetorCodeByTipo($tipoId)
 	{
-		$tipoId = $this->esc($tipoId);
-		$sql = "SELECT s.cod_setor FROM tp_tipo_tb AS t "
-			. "JOIN tp_setor_tb AS s ON s.id_setor=t.id_setor "
-			. "WHERE t.tipo_id = '" . $tipoId . "'";
-		$query = mysqli_query($this->db, $sql);
-		if (!$query) {
-			return null;
-		}
-		$row = mysqli_fetch_array($query);
-		return $row['cod_setor'] ?? null;
+		return $this->repo->getSetorCodeByTipo($tipoId);
 	}
 
 	public function getTipoArquivoById($tipoId)
 	{
-		$tipoId = $this->esc($tipoId);
-		$query = mysqli_query($this->db, "SELECT tipo_arq FROM tp_tipo_tb WHERE tipo_id = '" . $tipoId . "' LIMIT 1");
-		if (!$query) {
-			return null;
-		}
-		$row = mysqli_fetch_array($query);
-		return $row['tipo_arq'] ?? null;
+		return $this->repo->getTipoArquivoById($tipoId);
 	}
 
 	public function getCabecRodapById($tipoId)
 	{
-		$tipoId = $this->esc($tipoId);
-		$query = mysqli_query($this->db, "SELECT cod_cabec, cod_rodap FROM tp_tipo_tb WHERE tipo_id = '" . $tipoId . "' LIMIT 1");
-		if (!$query) {
-			return null;
-		}
-		return mysqli_fetch_assoc($query) ?: null;
-	}
-
-	private function esc($value)
-	{
-		return Database::escape($this->db, $value);
+		return $this->repo->getCabecRodapById($tipoId);
 	}
 }
