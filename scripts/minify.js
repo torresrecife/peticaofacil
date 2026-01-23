@@ -5,9 +5,10 @@ const CleanCSS = require('clean-css');
 
 const root = path.resolve(__dirname, '..');
 
+const pageScripts = getPageScripts();
 const jsFiles = [
   path.join(root, 'public', 'js', 'default.js'),
-  ...getPageScripts()
+  ...pageScripts
 ];
 
 const cssFiles = [
@@ -16,12 +17,8 @@ const cssFiles = [
 ];
 
 async function minifyAll() {
-  for (const file of jsFiles) {
-    await minifyJs(file);
-  }
-  for (const file of cssFiles) {
-    minifyCss(file);
-  }
+  await buildMainJs();
+  buildMainCss();
 }
 
 function getPageScripts() {
@@ -62,6 +59,60 @@ function minifyCss(filePath) {
     throw new Error(`CleanCSS failed for ${filePath}: ${output.errors.join(', ')}`);
   }
   const outPath = filePath.replace(/\.css$/, '.min.css');
+  fs.writeFileSync(outPath, output.styles + '\n', 'utf8');
+  process.stdout.write(`Minified: ${outPath}\n`);
+}
+
+async function buildMainJs() {
+  const mainPath = path.join(root, 'public', 'js', 'main.js');
+  if (pageScripts.length === 0 && fs.existsSync(mainPath)) {
+    const mainCode = fs.readFileSync(mainPath, 'utf8');
+    const result = await minify(mainCode, { compress: true, mangle: true });
+    if (!result || !result.code) {
+      throw new Error('Terser failed for main.js');
+    }
+    const outPath = path.join(root, 'public', 'js', 'main.min.js');
+    fs.writeFileSync(outPath, result.code + '\n', 'utf8');
+    process.stdout.write(`Minified: ${outPath}\n`);
+    return;
+  }
+
+  const parts = [];
+  for (const file of jsFiles) {
+    if (!fs.existsSync(file)) {
+      continue;
+    }
+    parts.push(fs.readFileSync(file, 'utf8'));
+  }
+  const mainCode = parts.join('\n') + '\n';
+  fs.writeFileSync(mainPath, mainCode, 'utf8');
+
+  const result = await minify(mainCode, { compress: true, mangle: true });
+  if (!result || !result.code) {
+    throw new Error('Terser failed for main.js');
+  }
+  const outPath = path.join(root, 'public', 'js', 'main.min.js');
+  fs.writeFileSync(outPath, result.code + '\n', 'utf8');
+  process.stdout.write(`Minified: ${outPath}\n`);
+}
+
+function buildMainCss() {
+  const parts = [];
+  for (const file of cssFiles) {
+    if (!fs.existsSync(file)) {
+      continue;
+    }
+    parts.push(fs.readFileSync(file, 'utf8'));
+  }
+  const mainPath = path.join(root, 'public', 'css', 'main.css');
+  const mainCode = parts.join('\n') + '\n';
+  fs.writeFileSync(mainPath, mainCode, 'utf8');
+
+  const output = new CleanCSS({}).minify(mainCode);
+  if (output.errors && output.errors.length > 0) {
+    throw new Error(`CleanCSS failed for main.css: ${output.errors.join(', ')}`);
+  }
+  const outPath = path.join(root, 'public', 'css', 'main.min.css');
   fs.writeFileSync(outPath, output.styles + '\n', 'utf8');
   process.stdout.write(`Minified: ${outPath}\n`);
 }

@@ -93,8 +93,7 @@ $dados2 = null;
 	<base href="<?php echo $basePath ? $basePath.'/' : '/'; ?>">
 		<title>Apresentação - Administração</title>
 		<link href="css/images/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon" />
-		<link rel="stylesheet" href="css/template.min.css" type="text/css" />
-		<link rel="stylesheet" href="css/custom-theme/jquery-ui-1.8.23.custom.min.css">
+		<link rel="stylesheet" href="css/main.min.css" type="text/css" />
 		<script type="text/javascript" src="js/jquery-1.8.0.min.js">		</script>
 		<script type="text/javascript" src="js/jquery-ui-1.8.23.custom.min.js"></script>
 		<script type="text/javascript" src="js/moment.js"></script>
@@ -102,7 +101,7 @@ $dados2 = null;
 		<script type="text/javascript" src="ckeditor/ckeditor.js">			</script>
         <script type="text/javascript" src="ckfinder/ckfinder.js">			</script>
 		<script type="text/javascript" src="ckeditor/adapters/jquery.js">	</script>		
-		<script type="text/javascript" src="js/default.min.js">					</script>   	
+		<script type="text/javascript" src="js/main.min.js">					</script>   	
 		<!--[if IE 7]><link href="templates/bluestork/css/ie7.css" rel="stylesheet" type="text/css" /><![endif]-->
 	</head>
 <body id="minwidth-body">

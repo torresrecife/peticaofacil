@@ -1,4 +1,3 @@
-<script type="text/javascript" src="js/pages/pecas.min.js"></script>
 <div class="content_body">
 	<div class="cpanel-left">
 		<div class="cpanel">

@@ -4,9 +4,8 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <script type="text/javascript" src="../js/jquery-1.8.0.min.js">		</script>
 <script type="text/javascript" src="../js/jquery-ui-1.8.23.custom.min.js"></script>
-<link rel="stylesheet" href="../css/template.min.css" type="text/css" />
-<link rel="stylesheet" href="../css/custom-theme/jquery-ui-1.8.23.custom.min.css">
-<script type="text/javascript" src="../js/pages/valida.min.js"></script>
+<link rel="stylesheet" href="../css/main.min.css" type="text/css" />
+<script type="text/javascript" src="../js/main.min.js"></script>
 <input type="hidden" id="valida_show_newpass" value="<?php echo $showNewPass ? '1' : '0'; ?>" />
 <div id="dialog-new-pass" title="Editar Usuário" style="display:none; text-align:left;">
 	<p class="validateTips"><?php echo "Alteração de senha obrigatória!"; ?></p>

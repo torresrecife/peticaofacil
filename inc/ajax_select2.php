@@ -4,13 +4,17 @@ require_once __DIR__ . "/response.php";
 protegePagina();
 
 $rows = array();
-if ($_POST['dados'] == 1) {
+$dadosFlag = $_POST['dados'] ?? null;
+if ($dadosFlag == 1) {
 	if (!class_exists(\App\Services\SelectService::class)) {
 		json_err("Servico indisponivel.");
 	}
-	$area_id  = $_POST['flag'];
+	$area_id  = $_POST['flag'] ?? '';
+	if ($area_id === '' || !is_numeric($area_id)) {
+		json_err("Area invalida.");
+	}
 	$service = new \App\Services\SelectService($conexao1);
-	$rows = $service->listClientesByArea($area_id);
+	$rows = $service->listClientesByArea((int) $area_id);
 }
 
 ob_start();

@@ -89,7 +89,6 @@ if($_POST['hid_enviar']==5){
 <?php
 }
 ?>
-<script type="text/javascript" src="js/pages/admin.min.js"></script>
 
 <div id="dialog_tipo" title="Novo Modelo" style="display:none">
 	<div style="height:210px; width:260px" >

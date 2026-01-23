@@ -40,7 +40,6 @@ if (class_exists(\App\Services\TipoService::class)) {
 }
 
 ?>
-<script type="text/javascript" src="js/pages/editor.min.js"></script>
 <div class="include_arq">
 	<table id="tb_left" align="left" width="60px" height="80%">
 		<tr height="30px" valign="top">

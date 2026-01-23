@@ -9,10 +9,12 @@
 	<base href="<?php echo $basePath ? $basePath.'/' : '/'; ?>">
 	<title>Petição - Fácil</title>
 	<link href="css/images/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon" />
-	<link rel="stylesheet" href="css/template.min.css" type="text/css" />
+	<link rel="stylesheet" href="css/main.min.css" type="text/css" />
 	<!--[if IE 7]><link href="templates/bluestork/css/ie7.css" rel="stylesheet" type="text/css" /><![endif]-->
 </head>
 <body>
+	<script type="text/javascript" src="js/jquery-1.8.0.min.js"></script>
+	<script type="text/javascript" src="js/main.min.js"></script>
 	<div id="border-top" class="h_blue">
 		<span class="logo"><img src="css/images/logo.png" alt="Sistema de Petição" /></span>
 		<span class="title"><a href="index.php">Petição Fácil</a></span>

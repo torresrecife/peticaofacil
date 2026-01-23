@@ -36,6 +36,9 @@ elseif($_POST['flag']=="U")
 	if (!class_exists(\App\Services\UsuarioService::class)) {
 		json_err("Servico indisponivel.");
 	}
+	if (!isset($_POST['id_usu']) || $_POST['id_usu'] === '' || !is_numeric($_POST['id_usu'])) {
+		json_err("Usuario invalido.");
+	}
 	$service = new \App\Services\UsuarioService($conexao1);
 	$ok = $service->update($_POST['id_usu'], $_POST);
 	$ok ? json_ok() : json_err("Erro ao atualizar.");
@@ -44,6 +47,9 @@ elseif($_POST['flag']=="D")
 {
 	if (!class_exists(\App\Services\UsuarioService::class)) {
 		json_err("Servico indisponivel.");
+	}
+	if (!isset($_POST['id_usu']) || $_POST['id_usu'] === '' || !is_numeric($_POST['id_usu'])) {
+		json_err("Usuario invalido.");
 	}
 	$service = new \App\Services\UsuarioService($conexao1);
 	$ok = $service->delete($_POST['id_usu']);

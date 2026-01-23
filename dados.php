@@ -8,7 +8,6 @@
 	</tr>
 </table>
 
-<script type="text/javascript" src="js/pages/dados.min.js"></script>
 
 <table align="center" class="content_form">
 <?php
