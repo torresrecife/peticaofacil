@@ -106,6 +106,34 @@ class TipoRepository
 		return $rows;
 	}
 
+	public function listByIds(array $ids)
+	{
+		$clean = array();
+		foreach ($ids as $id) {
+			if ($id !== '' && ctype_digit((string) $id)) {
+				$clean[] = (int) $id;
+			}
+		}
+		if (empty($clean)) {
+			return array();
+		}
+		$idList = implode(',', $clean);
+		$sql = "SELECT t.tipo_id, t.tipo_nome, s.nome_setor "
+			. "FROM tp_tipo_tb as t "
+			. "LEFT JOIN tp_setor_tb AS s ON s.id_setor=t.id_setor "
+			. "WHERE t.tipo_id IN (" . $idList . ") "
+			. "ORDER BY FIELD(t.tipo_id, " . $idList . ")";
+		$query = mysqli_query($this->db, $sql);
+		if (!$query) {
+			return array();
+		}
+		$rows = array();
+		while ($row = mysqli_fetch_assoc($query)) {
+			$rows[] = $row;
+		}
+		return $rows;
+	}
+
 	public function create(array $data)
 	{
 		$tiposetor = $this->esc($data['tiposetor'] ?? '');

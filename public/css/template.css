@@ -184,6 +184,56 @@ span.num{
 	white-space: nowrap;
 }
 
+/* Group petition types by sector */
+.setor-group {
+	clear: both;
+	padding-top: 10px;
+}
+.setor-title {
+	font-weight: bold;
+	margin: 6px 0;
+	color: #444;
+	border-bottom: 1px dotted #ccc;
+	padding-bottom: 4px;
+}
+.icon_pecas a.tipo-popular {
+	border: 1px solid #f0c36d;
+	background: #fff7d6 !important;
+	border-radius: 4px;
+	display: block;
+}
+.icon_pecas a.tipo-popular:hover {
+	border-color: #e6b55a;
+	background: #fff1c2 !important;
+}
+.top-pecas {
+	margin-bottom: 10px;
+	padding: 8px 10px;
+}
+.top-pecas-title {
+	font-weight: bold;
+	color: #444;
+	margin-bottom: 6px;
+}
+.top-pecas-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 8px;
+}
+.top-peca-item {
+	display: inline-block;
+	padding: 4px 8px;
+	background: #f4f7ff;
+	border: 1px solid #c9d5f2;
+	border-radius: 4px;
+	font-size: 10px;
+}
+.top-peca-item:hover {
+	background: #eaf0ff;
+	border-color: #b6c7ef;
+	text-decoration: none;
+}
+
 /* -- OVERALL STYLES ----------------------------- */
 
 /* Header */

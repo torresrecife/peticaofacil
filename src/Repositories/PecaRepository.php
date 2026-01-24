@@ -128,6 +128,30 @@ class PecaRepository
 		return $rows;
 	}
 
+	public function listTopTipos($usuarioNivel, $usuarioId, $setorId, $clienteId, $limit = 5)
+	{
+		$where = $this->buildScopeWhere($usuarioNivel, $usuarioId, $setorId, $clienteId);
+		$sql = "SELECT p.tipo_id, COUNT(*) as total "
+			. "FROM tp_pecas_tb as p "
+			. "JOIN tp_usu_tb AS u ON u.id_usu=p.id_usu "
+			. $where
+			. "GROUP BY p.tipo_id "
+			. "ORDER BY total DESC "
+			. "LIMIT " . (int) $limit;
+		$query = mysqli_query($this->db, $sql);
+		if (!$query) {
+			return array();
+		}
+		$rows = array();
+		while ($row = mysqli_fetch_assoc($query)) {
+			if (!isset($row['tipo_id'])) {
+				continue;
+			}
+			$rows[] = (int) $row['tipo_id'];
+		}
+		return $rows;
+	}
+
 	public function getEditInfo($id)
 	{
 		$id = $this->esc($id);

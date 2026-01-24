@@ -303,10 +303,47 @@ $dados2 = null;
 						}elseif($_POST['hid_enviar']==12){
 							include 'list.php';
 						}else{
+							$topTipos = array();
+							if (class_exists(\App\Repositories\PecaRepository::class) && class_exists(\App\Repositories\TipoRepository::class)) {
+								$pecaRepo = new \App\Repositories\PecaRepository($conexao1);
+								$tipoRepo = new \App\Repositories\TipoRepository($conexao1);
+								$topIds = $pecaRepo->listTopTipos($usu_nivel, $usu_id, $usu_setor, $usu_cliente, 10);
+								if (!empty($topIds)) {
+									$topTipos = $tipoRepo->listByIds($topIds);
+								}
+							}
 							?>
 							<div class="content_body">
 								<div class="cpanel-left">
 									<div class="cpanel">
+                                        <?php if (!empty($topTipos)) { ?>
+                                            <div class="setor-group" style="clear:both;padding-top:10px;">
+                                                <div class="setor-title" style="font-weight:bold;margin:6px 0;color:#444;">MAIS USADAS</div>
+                                                <?php $nTop = 0; ?>
+                                                <?php foreach ($topTipos as $topTipo) { ?>
+                                                    <?php $nTop++; ?>
+                                                    <div class="icon-wrapper">
+                                                        <div class="icon_pecas">
+                                                            <a href="#" onclick="return EnviarDados('index.php','1','<?php echo $topTipo['tipo_id']; ?>');" style="background:#FFFFFF" class="tipo-popular">
+                                                                <table width="100%">
+                                                                    <tr height="20px">
+                                                                        <td colspan="1" align="left" style="font-size:7pt;padding:2px;color:#999"><?php echo $nTop; ?> </td>
+                                                                        <td colspan="8" align="left" style="font-size:7pt;padding:2px;color:#999"><?php echo $topTipo['nome_setor'] ?? ''; ?></td>
+                                                                    </tr>
+                                                                    <tr height="20px">
+                                                                        <td colspan="3" align="left" style="width: 40px !important;">
+                                                                            <img src="css/images/header/icon-48-article-edit.png" alt="" style="width:35px;padding:0px 0;" />
+                                                                        </td>
+                                                                        <td colspan="6" align="left" style="width: 169px !important; font-size: 10px"><?php echo $topTipo['tipo_nome']; ?></td>
+                                                                    </tr>
+                                                                </table>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                <?php } ?>
+                                            </div>
+                                        <?php } ?>
+                                        <!-- LIsta de peticoes por setor-->
 										<?php fc_select_div("tp_tipo_tb",'1',"tipo_id","tipo_nome",$usu_cliente,"S",$conexao1,$usu_setor); ?>
 									</div>
 								</div>

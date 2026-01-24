@@ -2,6 +2,16 @@ var myfocus = 0;
 var mystart = 0;
 
 $(function() {
+	if (!window.CKEDITOR || !document.getElementById('name_text') || !CKEDITOR.replace) {
+		return;
+	}
+	if (CKEDITOR.instances && CKEDITOR.instances.name_text) {
+		return;
+	}
+	var nameText = document.getElementById('name_text');
+	if (nameText && nameText.tagName && nameText.tagName.toLowerCase() !== 'textarea') {
+		return;
+	}
 	CKEDITOR.config.skin = 'moono-lisa2';
 	CKEDITOR.config.tabSpaces = 4;
 	CKEDITOR.config.removePlugins = 'elementspath';
@@ -34,7 +44,9 @@ $(function() {
 		contentsCss: 'css/texto.css'
 	});
 
-	CKFinder.setupCKEditor(editor, 'ckfinder/');
+	if (window.CKFinder && CKFinder.setupCKEditor) {
+		CKFinder.setupCKEditor(editor, 'ckfinder/');
+	}
 
 	CKEDITOR.on('instanceReady', function(evt) {
 		var editor = evt.editor;
