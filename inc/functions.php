@@ -59,6 +59,14 @@ function fc_select_div($p_tb,$p_id,$val_id,$val_nome,$usu,$se,$conex,$p_setor=""
 	if (!class_exists(\App\Repositories\TipoRepository::class)) {
 		return;
 	}
+	$cacheDir = __DIR__ . '/../storage/cache';
+	$cacheTtl = 300;
+	$cacheKey = 'tipos_div_' . $p_id . '_' . $usu . '_' . $se . '_' . (int) $p_setor;
+	$cacheFile = $cacheDir . '/' . $cacheKey . '.html';
+	if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTtl) {
+		echo file_get_contents($cacheFile);
+		return;
+	}
 	$repo = new \App\Repositories\TipoRepository($conex);
 	$q = $repo->listWithRelations($usu, $p_setor);
 	$n=0;
@@ -97,9 +105,14 @@ function fc_select_div($p_tb,$p_id,$val_id,$val_nome,$usu,$se,$conex,$p_setor=""
 		$setorBlocks[$setorId] .= "</div>";
 		$setorBlocks[$setorId] .= "</div>";
 	}
+	$rendered = '';
 	foreach($setorBlocks as $block){
-		echo $block . "</div>";
+		$rendered .= $block . "</div>";
 	}
+	if ($rendered !== '' && is_dir($cacheDir)) {
+		file_put_contents($cacheFile, $rendered);
+	}
+	echo $rendered;
 }
 function fc_select_dados($id_input,$conex,$p_setor=""){
 	if (!class_exists(\App\Services\DadosService::class)) {

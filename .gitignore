@@ -13,6 +13,7 @@ config/env.local
 
 # Logs
 storage/logs/
+storage/cache/
 
 # Node
 node_modules/

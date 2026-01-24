@@ -286,8 +286,10 @@ span.num{
 /* Footer */
 #footer .copyright {
 	margin: 10px;
-	text-align: center;
+	text-align: end;
 	line-height: 160%;
+	font-style: italic;
+	opacity: 0.3;
 }
 
 p.footer-tip {

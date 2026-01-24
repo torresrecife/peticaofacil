@@ -9,6 +9,18 @@ $usu_nivel = $_SESSION['usuarioNivel'];
 $usu_id = $_SESSION['usuarioID'];
 $usu_cliente = $_SESSION['usuarioCliente'];
 
+$cacheDir = __DIR__ . '/../storage/cache';
+$cacheKey = 'last_pecas_' . $usu_nivel . '_' . $usu_id . '_' . $usu_setor . '_' . $usu_cliente;
+$cacheFile = $cacheDir . '/' . $cacheKey . '.json';
+$cacheTtl = 120;
+
+if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTtl) {
+	$cached = json_decode(file_get_contents($cacheFile), true);
+	if (is_array($cached) && isset($cached['html'])) {
+		json_ok(array('html' => $cached['html']));
+	}
+}
+
 $texto_pecas = "";
 if ($usu_nivel == 'USU') {
 	$texto_pecas = "Suas últimas petições salvas:";
@@ -42,4 +54,7 @@ foreach ($qpet2 as $wpet2) {
 ob_start();
 require __DIR__ . "/views/ajax_last_pecas.php";
 $html = ob_get_clean();
+if (is_dir($cacheDir)) {
+	file_put_contents($cacheFile, json_encode(array('html' => $html)));
+}
 json_ok(array('html' => $html));

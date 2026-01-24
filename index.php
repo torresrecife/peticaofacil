@@ -395,7 +395,7 @@ $dados2 = null;
 	<input type="hidden" id="TIPOPET" name="TIPOPET" value="<?php echo $TIPOPET; ?>">
 	<div id="footer">
 		<p class="copyright">
-			Criado por Fábio Torres.		
+			Desenvolvido por Fábio Torres.
 		</p>
 	</div>
 </form>
