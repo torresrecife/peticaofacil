@@ -62,37 +62,43 @@ function fc_select_div($p_tb,$p_id,$val_id,$val_nome,$usu,$se,$conex,$p_setor=""
 	$repo = new \App\Repositories\TipoRepository($conex);
 	$q = $repo->listWithRelations($usu, $p_setor);
 	$n=0;
-	foreach($q as $w){	
-			$n++;
-        $SETOR[$w['id_setor']] .= "<div class='icon-wrapper'>";
-            $SETOR[$w['id_setor']] .= "<div class='icon_pecas'>";
-								if($se=="E"){
-									$SETOR[$w['id_setor']] .= "<a href='#' onclick='return mark_active(this)' class='clspet' grupo='0' numpet='" . $w[$val_id] . "'>";
-								}elseif($se=="S"){
-									if($w['id_cliente']==0){
-										$bgcor = "#FFFFFF";
-									}else{
-										$bgcor = "#F0F4FF";
-									}
-									$SETOR[$w['id_setor']] .= "<a href='#' onclick='return EnviarDados(\"index.php\",\"$p_id\",".$w[$val_id].");' style='background:$bgcor'>";
-								}
-                            $SETOR[$w['id_setor']] .= "<table width='100%'>";
-                                $SETOR[$w['id_setor']] .= "<tr height='20px'>";
-							        $SETOR[$w['id_setor']] .= "<td colspan='1' align='left' style='font-size:7pt;padding:2px;color:#999'>"  . $n . " </td>";
-							        $SETOR[$w['id_setor']] .= "<td colspan='8' align='left' style='font-size:7pt;padding:2px;color:#999'>"  . ($w['cliente_name']?$w['cliente_name']:$w['nome_setor']) . "</td>";
-                                $SETOR[$w['id_setor']] .= "</tr>";
-                                $SETOR[$w['id_setor']] .= "<tr height='20px'>";
-                                    $SETOR[$w['id_setor']] .= "<td colspan='3' align='left' style='width: 40px !important;'><img src='css/images/header/icon-48-article-edit.png' alt='' style='width:35px;padding:0px 0;' /></td>";
-                                    $SETOR[$w['id_setor']] .= "<td colspan='6' align='left' style='width: 169px !important; font-size: 10px'>" . trim($w[$val_nome]) . "</td>";
-                                $SETOR[$w['id_setor']] .= "</tr>";
-                            $SETOR[$w['id_setor']] .= "</table>";
-                $SETOR[$w['id_setor']] .= "</a>";
-		    $SETOR[$w['id_setor']] .= "</div>";
-        $SETOR[$w['id_setor']] .= "</div>";
-	
+	$setorBlocks = array();
+	foreach($q as $w){
+		$n++;
+		$setorId = $w['id_setor'];
+		if (!isset($setorBlocks[$setorId])) {
+			$setorName = $w['nome_setor'] ? $w['nome_setor'] : 'Setor';
+			$setorBlocks[$setorId] = "<div class='setor-group' style='clear:both;padding-top:10px;'>";
+			$setorBlocks[$setorId] .= "<div class='setor-title' style='font-weight:bold;margin:6px 0;color:#444;'>" . $setorName . "</div>";
+		}
+		$setorBlocks[$setorId] .= "<div class='icon-wrapper'>";
+		$setorBlocks[$setorId] .= "<div class='icon_pecas'>";
+		if($se=="E"){
+			$setorBlocks[$setorId] .= "<a href='#' onclick='return mark_active(this)' class='clspet' grupo='0' numpet='" . $w[$val_id] . "'>";
+		}elseif($se=="S"){
+			if($w['id_cliente']==0){
+				$bgcor = "#FFFFFF";
+			}else{
+				$bgcor = "#F0F4FF";
+			}
+			$setorBlocks[$setorId] .= "<a href='#' onclick='return EnviarDados(\"index.php\",\"$p_id\",".$w[$val_id].");' style='background:$bgcor'>";
+		}
+		$setorBlocks[$setorId] .= "<table width='100%'>";
+		$setorBlocks[$setorId] .= "<tr height='20px'>";
+		$setorBlocks[$setorId] .= "<td colspan='1' align='left' style='font-size:7pt;padding:2px;color:#999'>"  . $n . " </td>";
+		$setorBlocks[$setorId] .= "<td colspan='8' align='left' style='font-size:7pt;padding:2px;color:#999'>"  . ($w['cliente_name']?$w['cliente_name']:$w['nome_setor']) . "</td>";
+		$setorBlocks[$setorId] .= "</tr>";
+		$setorBlocks[$setorId] .= "<tr height='20px'>";
+		$setorBlocks[$setorId] .= "<td colspan='3' align='left' style='width: 40px !important;'><img src='css/images/header/icon-48-article-edit.png' alt='' style='width:35px;padding:0px 0;' /></td>";
+		$setorBlocks[$setorId] .= "<td colspan='6' align='left' style='width: 169px !important; font-size: 10px'>" . trim($w[$val_nome]) . "</td>";
+		$setorBlocks[$setorId] .= "</tr>";
+		$setorBlocks[$setorId] .= "</table>";
+		$setorBlocks[$setorId] .= "</a>";
+		$setorBlocks[$setorId] .= "</div>";
+		$setorBlocks[$setorId] .= "</div>";
 	}
-	foreach($SETOR as $SET){
-		echo $SET;
+	foreach($setorBlocks as $block){
+		echo $block . "</div>";
 	}
 }
 function fc_select_dados($id_input,$conex,$p_setor=""){
