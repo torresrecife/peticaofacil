@@ -1,3 +1,25 @@
 /* Bundle entrypoint for global styles */
 @import "../../public/css/template.css";
 @import "../../public/css/custom-theme/jquery-ui-1.8.23.custom.css";
+
+/* Fix jQuery UI icon paths after bundling */
+.ui-icon,
+.ui-widget-content .ui-icon,
+.ui-widget-header .ui-icon {
+  background-image: url("custom-theme/images/ui-icons_222222_256x240.png");
+}
+.ui-state-default .ui-icon {
+  background-image: url("custom-theme/images/ui-icons_888888_256x240.png");
+}
+.ui-state-hover .ui-icon,
+.ui-state-focus .ui-icon,
+.ui-state-active .ui-icon {
+  background-image: url("custom-theme/images/ui-icons_454545_256x240.png");
+}
+.ui-state-highlight .ui-icon {
+  background-image: url("custom-theme/images/ui-icons_2e83ff_256x240.png");
+}
+.ui-state-error .ui-icon,
+.ui-state-error-text .ui-icon {
+  background-image: url("custom-theme/images/ui-icons_cd0a0a_256x240.png");
+}
