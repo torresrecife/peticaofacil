@@ -1,4 +1,7 @@
 $(function() {
+	if (!window.jQuery || !window.CKEDITOR || !$.fn.accordion || !$("#accordion").length) {
+		return;
+	}
 	$("#accordion").accordion({
 		autoHeight: false,
 		navigation: true,

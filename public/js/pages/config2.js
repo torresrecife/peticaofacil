@@ -1,6 +1,9 @@
 var str_retorno_ajax = $("#str_retorno_ajax").val() || "";
 
 $(function() {
+	if (!window.jQuery || !window.CKEDITOR || !$.fn.accordion || !$("#accordion").length) {
+		return;
+	}
 	var actParag = parseInt($("#act_parag").val(), 10);
 	if (isNaN(actParag)) {
 		actParag = 0;
@@ -13,7 +16,9 @@ $(function() {
 		active: actParag
 	});
 
-	$("input:text").setMask();
+	if ($.fn.setMask) {
+		$("input:text").setMask();
+	}
 
 	$(".group .delete").click(function() {
 		$(this).parents(".group").fadeOut('slow', function() {

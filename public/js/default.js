@@ -28,17 +28,20 @@
 
 //Demo
 	$(function() {
-		
-		$('input:text').setMask();
+		if ($.fn.setMask) {
+			$('input:text').setMask();
+		}
 		//Autocomplete
-		$("#BANCO").combobox({ source: "handler.ashx" });
-		$("#FILIAL").combobox({ source: "handler.ashx" });
-		$("#TCONTRATO").combobox({ source: "handler.ashx" });
-		$("#TIPOACAO").combobox({ source: "handler.ashx" });
-		$("#ADVOGADO").combobox({ source: "handler.ashx" });
-		$("#PUBADV").combobox({ source: "handler.ashx" });
-		//$("#TIPOPET").combobox();
-		$("#sel_chave").combobox();
+		if ($.fn.combobox) {
+			$("#BANCO").combobox({ source: "handler.ashx" });
+			$("#FILIAL").combobox({ source: "handler.ashx" });
+			$("#TCONTRATO").combobox({ source: "handler.ashx" });
+			$("#TIPOACAO").combobox({ source: "handler.ashx" });
+			$("#ADVOGADO").combobox({ source: "handler.ashx" });
+			$("#PUBADV").combobox({ source: "handler.ashx" });
+			//$("#TIPOPET").combobox();
+			$("#sel_chave").combobox();
+		}
 		
 		//$('select').each... Para ativar as funções dos selects
 		$('select').each(function(index,object) {
@@ -85,6 +88,9 @@ function inputs_checkeds(valor){
 }
 	//Autocomplete
 	(function( $ ) {
+		if (!$.widget || !$.ui || !$.ui.autocomplete) {
+			return;
+		}
 		$.widget( "ui.combobox", {
 			_create: function() {
 				var input,

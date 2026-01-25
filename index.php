@@ -393,11 +393,6 @@ $dados2 = null;
 		});
 	</script>
 	<input type="hidden" id="TIPOPET" name="TIPOPET" value="<?php echo $TIPOPET; ?>">
-	<div id="footer">
-		<p class="copyright">
-			Desenvolvido por Fábio Torres.
-		</p>
-	</div>
 </form>
 <!--Crinado Inputs dinâmicos-->
 	<div id="dialog_inputs" style="display:none;overflow-y: scroll;">
@@ -582,6 +577,11 @@ $dados2 = null;
 	<?php 
 	mysqli_close($conexao1);
 	?>
+    <footer class="footer">
+        <p class="copyright">
+            Desenvolvido por Fábio Torres.
+        </p>
+    </footer>
 </body>
 </html>
 

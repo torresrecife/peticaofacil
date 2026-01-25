@@ -10,26 +10,28 @@ var config3 = {
 	contentsCss: 'css/texto.css'
 };
 
-CKEDITOR.config.skin = 'moono-lisa';
-CKEDITOR.config.tabSpaces = 4;
-CKEDITOR.config.removePlugins = 'elementspath';
-CKEDITOR.config.defaultLanguage = 'pt_BR';
-CKEDITOR.config.toolbarGroups = [
-	{ name: 'basicstyles', groups: ['basicstyles', 'cleanup'] },
-	{ name: 'clipboard', groups: ['clipboard', 'undo'] },
-	{ name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph'] },
-	{ name: 'insert', groups: ['insert'] },
-	{ name: 'editing', groups: ['find', 'selection', 'spellchecker', 'editing'] },
-	{ name: 'styles', groups: ['styles'] },
-	{ name: 'document', groups: ['mode', 'document', 'doctools'] },
-	{ name: 'colors', groups: ['colors'] },
-	{ name: 'tools', groups: ['tools'] },
-	{ name: 'links', groups: ['links'] },
-	{ name: 'forms', groups: ['forms'] },
-	{ name: 'others', groups: ['others'] },
-	{ name: 'about', groups: ['about'] }
-];
-CKEDITOR.config.removeButtons = 'Save,NewPage,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Image,Flash,Smiley,SpecialChar,Iframe,About,ShowBlocks,Templates,Anchor,Unlink,Link,Language,BidiRtl,BidiLtr,Styles,Blockquote,CreateDiv,PageBreak,Print,Preview';
+if (window.CKEDITOR) {
+	CKEDITOR.config.skin = 'moono-lisa';
+	CKEDITOR.config.tabSpaces = 4;
+	CKEDITOR.config.removePlugins = 'elementspath';
+	CKEDITOR.config.defaultLanguage = 'pt_BR';
+	CKEDITOR.config.toolbarGroups = [
+		{ name: 'basicstyles', groups: ['basicstyles', 'cleanup'] },
+		{ name: 'clipboard', groups: ['clipboard', 'undo'] },
+		{ name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph'] },
+		{ name: 'insert', groups: ['insert'] },
+		{ name: 'editing', groups: ['find', 'selection', 'spellchecker', 'editing'] },
+		{ name: 'styles', groups: ['styles'] },
+		{ name: 'document', groups: ['mode', 'document', 'doctools'] },
+		{ name: 'colors', groups: ['colors'] },
+		{ name: 'tools', groups: ['tools'] },
+		{ name: 'links', groups: ['links'] },
+		{ name: 'forms', groups: ['forms'] },
+		{ name: 'others', groups: ['others'] },
+		{ name: 'about', groups: ['about'] }
+	];
+	CKEDITOR.config.removeButtons = 'Save,NewPage,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Image,Flash,Smiley,SpecialChar,Iframe,About,ShowBlocks,Templates,Anchor,Unlink,Link,Language,BidiRtl,BidiLtr,Styles,Blockquote,CreateDiv,PageBreak,Print,Preview';
+}
 
 $(function() {
 	if ($.fn.combobox) {
@@ -89,7 +91,7 @@ function fc_textarea(valor, texto, editor) {
 			},
 			title: texto
 		});
-	if (editor == 2) {
+	if (editor == 2 && $.fn.ckeditor) {
 		$('#id_text_' + rand).ckeditor(config3);
 	}
 }
