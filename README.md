@@ -7,7 +7,7 @@ per-page source files organized.
 
 ## Requirements (Production)
 
-- Node.js (LTS recommended) with `npm` in PATH
+- Node.js 16.x LTS (>=16.0) with `npm` in PATH
 - PHP 7.2+ runtime (app requirement)
 
 ### Local/CI build (bundle)
