@@ -4,7 +4,7 @@ require_once __DIR__ . '/bootstrap.php';
 use App\Infra\Database;
 
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
-	$baseUrl = getenv('APP_URL');
+	$baseUrl = normalizeAppUrl(getenv('APP_URL'));
 	$basePath = $baseUrl ? parse_url($baseUrl, PHP_URL_PATH) : '';
 	$scheme = $baseUrl ? parse_url($baseUrl, PHP_URL_SCHEME) : '';
 	$cookiePath = $basePath ? rtrim($basePath, '/') . '/' : '/';
@@ -101,7 +101,7 @@ function expulsaVisitante(){
 		}
 		session_destroy();
 	}
-	$baseUrl = getenv('APP_URL');
+	$baseUrl = normalizeAppUrl(getenv('APP_URL'));
 	if (!$baseUrl) {
 		$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 		$baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
@@ -123,7 +123,7 @@ function expulsaVisitante2(){
 		}
 		session_destroy();
 	}
-	$baseUrl = getenv('APP_URL');
+	$baseUrl = normalizeAppUrl(getenv('APP_URL'));
 	if (!$baseUrl) {
 		$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 		$baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
@@ -132,6 +132,17 @@ function expulsaVisitante2(){
 	$target = rtrim($baseUrl, '/') . '/login.php';
 	require __DIR__ . "/views/login_redirect.php";
 	exit;
+}
+
+function normalizeAppUrl($baseUrl) {
+	if (!$baseUrl) {
+		return '';
+	}
+	$scheme = parse_url($baseUrl, PHP_URL_SCHEME);
+	if (!$scheme || !in_array($scheme, array('http', 'https'), true)) {
+		return '';
+	}
+	return rtrim($baseUrl, '/');
 }
 
 ?>
