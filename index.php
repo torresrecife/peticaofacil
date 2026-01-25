@@ -577,11 +577,11 @@ $dados2 = null;
 	<?php 
 	mysqli_close($conexao1);
 	?>
-    <footer class="footer">
-        <p class="copyright">
-            Desenvolvido por Fábio Torres.
-        </p>
-    </footer>
+<!--    <footer class="footer">-->
+<!--        <p class="copyright">-->
+<!--            Desenvolvido por Fábio Torres.-->
+<!--        </p>-->
+<!--    </footer>-->
 </body>
 </html>
 
