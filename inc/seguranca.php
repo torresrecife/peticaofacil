@@ -95,10 +95,7 @@ function expulsaVisitante(){
 	unset($_SESSION['usuarioID'], $_SESSION['usuarioNome'], $_SESSION['usuarioLogin'], $_SESSION['usuarioSenha']);
 	$_SESSION = array();
 	if (session_status() === PHP_SESSION_ACTIVE) {
-		if (ini_get("session.use_cookies")) {
-			$params = session_get_cookie_params();
-			setcookie(session_name(), '', time() - 42000, $params["path"], $params["domain"], $params["secure"], $params["httponly"]);
-		}
+		clearSessionCookie();
 		session_destroy();
 	}
 	$baseUrl = normalizeAppUrl(getenv('APP_URL'));
@@ -119,10 +116,7 @@ function expulsaVisitante2(){
 	unset($_SESSION['usuarioID'], $_SESSION['usuarioNome'], $_SESSION['usuarioLogin'], $_SESSION['usuarioSenha']);
 	$_SESSION = array();
 	if (session_status() === PHP_SESSION_ACTIVE) {
-		if (ini_get("session.use_cookies")) {
-			$params = session_get_cookie_params();
-			setcookie(session_name(), '', time() - 42000, $params["path"], $params["domain"], $params["secure"], $params["httponly"]);
-		}
+		clearSessionCookie();
 		session_destroy();
 	}
 	$baseUrl = normalizeAppUrl(getenv('APP_URL'));
@@ -134,6 +128,10 @@ function expulsaVisitante2(){
 	}
 	$message = "";
 	$target = rtrim($baseUrl, '/') . '/login.php';
+	if (!headers_sent()) {
+		header('Location: ' . $target);
+		exit;
+	}
 	require __DIR__ . "/views/login_redirect.php";
 	exit;
 }
@@ -154,10 +152,30 @@ function getRequestBasePath() {
 		return '';
 	}
 	$basePath = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+	while (in_array(basename($basePath), array('inc', 'public'), true)) {
+		$basePath = str_replace('\\', '/', dirname($basePath));
+	}
 	if ($basePath === '/' || $basePath === '.') {
 		return '';
 	}
 	return rtrim($basePath, '/');
+}
+
+function clearSessionCookie() {
+	if (!ini_get("session.use_cookies")) {
+		return;
+	}
+	$params = session_get_cookie_params();
+	$baseUrl = normalizeAppUrl(getenv('APP_URL'));
+	$basePath = $baseUrl ? parse_url($baseUrl, PHP_URL_PATH) : getRequestBasePath();
+	$paths = array_filter(array_unique(array(
+		$params["path"] ?? '/',
+		'/',
+		$basePath ? rtrim($basePath, '/') . '/' : '/'
+	)));
+	foreach ($paths as $path) {
+		setcookie(session_name(), '', time() - 42000, $path, $params["domain"], $params["secure"], $params["httponly"]);
+	}
 }
 
 ?>
