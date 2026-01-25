@@ -3,5 +3,9 @@
 	RewriteBase /peticaofacil/
 
 	RewriteCond %{REQUEST_URI} !^/peticaofacil/public/
+	RewriteCond %{REQUEST_FILENAME} -f [OR]
+	RewriteCond %{REQUEST_FILENAME} -d
+	RewriteRule ^ - [L]
+
 	RewriteRule ^(.*)$ /peticaofacil/public/$1 [L]
 </IfModule>
