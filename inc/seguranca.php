@@ -5,7 +5,7 @@ use App\Infra\Database;
 
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
 	$baseUrl = normalizeAppUrl(getenv('APP_URL'));
-	$basePath = $baseUrl ? parse_url($baseUrl, PHP_URL_PATH) : '';
+	$basePath = $baseUrl ? parse_url($baseUrl, PHP_URL_PATH) : getRequestBasePath();
 	$scheme = $baseUrl ? parse_url($baseUrl, PHP_URL_SCHEME) : '';
 	$cookiePath = $basePath ? rtrim($basePath, '/') . '/' : '/';
 	$cookieParams = session_get_cookie_params();
@@ -104,7 +104,9 @@ function expulsaVisitante(){
 	$baseUrl = normalizeAppUrl(getenv('APP_URL'));
 	if (!$baseUrl) {
 		$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-		$baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
+		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+		$basePath = getRequestBasePath();
+		$baseUrl = $scheme . '://' . $host . ($basePath ? $basePath : '');
 	}
 	$message = "Usuário ou senha Inválidos!";
 	$target = rtrim($baseUrl, '/') . '/login.php';
@@ -126,7 +128,9 @@ function expulsaVisitante2(){
 	$baseUrl = normalizeAppUrl(getenv('APP_URL'));
 	if (!$baseUrl) {
 		$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-		$baseUrl = $scheme . '://' . $_SERVER['HTTP_HOST'];
+		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+		$basePath = getRequestBasePath();
+		$baseUrl = $scheme . '://' . $host . ($basePath ? $basePath : '');
 	}
 	$message = "";
 	$target = rtrim($baseUrl, '/') . '/login.php';
@@ -143,6 +147,17 @@ function normalizeAppUrl($baseUrl) {
 		return '';
 	}
 	return rtrim($baseUrl, '/');
+}
+
+function getRequestBasePath() {
+	if (empty($_SERVER['SCRIPT_NAME'])) {
+		return '';
+	}
+	$basePath = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+	if ($basePath === '/' || $basePath === '.') {
+		return '';
+	}
+	return rtrim($basePath, '/');
 }
 
 ?>
