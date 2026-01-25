@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/inc/bootstrap.php'; ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" dir="ltr" >
 <head>
@@ -9,12 +10,12 @@
 	<base href="<?php echo $basePath ? $basePath.'/' : '/'; ?>">
 	<title>Petição - Fácil</title>
 	<link href="css/images/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon" />
-	<link rel="stylesheet" href="css/main.min.css" type="text/css" />
+	<link rel="stylesheet" href="css/main.min.css?v=<?php echo asset_version('public/css/main.min.css'); ?>" type="text/css" />
 	<!--[if IE 7]><link href="templates/bluestork/css/ie7.css" rel="stylesheet" type="text/css" /><![endif]-->
 </head>
 <body>
-	<script type="text/javascript" src="js/jquery-1.8.0.min.js"></script>
-	<script type="text/javascript" src="js/main.min.js"></script>
+	<script type="text/javascript" src="js/jquery-1.8.0.min.js?v=<?php echo asset_version('public/js/jquery-1.8.0.min.js'); ?>"></script>
+	<script type="text/javascript" src="js/main.min.js?v=<?php echo asset_version('public/js/main.min.js'); ?>"></script>
 	<div id="border-top" class="h_blue">
 		<span class="logo"><img src="css/images/logo.png" alt="Sistema de Petição" /></span>
 		<span class="title"><a href="index.php">Petição Fácil</a></span>

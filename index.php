@@ -93,15 +93,15 @@ $dados2 = null;
 	<base href="<?php echo $basePath ? $basePath.'/' : '/'; ?>">
 		<title>Apresentação - Administração</title>
 		<link href="css/images/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon" />
-		<link rel="stylesheet" href="css/main.min.css" type="text/css" />
-		<script type="text/javascript" src="js/jquery-1.8.0.min.js">		</script>
-		<script type="text/javascript" src="js/jquery-ui-1.8.23.custom.min.js"></script>
-		<script type="text/javascript" src="js/moment.js"></script>
-		<script type="text/javascript" src="js/jquery.meio.mask.js">	 	</script>
-		<script type="text/javascript" src="ckeditor/ckeditor.js">			</script>
-        <script type="text/javascript" src="ckfinder/ckfinder.js">			</script>
-		<script type="text/javascript" src="ckeditor/adapters/jquery.js">	</script>		
-		<script type="text/javascript" src="js/main.min.js">					</script>   	
+		<link rel="stylesheet" href="css/main.min.css?v=<?php echo asset_version('public/css/main.min.css'); ?>" type="text/css" />
+		<script type="text/javascript" src="js/jquery-1.8.0.min.js?v=<?php echo asset_version('public/js/jquery-1.8.0.min.js'); ?>">		</script>
+		<script type="text/javascript" src="js/jquery-ui-1.8.23.custom.min.js?v=<?php echo asset_version('public/js/jquery-ui-1.8.23.custom.min.js'); ?>"></script>
+		<script type="text/javascript" src="js/moment.js?v=<?php echo asset_version('public/js/moment.js'); ?>"></script>
+		<script type="text/javascript" src="js/jquery.meio.mask.js?v=<?php echo asset_version('public/js/jquery.meio.mask.js'); ?>">	 	</script>
+		<script type="text/javascript" src="ckeditor/ckeditor.js?v=<?php echo asset_version('public/ckeditor/ckeditor.js'); ?>">			</script>
+        <script type="text/javascript" src="ckfinder/ckfinder.js?v=<?php echo asset_version('public/ckfinder/ckfinder.js'); ?>">			</script>
+		<script type="text/javascript" src="ckeditor/adapters/jquery.js?v=<?php echo asset_version('public/ckeditor/adapters/jquery.js'); ?>">	</script>		
+		<script type="text/javascript" src="js/main.min.js?v=<?php echo asset_version('public/js/main.min.js'); ?>">					</script>   	
 		<!--[if IE 7]><link href="templates/bluestork/css/ie7.css" rel="stylesheet" type="text/css" /><![endif]-->
 	</head>
 <body id="minwidth-body">

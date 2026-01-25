@@ -44,3 +44,16 @@ if (getenv('APP_DEBUG') === false) {
 		}
 	}
 }
+
+if (!function_exists('asset_version')) {
+	function asset_version($relativePath) {
+		$rootPath = dirname(__DIR__);
+		$relativePath = ltrim($relativePath, '/');
+		$fullPath = $rootPath . DIRECTORY_SEPARATOR
+			. str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $relativePath);
+		if (file_exists($fullPath)) {
+			return (string) filemtime($fullPath);
+		}
+		return '1';
+	}
+}
