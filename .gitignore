@@ -20,3 +20,10 @@ node_modules/
 
 # CKFinder uploads (user content)
 public/ckfinder/userfiles/
+
+# Simbol links
+/css
+/img
+/js
+/ckeditor
+/ckfinder
