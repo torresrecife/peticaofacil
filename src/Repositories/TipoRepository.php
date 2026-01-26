@@ -7,6 +7,7 @@ use App\Infra\Database;
 class TipoRepository
 {
 	private $db;
+	private $lastError = '';
 
 	public function __construct($db)
 	{
@@ -136,6 +137,7 @@ class TipoRepository
 
 	public function create(array $data)
 	{
+		$this->lastError = '';
 		$tiposetor = $this->esc($data['tiposetor'] ?? '');
 		$tipoclien = $this->esc($data['tipoclien'] ?? 0);
 		$tipoarqui = $this->esc($data['tipoarqui'] ?? '');
@@ -153,7 +155,11 @@ class TipoRepository
 			. "id_setor = '" . $tiposetor . "', "
 			. "tipo_arq = '" . $tipoarqui . "'";
 
-		return mysqli_query($this->db, $sql);
+		$result = mysqli_query($this->db, $sql);
+		if (!$result) {
+			$this->lastError = mysqli_error($this->db);
+		}
+		return $result;
 	}
 
 	public function deleteTipo($tipoId)
@@ -226,5 +232,10 @@ class TipoRepository
 	private function esc($value)
 	{
 		return Database::escape($this->db, $value);
+	}
+
+	public function getLastError()
+	{
+		return $this->lastError;
 	}
 }

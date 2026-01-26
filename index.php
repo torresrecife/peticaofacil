@@ -85,7 +85,7 @@ $dados2 = null;
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="pt-br" lang="pt-br" dir="ltr" >
 	<head>
-	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta http-equiv="content-type" content="text/html; charset=<?php echo app_charset(); ?>" />
 	<?php
 		$baseUrl = getenv('APP_URL') ?: '/peticaofacil';
 		$basePath = rtrim(parse_url($baseUrl, PHP_URL_PATH), '/');
@@ -328,13 +328,13 @@ $dados2 = null;
                                                                 <table width="100%">
                                                                     <tr height="20px">
                                                                         <td colspan="1" align="left" style="font-size:7pt;padding:2px;color:#999"><?php echo $nTop; ?> </td>
-                                                                        <td colspan="8" align="left" style="font-size:7pt;padding:2px;color:#999"><?php echo $topTipo['nome_setor'] ?? ''; ?></td>
+																		<td colspan="8" align="left" style="font-size:7pt;padding:2px;color:#999"><?php echo function_exists('app_to_utf8') ? app_to_utf8($topTipo['nome_setor'] ?? '') : ($topTipo['nome_setor'] ?? ''); ?></td>
                                                                     </tr>
                                                                     <tr height="20px">
                                                                         <td colspan="3" align="left" style="width: 40px !important;">
                                                                             <img src="css/images/header/icon-48-article-edit.png" alt="" style="width:35px;padding:0px 0;" />
                                                                         </td>
-                                                                        <td colspan="6" align="left" style="width: 169px !important; font-size: 10px"><?php echo $topTipo['tipo_nome']; ?></td>
+																		<td colspan="6" align="left" style="width: 169px !important; font-size: 10px"><?php echo function_exists('app_to_utf8') ? app_to_utf8($topTipo['tipo_nome'] ?? '') : ($topTipo['tipo_nome'] ?? ''); ?></td>
                                                                     </tr>
                                                                 </table>
                                                             </a>

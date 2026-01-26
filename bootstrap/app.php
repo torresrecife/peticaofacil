@@ -57,3 +57,22 @@ if (!function_exists('asset_version')) {
 		return '1';
 	}
 }
+
+if (!function_exists('app_charset')) {
+	function app_charset() {
+		return 'UTF-8';
+	}
+}
+
+if (!function_exists('app_to_utf8')) {
+	function app_to_utf8($value) {
+		if (!is_string($value)) {
+			return $value;
+		}
+		$dbCharset = strtolower(getenv('DB_CHARSET') ?: '');
+		if ($dbCharset === 'latin1') {
+			return utf8_encode($value);
+		}
+		return $value;
+	}
+}

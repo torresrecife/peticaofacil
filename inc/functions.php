@@ -17,7 +17,8 @@ function fc_select($p_tb,$p_id,$val_id,$val_nome,$usu,$conex,$p_setor=""){
 	echo "<option></option>";
 	
 	foreach($q as $w){
-		echo "<option value='" . $w[$val_id] . "' " . ($w[$val_id] == "$p_id" ? "selected" : "") . ">" . $w[$val_nome] . "</option>";
+		$label = function_exists('app_to_utf8') ? app_to_utf8($w[$val_nome]) : $w[$val_nome];
+		echo "<option value='" . $w[$val_id] . "' " . ($w[$val_id] == "$p_id" ? "selected" : "") . ">" . $label . "</option>";
 	}
 }
 function fc_select_li($p_tb,$p_id,$val_id,$val_nome,$usu_cliente,$conex,$p_setor=""){
@@ -35,7 +36,8 @@ function fc_select_li($p_tb,$p_id,$val_id,$val_nome,$usu_cliente,$conex,$p_setor
 		if($r%18==0){
 			$t=18+$t;
 		}
-		$li[$r] = "<li style='width:280px'><a class='icon-16-copy' href='#' onclick='return EnviarDados(\"index.php\",\"$p_id\",".$w[$val_id].");'>" . $w[$val_nome] . "</a></li>";
+		$label = function_exists('app_to_utf8') ? app_to_utf8($w[$val_nome]) : $w[$val_nome];
+		$li[$r] = "<li style='width:280px'><a class='icon-16-copy' href='#' onclick='return EnviarDados(\"index.php\",\"$p_id\",".$w[$val_id].");'>" . $label . "</a></li>";
 		//str_pad($w[$val_id], 3, '0', STR_PAD_LEFT);
 	}
 	$s=0;
@@ -75,7 +77,10 @@ function fc_select_div($p_tb,$p_id,$val_id,$val_nome,$usu,$se,$conex,$p_setor=""
 		$n++;
 		$setorId = $w['id_setor'];
 		if (!isset($setorBlocks[$setorId])) {
-			$setorName = $w['nome_setor'] ? $w['nome_setor'] : 'Setor';
+		$setorName = $w['nome_setor'] ? $w['nome_setor'] : 'Setor';
+		if (function_exists('app_to_utf8')) {
+			$setorName = app_to_utf8($setorName);
+		}
 			$setorBlocks[$setorId] = "<div class='setor-group' style='clear:both;padding-top:10px;'>";
 			$setorBlocks[$setorId] .= "<div class='setor-title' style='font-weight:bold;margin:6px 0;color:#444;'>" . $setorName . "</div>";
 		}
@@ -94,11 +99,19 @@ function fc_select_div($p_tb,$p_id,$val_id,$val_nome,$usu,$se,$conex,$p_setor=""
 		$setorBlocks[$setorId] .= "<table width='100%'>";
 		$setorBlocks[$setorId] .= "<tr height='20px'>";
 		$setorBlocks[$setorId] .= "<td colspan='1' align='left' style='font-size:7pt;padding:2px;color:#999'>"  . $n . " </td>";
-		$setorBlocks[$setorId] .= "<td colspan='8' align='left' style='font-size:7pt;padding:2px;color:#999'>"  . ($w['cliente_name']?$w['cliente_name']:$w['nome_setor']) . "</td>";
+		$clientLabel = ($w['cliente_name']?$w['cliente_name']:$w['nome_setor']);
+		if (function_exists('app_to_utf8')) {
+			$clientLabel = app_to_utf8($clientLabel);
+		}
+		$setorBlocks[$setorId] .= "<td colspan='8' align='left' style='font-size:7pt;padding:2px;color:#999'>"  . $clientLabel . "</td>";
 		$setorBlocks[$setorId] .= "</tr>";
 		$setorBlocks[$setorId] .= "<tr height='20px'>";
 		$setorBlocks[$setorId] .= "<td colspan='3' align='left' style='width: 40px !important;'><img src='css/images/header/icon-48-article-edit.png' alt='' style='width:35px;padding:0px 0;' /></td>";
-		$setorBlocks[$setorId] .= "<td colspan='6' align='left' style='width: 169px !important; font-size: 10px'>" . trim($w[$val_nome]) . "</td>";
+		$title = trim($w[$val_nome]);
+		if (function_exists('app_to_utf8')) {
+			$title = app_to_utf8($title);
+		}
+		$setorBlocks[$setorId] .= "<td colspan='6' align='left' style='width: 169px !important; font-size: 10px'>" . $title . "</td>";
 		$setorBlocks[$setorId] .= "</tr>";
 		$setorBlocks[$setorId] .= "</table>";
 		$setorBlocks[$setorId] .= "</a>";
@@ -124,7 +137,8 @@ function fc_select_dados($id_input,$conex,$p_setor=""){
 	echo "<option></option>";
 	
 	foreach($q as $w){
-		echo "<option value='" . $w['id_dados'] . "'>" . $w['nome_dados'] . "</option>";
+		$label = function_exists('app_to_utf8') ? app_to_utf8($w['nome_dados']) : $w['nome_dados'];
+		echo "<option value='" . $w['id_dados'] . "'>" . $label . "</option>";
 	}
 }
 
@@ -135,7 +149,8 @@ function fc_select_name($cond,$where,$col,$banco,$conex){
 		}
 		$repo = new \App\Repositories\TipoRepository($conex);
 		$row = $repo->findWithClienteById($where);
-		return $row['tipo_nome'] ?? '';
+		$label = $row['tipo_nome'] ?? '';
+		return function_exists('app_to_utf8') ? app_to_utf8($label) : $label;
 	}
 	return '';
 }

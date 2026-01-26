@@ -33,6 +33,11 @@ class TipoService
 		return $this->repo->updateRodap($tipoId, $texto);
 	}
 
+	public function getLastError()
+	{
+		return $this->repo->getLastError();
+	}
+
 	public function getSetorCodeByTipo($tipoId)
 	{
 		return $this->repo->getSetorCodeByTipo($tipoId);
