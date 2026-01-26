@@ -17,9 +17,16 @@ class ParagrafoRepository
 	{
 		$tipoId = $this->esc($tipoId);
 		$tituloUpper = strtoupper($titulo);
-		$fundTitulo = $this->esc(utf8_encode($tituloUpper));
+		$fundTituloRaw = function_exists('app_from_utf8') ? app_from_utf8($tituloUpper) : $tituloUpper;
+		$fundTitulo = $this->esc($fundTituloRaw);
 		$title = '<div class="titulos">' . $tituloUpper . '</div><p>&nbsp;</p><p align="left"></p>';
-		$titleEscaped = $this->esc($title);
+		$titleDb = function_exists('app_from_utf8') ? app_from_utf8($title) : $title;
+		$titleEscaped = $this->esc($titleDb);
+
+		$dupQuery = mysqli_query($this->db, "SELECT fund_id FROM tp_funda_tb WHERE tipo_id = " . $tipoId . " AND fund_titulo = '" . $fundTitulo . "' LIMIT 1");
+		if ($dupQuery && mysqli_num_rows($dupQuery) > 0) {
+			return 2;
+		}
 
 		$qOrder = mysqli_query($this->db, "SELECT MAX(fund_order) FROM tp_funda_tb WHERE tipo_id = " . $tipoId . " LIMIT 1");
 		$wOrder = mysqli_fetch_array($qOrder);
@@ -31,7 +38,7 @@ class ParagrafoRepository
 			. "fund_text = '" . $titleEscaped . "', "
 			. "fund_order = " . $order;
 
-		return mysqli_query($this->db, $sql);
+		return mysqli_query($this->db, $sql) ? 1 : 0;
 	}
 
 	public function updateText($fundId, $text)

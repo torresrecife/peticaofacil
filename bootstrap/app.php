@@ -86,3 +86,19 @@ if (!function_exists('app_to_utf8')) {
 		return $value;
 	}
 }
+
+if (!function_exists('app_from_utf8')) {
+	function app_from_utf8($value) {
+		if (!is_string($value)) {
+			return $value;
+		}
+		$dbCharset = strtolower(getenv('DB_CHARSET') ?: '');
+		if ($dbCharset === 'latin1') {
+			$converted = @iconv('UTF-8', 'ISO-8859-1//IGNORE', $value);
+			if ($converted !== false) {
+				return $converted;
+			}
+		}
+		return $value;
+	}
+}

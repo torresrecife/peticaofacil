@@ -13,6 +13,9 @@ if($_POST['flag']=="I"){
 	}
 	$service = new \App\Services\ParagrafoService($conexao1);
 	$ok = $service->create($tipo_id, $toptitle);
+	if ($ok === 2) {
+		json_err("Título já está em uso.");
+	}
 	$ok ? json_ok(array('title' => $title)) : json_err("Erro ao criar paragrafo.");
 	
 }elseif($_POST['flag']=="S"){
