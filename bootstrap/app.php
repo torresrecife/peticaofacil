@@ -71,6 +71,16 @@ if (!function_exists('app_to_utf8')) {
 		}
 		$dbCharset = strtolower(getenv('DB_CHARSET') ?: '');
 		if ($dbCharset === 'latin1') {
+			if (function_exists('mb_detect_encoding') && mb_detect_encoding($value, 'UTF-8', true)) {
+				return $value;
+			}
+			if (preg_match('//u', $value)) {
+				return $value;
+			}
+			$converted = @iconv('ISO-8859-1', 'UTF-8//IGNORE', $value);
+			if ($converted !== false) {
+				return $converted;
+			}
 			return utf8_encode($value);
 		}
 		return $value;

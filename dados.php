@@ -2,8 +2,13 @@
 <table align="center" class="sub_title_tb">
 	<tr>
 		<td class="sub_title_tb_l">
-			<div style="background:#FFF;float:left"><?php echo "Cod: ".$tw['tipo_id']." - ".$tw['tipo_nome']; ?></div>
-			<div style="background:#FFF;float:right"><?php echo $tw['cliente_name']?$tw['cliente_name']:'GERAL'; ?></div>
+			<?php
+				$tipoNome = function_exists('app_to_utf8') ? app_to_utf8($tw['tipo_nome']) : $tw['tipo_nome'];
+				$clienteNome = $tw['cliente_name'] ? $tw['cliente_name'] : 'GERAL';
+				$clienteNome = function_exists('app_to_utf8') ? app_to_utf8($clienteNome) : $clienteNome;
+			?>
+			<div style="background:#FFF;float:left"><?php echo "Cod: ".$tw['tipo_id']." - ".$tipoNome; ?></div>
+			<div style="background:#FFF;float:right"><?php echo $clienteNome; ?></div>
 		</td>
 	</tr>
 </table>
@@ -34,7 +39,8 @@ if($TIPOPET!=""){
 			$tag = "campo" . $w['id_input'];
 			$dd = $w['input_val'];			
 			if($w['input_tipo']=='SELECT') {
-				echo "<td colspan='" . $w['input_cols'] . "' class='td_title dis_" . $tag . "' style='display:" . $w['hide'] . "'><label>" . $w['input_title'] . "</label><label style='float:right;margin-right:30px;display:" . $displ . "'>" . $w['input_order'] . " - Campo" . $w['id_input'] . "</label><br>";					  
+				$inputTitle = function_exists('app_to_utf8') ? app_to_utf8($w['input_title']) : $w['input_title'];
+				echo "<td colspan='" . $w['input_cols'] . "' class='td_title dis_" . $tag . "' style='display:" . $w['hide'] . "'><label>" . $inputTitle . "</label><label style='float:right;margin-right:30px;display:" . $displ . "'>" . $w['input_order'] . " - Campo" . $w['id_input'] . "</label><br>";					  
 				$selectClass = "input-default " . $w['add_class'] . " js-combobox";
 				$dataAttrs = "";
 				
@@ -75,7 +81,11 @@ if($TIPOPET!=""){
 						}
 						$optionsHtml .= "<option></option>";
 						foreach($rows as $wsel){
-							$optionsHtml .= "<option value='" . $wsel[2] . "' ident='" . $wsel[0] . "' " . ( trim(str_replace(" ","",$dd_input))==trim(str_replace(" ","",$wsel[$inputdb_1])) ? 'selected' : '') . " >" . $wsel[$inputdb_1] . "</option>";
+							$optLabel = $wsel[$inputdb_1];
+							if (function_exists('app_to_utf8')) {
+								$optLabel = app_to_utf8($optLabel);
+							}
+							$optionsHtml .= "<option value='" . $wsel[2] . "' ident='" . $wsel[0] . "' " . ( trim(str_replace(" ","",$dd_input))==trim(str_replace(" ","",$wsel[$inputdb_1])) ? 'selected' : '') . " >" . $optLabel . "</option>";
 						}
 					}
 				}else{
@@ -90,17 +100,29 @@ if($TIPOPET!=""){
 						if($dados[$dd]==$wsel['nome_dados']){
 							$select = "selected";
 						}
-						$option .= "<option value='" . $wsel['nome_dados'] . "' ident='" . $wsel['id_dados'] . "' $select >" . $wsel['nome_dados'] . "</option>";
+						$label = function_exists('app_to_utf8') ? app_to_utf8($wsel['nome_dados']) : $wsel['nome_dados'];
+						$option .= "<option value='" . $wsel['nome_dados'] . "' ident='" . $wsel['id_dados'] . "' $select >" . $label . "</option>";
 					}
-					$optionsHtml .= ($select!="selected"?("<option>" . ( $dados[$dd]!="" ?  $dados[$dd] : "" ) . "</option>"):"");
+					$firstOpt = ($dados[$dd]!="" ?  $dados[$dd] : "" );
+					if (function_exists('app_to_utf8')) {
+						$firstOpt = app_to_utf8($firstOpt);
+					}
+					$optionsHtml .= ($select!="selected"?("<option>" . $firstOpt . "</option>"):"");
 					$optionsHtml .= $option;
 				}
-				echo "<select type='text' id='" . $tag . "' name='" . $tag . "' class='" . $selectClass . "' style='width:" . $w['input_width'] . "px' " . $onFuncoes . " obrigatorio='" . $w['input_req'] . "' descricao='" . strtoupper($w['input_title']) . "'" . $dataAttrs . ">";
+				$inputTitleAttr = strtoupper($w['input_title']);
+				if (function_exists('app_to_utf8')) {
+					$inputTitleAttr = strtoupper(app_to_utf8($w['input_title']));
+				}
+				echo "<select type='text' id='" . $tag . "' name='" . $tag . "' class='" . $selectClass . "' style='width:" . $w['input_width'] . "px' " . $onFuncoes . " obrigatorio='" . $w['input_req'] . "' descricao='" . $inputTitleAttr . "'" . $dataAttrs . ">";
 				echo $optionsHtml;
 				echo "</select><br>" . fc_botoes($w['id_input'],$displ) . "</td>";
 			}elseif($w['input_tipo']=='TEXT'){
 				$valor_text = ($dados[$dd]!="" ? $dados[$dd] : "");
 				$valor_text = str_replace("BUSCA E APREENSÃO EM ALIENAÇÃO FIDUCIÁRIA","BUSCA E APREENSÃO",$valor_text);
+				if (function_exists('app_to_utf8')) {
+					$valor_text = app_to_utf8($valor_text);
+				}
 				//if($valor_text!=""){
 					$text_pre = $w['input_pre']!=''?$w['input_pre']:"";
 					$text_pos = $w['input_pos']!=''?$w['input_pos']:"";
@@ -108,10 +130,19 @@ if($TIPOPET!=""){
 				//	$text_pre="";
 				//}
 				
-				echo "<td colspan='" . $w['input_cols'] . "' class='td_title dis_" . $tag . "' style='display:" . $w['hide'] . "'><label>" . $w['input_title'] . "</label><label style='float:right;margin-right:30px;display:" . $displ . "'>" . $w['input_order'] . " - Campo" . $w['id_input'] . "</label><br>
+				$inputTitle = function_exists('app_to_utf8') ? app_to_utf8($w['input_title']) : $w['input_title'];
+				$inputAlt = $w['input_alt'];
+				if (function_exists('app_to_utf8')) {
+					$inputAlt = app_to_utf8($inputAlt);
+				}
+				$inputTitleAttr = strtoupper($w['input_title']);
+				if (function_exists('app_to_utf8')) {
+					$inputTitleAttr = strtoupper(app_to_utf8($w['input_title']));
+				}
+				echo "<td colspan='" . $w['input_cols'] . "' class='td_title dis_" . $tag . "' style='display:" . $w['hide'] . "'><label>" . $inputTitle . "</label><label style='float:right;margin-right:30px;display:" . $displ . "'>" . $w['input_order'] . " - Campo" . $w['id_input'] . "</label><br>
 								<input type='hidden' id='" . $tag . "_pre' name='" . $tag . "_pre' value='".$text_pre."' />
 								<input type='hidden' id='" . $tag . "_pos' name='" . $tag . "_pos' value='".$text_pos."' />
-								<input type='text' id='" . $tag . "' name='" . $tag . "' value='" . $valor_text . "' class='input-default " . $w['add_class'] . "' style='width:" . $w['input_width'] . "px' alt='" . $w['input_alt'] . "' " . $onFuncoes . " obrigatorio='" . $w['input_req'] . "' descricao='" . strtoupper($w['input_title']) . "'/>".($w['input_req']==2?"<span style='float:right;font-size:12pt;margin-right:10px;color:red'>*</span>":"") . "
+								<input type='text' id='" . $tag . "' name='" . $tag . "' value='" . $valor_text . "' class='input-default " . $w['add_class'] . "' style='width:" . $w['input_width'] . "px' alt='" . $inputAlt . "' " . $onFuncoes . " obrigatorio='" . $w['input_req'] . "' descricao='" . $inputTitleAttr . "'/>".($w['input_req']==2?"<span style='float:right;font-size:12pt;margin-right:10px;color:red'>*</span>":"") . "
 						<br>" . fc_botoes($w['id_input'],$displ) . "</td>";
 				//utilizar para o nome da petição
 				if($w['nomepet']=="Y"){
@@ -129,8 +160,9 @@ if($TIPOPET!=""){
 						</div></td>";
 			}elseif($w['input_tipo']=='RADIO2'){
 				//Exemplo abaixo - tem que ser alterado posteriormente
+				$inputTitle = function_exists('app_to_utf8') ? app_to_utf8($w['input_title']) : $w['input_title'];
 				echo "<td colspan='" . $w['input_cols'] . "' class='td_title'>
-						<label><b>" . $w['input_title'] . ": </b></label><label style='float:right;margin-right:30px;display:" . $displ . "'>" . $w['input_order'] . " - Campo" . $w['id_input'] . "</label><br>";						
+						<label><b>" . $inputTitle . ": </b></label><label style='float:right;margin-right:30px;display:" . $displ . "'>" . $w['input_order'] . " - Campo" . $w['id_input'] . "</label><br>";						
 						$dadosRows = array();
 						if (class_exists(\App\Services\DadosService::class)) {
 							$dadosService = new \App\Services\DadosService($conexao1);
@@ -142,32 +174,60 @@ if($TIPOPET!=""){
 							if($dados[$dd]==$wsel['nome_dados']){
 								$select = "selected";
 							}
-							
-							$option .= "<label>" . $wsel['nome_dados'] . "</label><input type='radio' name='".$tag."' value='" . $wsel['nome_dados'] . "' class='input-default " . $w['add_class'] . "' " . ($dados[$w['input_val']] == 'F' ? 'checked' : '') . " " . $onFuncoes . "/>";
+					$label = function_exists('app_to_utf8') ? app_to_utf8($wsel['nome_dados']) : $wsel['nome_dados'];
+					$option .= "<label>" . $label . "</label><input type='radio' name='".$tag."' value='" . $wsel['nome_dados'] . "' class='input-default " . $w['add_class'] . "' " . ($dados[$w['input_val']] == 'F' ? 'checked' : '') . " " . $onFuncoes . "/>";
 						}
 						echo $option;
 				echo "</div></td>";
 					
 			}elseif($w['input_tipo']=='TITLE'){
 				echo "</tr><tr>";
-                echo "<td colspan='" . $w['input_cols'] . "' class='td_title' >";
+				$inputTitle = function_exists('app_to_utf8') ? app_to_utf8($w['input_title']) : $w['input_title'];
+				echo "<td colspan='" . $w['input_cols'] . "' class='td_title' >";
                 if($w['input_title']==""){
                     echo "<hr style='border-color: #d3d3d3'>";
                 }else{
-                    echo "<div>&nbsp;</div><p align='center' class='input-default " . $w['add_class'] . "' style='width:" . $w['input_width'] . "px; height:20px; margin-left:0px; padding-top:3px; margin-bottom:0px'><b>" . $w['input_title'] . "</b>";
+                    echo "<div>&nbsp;</div><p align='center' class='input-default " . $w['add_class'] . "' style='width:" . $w['input_width'] . "px; height:20px; margin-left:0px; padding-top:3px; margin-bottom:0px'><b>" . $inputTitle . "</b>";
                 }
                     echo fc_botoes($w['id_input'],$displ) . "</td>";
                     echo "</tr>";
                 $n=0;
             }elseif($w['input_tipo']=='BOTTOM'){
-				echo "<td colspan='" . $w['input_cols'] . "' class='td_title' ><label>" . $w['input_title'] . "</label><br><input type='text' id='" . $tag . "' name='" . $tag . "' value='" . ($dados[$dd]!="" ? $dados[$dd]:"") . "' class='input-default " . $w['add_class'] . "' style='color:666; width:" . $w['input_width'] . "px' alt='" . $w['input_alt'] . "' " . $onFuncoes . " readonly='readonly' />
+				$inputTitle = function_exists('app_to_utf8') ? app_to_utf8($w['input_title']) : $w['input_title'];
+				$inputAlt = $w['input_alt'];
+				$inputValue = ($dados[$dd]!="" ? $dados[$dd]:"");
+				if (function_exists('app_to_utf8')) {
+					$inputAlt = app_to_utf8($inputAlt);
+					$inputValue = app_to_utf8($inputValue);
+				}
+				echo "<td colspan='" . $w['input_cols'] . "' class='td_title' ><label>" . $inputTitle . "</label><br><input type='text' id='" . $tag . "' name='" . $tag . "' value='" . $inputValue . "' class='input-default " . $w['add_class'] . "' style='color:666; width:" . $w['input_width'] . "px' alt='" . $inputAlt . "' " . $onFuncoes . " readonly='readonly' />
 						" . fc_botoes($w['id_input'],$displ) . "</td>";
 			}elseif($w['input_tipo']=='TEXTAREA'){
-				echo "<td colspan='" . $w['input_cols'] . "' class='td_title dis_" . $tag . "' style='display:" . $w['hide'] . "'><label>" . $w['input_title'] . "</label><label style='float:right;margin-right:30px;display:" . $displ . "'>" . $w['input_order'] . " - Campo" . $w['id_input'] . "</label><br>
-						<input type='text' id='" . $tag . "' name='" . $tag . "' value='" . $w['texto_padrao'] . ($dados[$dd]!='' ? $dados[$dd]:'') . "' class='input-default " . $w['add_class'] . "' style='width:" . $w['input_width'] . "px;' alt='" . $w['input_alt'] . "' " . $onFuncoes . " obrigatorio='" . $w['input_req'] . "' descricao='" . strtoupper($w['input_title']) . "' onfocus='fc_textarea(this,\"" . $w['input_title'] . "\",2);' carregar='0'/>
+				$inputTitle = function_exists('app_to_utf8') ? app_to_utf8($w['input_title']) : $w['input_title'];
+				$inputAlt = $w['input_alt'];
+				$inputValue = $w['texto_padrao'] . ($dados[$dd]!='' ? $dados[$dd]:'');
+				if (function_exists('app_to_utf8')) {
+					$inputAlt = app_to_utf8($inputAlt);
+					$inputValue = app_to_utf8($inputValue);
+				}
+				$inputTitleAttr = strtoupper($w['input_title']);
+				if (function_exists('app_to_utf8')) {
+					$inputTitleAttr = strtoupper(app_to_utf8($w['input_title']));
+				}
+				echo "<td colspan='" . $w['input_cols'] . "' class='td_title dis_" . $tag . "' style='display:" . $w['hide'] . "'><label>" . $inputTitle . "</label><label style='float:right;margin-right:30px;display:" . $displ . "'>" . $w['input_order'] . " - Campo" . $w['id_input'] . "</label><br>
+						<input type='text' id='" . $tag . "' name='" . $tag . "' value='" . $inputValue . "' class='input-default " . $w['add_class'] . "' style='width:" . $w['input_width'] . "px;' alt='" . $inputAlt . "' " . $onFuncoes . " obrigatorio='" . $w['input_req'] . "' descricao='" . $inputTitleAttr . "' onfocus='fc_textarea(this,\"" . $inputTitle . "\",2);' carregar='0'/>
 						<br>". fc_botoes($w['id_input'],$displ) . "</td>";
 			}elseif($w['input_tipo']=='HIDDEN'){
-				echo "<div style='float:left;display:" . $displ . "'><label>" . $w['input_title'] . "</label><label style='float:right;margin-right:30px;display:" . $displ . "'>" . $w['input_order'] . " - Campo" . $w['id_input'] . "</label><br><input type='text' id='" . $tag . "' name='" . $tag . "' value='" . $text_pre . $valor_text . "' class='input-default " . $w['add_class'] . "' style='width:" . $w['input_width'] . "px; display:".$displ."' alt='" . $w['input_alt'] . "' " . $onFuncoes . " obrigatorio='" . $w['input_req'] . "' descricao='" . strtoupper($w['input_title']) . "' title='" . htmlentities($w['input_title']) . "'/><div style='float:left'>" . fc_botoes($w['id_input'],$displ) . "</div></div>";
+				$inputTitle = function_exists('app_to_utf8') ? app_to_utf8($w['input_title']) : $w['input_title'];
+				$inputAlt = $w['input_alt'];
+				$inputTitleAttr = strtoupper($w['input_title']);
+				$inputTitleRaw = $w['input_title'];
+				if (function_exists('app_to_utf8')) {
+					$inputAlt = app_to_utf8($inputAlt);
+					$inputTitleAttr = strtoupper(app_to_utf8($w['input_title']));
+					$inputTitleRaw = app_to_utf8($w['input_title']);
+				}
+				echo "<div style='float:left;display:" . $displ . "'><label>" . $inputTitle . "</label><label style='float:right;margin-right:30px;display:" . $displ . "'>" . $w['input_order'] . " - Campo" . $w['id_input'] . "</label><br><input type='text' id='" . $tag . "' name='" . $tag . "' value='" . $text_pre . $valor_text . "' class='input-default " . $w['add_class'] . "' style='width:" . $w['input_width'] . "px; display:".$displ."' alt='" . $inputAlt . "' " . $onFuncoes . " obrigatorio='" . $w['input_req'] . "' descricao='" . $inputTitleAttr . "' title='" . htmlentities($inputTitleRaw) . "'/><div style='float:left'>" . fc_botoes($w['id_input'],$displ) . "</div></div>";
 			}
 			$cols = $w['input_rols'];
 			for($i=1;$i<=$cols;$i++){

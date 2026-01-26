@@ -54,6 +54,9 @@ foreach ($qpet2 as $wpet2) {
 ob_start();
 require __DIR__ . "/views/ajax_last_pecas.php";
 $html = ob_get_clean();
+if (function_exists('app_to_utf8')) {
+	$html = app_to_utf8($html);
+}
 if (is_dir($cacheDir)) {
 	file_put_contents($cacheFile, json_encode(array('html' => $html)));
 }
