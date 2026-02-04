@@ -16,14 +16,14 @@ class SelectRepository
 	public function listDadosByInput($campoId)
 	{
 		$campoId = $this->esc($campoId);
-		$query = mysqli_query($this->db, "SELECT nome_dados FROM tp_dados_tb WHERE id_input = " . $campoId);
+		$query = mysqli_query($this->db, "SELECT id_dados, nome_dados, return_1 FROM tp_dados_tb WHERE id_input = " . $campoId);
 		if (!$query) {
 			return array();
 		}
 
 		$rows = array();
 		while ($row = mysqli_fetch_assoc($query)) {
-			$rows[] = $row['nome_dados'];
+			$rows[] = $row;
 		}
 
 		return $rows;

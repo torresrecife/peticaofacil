@@ -16,6 +16,18 @@
 
 <table align="center" class="content_form">
 <?php
+function normalize_select_value($label)
+{
+	$normalized = strtoupper(trim($label));
+	if (function_exists('iconv')) {
+		$normalized = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $normalized);
+	}
+	$normalized = preg_replace('/[^A-Z]/', '', $normalized);
+	if ($normalized === 'SIM' || $normalized === 'NAO') {
+		return $normalized;
+	}
+	return $label;
+}
 
 if($TIPOPET!=""){
 	$displ = $_POST['hid_enviar']==7?'block':'none';
@@ -85,7 +97,8 @@ if($TIPOPET!=""){
 							if (function_exists('app_to_utf8')) {
 								$optLabel = app_to_utf8($optLabel);
 							}
-							$optionsHtml .= "<option value='" . $wsel[2] . "' ident='" . $wsel[0] . "' " . ( trim(str_replace(" ","",$dd_input))==trim(str_replace(" ","",$wsel[$inputdb_1])) ? 'selected' : '') . " >" . $optLabel . "</option>";
+							$optValue = normalize_select_value($optLabel);
+							$optionsHtml .= "<option value='" . $optValue . "' ident='" . $wsel[0] . "' " . ( trim(str_replace(" ","",$dd_input))==trim(str_replace(" ","",$wsel[$inputdb_1])) ? 'selected' : '') . " >" . $optLabel . "</option>";
 						}
 					}
 				}else{
@@ -101,7 +114,8 @@ if($TIPOPET!=""){
 							$select = "selected";
 						}
 						$label = function_exists('app_to_utf8') ? app_to_utf8($wsel['nome_dados']) : $wsel['nome_dados'];
-						$option .= "<option value='" . $wsel['nome_dados'] . "' ident='" . $wsel['id_dados'] . "' $select >" . $label . "</option>";
+						$value = normalize_select_value($label);
+						$option .= "<option value='" . $value . "' ident='" . $wsel['id_dados'] . "' $select >" . $label . "</option>";
 					}
 					$firstOpt = ($dados[$dd]!="" ?  $dados[$dd] : "" );
 					if (function_exists('app_to_utf8')) {

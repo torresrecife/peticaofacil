@@ -16,15 +16,20 @@ class CompRepository
 		$campo = explode("|_|", $campo0);
 
 		$sel = " SELECT ";
-		for ($q = 0; $q <= count($campo); $q++) {
-			if ($campo[$q] != '') {
+		for ($q = 0; $q < count($campo); $q++) {
+			if (isset($campo[$q]) && $campo[$q] !== '') {
 				$sel .= ($q > 0 ? (',' . $campo[$q]) : $campo[$q]);
 			}
 		}
 
 		$sel .= " FROM $tabela";
 		$sel .= " where ";
-		$sel .= " $idRef = $idVal";
+		if (is_numeric($idVal)) {
+			$sel .= " $idRef = $idVal";
+		} else {
+			$safeVal = mysqli_real_escape_string($this->db, (string) $idVal);
+			$sel .= " $idRef = '" . $safeVal . "'";
+		}
 		$sel = str_replace("\\'", "'", $sel);
 
 		$query = mysqli_query($this->db, $sel);
@@ -37,8 +42,10 @@ class CompRepository
 		}
 
 		$result = '';
-		for ($i = 0; $i <= count($while); $i++) {
-			$result .= $while[$i] ? ($while[$i] . '_|_') : "";
+		for ($i = 0; $i < count($while); $i++) {
+			if (isset($while[$i]) && $while[$i] !== '') {
+				$result .= $while[$i] . '_|_';
+			}
 		}
 
 		return $result;
@@ -49,7 +56,12 @@ class CompRepository
 		$sel = " SELECT " . $campo0;
 		$sel .= " FROM " . $tabela;
 		$sel .= " where ";
-		$sel .= " " . $idRef . " = " . $idVal;
+		if (is_numeric($idVal)) {
+			$sel .= " " . $idRef . " = " . $idVal;
+		} else {
+			$safeVal = mysqli_real_escape_string($this->db, (string) $idVal);
+			$sel .= " " . $idRef . " = '" . $safeVal . "'";
+		}
 		$sel = str_replace("\\'", "'", $sel);
 
 		$query = mysqli_query($this->db, $sel);

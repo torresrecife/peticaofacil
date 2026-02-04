@@ -20,7 +20,11 @@ if ($_POST['flag'] == "I") {
 	$items = array();
 	if ($row) {
 		foreach ($row as $value) {
-			$items[] = $value;
+			if (function_exists('app_to_utf8')) {
+				$items[] = app_to_utf8($value);
+			} else {
+				$items[] = $value;
+			}
 		}
 	}
 	json_ok(array('items' => $items));
@@ -55,6 +59,9 @@ if ($_POST['flag'] == "I") {
 	ob_start();
 	require __DIR__ . "/views/ajax_input_select.php";
 	$html = ob_get_clean();
+	if (function_exists('app_to_utf8')) {
+		$html = app_to_utf8($html);
+	}
 	json_ok(array('html' => $html));
 }
 ?>

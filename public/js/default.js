@@ -69,6 +69,16 @@
 				$('#tdInputs').show();
 			}
 		});
+
+	$(document).on('change', 'select', function() {
+		var attr = $(this).attr('onblur') || $(this).attr('onfocus') || $(this).attr('onload') || '';
+		if (attr && attr.indexOf('mcampo(') !== -1) {
+			var match = attr.match(/mcampo\((['"])(.*?)\1\)/);
+			if (match && match[2]) {
+				mcampo(match[2]);
+			}
+		}
+	});
 	});
 	
 function inputs_checkeds(valor){
@@ -349,9 +359,14 @@ function inputs_checkeds(valor){
 	function fc_ajax_comp(tabela,campo0,input0,unir,id_ref,id_val,conex){
 		var str = "";
 		
-		$(id_val).each(function(){
-			str = $(this).find('option:selected').attr('ident');
-		});
+	$(id_val).each(function(){
+		var $el = $(this);
+		if ($el.is('select')) {
+			str = $el.find('option:selected').attr('ident') || $el.val() || '';
+		} else {
+			str = $el.val() || '';
+		}
+	});
 		
 		$.ajax({
 			type: "POST",
@@ -362,7 +377,7 @@ function inputs_checkeds(valor){
 			      "&id_ref=" + id_ref +
 			      "&id_val=" + str	  +
 			      "&conex="  + conex,
-			dataType: "json",
+		dataType: "json",
 				  
 			success: function(response){
 				if(!response || !response.ok){
@@ -370,14 +385,14 @@ function inputs_checkeds(valor){
 					alert("Erro: " + msg + ". (Copie esse erro e informe ao administrador)");
 					return;
 				}
-				var x = response.data ? response.data.value : "";
+			var x = response.data ? response.data.value : "";
 			
 				var quebra="";
 				var iSinput="";
 				var iSunir="";
 				var a = "";
 				var b = "";
-				quebra=x.split("_|_");
+			quebra=x.split("_|_");
 				iSinput=input0.split("|_|");
 				for(a in quebra){
 					if(quebra[a] && unir != 'unir'){
@@ -563,12 +578,29 @@ function inputs_checkeds(valor){
 								}
 								var nsel = responseSel.data && responseSel.data.items ? responseSel.data.items : [];
 								var nhtml = "";
+								var hasReturn = false;
+								var idx = 0;
 								for(a in nsel){
 									if(nsel[a] !== ""){
-										nhtml += '<p style="display: block;"><input type="text" class="slInputs input-default" value="'+nsel[a]+'" style="width:220px"></p>';
+										idx++;
+										var label = (nsel[a] && typeof nsel[a] === "object") ? (nsel[a].nome_dados || "") : nsel[a];
+										var retVal = (nsel[a] && typeof nsel[a] === "object") ? (nsel[a].return_1 || "") : "";
+										if (retVal !== "") {
+											hasReturn = true;
+										}
+										nhtml += '<div class="pInputs">'
+											+ '<input type="text" class="slInputs input-default" value="'+label+'" style="width:203px;margin-top:5px;" my_val="'+idx+'" />'
+											+ '&nbsp;<input type="text" class="slTextarea input-default" id="slTextarea_'+idx+'" style="width:203px" value="'+retVal.replace(/"/g,'&quot;')+'" />'
+											+ '</div>';
 									}
 								}
 								$("#inputs").html(nhtml);
+								if (hasReturn) {
+									$("input.CKRETURN[value='Textarea']").prop("checked", true);
+									$("#tdInputs").hide();
+								} else {
+									$("#tdInputs").show();
+								}
 							}
 						});
 					}
@@ -1771,13 +1803,19 @@ function validaEmail(mail){
 //mostra os campos que estavam ocultos e os tornam obrigatórios
 function mcampo(valor){
 	var campos = valor.split("_|_");
-	if($("#"+campos[0]).val()=="SIM"){
+	var rawVal = ($("#"+campos[0]).val() || "").toString();
+	var normVal = rawVal.toUpperCase();
+	if (normVal.normalize) {
+		normVal = normVal.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+	}
+	normVal = normVal.replace(/[^A-Z]/g, '');
+	if(normVal=="SIM"){
 		for(i = 1; i < campos.length; i++) {
 			//alert(campos[i]);	
 			$(".dis_"+campos[i]).show();
 			$(".dis_"+campos[i]+" input").attr("obrigatorio","2");
 		}
-	}else if($("#"+campos[0]).val()=="NÃO"){
+	}else if(normVal=="NAO"){
 		for(i = 1; i < campos.length; i++) {			
 			$(".dis_"+campos[i]).hide();
 			$(".dis_"+campos[i]+" input").val("");

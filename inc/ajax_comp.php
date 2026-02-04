@@ -9,6 +9,10 @@ $campo0 = $_POST['campo0']	? $_POST['campo0'] : "''";
 $id_ref = $_POST['id_ref']	? $_POST['id_ref'] : "''";
 $id_val = $_POST['id_val']	? $_POST['id_val'] : "''";
 
+if ($id_ref === 'id_dados' && $id_val !== '' && !is_numeric($id_val)) {
+	$id_ref = 'nome_dados';
+}
+
 if (!class_exists(\App\Services\CompService::class)) {
 	json_err("Servico indisponivel.");
 }
@@ -23,5 +27,9 @@ elseif($_POST['conex']==2)
 }
 
 $service = new \App\Services\CompService($conex);
-json_ok(array('value' => $service->fetchResult($tabela, $campo0, $id_ref, $id_val)));
+$value = $service->fetchResult($tabela, $campo0, $id_ref, $id_val);
+if (function_exists('app_to_utf8')) {
+	$value = app_to_utf8($value);
+}
+json_ok(array('value' => $value));
 ?>
