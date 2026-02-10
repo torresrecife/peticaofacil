@@ -96,19 +96,35 @@ function fc_textarea(valor, texto, editor) {
 	}
 }
 
-function validate_peticao(args) {
+function validate_peticao(args='') {
 	var dd = 0;
 	$('.new_required').each(function(index, object) {
+		var $obj = $(object);
+		var rawVal = ($obj.val() || "").toString();
+		if ($obj.is('select') && rawVal === '') {
+			var $comboInput = $obj.next('.ui-combobox').find('input.ui-autocomplete-input');
+			if ($comboInput.length) {
+				rawVal = ($comboInput.val() || "").toString();
+			}
+		}
+		var normVal = rawVal.toUpperCase();
+		if (normVal.normalize) {
+			normVal = normVal.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+		}
+		normVal = normVal.replace(/[^A-Z]/g, '');
+		if (normVal === 'NO') {
+			normVal = 'NAO';
+		}
 		if (args != "") {
-			if ($(object).val() == "AUSENTE" || $(object).val() == "MUDOU-SE" || $(object).val() == "DESCONHECIDO") {
+			if (normVal == "AUSENTE" || normVal == "MUDOUSE" || normVal == "DESCONHECIDO") {
 				dd = 1;
 			}
 		} else {
-			if ($(object).val() == "NÃO" && $(object).attr("type") != "radio") {
+			if (normVal == "NAO" && $obj.attr("type") != "radio") {
 				dd = 1;
-			} else if ($(object).attr("type") == "radio") {
+			} else if ($obj.attr("type") == "radio") {
 				setTimeout(function() {
-					if ($(object).is(":checked") == true && $(object).val() == "NÃO") {
+					if ($obj.is(":checked") == true && normVal == "NAO") {
 						dd = 1;
 					}
 				}, 200);
