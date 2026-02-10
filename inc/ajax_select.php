@@ -21,8 +21,9 @@ if($_POST['flag']=="S")
 	$items = array();
 	foreach ($service->listDadosByInput($campoId) as $row) {
 		$nome = $row['nome_dados'] ?? '';
-		$ret = $row['return_1'] ?? '';
-		if (function_exists('app_to_utf8')) {
+		$ret = isset($row['return_1']) && $row['return_1'] !== 'undefined' &&  $row['return_1'] !== '' ? $row[ 'return_1'] : '';
+
+        if (function_exists('app_to_utf8')) {
 			$nome = app_to_utf8($nome);
 			$ret = app_to_utf8($ret);
 		}
