@@ -140,6 +140,10 @@ if($TIPOPET!=""){
 				//if($valor_text!=""){
 					$text_pre = $w['input_pre']!=''?$w['input_pre']:"";
 					$text_pos = $w['input_pos']!=''?$w['input_pos']:"";
+					if (function_exists('app_to_utf8')) {
+						$text_pre = app_to_utf8($text_pre);
+						$text_pos = app_to_utf8($text_pos);
+					}
 				//}else{
 				//	$text_pre="";
 				//}
