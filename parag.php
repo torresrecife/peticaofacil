@@ -50,7 +50,7 @@ function normalize_title($value)
 			?>
 			<input type="hidden" class="fund_id" value="<?php echo $wtext['fund_id']; ?>" />
 			<div class="group">
-				<h3><a href="#" style="cursor: move;" ><?php echo $wtext['fund_titulo']; ?></a><img src="css/images/closeButton.png" alt="delete" class="delete" /></h3>
+			<h3><a href="#" style="cursor: move;" ><?php echo normalize_utf8($wtext['fund_titulo']); ?></a><img src="css/images/closeButton.png" alt="delete" class="delete" /></h3>
 				<div align="center">
 					<textarea id="cls_text_<?php echo $n; ?>" name="cls_text_<?php echo $n; ?>" class="cls_text" style="width:690px;" >
 						<?php

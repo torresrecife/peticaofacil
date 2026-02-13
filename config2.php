@@ -20,6 +20,14 @@ foreach ($inputs as $idx => $w) {
 	$campos .= "@campo" . $w['id_input'] . "@";
 }
 
+function normalize_utf8($value)
+{
+    if (!is_string($value) || $value === '') {
+        return $value;
+    }
+    return preg_match('//u', $value) ? $value : utf8_encode($value);
+}
+
 ?>
 <div align="center" class="content_form_cfg">
 	<div align="left" id="accordion" style="width:800px;" >
@@ -56,7 +64,7 @@ foreach ($inputs as $idx => $w) {
 			<input type='hidden' name='#dados<?php echo $n; ?>' id='#dados<?php echo $n; ?>' value='' />
 			<div class="group">
 				<h3>
-					<a href="#" style="cursor: move;" ><?php echo $wtext['fund_titulo']; ?></a>
+					<a href="#" style="cursor: move;" ><?php echo normalize_utf8($wtext['fund_titulo']); ?></a>
 				</h3>
 				<div align="center">
 					<textarea class="cls_text" id="input<?php echo $n; ?>" name="input<?php echo $n; ?>"><?php echo urldecode($wtext['fund_text']); ?></textarea>
