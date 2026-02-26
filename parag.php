@@ -34,7 +34,7 @@ function normalize_title($value)
 <div align="center" class="include_arq">		
 	<div align="left" id="accordion" style="width:880px;" >
 		<?php	
-		$tipo_tb   = $_POST['TIPOPET'] ? $_POST['TIPOPET'] : "''";
+		$tipo_tb   = $_POST['TIPOPET'] ?: "''";
 		$rows = array();
 		if (class_exists(\App\Services\ParagrafoService::class)) {
 			$parService = new \App\Services\ParagrafoService($conexao1);
