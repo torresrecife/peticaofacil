@@ -17,8 +17,12 @@ class ClienteRepository
 
 	public function insert(array $data)
 	{
-		$nome = $this->esc($data['cliente_name'] ?? '');
-		$cod = $this->esc($data['cliente_cod'] ?? '');
+		$nomeRaw = $data['cliente_name'] ?? '';
+		$codRaw = $data['cliente_cod'] ?? '';
+		$nomeDb = function_exists('app_from_utf8') ? app_from_utf8($nomeRaw) : $nomeRaw;
+		$codDb = function_exists('app_from_utf8') ? app_from_utf8($codRaw) : $codRaw;
+		$nome = $this->esc($nomeDb);
+		$cod = $this->esc($codDb);
 		$area = Database::trimOrNull($data['cliente_area'] ?? '');
 		$areaSql = $area === null ? 'NULL' : "'" . $this->esc($area) . "'";
 
@@ -38,8 +42,12 @@ class ClienteRepository
 	public function update($id, array $data)
 	{
 		$id = $this->esc($id);
-		$nome = $this->esc($data['cliente_name'] ?? '');
-		$cod = $this->esc($data['cliente_cod'] ?? '');
+		$nomeRaw = $data['cliente_name'] ?? '';
+		$codRaw = $data['cliente_cod'] ?? '';
+		$nomeDb = function_exists('app_from_utf8') ? app_from_utf8($nomeRaw) : $nomeRaw;
+		$codDb = function_exists('app_from_utf8') ? app_from_utf8($codRaw) : $codRaw;
+		$nome = $this->esc($nomeDb);
+		$cod = $this->esc($codDb);
 		$area = Database::trimOrNull($data['cliente_area'] ?? '');
 		$areaSql = $area === null ? 'NULL' : "'" . $this->esc($area) . "'";
 

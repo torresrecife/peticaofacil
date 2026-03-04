@@ -4,12 +4,12 @@
 			<div class="icon-wrapper">
 				<table class="adminlist" width="60%" align="center">
 					<tr height="30">
-						<td class="order" ><b>Código		  </b></td>
+						<td class="order" ><b>C&oacute;digo		  </b></td>
 						<td class="order" ><b>Nome	do cliente</b></td>
 						<td class="order" ><b>Nome chave</b></td>
 						<td class="order" ><b>Setor			  </b></td>
 						<td class="order" ><b>Data Cadastro	  </b></td>
-						<td class="order" ><b>Opções          </b></td>
+						<td class="order" ><b>Op&ccedil;&otilde;es          </b></td>
 					</tr>
 					<?php
 						
@@ -19,14 +19,17 @@
 						$rows = $service->listAllWithSetor();
 					}
 					foreach ($rows as $arr) {
+						$clienteNome = function_exists('app_to_utf8') ? app_to_utf8($arr['cliente_name']) : $arr['cliente_name'];
+						$clienteCod = function_exists('app_to_utf8') ? app_to_utf8($arr['cliente_cod']) : $arr['cliente_cod'];
+						$setorNome = function_exists('app_to_utf8') ? app_to_utf8($arr['nome_setor']) : $arr['nome_setor'];
 						?>
 						<tr >
 							<td class="order"><?PHP echo $arr['cliente_id'];	 ?></td>
-							<td class="order"><?php echo $arr['cliente_name']; ?></td>
-							<td class="order"><?php echo $arr['cliente_cod']; ?></td>
-							<td class="order"><?php echo $arr['nome_setor']; 	 ?></td>
+							<td class="order"><?php echo $clienteNome; ?></td>
+							<td class="order"><?php echo $clienteCod; ?></td>
+							<td class="order"><?php echo $setorNome; 	 ?></td>
 							<td class="order"><?php echo $arr['cliente_creator']; 	 ?></td>
-							<td class="order"><?php echo fc_botoes_cliente($arr['cliente_id'],"block",$arr['cliente_name']); ?></td>
+							<td class="order"><?php echo fc_botoes_cliente($arr['cliente_id'],"block",$clienteNome); ?></td>
 						</tr>
 						<?php
 					}
@@ -61,9 +64,9 @@
 								$setores = $setorService->listAll();
 							}
 							foreach($setores as $wsetor){
-								
+								$setorLabel = function_exists('app_to_utf8') ? app_to_utf8($wsetor[1]) : $wsetor[1];
 								?>
-								<option value="<?php echo $wsetor[0]; ?>"> <?php echo $wsetor[1]; ?></option>
+								<option value="<?php echo $wsetor[0]; ?>"> <?php echo $setorLabel; ?></option>
 								<?php 
 							}
 							?>

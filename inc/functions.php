@@ -222,9 +222,11 @@ function fc_botoes_setor($id_setor,$displ,$nome=""){
 			</div>";
 }
 function fc_botoes_cliente($cliente_id,$displ,$nome=""){
+	$nome = function_exists('app_to_utf8') ? app_to_utf8($nome) : $nome;
+	$nomeJs = addslashes($nome);
 	return "<div id='module-status' style='display:" . $displ . ";'>
 				<span class='editar'><a href='javascript:fc_edit_cliente(\"$cliente_id\",\"U\");' class='button_del' title='Editar Cliente'>Editar</a></span>
-				<span class='excluir'><a href='javascript:fc_del_cliente(\"$cliente_id\",\"$nome\");' class='button_del' title='Excluir Cliente'>Excluir</a></span>
+				<span class='excluir'><a href='javascript:fc_del_cliente(\"$cliente_id\",\"$nomeJs\");' class='button_del' title='Excluir Cliente'>Excluir</a></span>
 			</div>";
 }
 function cabecalhoerodape($tipoid,$rodcab,$rtfpdf,$conex){

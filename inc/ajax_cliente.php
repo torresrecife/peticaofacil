@@ -13,7 +13,7 @@ if($_POST['flag']=="E"){
 	$items = array();
 	if ($row) {
 		foreach ($row as $value) {
-			$items[] = $value;
+			$items[] = function_exists('app_to_utf8') ? app_to_utf8($value) : $value;
 		}
 	}
 	json_ok(array('items' => $items));
