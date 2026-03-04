@@ -58,7 +58,7 @@
 	</div>
 	<div id="footer">
 		<p class="copyright" style="color:#ccc">
-			<a href="#" style="color:#ccc">BVAA</a> - Desenvolvido por: Fábio Torres (<a href="mailto:fabio@direito2010.com.br" style="color:#ccc">fabio@direito2010.com.br</a>).		
+			<a href="#" style="color:#ccc">BVAA</a> - Desenvolvido por: Fábio Torres (<a href="mailto:fabiotorres.adv@gmail.com" style="color:#ccc">fabio@direito2010.com.br</a>).
 		</p>
 	</div>
 </body>
