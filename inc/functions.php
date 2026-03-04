@@ -198,9 +198,11 @@ function fc_botoes($valor,$displ){
 			</div>";
 }
 function fc_botoes_usu($id_usu,$displ,$nome=""){
+	$nome = function_exists('app_to_utf8') ? app_to_utf8($nome) : $nome;
+	$nomeJs = addslashes($nome);
 	return "<div id='module-status' style='display:" . $displ . ";'>
-				<span class='editar'><a href='javascript:fc_edit_usu(\"$id_usu\",\"U\");' class='button_del' title='Editar UsuÃ¡rio'>Editar</a></span>
-				<span class='excluir'><a href='javascript:fc_del_usu(\"$id_usu\",\"$nome\");' class='button_del' title='Excluir UsuÃ¡rio'>Excluir</a></span>
+				<span class='editar'><a href='javascript:fc_edit_usu(\"$id_usu\",\"U\");' class='button_del' title='Editar Usuário'>Editar</a></span>
+				<span class='excluir'><a href='javascript:fc_del_usu(\"$id_usu\",\"$nomeJs\");' class='button_del' title='Excluir Usuário'>Excluir</a></span>
 			</div>";
 }
 function fc_botoes_sql($id_sql,$displ,$nome=""){

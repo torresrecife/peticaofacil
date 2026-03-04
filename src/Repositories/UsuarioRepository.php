@@ -46,10 +46,14 @@ class UsuarioRepository
 
 	public function insert(array $data)
 	{
-		$nome = $this->esc($data['nome_usu'] ?? '');
-		$login = $this->esc($data['login_usu'] ?? '');
-		$email = $this->esc($data['email_usu'] ?? '');
-		$nivel = $this->esc($data['nivel_usu'] ?? '');
+		$nomeRaw = $data['nome_usu'] ?? '';
+		$loginRaw = $data['login_usu'] ?? '';
+		$emailRaw = $data['email_usu'] ?? '';
+		$nivelRaw = $data['nivel_usu'] ?? '';
+		$nome = $this->esc(function_exists('app_from_utf8') ? app_from_utf8($nomeRaw) : $nomeRaw);
+		$login = $this->esc(function_exists('app_from_utf8') ? app_from_utf8($loginRaw) : $loginRaw);
+		$email = $this->esc(function_exists('app_from_utf8') ? app_from_utf8($emailRaw) : $emailRaw);
+		$nivel = $this->esc(function_exists('app_from_utf8') ? app_from_utf8($nivelRaw) : $nivelRaw);
 		$setor = $this->esc($data['setor_usu'] ?? '');
 		$cliente = $this->esc($data['banco_neo'] ?? '');
 		$senha = $data['senha_usu1'] ?? '';
@@ -74,10 +78,14 @@ class UsuarioRepository
 	public function update($id, array $data)
 	{
 		$id = $this->esc($id);
-		$nome = $this->esc($data['nome_usu'] ?? '');
-		$login = $this->esc($data['login_usu'] ?? '');
-		$email = $this->esc($data['email_usu'] ?? '');
-		$nivel = $this->esc($data['nivel_usu'] ?? '');
+		$nomeRaw = $data['nome_usu'] ?? '';
+		$loginRaw = $data['login_usu'] ?? '';
+		$emailRaw = $data['email_usu'] ?? '';
+		$nivelRaw = $data['nivel_usu'] ?? '';
+		$nome = $this->esc(function_exists('app_from_utf8') ? app_from_utf8($nomeRaw) : $nomeRaw);
+		$login = $this->esc(function_exists('app_from_utf8') ? app_from_utf8($loginRaw) : $loginRaw);
+		$email = $this->esc(function_exists('app_from_utf8') ? app_from_utf8($emailRaw) : $emailRaw);
+		$nivel = $this->esc(function_exists('app_from_utf8') ? app_from_utf8($nivelRaw) : $nivelRaw);
 		$setor = $this->esc($data['setor_usu'] ?? '');
 		$cliente = $this->esc($data['banco_neo'] ?? '');
 		$senha = $data['senha_usu1'] ?? '';

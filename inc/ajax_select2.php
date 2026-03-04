@@ -20,4 +20,7 @@ if ($dadosFlag == 1) {
 ob_start();
 require __DIR__ . "/views/ajax_select2_options.php";
 $html = ob_get_clean();
+if (function_exists('app_to_utf8')) {
+	$html = app_to_utf8($html);
+}
 json_ok(array('html' => $html));
