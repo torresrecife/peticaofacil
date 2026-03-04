@@ -116,8 +116,9 @@ if($_POST['hid_enviar']==5){
 							$servers = $repo->listAll();
 						}
 						foreach ($servers as $wserver){
+							$serverLabel = function_exists('app_to_utf8') ? app_to_utf8($wserver[1]) : $wserver[1];
 							?>
-							<option value="<?php echo $wserver[0]; ?>"> <?php echo $wserver[1]; ?></option>
+							<option value="<?php echo $wserver[0]; ?>"> <?php echo $serverLabel; ?></option>
 							<?php 
 						}
 						?>
@@ -138,8 +139,9 @@ if($_POST['hid_enviar']==5){
 							if ($usu_setor != 0 && $wsetor[0] != $usu_setor) {
 								continue;
 							}
+							$setorLabel = function_exists('app_to_utf8') ? app_to_utf8($wsetor[1]) : $wsetor[1];
 							?>
-							<option value="<?php echo $wsetor[0]; ?>"> <?php echo $wsetor[1]; ?></option>
+							<option value="<?php echo $wsetor[0]; ?>"> <?php echo $setorLabel; ?></option>
 							<?php 
 						}
 						?>
@@ -160,8 +162,9 @@ if($_POST['hid_enviar']==5){
 							if ($usu_cliente != 0 && strpos(',' . $usu_cliente . ',', ',' . $wcliente[0] . ',') === false) {
 								continue;
 							}
+							$clienteLabel = function_exists('app_to_utf8') ? app_to_utf8($wcliente[1]) : $wcliente[1];
 							?>
-							<option value="<?php echo $wcliente[0]; ?>"> <?php echo $wcliente[1]; ?></option>
+							<option value="<?php echo $wcliente[0]; ?>"> <?php echo $clienteLabel; ?></option>
 							<?php 
 						}
 						?>
