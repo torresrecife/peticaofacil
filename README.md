@@ -1,5 +1,15 @@
 # Peticao Facil
 
+mkdir storage
+sudo chmod 777 storage
+mkdir logs
+sudo chmod 777 logs
+ln -s public/css css
+ln -s public/js js
+ln -s public/img img
+ln -s public/ckeditor ckeditor
+ln -s public/ckfinder ckfinder
+
 ## Build/Deploy
 
 This project uses Webpack to bundle/minify JS/CSS while keeping the

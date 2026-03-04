@@ -144,11 +144,13 @@ class TipoRepository
 		$tiposql = $this->esc($data['tiposql'] ?? '');
 		$tipotitle = strtoupper($data['tipotitle'] ?? '');
 		$tipotitlePre = strtoupper($data['tipotitle_pre'] ?? '');
+		$tipotitleDb = function_exists('app_from_utf8') ? app_from_utf8($tipotitle) : $tipotitle;
+		$tipotitlePreDb = function_exists('app_from_utf8') ? app_from_utf8($tipotitlePre) : $tipotitlePre;
 
 		$sql = "INSERT INTO tp_tipo_tb SET "
 			. "id_db = '" . $tiposql . "', "
-			. "tipo_nome = '" . $this->esc($tipotitle) . "', "
-			. "nome_pre = '" . $this->esc($tipotitlePre) . "', "
+			. "tipo_nome = '" . $this->esc($tipotitleDb) . "', "
+			. "nome_pre = '" . $this->esc($tipotitlePreDb) . "', "
 			. "id_cliente = '" . $tipoclien . "', "
 			. "tipo_data = now(), "
 			. "tipo_stt = 'Y', "

@@ -2101,13 +2101,15 @@ function novo_tipo() {
 				$.ajax({
 					type: "POST",
 					url: "inc/ajax_tipo.php",
-					data: "flag=T"
-						+ "&tipotitle=" + escape($("#TIPOTITLE").val())
-						+ "&tipotitle_pre=" + escape($("#TIPOTITLE_PRE").val())
-						+ "&tiposql=" + escape($("#TIPOSQL").val())
-						+ "&tiposetor=" + escape($("#TIPOSETOR").val())
-						+ "&tipoclien=" + escape($("#TIPOCLIEN").val())
-						+ "&tipoarqui=" + escape($("#TIPOARQUI").val()),
+					data: {
+						flag: "T",
+						tipotitle: $("#TIPOTITLE").val(),
+						tipotitle_pre: $("#TIPOTITLE_PRE").val(),
+						tiposql: $("#TIPOSQL").val(),
+						tiposetor: $("#TIPOSETOR").val(),
+						tipoclien: $("#TIPOCLIEN").val(),
+						tipoarqui: $("#TIPOARQUI").val()
+					},
 					dataType: "json",
 					success: function(response) {
 						if (response && response.ok) {
