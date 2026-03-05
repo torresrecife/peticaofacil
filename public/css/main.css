@@ -3457,7 +3457,7 @@ table.topo2
 	position:fixed;
 	bottom:5px;
 	width:788px;
-	left: 20.8%;
+	left: calc(50% - 395px);
 	height:60px;
 	background:#FFFFFF;
 	display:none;
