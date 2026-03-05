@@ -39,8 +39,24 @@ if($_POST['flag']=="I"){
 }elseif($_POST['flag']=="DT"){
 	json_err("Operacao invalida.");
 }elseif($_POST['flag']=="C"){
-	json_err("Operacao invalida.");
+	$fund_id   = $_POST['fund_id']   ? $_POST['fund_id']   : "''";
+	$fund_text = $_POST['fund_text'] ? str_replace("%u2013","-",$_POST['fund_text']) : "''";
+	if (!class_exists(\App\Services\TipoService::class)) {
+		json_err("Servico indisponivel.");
+	}
+	$service = new \App\Services\TipoService($conexao1);
+	$ok = $service->updateCabec($fund_id, $fund_text);
+	$ok ? json_ok() : json_err("Erro ao atualizar cabecalho.");
 }elseif($_POST['flag']=="R"){
+	$fund_id   = $_POST['fund_id']   ? $_POST['fund_id']   : "''";
+	$fund_text = $_POST['fund_text'] ? str_replace("%u2013","-",$_POST['fund_text']) : "''";
+	if (!class_exists(\App\Services\TipoService::class)) {
+		json_err("Servico indisponivel.");
+	}
+	$service = new \App\Services\TipoService($conexao1);
+	$ok = $service->updateRodap($fund_id, $fund_text);
+	$ok ? json_ok() : json_err("Erro ao atualizar rodape.");
+}else{
 	json_err("Operacao invalida.");
 }
 
