@@ -7,6 +7,14 @@
 
 <?php
 
+function normalize_utf8($value)
+{
+	if (!is_string($value) || $value === '') {
+		return $value;
+	}
+	return preg_match('//u', $value) ? $value : utf8_encode($value);
+}
+
 $campos = "";
 $inputs = array();
 if (class_exists(\App\Services\InputService::class)) {
@@ -14,18 +22,11 @@ if (class_exists(\App\Services\InputService::class)) {
 	$inputs = $inputService->listFullByTipo($_POST['TIPOPET']);
 }
 foreach ($inputs as $idx => $w) {
+	$inputTitle = normalize_utf8($w['input_title']);
 	$campos .= $idx > 0 ? "|_|" : "";
-	$campos .= $w['input_title'];
+	$campos .= $inputTitle;
 	$campos .= "_|_";
 	$campos .= "@campo" . $w['id_input'] . "@";
-}
-
-function normalize_utf8($value)
-{
-    if (!is_string($value) || $value === '') {
-        return $value;
-    }
-    return preg_match('//u', $value) ? $value : utf8_encode($value);
 }
 
 ?>
@@ -107,7 +108,7 @@ function normalize_utf8($value)
 	<input type="hidden" id="tipo_id" value="<?php echo $tipo_tb; ?>" >
 	<input type="hidden" name="name_text" id="name_text" >
 	<input type="hidden" name="act_parag" id="act_parag" value="<?php echo $_POST['act_parag'] ? $_POST['act_parag'] : 0; ?>" >
-	<input type="hidden" id="str_retorno_ajax" value="<?php echo $campos; ?>">
+	<input type="hidden" id="str_retorno_ajax" value="<?php echo htmlspecialchars($campos, ENT_QUOTES, 'UTF-8'); ?>">
 </div>
 <div id="dialog_parag" title="Novo Tópico" style="display:none">
 	<div style="height:80px">

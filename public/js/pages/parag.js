@@ -15,14 +15,22 @@ $(function() {
 	});
 
 	var config2 = {
-		extraPlugins: 'autogrow,myplugin,sharedspace,uploadimage',
+		extraPlugins: 'autogrow,myplugin,sharedspace,uploadimage,insertTab',
 		removePlugins: 'floatingspace,resize',
 		sharedSpaces: {
 			top: 'topSpace',
 			bottom: 'bottomSpace'
 		},
 		language: 'pt_BR',
-		contentsCss: 'css/texto.css'
+		contentsCss: 'css/texto.css',
+		toolbar: [
+			['Bold', 'Italic', 'Underline', 'Strike'],
+			['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'insertTab', 'CampoBT'],
+			['Source', '-', 'Save', 'NewPage', 'DocProps', 'Preview', 'Print'],
+			['Format', 'Font', 'FontSize'],
+			['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'],
+			['Image', 'Table', 'HorizontalRule']
+		]
 	};
 	CKEDITOR.config.skin = 'moono-lisa';
 	CKEDITOR.config.tabSpaces = 4;

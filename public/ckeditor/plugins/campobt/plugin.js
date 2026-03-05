@@ -1,16 +1,38 @@
 ﻿
-var campos = str_retorno_ajax.split("|_|");
+function getCampoBtRawValue() {
+	var input = document.getElementById('str_retorno_ajax');
+	if (input && typeof input.value === 'string' && input.value !== '') {
+		return input.value;
+	}
+	if (typeof window.str_retorno_ajax === 'string' && window.str_retorno_ajax !== '') {
+		return window.str_retorno_ajax;
+	}
+	if (typeof str_retorno_ajax === 'string' && str_retorno_ajax !== '') {
+		return str_retorno_ajax;
+	}
+	return '';
+}
+
+function buildCampoBtItems() {
+	var raw = getCampoBtRawValue();
+	var campos = String(raw || '').split('|_|');
+	var tenant_fields = [];
+	var i;
+
+	for (i = 0; i < campos.length; i++) {
+		var strcampos = String(campos[i] || '');
+		var dados = strcampos.split('_|_');
+		if (dados.length > 1 && dados[1] !== undefined && dados[1] !== '') {
+			tenant_fields.push([dados[0], dados[1]]);
+		}
+	}
+
+	return tenant_fields;
+}
 
 CKEDITOR.dialog.add( 'campobt', function( editor )
 {
-	var tenant_fields = []; //new Array();
-	for(i=0;i<=campos.length;i++){
-		strcampos = new String(campos[i]);
-		var dados = strcampos.split("_|_");
-		if(dados[1]!=undefined){
-			tenant_fields[i]=[dados[0], dados[1]];
-		}
-	}
+	var tenant_fields = buildCampoBtItems();
 	return {
 		title : 'Campos',
 		minWidth : 300,

@@ -2164,7 +2164,7 @@ $(function() {
 	});
 
 	var config1 = {
-		extraPlugins: 'autogrow,rodape,myplugin,sharedspace,cabecalho,rodape,assinatura',
+		extraPlugins: 'autogrow,rodape,myplugin,sharedspace,cabecalho,assinatura,insertTab,campobt',
 		removePlugins: 'floatingspace,resize',
 		sharedSpaces: {
 			top: 'topSpace',
@@ -2173,7 +2173,7 @@ $(function() {
 		contentsCss: 'css/texto.css',
 		toolbar: [
 			['Bold', 'Italic', 'Underline', 'Strike'],
-			['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'insertTab'],
+			['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'insertTab', 'CampoBT'],
 			['Source', '-', 'Save', 'NewPage', 'DocProps', 'Preview', 'Print'],
 			['Format', 'Font', 'FontSize'],
 			['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'],
@@ -2281,14 +2281,22 @@ function novo_parag() {
 
 var rand = 0;
 var config3 = {
-	extraPlugins: 'autogrow,myplugin,sharedspace,uploadimage',
+	extraPlugins: 'autogrow,myplugin,sharedspace,uploadimage,insertTab',
 	removePlugins: 'floatingspace,resize',
 	sharedSpaces: {
 		top: 'topSpace',
 		bottom: 'bottomSpace'
 	},
 	language: 'pt_BR',
-	contentsCss: 'css/texto.css'
+	contentsCss: 'css/texto.css',
+	toolbar: [
+		['Bold', 'Italic', 'Underline', 'Strike'],
+		['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'insertTab', 'CampoBT'],
+		['Source', '-', 'Save', 'NewPage', 'DocProps', 'Preview', 'Print'],
+		['Format', 'Font', 'FontSize'],
+		['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'],
+		['Image', 'Table', 'HorizontalRule']
+	]
 };
 
 if (window.CKEDITOR) {
@@ -2442,14 +2450,22 @@ $(function() {
 	];
 	CKEDITOR.config.removeButtons = 'Save,NewPage,Scayt,Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,Flash,Smiley,SpecialChar,Iframe,About,ShowBlocks,Templates,Anchor,Unlink,Link,Language,BidiRtl,BidiLtr,Styles,Blockquote,CreateDiv,PageBreak,Print,Preview,Maximize';
 	var editor = CKEDITOR.replace('name_text', {
-		extraPlugins: 'autogrow,myplugin,sharedspace,uploadimage',
+		extraPlugins: 'autogrow,myplugin,sharedspace,uploadimage,insertTab',
 		removePlugins: 'floatingspace,resize',
 		sharedSpaces: {
 			top: 'topSpace',
 			bottom: 'bottomSpace'
 		},
 		language: 'pt_BR',
-		contentsCss: 'css/texto.css'
+		contentsCss: 'css/texto.css',
+		toolbar: [
+			['Bold', 'Italic', 'Underline', 'Strike'],
+			['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'insertTab', 'CampoBT'],
+			['Source', '-', 'Save', 'NewPage', 'DocProps', 'Preview', 'Print'],
+			['Format', 'Font', 'FontSize'],
+			['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'],
+			['Image', 'Table', 'HorizontalRule']
+		]
 	});
 
 	if (window.CKFinder && CKFinder.setupCKEditor) {
@@ -2693,14 +2709,22 @@ $(function() {
 	});
 
 	var config2 = {
-		extraPlugins: 'autogrow,myplugin,sharedspace,uploadimage',
+		extraPlugins: 'autogrow,myplugin,sharedspace,uploadimage,insertTab',
 		removePlugins: 'floatingspace,resize',
 		sharedSpaces: {
 			top: 'topSpace',
 			bottom: 'bottomSpace'
 		},
 		language: 'pt_BR',
-		contentsCss: 'css/texto.css'
+		contentsCss: 'css/texto.css',
+		toolbar: [
+			['Bold', 'Italic', 'Underline', 'Strike'],
+			['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'insertTab', 'CampoBT'],
+			['Source', '-', 'Save', 'NewPage', 'DocProps', 'Preview', 'Print'],
+			['Format', 'Font', 'FontSize'],
+			['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'],
+			['Image', 'Table', 'HorizontalRule']
+		]
 	};
 	CKEDITOR.config.skin = 'moono-lisa';
 	CKEDITOR.config.tabSpaces = 4;

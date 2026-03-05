@@ -27,7 +27,7 @@ $(function() {
 	});
 
 	var config1 = {
-		extraPlugins: 'autogrow,rodape,myplugin,sharedspace,cabecalho,rodape,assinatura',
+		extraPlugins: 'autogrow,rodape,myplugin,sharedspace,cabecalho,assinatura,insertTab,campobt',
 		removePlugins: 'floatingspace,resize',
 		sharedSpaces: {
 			top: 'topSpace',
@@ -36,7 +36,7 @@ $(function() {
 		contentsCss: 'css/texto.css',
 		toolbar: [
 			['Bold', 'Italic', 'Underline', 'Strike'],
-			['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'insertTab'],
+			['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'insertTab', 'CampoBT'],
 			['Source', '-', 'Save', 'NewPage', 'DocProps', 'Preview', 'Print'],
 			['Format', 'Font', 'FontSize'],
 			['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'],
