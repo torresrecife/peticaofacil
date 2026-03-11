@@ -1880,7 +1880,7 @@ a.saveorder.inactive {
 	background: url(images/j_button1_next.png) 100% 0 no-repeat;
 }
 
-.button1 a {
+.button1 a, .button1 button {
 	display: block;
 	height: 26px;
 	float: left;
@@ -1890,9 +1890,10 @@ a.saveorder.inactive {
 	color: #333;
 	cursor: pointer;
 	padding: 0 35px 0 6px;
+	width: 88px;
 }
 
-.button1 a:hover {
+.button1 a:hover, .button1 button:hover {
 	text-decoration: none;
 	color: #0B55C4;
 }
@@ -2141,6 +2142,7 @@ select#lang {
 	margin: 0;
 	width: 0;
 	height: 0;
+	background: transparent;
 }
 
 #form-login .button-holder {
