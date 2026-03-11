@@ -1896,6 +1896,8 @@ a.saveorder.inactive {
 .button1 a:hover, .button1 button:hover {
 	text-decoration: none;
 	color: #0B55C4;
+	background: transparent;
+	border: none;
 }
 
 .button2-left a,
