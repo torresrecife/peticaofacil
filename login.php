@@ -37,12 +37,11 @@
 										<div class="button-holder">
 											<div class="button1">
 												<div class="next">
-													<a href="#" onclick="document.getElementById('form-login').submit();">Acessar</a>
+													<button type="submit" class="login-submit">Acessar</button>
 												</div>
 											</div>
 										</div>
 									<div class="clr"></div>
-									<input type="submit" class="hidebtn" value="Acessar" />
 								</fieldset>
 							</form>
 							<div class="clr"></div>
