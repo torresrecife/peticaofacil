@@ -38,8 +38,14 @@ class SqlConfigRepository
 		$senha = $this->esc($data['senha_db'] ?? '');
 		$table = $this->esc($data['table_db'] ?? '');
 		$chave = $this->esc($data['chave_db'] ?? '');
-		$queryDb = $this->esc($data['query_db'] ?? '');
-		$whereDb = $this->esc($data['where_db'] ?? '');
+		$queryDbRaw = $data['query_db'] ?? '';
+		$whereDbRaw = $data['where_db'] ?? '';
+		if (function_exists('app_from_utf8')) {
+			$queryDbRaw = app_from_utf8($queryDbRaw);
+			$whereDbRaw = app_from_utf8($whereDbRaw);
+		}
+		$queryDb = $this->esc($queryDbRaw);
+		$whereDb = $this->esc($whereDbRaw);
 
 		$sql = "INSERT INTO tp_config_db SET "
 			. "nome_db = '" . $nome . "', "
@@ -67,8 +73,14 @@ class SqlConfigRepository
 		$senha = $this->esc($data['senha_db'] ?? '');
 		$table = $this->esc($data['table_db'] ?? '');
 		$chave = $this->esc($data['chave_db'] ?? '');
-		$queryDb = $this->esc($data['query_db'] ?? '');
-		$whereDb = $this->esc($data['where_db'] ?? '');
+		$queryDbRaw = $data['query_db'] ?? '';
+		$whereDbRaw = $data['where_db'] ?? '';
+		if (function_exists('app_from_utf8')) {
+			$queryDbRaw = app_from_utf8($queryDbRaw);
+			$whereDbRaw = app_from_utf8($whereDbRaw);
+		}
+		$queryDb = $this->esc($queryDbRaw);
+		$whereDb = $this->esc($whereDbRaw);
 
 		$sql = "UPDATE tp_config_db SET "
 			. "nome_db = '" . $nome . "', "

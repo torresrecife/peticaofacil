@@ -23,10 +23,13 @@ if (class_exists(\App\Repositories\SqlConfigRepository::class)) {
 	$rows = array();
 }
 foreach ($rows as $arr){
+	$nomeDb = function_exists('app_to_utf8') ? app_to_utf8($arr['nome_db']) : $arr['nome_db'];
+	$queryDb = function_exists('app_to_utf8') ? app_to_utf8($arr['query_db']) : $arr['query_db'];
+	$whereDb = function_exists('app_to_utf8') ? app_to_utf8($arr['where_db']) : $arr['where_db'];
 	?>
 	<tr >
 		<td class="order"><?PHP echo $arr['id_db'];		?>	</td>
-		<td class="order"><?php echo $arr['nome_db'];	?>	</td>
+		<td class="order"><?php echo $nomeDb;	?>	</td>
 		<td class="order"><?php echo $arr['tipo_id'];	?>	</td>
 		<td class="order"><?php echo $arr['ip_db']; 	?>	</td>
 		<td class="order"><?php echo $arr['data_db'];	?>	</td>
@@ -34,9 +37,9 @@ foreach ($rows as $arr){
 		<td class="order"><?php echo $arr['senha_db']; 	?>	</td>
 		<td class="order"><?php echo $arr['table_db']; 	?>	</td>
 		<td class="order"><?php echo $arr['chave_db']; 	?>	</td>
-		<td class="order" title="<?php echo $arr['query_db']; ?>" ><?php echo substr($arr['query_db'],0,30) . (strlen($arr['query_db'])>30?"...":""); 	?>	</td>
-		<td class="order" title="<?php echo $arr['where_db']; ?>" ><?php echo substr($arr['where_db'],0,30) . (strlen($arr['where_db'])>30?"...":""); 	?>	</td>
-		<td class="order"><?php echo fc_botoes_sql($arr['id_db'],"block",$arr['nome_db']); ?></td>
+		<td class="order" title="<?php echo htmlspecialchars($queryDb, ENT_QUOTES, 'UTF-8'); ?>" ><?php echo substr($queryDb,0,30) . (strlen($queryDb)>30?"...":""); 	?>	</td>
+		<td class="order" title="<?php echo htmlspecialchars($whereDb, ENT_QUOTES, 'UTF-8'); ?>" ><?php echo substr($whereDb,0,30) . (strlen($whereDb)>30?"...":""); 	?>	</td>
+		<td class="order"><?php echo fc_botoes_sql($arr['id_db'],"block",$nomeDb); ?></td>
 	</tr>
 	<?php
 }

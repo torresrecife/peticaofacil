@@ -44,7 +44,8 @@ class Database
 		$connectionInfo = array(
 			'UID' => $user,
 			'PWD' => $pass,
-			'Database' => $db
+			'Database' => $db,
+			'CharacterSet' => 'UTF-8'
 		);
 
 		return sqlsrv_connect($server, $connectionInfo);
