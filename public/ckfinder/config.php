@@ -22,6 +22,13 @@ ini_set('display_errors', 0);
 
 $config = array();
 
+// Resolve CKFinder paths from environment (production/local).
+$appUrl = getenv('APP_URL') ?: '';
+$appPath = $appUrl ? rtrim((string) parse_url($appUrl, PHP_URL_PATH), '/') : '';
+$defaultBaseUrl = ($appPath !== '' ? $appPath : '') . '/ckfinder/userfiles/';
+$baseUrl = getenv('CKFINDER_BASE_URL') ?: $defaultBaseUrl;
+$baseUrl = '/' . ltrim($baseUrl, '/');
+
 /*============================ Enable PHP Connector HERE ==============================*/
 // https://ckeditor.com/docs/ckfinder/ckfinder3-php/configuration.html#configuration_options_authentication
 
@@ -66,8 +73,8 @@ $config['images'] = array(
 $config['backends'][] = array(
     'name'         => 'default',
     'adapter'      => 'local',
-    'baseUrl'      => '/bvaa/peticaofacil/ckfinder/userfiles/',
-//  'root'         => '', // Can be used to explicitly set the CKFinder user files directory.
+    'baseUrl'      => $baseUrl,
+    'root'         => getenv('CKFINDER_ROOT') ?: __DIR__ . '/userfiles/',
     'chmodFiles'   => 0777,
     'chmodFolders' => 0755,
     'filesystemEncoding' => 'UTF-8',
