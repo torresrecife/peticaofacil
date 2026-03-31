@@ -86,6 +86,8 @@
 				$path = $real;
 			}
 			$path = str_replace('\\', '/', $path);
+			$path = rawurldecode($path);
+			$path = preg_replace('#^/([A-Za-z]:/)#', '$1', $path);
 			if (preg_match('/^[A-Za-z]:\//', $path)) {
 				return 'src="file:///' . $path . '"';
 			}
