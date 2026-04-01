@@ -22,11 +22,54 @@ ini_set('display_errors', 0);
 
 $config = array();
 
+// Resolve env values for CKFinder. The connector may run without bootstrap/app.php.
+if (!function_exists('ckfinder_env')) {
+    function ckfinder_env($key, $default = '')
+    {
+        $value = getenv($key);
+        if ($value !== false && $value !== '') {
+            return trim($value, " \t\n\r\0\x0B\"'");
+        }
+        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+            return trim($_ENV[$key], " \t\n\r\0\x0B\"'");
+        }
+        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+            return trim($_SERVER[$key], " \t\n\r\0\x0B\"'");
+        }
+
+        static $fileEnv = null;
+        if ($fileEnv === null) {
+            $rootPath = dirname(dirname(__DIR__));
+            $envPath = $rootPath . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'env.local';
+            $fileEnv = array();
+            if (file_exists($envPath)) {
+                $parsed = @parse_ini_file($envPath, false, INI_SCANNER_RAW);
+                if (is_array($parsed)) {
+                    $fileEnv = $parsed;
+                }
+            }
+        }
+        if (isset($fileEnv[$key]) && $fileEnv[$key] !== '') {
+            return trim($fileEnv[$key], " \t\n\r\0\x0B\"'");
+        }
+        return $default;
+    }
+}
+
 // Resolve CKFinder paths from environment (production/local).
-$appUrl = getenv('APP_URL') ?: '';
+$appUrl = ckfinder_env('APP_URL', '');
 $appPath = $appUrl ? rtrim((string) parse_url($appUrl, PHP_URL_PATH), '/') : '';
+if ($appPath === '') {
+    // Fallback when env is missing: infer app path from connector request URL.
+    $scriptName = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
+    $marker = '/ckfinder/core/connector/php/connector.php';
+    $pos = stripos($scriptName, $marker);
+    if ($pos !== false) {
+        $appPath = rtrim(substr($scriptName, 0, $pos), '/');
+    }
+}
 $defaultBaseUrl = ($appPath !== '' ? $appPath : '') . '/ckfinder/userfiles/';
-$baseUrl = getenv('CKFINDER_BASE_URL') ?: $defaultBaseUrl;
+$baseUrl = ckfinder_env('CKFINDER_BASE_URL', $defaultBaseUrl);
 $baseUrl = '/' . ltrim($baseUrl, '/');
 
 /*============================ Enable PHP Connector HERE ==============================*/
@@ -74,7 +117,7 @@ $config['backends'][] = array(
     'name'         => 'default',
     'adapter'      => 'local',
     'baseUrl'      => $baseUrl,
-    'root'         => getenv('CKFINDER_ROOT') ?: __DIR__ . '/userfiles/',
+    'root'         => ckfinder_env('CKFINDER_ROOT', __DIR__ . '/userfiles/'),
     'chmodFiles'   => 0777,
     'chmodFolders' => 0755,
     'filesystemEncoding' => 'UTF-8',
