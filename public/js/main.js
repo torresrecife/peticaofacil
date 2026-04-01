@@ -2428,7 +2428,7 @@ $(function() {
 	if (!window.CKEDITOR || !document.getElementById('name_text')) {
 		return;
 	}
-	CKEDITOR.config.skin = 'moono-lisa2';
+	CKEDITOR.config.skin = 'moono-lisa';
 	CKEDITOR.config.tabSpaces = 4;
 	CKEDITOR.config.removePlugins = 'elementspath';
 	CKEDITOR.config.width = 618.7;

@@ -46,6 +46,14 @@
 	function normalize_pdf_image_src($html)
 	{
 		$baseUrl = getenv('APP_URL') ?: '';
+		if ($baseUrl === '' && !empty($_SERVER['SCRIPT_NAME'])) {
+			$script = (string) $_SERVER['SCRIPT_NAME'];
+			$marker = '/inc/getpdf_2.php';
+			$pos = stripos($script, $marker);
+			if ($pos !== false) {
+				$baseUrl = substr($script, 0, $pos);
+			}
+		}
 		$basePath = $baseUrl ? rtrim(parse_url($baseUrl, PHP_URL_PATH), '/') . '/' : '/';
 		return preg_replace_callback('/src="([^"]+)"/i', function ($matches) use ($basePath) {
 			$src = $matches[1];
@@ -53,6 +61,11 @@
 				return 'src="' . $src . '"';
 			}
 			$normalized = $src;
+			$normalized = preg_replace('/[#?].*$/', '', $normalized);
+			$normalized = rawurldecode($normalized);
+			if (strpos($normalized, '/ckfinder/') === 0 && $basePath !== '/') {
+				$normalized = '/' . trim($basePath, '/') . $normalized;
+			}
 			if (strpos($normalized, $basePath) === 0) {
 				$normalized = '/' . ltrim(substr($normalized, strlen($basePath)), '/');
 			}
@@ -81,6 +94,16 @@
 				$projectRoot = dirname(__DIR__);
 				$publicCandidate = $projectRoot . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . ltrim($normalized, '/');
 				$real = realpath($publicCandidate);
+			}
+			if (!$real && strpos($normalized, '/ckfinder/') === 0) {
+				$projectRoot = dirname(__DIR__);
+				$publicCandidate = $projectRoot . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . ltrim($normalized, '/');
+				$real = realpath($publicCandidate);
+			}
+			if (!$real && strpos($normalized, '/public/ckfinder/') === 0) {
+				$projectRoot = dirname(__DIR__);
+				$candidate = $projectRoot . DIRECTORY_SEPARATOR . ltrim($normalized, '/');
+				$real = realpath($candidate);
 			}
 			if ($real) {
 				$path = $real;

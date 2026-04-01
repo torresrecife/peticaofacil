@@ -12,7 +12,7 @@ $(function() {
 	if (nameText && nameText.tagName && nameText.tagName.toLowerCase() !== 'textarea') {
 		return;
 	}
-	CKEDITOR.config.skin = 'moono-lisa2';
+	CKEDITOR.config.skin = 'moono-lisa';
 	CKEDITOR.config.tabSpaces = 4;
 	CKEDITOR.config.removePlugins = 'elementspath';
 	CKEDITOR.config.width = 618.7;
