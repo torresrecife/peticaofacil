@@ -2,38 +2,75 @@
 
 namespace App;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Support\LegacyEncoding;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use Notifiable;
+    use LegacyEncoding;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    protected $table = 'tp_usu_tb';
+    protected $primaryKey = 'id_usu';
+    public $timestamps = false;
+
     protected $fillable = [
-        'name', 'email', 'password',
+        'nome_usu',
+        'login_usu',
+        'senha_usu',
+        'email_usu',
+        'nivel_usu',
+        'acesso_usu',
+        'data_cad',
+        'id_setor',
+        'id_cliente',
+        'status_usu',
+        'estados_usu',
+        'comarca_usu',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [
-        'password', 'remember_token',
+        'senha_usu',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
+    protected $legacyUtf8Fields = [
+        'nome_usu',
+        'login_usu',
+        'email_usu',
+        'estados_usu',
+        'comarca_usu',
     ];
+
+    protected $casts = [
+        'acesso_usu' => 'datetime',
+        'data_cad' => 'datetime',
+    ];
+
+    public function getAuthPassword()
+    {
+        return $this->senha_usu;
+    }
+
+    public function setor()
+    {
+        return $this->belongsTo(Setor::class, 'id_setor', 'id_setor');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status_usu', 'ATI');
+    }
+
+    public function isAdmin()
+    {
+        return in_array($this->nivel_usu, ['ADM', 'GER'], true);
+    }
+
+    public function getClientIdsAttribute()
+    {
+        if (!$this->id_cliente || $this->id_cliente === '0') {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', explode(',', $this->id_cliente))));
+    }
 }
