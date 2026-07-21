@@ -1,0 +1,81 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Cliente;
+use App\Http\Controllers\Controller;
+use App\Setor;
+use App\SqlServerConfig;
+use App\Tipo;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+
+class TipoController extends Controller
+{
+    public function index()
+    {
+        $tipos = Tipo::with(['setor', 'cliente', 'servidor'])
+            ->orderBy('id_setor')
+            ->orderBy('tipo_nome')
+            ->paginate(20);
+
+        return view('admin.tipos.index', compact('tipos'));
+    }
+
+    public function create()
+    {
+        return view('admin.tipos.form', $this->formData(new Tipo([
+            'tipo_stt' => 'Y',
+            'tipo_arq' => 'pdf',
+        ])));
+    }
+
+    public function store(Request $request)
+    {
+        $tipo = new Tipo($this->validateData($request));
+        $tipo->tipo_data = now();
+        $tipo->save();
+
+        return redirect()->route('admin.modelos.edit', $tipo)->with('status', 'Modelo criado.');
+    }
+
+    public function edit(Tipo $modelo)
+    {
+        $modelo->load(['paragrafos', 'campos.dados', 'setor', 'cliente', 'servidor']);
+
+        return view('admin.tipos.form', $this->formData($modelo));
+    }
+
+    public function update(Request $request, Tipo $modelo)
+    {
+        $modelo->fill($this->validateData($request))->save();
+
+        return redirect()->route('admin.modelos.edit', $modelo)->with('status', 'Modelo atualizado.');
+    }
+
+    protected function validateData(Request $request)
+    {
+        return $request->validate([
+            'tipo_nome' => 'required|string|max:300',
+            'nome_pre' => 'nullable|string|max:300',
+            'nome_pos' => 'nullable|string|max:300',
+            'id_db' => 'nullable|integer',
+            'id_cliente' => 'nullable|integer',
+            'id_setor' => 'required|integer',
+            'tipo_stt' => ['required', Rule::in(['Y', 'N'])],
+            'tipo_arq' => ['required', Rule::in(['pdf', 'word', 'pdf,word'])],
+            'cod_cabec' => 'nullable|string',
+            'cod_rodap' => 'nullable|string',
+        ]);
+    }
+
+    protected function formData(Tipo $modelo)
+    {
+        return [
+            'modelo' => $modelo,
+            'setores' => Setor::orderBy('nome_setor')->get(),
+            'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
+            'servidores' => SqlServerConfig::active()->orderBy('nome_db')->get(),
+        ];
+    }
+}

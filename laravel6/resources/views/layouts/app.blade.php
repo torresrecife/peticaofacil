@@ -173,11 +173,20 @@
         .form-group.full {
             grid-column: 1 / -1;
         }
-        input, select {
+        input, select, textarea {
             border: 1px solid #bcccdc;
             border-radius: 4px;
             padding: 10px 12px;
             font-size: 14px;
+        }
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+            font-family: Arial, sans-serif;
+        }
+        .stack {
+            display: grid;
+            gap: 16px;
         }
         .login-wrap {
             min-height: 100vh;
@@ -212,6 +221,8 @@
             <a href="{{ route('admin.usuarios.index') }}">Usuarios</a>
             <a href="{{ route('admin.setores.index') }}">Setores</a>
             <a href="{{ route('admin.clientes.index') }}">Clientes</a>
+            <a href="{{ route('admin.servidores.index') }}">Servidores SQL</a>
+            <a href="{{ route('admin.modelos.index') }}">Modelos</a>
             <a href="{{ route('status') }}">Status da migracao</a>
         </aside>
         <main class="content">

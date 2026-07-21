@@ -38,5 +38,15 @@ Route::middleware('auth')->group(function () {
         Route::resource('clientes', 'Admin\ClienteController')->except(['show', 'destroy'])->parameters([
             'clientes' => 'cliente',
         ]);
+        Route::resource('servidores', 'Admin\SqlServerConfigController')->except(['show', 'destroy'])->parameters([
+            'servidores' => 'servidore',
+        ]);
+        Route::resource('modelos', 'Admin\TipoController')->except(['show', 'destroy'])->parameters([
+            'modelos' => 'modelo',
+        ]);
+        Route::post('modelos/{modelo}/paragrafos', 'Admin\ParagrafoController@store')->name('modelos.paragrafos.store');
+        Route::put('modelos/{modelo}/paragrafos/{paragrafo}', 'Admin\ParagrafoController@update')->name('modelos.paragrafos.update');
+        Route::post('modelos/{modelo}/campos', 'Admin\InputCampoController@store')->name('modelos.campos.store');
+        Route::put('modelos/{modelo}/campos/{campo}', 'Admin\InputCampoController@update')->name('modelos.campos.update');
     });
 });
