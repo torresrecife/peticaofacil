@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Peticao Facil')</title>
+    @stack('head')
     <style>
         body {
             margin: 0;
@@ -188,6 +189,44 @@
             display: grid;
             gap: 16px;
         }
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .section-title h3,
+        .section-title h2 {
+            margin: 0;
+        }
+        .panel-muted {
+            background: #f8fbfd;
+            border: 1px solid #d9e2ec;
+            border-radius: 6px;
+            padding: 16px;
+        }
+        .editor-note {
+            font-size: 13px;
+            color: #627d98;
+        }
+        .accordion-item {
+            border: 1px solid #d9e2ec;
+            border-radius: 6px;
+            background: #fff;
+        }
+        .accordion-item summary {
+            cursor: pointer;
+            list-style: none;
+            padding: 14px 16px;
+            font-weight: bold;
+        }
+        .accordion-item summary::-webkit-details-marker {
+            display: none;
+        }
+        .accordion-body {
+            padding: 0 16px 16px;
+        }
         .login-wrap {
             min-height: 100vh;
             display: grid;
@@ -255,5 +294,6 @@
 @else
     @yield('content')
 @endauth
+@stack('scripts')
 </body>
 </html>
