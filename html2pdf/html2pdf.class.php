@@ -1313,7 +1313,7 @@ if (!defined('__CLASS_HTML2PDF__')) {
             $infos=@getimagesize($src);
 
             // if the image does not exist, or can not be loaded
-            if (count($infos)<2) {
+            if (!is_array($infos) || count($infos)<2) {
                 // if the test is activ => exception
                 if ($this->_testIsImage) {
                     throw new HTML2PDF_exception(6, $src);
@@ -1577,7 +1577,7 @@ if (!defined('__CLASS_HTML2PDF__')) {
                 $imageInfos=@getimagesize($iName);
 
                 // if the image can not be loaded
-                if (count($imageInfos)<2) {
+                if (!is_array($imageInfos) || count($imageInfos)<2) {
                     if ($this->_testIsImage) {
                         throw new HTML2PDF_exception(6, $iName);
                     }
@@ -2287,7 +2287,7 @@ if (!defined('__CLASS_HTML2PDF__')) {
                         // get the size of the image
                         // WARNING : if URL, "allow_url_fopen" must turned to "on" in php.ini
                         $infos=@getimagesize($background['img']);
-                        if (count($infos)>1) {
+                if (is_array($infos) && count($infos)>1) {
                             $imageWidth = $this->parsingCss->ConvertToMM($background['width'], $this->pdf->getW());
                             $imageHeight = $imageWidth*$infos[1]/$infos[0];
 
