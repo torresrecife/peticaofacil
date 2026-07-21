@@ -30,6 +30,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/peticoes', 'PeticaoAssemblyController@index')->name('peticoes.index');
     Route::get('/peticoes/{modelo}', 'PeticaoAssemblyController@show')->name('peticoes.show');
     Route::post('/peticoes/{modelo}', 'PeticaoAssemblyController@compose')->name('peticoes.compose');
+    Route::post('/peticoes/{modelo}/editor', 'PeticaoEditorController@create')->name('peticoes.editor.create');
+    Route::post('/peticoes/{modelo}/salvar', 'PeticaoEditorController@save')->name('peticoes.editor.save');
+    Route::post('/peticoes/{modelo}/exportar/pdf', 'PeticaoEditorController@exportPdf')->name('peticoes.editor.export.pdf');
+    Route::post('/peticoes/{modelo}/exportar/word', 'PeticaoEditorController@exportWord')->name('peticoes.editor.export.word');
+    Route::get('/pecas/{peca}/editar', 'PeticaoEditorController@edit')->name('peticoes.editor.edit');
+    Route::get('/pecas', 'PecaController@index')->name('pecas.index');
 
     Route::prefix('admin')->name('admin.')->middleware('legacy.role:ADM,GER')->group(function () {
         Route::resource('usuarios', 'Admin\UserController')->except(['show', 'destroy'])->parameters([

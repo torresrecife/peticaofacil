@@ -14,8 +14,29 @@
             <h3>Dados da montagem</h3>
             <div class="editor-note">Campos dinamicos do modelo, com retorno aplicado para `SELECT`.</div>
         </div>
+
+        @if($lookupStatus)
+            <div class="flash">{{ $lookupStatus }}</div>
+        @endif
+
         <form method="post" action="{{ route('peticoes.compose', $modelo) }}">
             @csrf
+            @if($modelo->servidor)
+                <div class="panel-muted" style="margin-bottom:20px;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Pesquisa por processo</label>
+                            <input name="codigo_processo" value="{{ $codigoProcesso ?? '' }}" placeholder="{{ $modelo->servidor->chave_db ?: 'Codigo do processo' }}">
+                            <div class="editor-note">Busca no SQL Server configurado para este modelo e preenche automaticamente os campos mapeados.</div>
+                        </div>
+                        <div class="form-group" style="justify-content:end;">
+                            <label>&nbsp;</label>
+                            <button type="submit" name="action_type" value="lookup">Buscar e preencher</button>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="form-grid">
                 @foreach($modelo->campos as $campo)
                     @if($campo->input_tipo === 'TITLE')
@@ -51,7 +72,7 @@
                 @endforeach
             </div>
             <div style="margin-top:20px;">
-                <button type="submit">Gerar preview</button>
+                <button type="submit" name="action_type" value="preview">Gerar preview</button>
             </div>
         </form>
     </div>
@@ -65,6 +86,12 @@
             <div class="panel-muted" style="background:#fff;">
                 {!! $preview['html'] !!}
             </div>
+            <form method="post" action="{{ route('peticoes.editor.create', $modelo) }}" style="margin-top:16px;">
+                @csrf
+                <input type="hidden" name="nome_cli" value="{{ $preview['suggested_filename'] }}">
+                <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>
+                <button type="submit">Abrir no editor final</button>
+            </form>
         </div>
     @endif
 </div>

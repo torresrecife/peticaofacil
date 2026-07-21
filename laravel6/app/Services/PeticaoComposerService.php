@@ -26,7 +26,7 @@ class PeticaoComposerService
                 'placeholder' => $campo->placeholder,
             ];
 
-            $replacements[$campo->placeholder] = $resolvedValue;
+            $replacements[(string) $campo->id_input] = $resolvedValue;
 
             if ($campo->nomepet === 'Y' && trim(strip_tags($resolvedValue)) !== '') {
                 $fileNameParts[] = trim(strip_tags($resolvedValue));
@@ -73,6 +73,10 @@ class PeticaoComposerService
 
     protected function replacePlaceholders($html, array $replacements)
     {
-        return strtr((string) $html, $replacements);
+        return preg_replace_callback('/@campo(\d+)@/i', function ($matches) use ($replacements) {
+            $id = $matches[1];
+
+            return array_key_exists($id, $replacements) ? $replacements[$id] : $matches[0];
+        }, (string) $html);
     }
 }
