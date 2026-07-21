@@ -59,4 +59,19 @@ class InputCampo extends Model
             ->orderBy('dados_order')
             ->orderBy('id_dados');
     }
+
+    public function getPlaceholderAttribute()
+    {
+        return '@campo' . $this->id_input . '@';
+    }
+
+    public function getSelectOptionsAttribute()
+    {
+        return $this->dados->map(function ($item) {
+            return [
+                'label' => $item->nome_dados,
+                'return' => $item->return_1 ?: $item->nome_dados,
+            ];
+        })->values()->all();
+    }
 }

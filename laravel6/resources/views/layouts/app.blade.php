@@ -262,6 +262,7 @@
             <a href="{{ route('admin.clientes.index') }}">Clientes</a>
             <a href="{{ route('admin.servidores.index') }}">Servidores SQL</a>
             <a href="{{ route('admin.modelos.index') }}">Modelos</a>
+            <a href="{{ route('peticoes.index') }}">Montagem</a>
             <a href="{{ route('status') }}">Status da migracao</a>
         </aside>
         <main class="content">

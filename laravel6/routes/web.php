@@ -27,6 +27,9 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', 'Auth\LoginController@logout')->name('logout');
     Route::get('/painel', 'DashboardController')->name('dashboard');
+    Route::get('/peticoes', 'PeticaoAssemblyController@index')->name('peticoes.index');
+    Route::get('/peticoes/{modelo}', 'PeticaoAssemblyController@show')->name('peticoes.show');
+    Route::post('/peticoes/{modelo}', 'PeticaoAssemblyController@compose')->name('peticoes.compose');
 
     Route::prefix('admin')->name('admin.')->middleware('legacy.role:ADM,GER')->group(function () {
         Route::resource('usuarios', 'Admin\UserController')->except(['show', 'destroy'])->parameters([

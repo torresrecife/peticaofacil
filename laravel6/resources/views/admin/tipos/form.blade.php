@@ -15,7 +15,12 @@
 @section('content')
 <div class="topbar" style="margin-bottom:16px;">
     <h2 style="margin:0;">{{ $modelo->exists ? 'Editar modelo' : 'Novo modelo' }}</h2>
-    <a class="button secondary link" href="{{ route('admin.modelos.index') }}">Voltar</a>
+    <div class="actions">
+        @if($modelo->exists)
+            <a class="button link" href="{{ route('peticoes.show', $modelo) }}">Abrir montagem</a>
+        @endif
+        <a class="button secondary link" href="{{ route('admin.modelos.index') }}">Voltar</a>
+    </div>
 </div>
 
 <div class="stack">
@@ -165,6 +170,7 @@
                         <div class="form-group">
                             <label>Titulo</label>
                             <input name="input_title" required>
+                            <div class="editor-note">O token gerado sera criado automaticamente apos salvar.</div>
                         </div>
                         <div class="form-group">
                             <label>Tipo</label>
@@ -225,6 +231,7 @@
                         <div class="form-group full">
                             <label>Opcoes do select</label>
                             <textarea name="opcoes" placeholder="Uma linha por opcao. Use Nome|Retorno"></textarea>
+                            <div class="editor-note">Formato: `Rotulo|Retorno`. O rotulo aparece para o usuario; o retorno entra na montagem.</div>
                         </div>
                     </div>
                     <div style="margin-top:12px;">
@@ -238,6 +245,12 @@
                     <details class="accordion-item">
                         <summary>{{ $campo->input_order }}. {{ $campo->input_title }} ({{ $campo->input_tipo }})</summary>
                         <div class="accordion-body">
+                            <div class="panel-muted" style="margin-bottom:16px;">
+                                <strong>Token:</strong> {{ $campo->placeholder }}
+                                @if($campo->input_tipo === 'SELECT')
+                                    <div class="editor-note" style="margin-top:6px;">As opcoes seguem o formato `Rotulo|Retorno`.</div>
+                                @endif
+                            </div>
                             <form method="post" action="{{ route('admin.modelos.campos.update', [$modelo, $campo]) }}">
                                 @csrf
                                 @method('put')
@@ -304,6 +317,7 @@
                                         <label>Opcoes do select</label>
                                         <textarea name="opcoes">@foreach($campo->dados as $dado){{ $dado->nome_dados }}|{{ $dado->return_1 }}
 @endforeach</textarea>
+                                        <div class="editor-note">Uma linha por opcao. Ex.: `Sim|SIM`.</div>
                                     </div>
                                 </div>
                                 <div style="margin-top:12px;">
