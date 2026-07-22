@@ -27,4 +27,14 @@ class PeticaoModeloParagrafo extends Model
     {
         return $this->belongsTo(PeticaoModelo::class, 'modelo_id');
     }
+
+    public function getFundTextAttribute()
+    {
+        return $this->conteudo_html;
+    }
+
+    public function getFundOrderAttribute()
+    {
+        return $this->ordem;
+    }
 }

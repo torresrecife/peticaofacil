@@ -2,11 +2,9 @@
 
 namespace App\Services;
 
-use App\Tipo;
-
 class PeticaoComposerService
 {
-    public function compose(Tipo $modelo, array $input)
+    public function compose($modelo, array $input)
     {
         $replacements = [];
         $resolved = [];

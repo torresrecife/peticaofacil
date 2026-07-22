@@ -1,0 +1,78 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\User;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
+
+class LegacyEditorRedirectTest extends TestCase
+{
+    public function test_legacy_editor_route_redirects_to_normalized_editor_when_mirror_exists()
+    {
+        $user = factory(User::class)->create([
+            'id_usu' => 55,
+            'nivel_usu' => 'ADM',
+            'acesso_usu' => now(),
+        ]);
+
+        DB::table('tp_setor_tb')->insert([
+            'id_setor' => 55,
+            'nome_setor' => 'Execucao',
+            'cod_setor' => 'EXE',
+            'data_cad' => now(),
+        ]);
+
+        DB::table('tp_tipo_tb')->insert([
+            'tipo_id' => 55,
+            'tipo_nome' => 'Modelo Redirecionado',
+            'id_setor' => 55,
+            'tipo_data' => now(),
+            'tipo_stt' => 'Y',
+            'tipo_arq' => 'pdf',
+        ]);
+
+        DB::table('peticao_modelos')->insert([
+            'id' => 55,
+            'legacy_tipo_id' => 55,
+            'legacy_setor_id' => 55,
+            'nome' => 'Modelo Redirecionado',
+            'slug' => 'modelo-redirecionado-55',
+            'status' => 'ativo',
+            'arquivo_padrao' => 'pdf',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('tp_pecas_tb')->insert([
+            'id_pecas' => 5501,
+            'tipo_id' => 55,
+            'id_usu' => 55,
+            'nome_pecas' => 'Modelo Redirecionado',
+            'nome_cli' => 'Cliente Redirect',
+            'cod_pecas' => '<p>Conteudo</p>',
+            'data_cad' => now(),
+            'cod_sav' => 'RED55',
+        ]);
+
+        DB::table('peticoes')->insert([
+            'id' => 6501,
+            'legacy_peca_id' => 5501,
+            'modelo_id' => 55,
+            'legacy_usuario_id' => 55,
+            'codigo_externo' => 'RED55',
+            'nome_arquivo' => 'Modelo Redirecionado',
+            'cliente_referencia' => 'Cliente Redirect',
+            'conteudo_html' => '<p>Conteudo</p>',
+            'campos_resolvidos' => null,
+            'gerado_em' => now(),
+            'salvo_em' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get('/pecas/5501/editar')
+            ->assertRedirect('/peticoes-salvas/6501/editar');
+    }
+}

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Peca;
+use App\PeticaoNormalizada;
 use App\Services\PecaStorageService;
 use App\Services\PeticaoExportService;
 use App\Tipo;
@@ -27,6 +28,11 @@ class PeticaoEditorController extends Controller
 
     public function edit(Peca $peca)
     {
+        $mirror = PeticaoNormalizada::where('legacy_peca_id', $peca->id_pecas)->first();
+        if ($mirror) {
+            return redirect()->route('peticoes.saved.edit', $mirror);
+        }
+
         $peca->load('tipo');
 
         return view('peticao.editor', [

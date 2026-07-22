@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="topbar" style="margin-bottom:16px;">
-    <h2 style="margin:0;">{{ $modelo->tipo_nome }}</h2>
+    <h2 style="margin:0;">{{ $modeloFonte->tipo_nome }}</h2>
     <a class="button secondary link" href="{{ route('peticoes.index') }}">Voltar</a>
 </div>
 
@@ -21,12 +21,12 @@
 
         <form method="post" action="{{ route('peticoes.compose', $modelo) }}">
             @csrf
-            @if($modelo->servidor)
+            @if($modeloFonte->servidor)
                 <div class="panel-muted" style="margin-bottom:20px;">
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Pesquisa por processo</label>
-                            <input name="codigo_processo" value="{{ $codigoProcesso ?? '' }}" placeholder="{{ $modelo->servidor->chave_db ?: 'Codigo do processo' }}">
+                            <input name="codigo_processo" value="{{ $codigoProcesso ?? '' }}" placeholder="{{ $modeloFonte->servidor->chave_db ?: 'Codigo do processo' }}">
                             <div class="editor-note">Busca no SQL Server configurado para este modelo e preenche automaticamente os campos mapeados.</div>
                         </div>
                         <div class="form-group" style="justify-content:end;">
@@ -38,7 +38,7 @@
             @endif
 
             <div class="form-grid">
-                @foreach($modelo->campos as $campo)
+                @foreach($modeloFonte->campos as $campo)
                     @if($campo->input_tipo === 'TITLE')
                         <div class="form-group full">
                             <div class="panel-muted"><strong>{{ $campo->input_title }}</strong></div>

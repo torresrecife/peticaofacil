@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\PeticaoModelo;
 use App\Services\SqlServerLookupService;
 use App\Services\PeticaoComposerService;
 use App\Tipo;
@@ -22,9 +23,11 @@ class PeticaoAssemblyController extends Controller
     public function show(Tipo $modelo)
     {
         $modelo->load(['campos.dados', 'paragrafos', 'setor', 'cliente', 'servidor']);
+        $modeloFonte = $this->resolvePreferredModelo($modelo);
 
         return view('peticao.assemble', [
             'modelo' => $modelo,
+            'modeloFonte' => $modeloFonte,
             'preview' => null,
             'values' => [],
             'codigoProcesso' => '',
@@ -35,20 +38,21 @@ class PeticaoAssemblyController extends Controller
     public function compose(Request $request, Tipo $modelo, PeticaoComposerService $composer, SqlServerLookupService $lookup)
     {
         $modelo->load(['campos.dados', 'paragrafos', 'setor', 'cliente', 'servidor']);
+        $modeloFonte = $this->resolvePreferredModelo($modelo);
 
         $values = [];
-        foreach ($modelo->campos as $campo) {
+        foreach ($modeloFonte->campos as $campo) {
             $values['campo_' . $campo->id_input] = $request->input('campo_' . $campo->id_input);
         }
 
         $codigoProcesso = trim((string) $request->input('codigo_processo', ''));
         $lookupStatus = null;
 
-        if ($codigoProcesso !== '' && $modelo->servidor) {
-            $externalData = $lookup->fetchByCode($modelo->servidor, $codigoProcesso);
+        if ($codigoProcesso !== '' && $modeloFonte->servidor) {
+            $externalData = $lookup->fetchByCode($modeloFonte->servidor, $codigoProcesso);
 
             if (is_array($externalData)) {
-                foreach ($modelo->campos as $campo) {
+                foreach ($modeloFonte->campos as $campo) {
                     $fieldKey = 'campo_' . $campo->id_input;
                     if (($values[$fieldKey] ?? '') !== '') {
                         continue;
@@ -70,11 +74,12 @@ class PeticaoAssemblyController extends Controller
 
         $preview = null;
         if ($request->input('action_type', 'preview') === 'preview') {
-            $preview = $composer->compose($modelo, $values);
+            $preview = $composer->compose($modeloFonte, $values);
         }
 
         return view('peticao.assemble', [
             'modelo' => $modelo,
+            'modeloFonte' => $modeloFonte,
             'preview' => $preview,
             'values' => $values,
             'codigoProcesso' => $codigoProcesso,
@@ -99,5 +104,14 @@ class PeticaoAssemblyController extends Controller
         }
 
         return $value;
+    }
+
+    protected function resolvePreferredModelo(Tipo $modelo)
+    {
+        $mirror = PeticaoModelo::with(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor'])
+            ->where('legacy_tipo_id', $modelo->tipo_id)
+            ->first();
+
+        return $mirror ?: $modelo;
     }
 }
