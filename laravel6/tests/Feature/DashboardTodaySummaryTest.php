@@ -126,6 +126,25 @@ class DashboardTodaySummaryTest extends TestCase
             ],
         ]);
 
+        DB::table('tp_tipo_tb')->insert([
+            'tipo_id' => 903,
+            'tipo_nome' => 'Modelo Legado do Dia',
+            'tipo_data' => now(),
+            'tipo_stt' => 'Y',
+            'tipo_arq' => 'pdf',
+        ]);
+
+        DB::table('tp_pecas_tb')->insert([
+            'id_pecas' => 999,
+            'tipo_id' => 903,
+            'id_usu' => 902,
+            'nome_pecas' => 'Modelo Legado do Dia',
+            'nome_cli' => 'Cliente Legado',
+            'cod_pecas' => '<p>Legacy</p>',
+            'data_cad' => now()->subMinutes(5),
+            'cod_sav' => 'LEG999',
+        ]);
+
         $this->actingAs($admin)
             ->get('/painel')
             ->assertStatus(200)
@@ -134,12 +153,14 @@ class DashboardTodaySummaryTest extends TestCase
             ->assertSee('Cliente Alfa')
             ->assertSee('Cliente Beta')
             ->assertSee('Cliente Gama')
+            ->assertSee('Cliente Legado')
             ->assertDontSee('Cliente Ontem')
             ->assertSee('Fabio')
             ->assertSee('Maria')
             ->assertSee('Modelo Civel')
             ->assertSee('Modelo Trabalhista')
+            ->assertSee('Modelo Legado do Dia')
             ->assertSee('2')
-            ->assertSee('1');
+            ->assertSee('Legada');
     }
 }

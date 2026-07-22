@@ -32,7 +32,7 @@
         <div class="panel">
             <div class="section-title">
                 <h3>Peticoes de hoje</h3>
-                <div class="editor-note">{{ $todayLabel }} · ultimas 10</div>
+                <div class="editor-note">{{ $todayLabel }} - ultimas 10</div>
             </div>
             @if($peticoesHoje->isEmpty())
                 <div class="editor-note">Nenhuma peticao salva hoje.</div>
@@ -43,16 +43,16 @@
                             <th>Horario</th>
                             <th>Cliente</th>
                             <th>Modelo</th>
+                            <th>Origem</th>
                         </tr>
                     </thead>
                     <tbody>
                     @foreach($peticoesHoje as $peticao)
                         <tr>
-                            <td>{{ optional($peticao->salvo_em)->format('H:i') }}</td>
-                            <td>
-                                <a href="{{ route('peticoes.saved.edit', $peticao) }}">{{ $peticao->cliente_referencia }}</a>
-                            </td>
-                            <td>{{ optional($peticao->modelo)->nome ?: $peticao->nome_arquivo }}</td>
+                            <td>{{ optional($peticao->momento)->format('H:i') }}</td>
+                            <td><a href="{{ $peticao->link }}">{{ $peticao->cliente }}</a></td>
+                            <td>{{ $peticao->modelo }}</td>
+                            <td>{{ $peticao->origem }}</td>
                         </tr>
                     @endforeach
                     </tbody>
@@ -78,7 +78,7 @@
                     <tbody>
                     @foreach($usuariosHoje as $linha)
                         <tr>
-                            <td>{{ optional($linha->legacyUsuario)->nome_usu ?: ('Usuario #' . $linha->legacy_usuario_id) }}</td>
+                            <td>{{ $linha->nome_usu }}</td>
                             <td>{{ $linha->total_peticoes }}</td>
                         </tr>
                     @endforeach

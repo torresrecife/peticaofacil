@@ -7,6 +7,15 @@
     <h2 style="margin:0;">Pecas salvas</h2>
 </div>
 
+@if(!empty($usingLegacyFallback))
+    <div class="panel" style="margin-bottom:20px; border-color:#fde68a; background:#fffbeb;">
+        <strong>Leitura de compatibilidade ativa.</strong>
+        <div class="editor-note" style="margin-top:6px; color:#92400e;">
+            Nenhum registro foi encontrado na tabela normalizada para este filtro. A listagem abaixo esta lendo a tabela legada e a abertura da peca continua sincronizando para o fluxo novo.
+        </div>
+    </div>
+@endif
+
 <div class="panel" style="margin-bottom:20px;">
     <form method="get" action="{{ route('pecas.index') }}">
         <div class="form-grid">
@@ -47,15 +56,27 @@
         <tbody>
             @forelse($pecas as $peca)
                 <tr>
-                    <td>{{ $peca->legacy_peca_id ?: $peca->id }}</td>
-                    <td>{{ optional($peca->modelo)->nome }}</td>
-                    <td>{{ $peca->cliente_referencia }}</td>
-                    <td>{{ optional($peca->gerado_em)->format('d/m/Y H:i') ?: optional($peca->created_at)->format('d/m/Y H:i') }}</td>
-                    <td>{{ optional($peca->legacyUsuario)->login_usu }}</td>
-                    <td><span class="editor-note">Normalizada</span></td>
-                    <td>
-                        <a href="{{ route('peticoes.saved.edit', $peca) }}">Editar</a>
-                    </td>
+                    @if(!empty($usingLegacyFallback))
+                        <td>{{ $peca->id_pecas }}</td>
+                        <td>{{ optional($peca->modeloNormalizado)->nome ?: optional($peca->tipo)->tipo_nome }}</td>
+                        <td>{{ $peca->nome_cli }}</td>
+                        <td>{{ optional($peca->data_cad)->format('d/m/Y H:i') }}</td>
+                        <td>{{ optional($peca->usuario)->login_usu }}</td>
+                        <td><span class="editor-note">Legada</span></td>
+                        <td>
+                            <a href="{{ route('peticoes.editor.edit', $peca) }}">Abrir</a>
+                        </td>
+                    @else
+                        <td>{{ $peca->legacy_peca_id ?: $peca->id }}</td>
+                        <td>{{ optional($peca->modelo)->nome }}</td>
+                        <td>{{ $peca->cliente_referencia }}</td>
+                        <td>{{ optional($peca->gerado_em)->format('d/m/Y H:i') ?: optional($peca->created_at)->format('d/m/Y H:i') }}</td>
+                        <td>{{ optional($peca->legacyUsuario)->login_usu }}</td>
+                        <td><span class="editor-note">Normalizada</span></td>
+                        <td>
+                            <a href="{{ route('peticoes.saved.edit', $peca) }}">Editar</a>
+                        </td>
+                    @endif
                 </tr>
             @empty
                 <tr>
