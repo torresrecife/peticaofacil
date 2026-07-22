@@ -38,6 +38,11 @@ class PeticaoModelo extends Model
 
     public function servidor()
     {
+        return $this->belongsTo(SqlServerProfile::class, 'legacy_sql_config_id', 'legacy_config_id');
+    }
+
+    public function servidorLegacy()
+    {
         return $this->belongsTo(SqlServerConfig::class, 'legacy_sql_config_id', 'id_db');
     }
 

@@ -2,11 +2,9 @@
 
 namespace App\Services;
 
-use App\SqlServerConfig;
-
 class SqlServerLookupService
 {
-    public function fetchByCode(SqlServerConfig $config, $code)
+    public function fetchByCode($config, $code)
     {
         if (!function_exists('sqlsrv_connect') || !function_exists('sqlsrv_query')) {
             return null;

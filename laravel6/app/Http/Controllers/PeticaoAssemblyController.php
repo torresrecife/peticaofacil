@@ -28,7 +28,7 @@ class PeticaoAssemblyController extends Controller
 
     public function showNormalized(PeticaoModelo $modeloNormalizado)
     {
-        $modeloNormalizado->load(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor']);
+        $modeloNormalizado->load(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']);
 
         return $this->renderAssemble($modeloNormalizado, $modeloNormalizado);
     }
@@ -43,7 +43,7 @@ class PeticaoAssemblyController extends Controller
 
     public function composeNormalized(Request $request, PeticaoModelo $modeloNormalizado, PeticaoComposerService $composer, SqlServerLookupService $lookup)
     {
-        $modeloNormalizado->load(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor']);
+        $modeloNormalizado->load(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']);
 
         return $this->renderComposedAssemble($request, $modeloNormalizado, $modeloNormalizado, $composer, $lookup);
     }
@@ -66,8 +66,10 @@ class PeticaoAssemblyController extends Controller
         $codigoProcesso = trim((string) $request->input('codigo_processo', ''));
         $lookupStatus = null;
 
-        if ($codigoProcesso !== '' && $modeloFonte->servidor) {
-            $externalData = $lookup->fetchByCode($modeloFonte->servidor, $codigoProcesso);
+        $lookupConfig = $this->resolveLookupConfig($modeloFonte);
+
+        if ($codigoProcesso !== '' && $lookupConfig) {
+            $externalData = $lookup->fetchByCode($lookupConfig, $codigoProcesso);
 
             if (is_array($externalData)) {
                 foreach ($modeloFonte->campos as $campo) {
@@ -131,10 +133,19 @@ class PeticaoAssemblyController extends Controller
 
     protected function resolvePreferredModelo(Tipo $modelo)
     {
-        $mirror = PeticaoModelo::with(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor'])
+        $mirror = PeticaoModelo::with(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy'])
             ->where('legacy_tipo_id', $modelo->tipo_id)
             ->first();
 
         return $mirror ?: $modelo;
+    }
+
+    protected function resolveLookupConfig($modeloFonte)
+    {
+        if ($modeloFonte instanceof PeticaoModelo) {
+            return $modeloFonte->servidor ?: $modeloFonte->servidorLegacy;
+        }
+
+        return $modeloFonte->servidor ?: null;
     }
 }

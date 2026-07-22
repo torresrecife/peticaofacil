@@ -154,6 +154,56 @@ class PeticaoFlowTest extends TestCase
         $pdfResponse->assertHeader('content-type', 'application/pdf');
     }
 
+    public function test_normalized_model_prefers_sql_server_profile_relation_for_runtime_lookup_source()
+    {
+        $user = factory(User::class)->create([
+            'nivel_usu' => 'USU',
+            'acesso_usu' => now(),
+        ]);
+
+        $modeloId = $this->seedModeloCompleto();
+
+        DB::table('tp_config_db')->insert([
+            'id_db' => 90,
+            'nome_db' => 'Servidor Legado Runtime',
+            'ip_db' => '192.168.10.10',
+            'data_db' => 'juridico',
+            'usu_db' => 'legacy',
+            'senha_db' => '123',
+            'table_db' => 'Processos',
+            'chave_db' => 'CodigoLegado',
+            'query_db' => 'SELECT * FROM Processos',
+            'where_db' => 'where 1=1',
+            'stt' => 'Y',
+        ]);
+
+        DB::table('sql_server_profiles')->insert([
+            'id' => 90,
+            'legacy_config_id' => 90,
+            'nome' => 'Servidor Normalizado Runtime',
+            'host' => '10.10.10.10',
+            'database_name' => 'juridico_novo',
+            'username' => 'normalizado',
+            'password' => '456',
+            'table_name' => 'ProcessosNovo',
+            'lookup_key' => 'CodigoNormalizado',
+            'base_query' => 'SELECT * FROM ProcessosNovo',
+            'where_clause' => 'where 1=1',
+            'status' => 'ativo',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('tp_tipo_tb')->where('tipo_id', $modeloId)->update(['id_db' => 90]);
+        DB::table('peticao_modelos')->where('id', $modeloId)->update(['legacy_sql_config_id' => 90]);
+
+        $response = $this->actingAs($user)->get('/peticoes/modelos/' . $modeloId);
+
+        $response->assertStatus(200)
+            ->assertSee('CodigoNormalizado')
+            ->assertDontSee('CodigoLegado');
+    }
+
     protected function seedModeloCompleto()
     {
         DB::table('tp_setor_tb')->insert([
