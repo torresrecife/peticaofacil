@@ -70,6 +70,7 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
         Route::resource('servidores', 'Admin\SqlServerConfigController')->except(['show', 'destroy'])->parameters([
             'servidores' => 'servidore',
         ]);
+        Route::get('servidores-normalizados', 'Admin\NormalizedSqlServerConfigController@index')->name('servidores-normalizados.index');
         Route::get('servidores-normalizados/create', 'Admin\NormalizedSqlServerConfigController@create')->name('servidores-normalizados.create');
         Route::post('servidores-normalizados', 'Admin\NormalizedSqlServerConfigController@store')->name('servidores-normalizados.store');
         Route::get('servidores-normalizados/{servidorNormalizado}/edit', 'Admin\NormalizedSqlServerConfigController@edit')->name('servidores-normalizados.edit');

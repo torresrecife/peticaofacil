@@ -50,4 +50,16 @@ class AdminNormalizedSqlServerConfigTest extends TestCase
 
         $response->assertRedirect('/admin/servidores-normalizados/' . $profile->id . '/edit');
     }
+
+    public function test_legacy_index_route_redirects_to_normalized_server_index()
+    {
+        $admin = factory(User::class)->create([
+            'nivel_usu' => 'ADM',
+            'acesso_usu' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/servidores')
+            ->assertRedirect('/admin/servidores-normalizados');
+    }
 }

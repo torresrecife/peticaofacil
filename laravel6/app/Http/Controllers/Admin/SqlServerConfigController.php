@@ -10,18 +10,7 @@ class SqlServerConfigController extends Controller
 {
     public function index()
     {
-        $configs = SqlServerProfile::orderBy('id')->paginate(20);
-        $legacyIds = $configs->pluck('legacy_config_id')->filter()->values()->all();
-
-        $legacyFallback = SqlServerConfig::orderBy('id_db');
-        if (!empty($legacyIds)) {
-            $legacyFallback->whereNotIn('id_db', $legacyIds);
-        }
-
-        return view('admin.sqlserver.index', [
-            'configs' => $configs,
-            'legacyFallback' => $legacyFallback->get(),
-        ]);
+        return redirect()->route('admin.servidores-normalizados.index');
     }
 
     public function create()

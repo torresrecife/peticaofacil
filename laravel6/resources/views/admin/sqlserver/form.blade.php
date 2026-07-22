@@ -5,7 +5,7 @@
 @section('content')
 <div class="topbar" style="margin-bottom:16px;">
     <h2 style="margin:0;">{{ $config->exists ? 'Editar servidor SQL' : 'Novo servidor SQL' }}</h2>
-    <a class="button secondary link" href="{{ route('admin.servidores.index') }}">Voltar</a>
+    <a class="button secondary link" href="{{ route('admin.servidores-normalizados.index') }}">Voltar</a>
 </div>
 
 <div class="panel">
