@@ -11,38 +11,51 @@ class PecaStorageService
 {
     public function save($modelo, array $payload, Peca $peca = null)
     {
-        $legacyTipo = $this->resolveLegacyTipo($modelo);
-        if (!$legacyTipo) {
+        $legacyTipoId = $this->resolveLegacyTipoId($modelo);
+        if (!$legacyTipoId) {
             throw new \InvalidArgumentException('Nao foi possivel resolver o modelo legado para salvar a peca.');
         }
 
         $peca = $peca ?: new Peca();
 
-        $peca->tipo_id = $legacyTipo->tipo_id;
+        $peca->tipo_id = $legacyTipoId;
         $peca->id_usu = Auth::id();
-        $peca->nome_pecas = $legacyTipo->tipo_nome;
+        $peca->nome_pecas = $this->resolveLegacyNome($modelo);
         $peca->nome_cli = $payload['nome_cli'];
         $peca->cod_pecas = $payload['cod_pecas'];
         $peca->data_cad = now();
         $peca->cod_sav = $peca->cod_sav ?: $this->generateCodSav();
         $peca->save();
 
-        app(LegacyPecaSyncService::class)->syncPeca($peca, $legacyTipo);
+        app(LegacyPecaSyncService::class)->syncPeca($peca, $modelo);
 
         return $peca;
     }
 
-    protected function resolveLegacyTipo($modelo)
+    protected function resolveLegacyTipoId($modelo)
     {
         if ($modelo instanceof Tipo) {
-            return $modelo;
+            return $modelo->tipo_id;
         }
 
         if ($modelo instanceof PeticaoModelo && $modelo->legacy_tipo_id) {
-            return Tipo::find($modelo->legacy_tipo_id);
+            return $modelo->legacy_tipo_id;
         }
 
-        return null;
+        return 0;
+    }
+
+    protected function resolveLegacyNome($modelo)
+    {
+        if ($modelo instanceof PeticaoModelo) {
+            return $modelo->nome;
+        }
+
+        if ($modelo instanceof Tipo) {
+            return $modelo->tipo_nome;
+        }
+
+        return 'Peticao';
     }
 
     protected function generateCodSav()

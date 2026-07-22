@@ -38,6 +38,11 @@ class Peca extends Model
         return $this->belongsTo(Tipo::class, 'tipo_id', 'tipo_id');
     }
 
+    public function modeloNormalizado()
+    {
+        return $this->belongsTo(PeticaoModelo::class, 'tipo_id', 'legacy_tipo_id');
+    }
+
     public function usuario()
     {
         return $this->belongsTo(User::class, 'id_usu', 'id_usu');

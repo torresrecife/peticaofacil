@@ -12,10 +12,10 @@
         <div class="form-grid">
             <div class="form-group">
                 <label>Modelo</label>
-                <select name="tipo_id">
+                <select name="modelo_id">
                     <option value="">Todos</option>
                     @foreach($modelos as $modelo)
-                        <option value="{{ $modelo->tipo_id }}" @if((string) $selectedTipo === (string) $modelo->tipo_id) selected @endif>{{ $modelo->tipo_nome }}</option>
+                        <option value="{{ $modelo->id }}" @if((string) $selectedModelo === (string) $modelo->id) selected @endif>{{ $modelo->nome }}</option>
                     @endforeach
                 </select>
             </div>

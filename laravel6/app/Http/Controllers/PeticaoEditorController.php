@@ -44,8 +44,8 @@ class PeticaoEditorController extends Controller
     {
         $mirror = PeticaoNormalizada::where('legacy_peca_id', $peca->id_pecas)->first();
         if (!$mirror) {
-            $peca->load('tipo');
-            $mirror = $legacyPecaSync->syncPeca($peca, $peca->tipo);
+            $peca->load('modeloNormalizado');
+            $mirror = $legacyPecaSync->syncPeca($peca, $peca->modeloNormalizado);
         }
 
         if ($mirror) {

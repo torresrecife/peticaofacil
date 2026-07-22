@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\PeticaoNormalizada;
-use App\Tipo;
+use App\PeticaoModelo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,7 +11,8 @@ class PecaController extends Controller
 {
     public function index(Request $request)
     {
-        $tipoId = $request->query('tipo_id');
+        $modeloId = $request->query('modelo_id');
+        $legacyTipoId = $request->query('tipo_id');
         $search = trim((string) $request->query('search', ''));
 
         $query = PeticaoNormalizada::with(['modelo', 'legacyPeca', 'legacyUsuario'])->orderByDesc('gerado_em')->orderByDesc('id');
@@ -21,9 +22,11 @@ class PecaController extends Controller
             $query->where('legacy_usuario_id', $user->id_usu);
         }
 
-        if ($tipoId) {
-            $query->whereHas('modelo', function ($builder) use ($tipoId) {
-                $builder->where('legacy_tipo_id', $tipoId);
+        if ($modeloId) {
+            $query->where('modelo_id', $modeloId);
+        } elseif ($legacyTipoId) {
+            $query->whereHas('modelo', function ($builder) use ($legacyTipoId) {
+                $builder->where('legacy_tipo_id', $legacyTipoId);
             });
         }
 
@@ -37,12 +40,12 @@ class PecaController extends Controller
         }
 
         $pecas = $query->paginate(20)->appends($request->query());
-        $modelos = Tipo::orderBy('tipo_nome')->get();
+        $modelos = PeticaoModelo::orderBy('nome')->get();
 
         return view('pecas.index', [
             'pecas' => $pecas,
             'modelos' => $modelos,
-            'selectedTipo' => $tipoId,
+            'selectedModelo' => $modeloId,
             'search' => $search,
         ]);
     }

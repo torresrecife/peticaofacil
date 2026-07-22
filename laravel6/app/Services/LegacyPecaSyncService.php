@@ -10,17 +10,15 @@ use Illuminate\Support\Facades\DB;
 
 class LegacyPecaSyncService
 {
-    public function syncPeca(Peca $peca, Tipo $tipo = null)
+    public function syncPeca(Peca $peca, $source = null)
     {
-        $tipo = $tipo ?: $peca->tipo ?: Tipo::find($peca->tipo_id);
-        if (!$tipo) {
-            return null;
-        }
+        $modelo = $this->resolveModelo($peca, $source);
 
-        $modelo = PeticaoModelo::where('legacy_tipo_id', $tipo->tipo_id)->first();
         if (!$modelo) {
             return null;
         }
+
+        $legacyTipoId = $modelo->legacy_tipo_id ?: ($source instanceof Tipo ? $source->tipo_id : $peca->tipo_id);
 
         return PeticaoNormalizada::updateOrCreate(
             ['legacy_peca_id' => $peca->id_pecas],
@@ -28,11 +26,11 @@ class LegacyPecaSyncService
                 'modelo_id' => $modelo->id,
                 'legacy_usuario_id' => $peca->id_usu ?: null,
                 'codigo_externo' => $peca->cod_sav ?: null,
-                'nome_arquivo' => $peca->nome_pecas ?: $tipo->tipo_nome,
+                'nome_arquivo' => $peca->nome_pecas ?: $modelo->nome,
                 'cliente_referencia' => $peca->nome_cli,
                 'conteudo_html' => $peca->cod_pecas,
                 'campos_resolvidos' => [
-                    'legacy_tipo_id' => $tipo->tipo_id,
+                    'legacy_tipo_id' => $legacyTipoId,
                     'legacy_cod_sav' => $peca->cod_sav,
                 ],
                 'gerado_em' => $peca->data_cad,
@@ -45,12 +43,12 @@ class LegacyPecaSyncService
     {
         $synced = 0;
 
-        Peca::with('tipo')
+        Peca::with('modeloNormalizado')
             ->orderBy('id_pecas')
             ->chunk(100, function ($pecas) use (&$synced) {
                 DB::transaction(function () use ($pecas, &$synced) {
                     foreach ($pecas as $peca) {
-                        if ($this->syncPeca($peca, $peca->tipo)) {
+                        if ($this->syncPeca($peca, $peca->modeloNormalizado)) {
                             $synced++;
                         }
                     }
@@ -58,5 +56,22 @@ class LegacyPecaSyncService
             });
 
         return $synced;
+    }
+
+    protected function resolveModelo(Peca $peca, $source = null)
+    {
+        if ($source instanceof PeticaoModelo) {
+            return $source;
+        }
+
+        if ($source instanceof Tipo) {
+            return PeticaoModelo::where('legacy_tipo_id', $source->tipo_id)->first();
+        }
+
+        if ($peca->relationLoaded('modeloNormalizado') && $peca->modeloNormalizado) {
+            return $peca->modeloNormalizado;
+        }
+
+        return $peca->modeloNormalizado()->first();
     }
 }

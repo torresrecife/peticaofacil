@@ -112,6 +112,8 @@ class PeticaoFlowTest extends TestCase
 
         $previewHtml = $previewResponse->viewData('preview')['html'];
 
+        DB::table('tp_tipo_tb')->where('tipo_id', $modeloId)->delete();
+
         $this->actingAs($user)
             ->post('/peticoes/modelos/' . $modeloId . '/editor', [
                 'nome_cli' => 'Beltrano',
@@ -130,6 +132,10 @@ class PeticaoFlowTest extends TestCase
         $this->assertNotNull($peca);
         $this->assertSame($modeloId, (int) $peca->tipo_id);
         $saveResponse->assertRedirect('/pecas/' . $peca->id_pecas . '/editar');
+
+        $this->actingAs($user)
+            ->get('/pecas/' . $peca->id_pecas . '/editar')
+            ->assertRedirect();
 
         $wordResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId . '/exportar/word', [
             'nome_cli' => 'Beltrano',
