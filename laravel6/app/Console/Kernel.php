@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         \App\Console\Commands\SyncLegacyModelos::class,
+        \App\Console\Commands\SyncLegacyPecas::class,
     ];
 
     /**

@@ -31,4 +31,14 @@ class PeticaoNormalizada extends Model
     {
         return $this->belongsTo(PeticaoModelo::class, 'modelo_id');
     }
+
+    public function legacyPeca()
+    {
+        return $this->belongsTo(Peca::class, 'legacy_peca_id', 'id_pecas');
+    }
+
+    public function legacyUsuario()
+    {
+        return $this->belongsTo(User::class, 'legacy_usuario_id', 'id_usu');
+    }
 }

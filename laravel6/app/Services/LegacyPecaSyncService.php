@@ -6,6 +6,7 @@ use App\Peca;
 use App\PeticaoModelo;
 use App\PeticaoNormalizada;
 use App\Tipo;
+use Illuminate\Support\Facades\DB;
 
 class LegacyPecaSyncService
 {
@@ -38,5 +39,24 @@ class LegacyPecaSyncService
                 'salvo_em' => now(),
             ]
         );
+    }
+
+    public function syncAll()
+    {
+        $synced = 0;
+
+        Peca::with('tipo')
+            ->orderBy('id_pecas')
+            ->chunk(100, function ($pecas) use (&$synced) {
+                DB::transaction(function () use ($pecas, &$synced) {
+                    foreach ($pecas as $peca) {
+                        if ($this->syncPeca($peca, $peca->tipo)) {
+                            $synced++;
+                        }
+                    }
+                });
+            });
+
+        return $synced;
     }
 }

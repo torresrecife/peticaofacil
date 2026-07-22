@@ -40,22 +40,30 @@
                 <th>Cliente / arquivo</th>
                 <th>Data</th>
                 <th>Usuario</th>
+                <th>Origem</th>
                 <th></th>
             </tr>
         </thead>
         <tbody>
             @forelse($pecas as $peca)
                 <tr>
-                    <td>{{ $peca->id_pecas }}</td>
-                    <td>{{ optional($peca->tipo)->tipo_nome }}</td>
-                    <td>{{ $peca->nome_cli }}</td>
-                    <td>{{ optional($peca->data_cad)->format('d/m/Y H:i') }}</td>
-                    <td>{{ optional($peca->usuario)->login_usu }}</td>
-                    <td><a href="{{ route('peticoes.editor.edit', $peca) }}">Editar</a></td>
+                    <td>{{ $peca->legacy_peca_id ?: $peca->id }}</td>
+                    <td>{{ optional($peca->modelo)->nome }}</td>
+                    <td>{{ $peca->cliente_referencia }}</td>
+                    <td>{{ optional($peca->gerado_em)->format('d/m/Y H:i') ?: optional($peca->created_at)->format('d/m/Y H:i') }}</td>
+                    <td>{{ optional($peca->legacyUsuario)->login_usu }}</td>
+                    <td><span class="editor-note">Normalizada</span></td>
+                    <td>
+                        @if($peca->legacyPeca)
+                            <a href="{{ route('peticoes.editor.edit', $peca->legacyPeca) }}">Editar</a>
+                        @else
+                            <span class="editor-note">Sem vinculo legado</span>
+                        @endif
+                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6">Nenhuma peca encontrada.</td>
+                    <td colspan="7">Nenhuma peca encontrada.</td>
                 </tr>
             @endforelse
         </tbody>

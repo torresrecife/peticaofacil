@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Peca;
+use App\PeticaoNormalizada;
 use App\Tipo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,22 +14,25 @@ class PecaController extends Controller
         $tipoId = $request->query('tipo_id');
         $search = trim((string) $request->query('search', ''));
 
-        $query = Peca::with(['tipo', 'usuario'])->orderByDesc('data_cad');
+        $query = PeticaoNormalizada::with(['modelo', 'legacyPeca', 'legacyUsuario'])->orderByDesc('gerado_em')->orderByDesc('id');
 
         $user = Auth::user();
         if ($user && $user->nivel_usu !== 'ADM') {
-            $query->where('id_usu', $user->id_usu);
+            $query->where('legacy_usuario_id', $user->id_usu);
         }
 
         if ($tipoId) {
-            $query->where('tipo_id', $tipoId);
+            $query->whereHas('modelo', function ($builder) use ($tipoId) {
+                $builder->where('legacy_tipo_id', $tipoId);
+            });
         }
 
         if ($search !== '') {
             $query->where(function ($builder) use ($search) {
-                $builder->where('nome_cli', 'like', '%' . $search . '%')
-                    ->orWhere('nome_pecas', 'like', '%' . $search . '%')
-                    ->orWhere('id_pecas', 'like', '%' . $search . '%');
+                $builder->where('cliente_referencia', 'like', '%' . $search . '%')
+                    ->orWhere('nome_arquivo', 'like', '%' . $search . '%')
+                    ->orWhere('legacy_peca_id', 'like', '%' . $search . '%')
+                    ->orWhere('codigo_externo', 'like', '%' . $search . '%');
             });
         }
 
