@@ -4,13 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Paragrafo;
+use App\Services\LegacyModeloSyncService;
 use App\Support\LegacyEditorContent;
 use App\Tipo;
 use Illuminate\Http\Request;
 
 class ParagrafoController extends Controller
 {
-    public function store(Request $request, Tipo $modelo)
+    public function store(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService)
     {
         $data = $request->validate([
             'fund_titulo' => 'required|string|max:200',
@@ -31,10 +32,12 @@ class ParagrafoController extends Controller
             'fund_stt' => 'Y',
         ]);
 
+        $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
+
         return redirect()->route('admin.modelos.edit', $modelo)->with('status', 'Paragrafo criado.');
     }
 
-    public function update(Request $request, Tipo $modelo, Paragrafo $paragrafo)
+    public function update(Request $request, Tipo $modelo, Paragrafo $paragrafo, LegacyModeloSyncService $syncService)
     {
         $data = $request->validate([
             'fund_titulo' => 'required|string|max:200',
@@ -45,6 +48,7 @@ class ParagrafoController extends Controller
         $data['fund_text'] = LegacyEditorContent::denormalize($data['fund_text'] ?? null);
 
         $paragrafo->fill($data)->save();
+        $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
         return redirect()->route('admin.modelos.edit', $modelo)->with('status', 'Paragrafo atualizado.');
     }

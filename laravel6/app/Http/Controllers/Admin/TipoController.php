@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Setor;
 use App\SqlServerConfig;
 use App\Support\LegacyEditorContent;
+use App\Services\LegacyModeloSyncService;
 use App\Tipo;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -31,11 +32,12 @@ class TipoController extends Controller
         ])));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, LegacyModeloSyncService $syncService)
     {
         $tipo = new Tipo($this->validateData($request));
         $tipo->tipo_data = now();
         $tipo->save();
+        $syncService->syncTipo($tipo->fresh(['paragrafos', 'campos.dados']));
 
         return redirect()->route('admin.modelos.edit', $tipo)->with('status', 'Modelo criado.');
     }
@@ -48,9 +50,10 @@ class TipoController extends Controller
         return view('admin.tipos.form', $this->formData($modelo));
     }
 
-    public function update(Request $request, Tipo $modelo)
+    public function update(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService)
     {
         $modelo->fill($this->validateData($request))->save();
+        $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
         return redirect()->route('admin.modelos.edit', $modelo)->with('status', 'Modelo atualizado.');
     }

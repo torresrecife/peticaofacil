@@ -5,28 +5,31 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\InputCampo;
 use App\InputDado;
+use App\Services\LegacyModeloSyncService;
 use App\Tipo;
 use Illuminate\Http\Request;
 
 class InputCampoController extends Controller
 {
-    public function store(Request $request, Tipo $modelo)
+    public function store(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService)
     {
         $data = $this->validateData($request);
         $campo = new InputCampo();
         $this->fillCampo($campo, $modelo, $data);
         $campo->save();
         $this->syncDados($campo, $data['opcoes'] ?? '');
+        $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
         return redirect()->route('admin.modelos.edit', $modelo)->with('status', 'Campo criado.');
     }
 
-    public function update(Request $request, Tipo $modelo, InputCampo $campo)
+    public function update(Request $request, Tipo $modelo, InputCampo $campo, LegacyModeloSyncService $syncService)
     {
         $data = $this->validateData($request);
         $this->fillCampo($campo, $modelo, $data);
         $campo->save();
         $this->syncDados($campo, $data['opcoes'] ?? '');
+        $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
         return redirect()->route('admin.modelos.edit', $modelo)->with('status', 'Campo atualizado.');
     }

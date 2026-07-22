@@ -21,6 +21,11 @@ abstract class TestCase extends BaseTestCase
     {
         Schema::disableForeignKeyConstraints();
 
+        Schema::dropIfExists('peticoes');
+        Schema::dropIfExists('peticao_modelo_campo_opcoes');
+        Schema::dropIfExists('peticao_modelo_campos');
+        Schema::dropIfExists('peticao_modelo_paragrafos');
+        Schema::dropIfExists('peticao_modelos');
         Schema::dropIfExists('tp_pecas_tb');
         Schema::dropIfExists('tp_dados_tb');
         Schema::dropIfExists('tp_inputs_tb');
@@ -126,7 +131,7 @@ abstract class TestCase extends BaseTestCase
             $table->integer('input_order')->default(0);
             $table->string('listsel', 1)->default('N');
             $table->string('nomepet', 1)->default('N');
-            $table->string('hide', 1)->default('N');
+            $table->string('hide', 20)->default('true');
             $table->text('texto_padrao')->nullable();
             $table->string('add_class', 255)->nullable();
         });
@@ -155,6 +160,84 @@ abstract class TestCase extends BaseTestCase
             $table->longText('cod_pecas');
             $table->dateTime('data_cad')->nullable();
             $table->string('cod_sav', 255)->nullable();
+        });
+
+        Schema::create('peticao_modelos', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedInteger('legacy_tipo_id')->nullable()->unique();
+            $table->unsignedInteger('legacy_cliente_id')->nullable();
+            $table->unsignedInteger('legacy_setor_id')->nullable();
+            $table->unsignedInteger('legacy_sql_config_id')->nullable();
+            $table->string('nome', 255);
+            $table->string('slug', 255)->nullable();
+            $table->string('status', 20)->default('ativo');
+            $table->string('arquivo_padrao', 50)->nullable();
+            $table->longText('cabecalho_html')->nullable();
+            $table->longText('rodape_html')->nullable();
+            $table->text('metadata')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('peticao_modelo_paragrafos', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('modelo_id');
+            $table->unsignedInteger('legacy_fund_id')->nullable()->unique();
+            $table->string('titulo', 255)->nullable();
+            $table->longText('conteudo_html')->nullable();
+            $table->unsignedInteger('ordem')->default(0);
+            $table->boolean('visivel')->default(true);
+            $table->boolean('ativo')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('peticao_modelo_campos', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('modelo_id');
+            $table->unsignedInteger('legacy_input_id')->nullable()->unique();
+            $table->string('rotulo', 255)->nullable();
+            $table->string('token', 255)->unique();
+            $table->string('tipo', 50);
+            $table->string('origem_coluna', 255)->nullable();
+            $table->string('origem_alias', 255)->nullable();
+            $table->text('prefixo')->nullable();
+            $table->text('sufixo')->nullable();
+            $table->text('valor_padrao')->nullable();
+            $table->string('classe_css', 255)->nullable();
+            $table->unsignedInteger('largura')->nullable();
+            $table->unsignedInteger('colunas_layout')->nullable();
+            $table->unsignedInteger('linhas_layout')->nullable();
+            $table->unsignedInteger('ordem')->default(0);
+            $table->boolean('obrigatorio')->default(false);
+            $table->boolean('visivel')->default(true);
+            $table->boolean('gera_nome_arquivo')->default(false);
+            $table->text('eventos_frontend')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('peticao_modelo_campo_opcoes', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('campo_id');
+            $table->unsignedInteger('legacy_dado_id')->nullable()->unique();
+            $table->string('rotulo', 255);
+            $table->string('valor_retorno', 255)->nullable();
+            $table->text('valores_extras')->nullable();
+            $table->unsignedInteger('ordem')->default(0);
+            $table->timestamps();
+        });
+
+        Schema::create('peticoes', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedInteger('legacy_peca_id')->nullable()->unique();
+            $table->unsignedBigInteger('modelo_id');
+            $table->unsignedInteger('legacy_usuario_id')->nullable();
+            $table->string('codigo_externo', 255)->nullable();
+            $table->string('nome_arquivo', 500);
+            $table->string('cliente_referencia', 500)->nullable();
+            $table->longText('conteudo_html');
+            $table->text('campos_resolvidos')->nullable();
+            $table->timestamp('gerado_em')->nullable();
+            $table->timestamp('salvo_em')->nullable();
+            $table->timestamps();
         });
     }
 }
