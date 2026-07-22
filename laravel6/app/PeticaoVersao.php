@@ -30,4 +30,9 @@ class PeticaoVersao extends Model
     {
         return $this->belongsTo(PeticaoNormalizada::class, 'peticao_id');
     }
+
+    public function legacyUsuario()
+    {
+        return $this->belongsTo(User::class, 'legacy_usuario_id_snapshot', 'id_usu');
+    }
 }

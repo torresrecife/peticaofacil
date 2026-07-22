@@ -143,6 +143,17 @@ class PeticaoSavedEditorTest extends TestCase
             ->value('id');
 
         $this->actingAs($user)
+            ->post('/peticoes-salvas/4001/versoes/' . $restoreVersionId . '/exportar/word')
+            ->assertStatus(200)
+            ->assertHeader('content-type', 'application/msword; charset=UTF-8');
+
+        $versionPdfResponse = $this->actingAs($user)
+            ->post('/peticoes-salvas/4001/versoes/' . $restoreVersionId . '/exportar/pdf');
+        $versionPdfResponse->assertStatus(200);
+        $versionPdfResponse->assertHeader('content-type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF', $versionPdfResponse->getContent());
+
+        $this->actingAs($user)
             ->post('/peticoes-salvas/4001/versoes/' . $restoreVersionId . '/restaurar')
             ->assertRedirect('/peticoes-salvas/4001/editar');
 
@@ -151,10 +162,11 @@ class PeticaoSavedEditorTest extends TestCase
         $this->assertStringContainsString('Texto restaurado', $normalizedAfterRestore->conteudo_html);
 
         $this->actingAs($user)
-            ->get('/peticoes-salvas/4001/editar?origin=restore')
+            ->get('/peticoes-salvas/4001/editar?origin=restore&user_id=30&date_from=2026-07-22&date_to=2026-07-22')
             ->assertStatus(200)
             ->assertSee('restore')
             ->assertSee('Cliente Restaurado')
+            ->assertSee('2026-07-22')
             ->assertDontSee('Cliente Atualizado');
     }
 }

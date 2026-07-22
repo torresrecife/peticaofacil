@@ -105,6 +105,23 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label>Usuario</label>
+                        <select name="user_id">
+                            <option value="">Todos</option>
+                            @foreach($usuariosHistorico as $usuarioHistorico)
+                                <option value="{{ $usuarioHistorico->id_usu }}" @if((string) ($selectedUserId ?? '') === (string) $usuarioHistorico->id_usu) selected @endif>{{ $usuarioHistorico->login_usu }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Data inicial</label>
+                        <input type="date" name="date_from" value="{{ $selectedDateFrom ?? '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Data final</label>
+                        <input type="date" name="date_to" value="{{ $selectedDateTo ?? '' }}">
+                    </div>
                 </div>
                 <div class="actions" style="margin-top:12px;">
                     <button type="submit">Filtrar historico</button>
@@ -117,6 +134,7 @@
                         <th>Versao</th>
                         <th>Origem</th>
                         <th>Cliente</th>
+                        <th>Usuario</th>
                         <th>Data</th>
                         <th>Legado</th>
                         <th></th>
@@ -128,6 +146,7 @@
                             <td>{{ $versao->versao_numero }}</td>
                             <td>{{ $versao->origem_snapshot }}</td>
                             <td>{{ $versao->cliente_referencia_snapshot }}</td>
+                            <td>{{ optional($versao->legacyUsuario)->login_usu ?: '-' }}</td>
                             <td>{{ optional($versao->criado_em)->format('d/m/Y H:i') ?: optional($versao->created_at)->format('d/m/Y H:i') }}</td>
                             <td>{{ $versao->legacy_peca_id_snapshot ?: '-' }}</td>
                             <td>
@@ -140,12 +159,20 @@
                                         @csrf
                                         <button type="submit" class="button secondary">Restaurar</button>
                                     </form>
+                                    <form method="post" action="{{ route('peticoes.saved.versions.export.word', [$peticao, $versao]) }}">
+                                        @csrf
+                                        <button type="submit" class="button secondary">Word</button>
+                                    </form>
+                                    <form method="post" action="{{ route('peticoes.saved.versions.export.pdf', [$peticao, $versao]) }}">
+                                        @csrf
+                                        <button type="submit" class="button secondary">PDF</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6">Sem versoes registradas.</td>
+                            <td colspan="7">Sem versoes registradas.</td>
                         </tr>
                     @endforelse
                 </tbody>

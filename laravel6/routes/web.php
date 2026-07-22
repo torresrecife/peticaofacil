@@ -43,6 +43,8 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::put('/peticoes-salvas/{peticao}', 'PeticaoSavedController@update')->name('peticoes.saved.update');
     Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/restaurar', 'PeticaoSavedController@restoreVersion')->name('peticoes.saved.versions.restore');
     Route::get('/peticoes-salvas/{peticao}/versoes/{versao}/comparar', 'PeticaoSavedController@compareVersions')->name('peticoes.saved.versions.compare');
+    Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/exportar/word', 'PeticaoSavedController@exportVersionWord')->name('peticoes.saved.versions.export.word');
+    Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/exportar/pdf', 'PeticaoSavedController@exportVersionPdf')->name('peticoes.saved.versions.export.pdf');
     Route::post('/peticoes-salvas/{peticao}/exportar/pdf', 'PeticaoSavedController@exportPdf')->name('peticoes.saved.export.pdf');
     Route::post('/peticoes-salvas/{peticao}/exportar/word', 'PeticaoSavedController@exportWord')->name('peticoes.saved.export.word');
     Route::get('/pecas/{peca}/editar', 'PeticaoEditorController@edit')->name('peticoes.editor.edit');

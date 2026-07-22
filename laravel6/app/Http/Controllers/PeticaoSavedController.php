@@ -35,20 +35,45 @@ class PeticaoSavedController extends Controller
     public function edit(PeticaoNormalizada $peticao)
     {
         $origin = request()->query('origin');
+        $userId = request()->query('user_id');
+        $dateFrom = request()->query('date_from');
+        $dateTo = request()->query('date_to');
 
         $peticao->load(['modelo', 'legacyPeca.tipo', 'legacyUsuario']);
 
-        $versionsQuery = $peticao->versoes();
+        $versionsQuery = $peticao->versoes()->with('legacyUsuario');
         if ($origin) {
             $versionsQuery->where('origem_snapshot', $origin);
         }
+        if ($userId) {
+            $versionsQuery->where('legacy_usuario_id_snapshot', $userId);
+        }
+        if ($dateFrom) {
+            $versionsQuery->whereDate('criado_em', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $versionsQuery->whereDate('criado_em', '<=', $dateTo);
+        }
 
         $versoes = $versionsQuery->paginate(10)->appends(request()->query());
+        $usuariosHistorico = $peticao->versoes()
+            ->with('legacyUsuario')
+            ->whereNotNull('legacy_usuario_id_snapshot')
+            ->get()
+            ->pluck('legacyUsuario')
+            ->filter()
+            ->unique('id_usu')
+            ->sortBy('login_usu')
+            ->values();
 
         return view('peticao.saved-editor', [
             'peticao' => $peticao,
             'versoes' => $versoes,
             'selectedOrigin' => $origin,
+            'selectedUserId' => $userId,
+            'selectedDateFrom' => $dateFrom,
+            'selectedDateTo' => $dateTo,
+            'usuariosHistorico' => $usuariosHistorico,
         ]);
     }
 
@@ -110,5 +135,26 @@ class PeticaoSavedController extends Controller
         ]);
 
         return $exportService->exportPdf($request, $data['nome_cli'], $data['cod_pecas']);
+    }
+
+    public function exportVersionWord(PeticaoNormalizada $peticao, PeticaoVersao $versao, PeticaoExportService $exportService)
+    {
+        abort_unless((int) $versao->peticao_id === (int) $peticao->id, 404);
+
+        return $exportService->exportWord(
+            $versao->cliente_referencia_snapshot ?: ('peticao_versao_' . $versao->versao_numero),
+            $versao->conteudo_html_snapshot
+        );
+    }
+
+    public function exportVersionPdf(Request $request, PeticaoNormalizada $peticao, PeticaoVersao $versao, PeticaoExportService $exportService)
+    {
+        abort_unless((int) $versao->peticao_id === (int) $peticao->id, 404);
+
+        return $exportService->exportPdf(
+            $request,
+            $versao->cliente_referencia_snapshot ?: ('peticao_versao_' . $versao->versao_numero),
+            $versao->conteudo_html_snapshot
+        );
     }
 }
