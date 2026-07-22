@@ -16,7 +16,22 @@
 <div class="topbar" style="margin-bottom:16px;">
     <h2 style="margin:0;">Editor final da peca</h2>
     <div class="actions">
-        <a class="button secondary link" href="{{ route('peticoes.show', $modelo) }}">Voltar para montagem</a>
+        @php
+            $isNormalizedEditor = $modelo instanceof \App\PeticaoModelo;
+            $backRoute = $isNormalizedEditor
+                ? route('peticoes.normalized.show', $modelo)
+                : route('peticoes.show', $modelo);
+            $saveRoute = $isNormalizedEditor
+                ? route('peticoes.normalized.editor.save', $modelo)
+                : route('peticoes.editor.save', $modelo);
+            $wordRoute = $isNormalizedEditor
+                ? route('peticoes.normalized.editor.export.word', $modelo)
+                : route('peticoes.editor.export.word', $modelo);
+            $pdfRoute = $isNormalizedEditor
+                ? route('peticoes.normalized.editor.export.pdf', $modelo)
+                : route('peticoes.editor.export.pdf', $modelo);
+        @endphp
+        <a class="button secondary link" href="{{ $backRoute }}">Voltar para montagem</a>
     </div>
 </div>
 
@@ -27,7 +42,7 @@
             <div class="editor-note">Edicao final, salvamento e exportacao no fluxo novo.</div>
         </div>
 
-        <form method="post" action="{{ route('peticoes.editor.save', $modelo) }}" id="editor-save-form">
+        <form method="post" action="{{ $saveRoute }}" id="editor-save-form">
             @csrf
             <input type="hidden" name="peca_id" value="{{ $peca ? $peca->id_pecas : '' }}">
             <div class="form-grid">
@@ -52,13 +67,13 @@
             <div class="editor-note">Usa o conteudo atual do editor.</div>
         </div>
         <div class="actions">
-            <form method="post" action="{{ route('peticoes.editor.export.word', $modelo) }}" class="js-export-form">
+            <form method="post" action="{{ $wordRoute }}" class="js-export-form">
                 @csrf
                 <input type="hidden" name="nome_cli" value="{{ old('nome_cli', $nomeCli) }}">
                 <textarea name="cod_pecas" style="display:none;">{{ old('cod_pecas', $content) }}</textarea>
                 <button type="submit">Exportar Word</button>
             </form>
-            <form method="post" action="{{ route('peticoes.editor.export.pdf', $modelo) }}" class="js-export-form">
+            <form method="post" action="{{ $pdfRoute }}" class="js-export-form">
                 @csrf
                 <input type="hidden" name="nome_cli" value="{{ old('nome_cli', $nomeCli) }}">
                 <textarea name="cod_pecas" style="display:none;">{{ old('cod_pecas', $content) }}</textarea>

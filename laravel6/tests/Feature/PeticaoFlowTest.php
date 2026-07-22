@@ -92,6 +92,62 @@ class PeticaoFlowTest extends TestCase
         $this->assertStringStartsWith('%PDF', $pdfResponse->getContent());
     }
 
+    public function test_legacy_editor_residual_flow_accepts_normalized_model_routes()
+    {
+        $user = factory(User::class)->create([
+            'id_usu' => 88,
+            'nivel_usu' => 'USU',
+            'acesso_usu' => now(),
+        ]);
+
+        $modeloId = $this->seedModeloCompleto();
+
+        $previewResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId, [
+            'action_type' => 'preview',
+            'campo_1' => 'Beltrano',
+            'campo_2' => 'Preferencial',
+            'campo_3' => 'Observacao simples',
+            'campo_4' => 'Indeferir',
+        ]);
+
+        $previewHtml = $previewResponse->viewData('preview')['html'];
+
+        $this->actingAs($user)
+            ->post('/peticoes/modelos/' . $modeloId . '/editor', [
+                'nome_cli' => 'Beltrano',
+                'content' => $previewHtml,
+            ])
+            ->assertStatus(200)
+            ->assertSee('Editor final da peca');
+
+        $saveResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId . '/salvar', [
+            'nome_cli' => 'Beltrano',
+            'cod_pecas' => $previewHtml,
+        ]);
+
+        $peca = DB::table('tp_pecas_tb')->where('nome_cli', 'Beltrano')->first();
+
+        $this->assertNotNull($peca);
+        $this->assertSame($modeloId, (int) $peca->tipo_id);
+        $saveResponse->assertRedirect('/pecas/' . $peca->id_pecas . '/editar');
+
+        $wordResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId . '/exportar/word', [
+            'nome_cli' => 'Beltrano',
+            'cod_pecas' => $previewHtml,
+        ]);
+
+        $wordResponse->assertStatus(200);
+        $wordResponse->assertHeader('content-type', 'application/msword; charset=UTF-8');
+
+        $pdfResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId . '/exportar/pdf', [
+            'nome_cli' => 'Beltrano',
+            'cod_pecas' => '<p>Residual PDF</p>',
+        ]);
+
+        $pdfResponse->assertStatus(200);
+        $pdfResponse->assertHeader('content-type', 'application/pdf');
+    }
+
     protected function seedModeloCompleto()
     {
         DB::table('tp_setor_tb')->insert([

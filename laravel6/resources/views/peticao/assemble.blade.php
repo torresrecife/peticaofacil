@@ -104,7 +104,12 @@
                 <button type="submit">Abrir peticao normalizada</button>
             </form>
             @if(!$isNormalizedRoute || $modelo->legacy_tipo_id)
-                <form method="post" action="{{ route('peticoes.editor.create', $isNormalizedRoute ? $modelo->legacy_tipo_id : $modelo) }}" style="margin-top:12px;">
+                @php
+                    $legacyEditorRoute = $isNormalizedRoute
+                        ? route('peticoes.normalized.editor.create', $modelo)
+                        : route('peticoes.editor.create', $modelo);
+                @endphp
+                <form method="post" action="{{ $legacyEditorRoute }}" style="margin-top:12px;">
                     @csrf
                     <input type="hidden" name="nome_cli" value="{{ $preview['suggested_filename'] }}">
                     <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>

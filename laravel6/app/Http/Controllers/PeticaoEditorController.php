@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Peca;
+use App\PeticaoModelo;
 use App\PeticaoNormalizada;
 use App\Services\LegacyPecaSyncService;
 use App\Services\PecaStorageService;
@@ -13,6 +14,18 @@ use Illuminate\Http\Request;
 class PeticaoEditorController extends Controller
 {
     public function create(Request $request, Tipo $modelo)
+    {
+        return $this->renderCreateEditor($request, $modelo);
+    }
+
+    public function createNormalized(Request $request, PeticaoModelo $modeloNormalizado)
+    {
+        abort_unless($modeloNormalizado->legacy_tipo_id, 404);
+
+        return $this->renderCreateEditor($request, $modeloNormalizado);
+    }
+
+    protected function renderCreateEditor(Request $request, $modelo)
     {
         $data = $request->validate([
             'content' => 'required|string',
@@ -51,6 +64,18 @@ class PeticaoEditorController extends Controller
 
     public function save(Request $request, Tipo $modelo, PecaStorageService $storage)
     {
+        return $this->handleSave($request, $modelo, $storage);
+    }
+
+    public function saveNormalized(Request $request, PeticaoModelo $modeloNormalizado, PecaStorageService $storage)
+    {
+        abort_unless($modeloNormalizado->legacy_tipo_id, 404);
+
+        return $this->handleSave($request, $modeloNormalizado, $storage);
+    }
+
+    protected function handleSave(Request $request, $modelo, PecaStorageService $storage)
+    {
         $data = $request->validate([
             'nome_cli' => 'required|string|max:500',
             'cod_pecas' => 'required|string',
@@ -69,6 +94,18 @@ class PeticaoEditorController extends Controller
 
     public function exportWord(Request $request, Tipo $modelo, PeticaoExportService $exportService)
     {
+        return $this->handleExportWord($request, $exportService);
+    }
+
+    public function exportNormalizedWord(Request $request, PeticaoModelo $modeloNormalizado, PeticaoExportService $exportService)
+    {
+        abort_unless($modeloNormalizado->legacy_tipo_id, 404);
+
+        return $this->handleExportWord($request, $exportService);
+    }
+
+    protected function handleExportWord(Request $request, PeticaoExportService $exportService)
+    {
         $data = $request->validate([
             'nome_cli' => 'required|string|max:500',
             'cod_pecas' => 'required|string',
@@ -78,6 +115,18 @@ class PeticaoEditorController extends Controller
     }
 
     public function exportPdf(Request $request, Tipo $modelo, PeticaoExportService $exportService)
+    {
+        return $this->handleExportPdf($request, $exportService);
+    }
+
+    public function exportNormalizedPdf(Request $request, PeticaoModelo $modeloNormalizado, PeticaoExportService $exportService)
+    {
+        abort_unless($modeloNormalizado->legacy_tipo_id, 404);
+
+        return $this->handleExportPdf($request, $exportService);
+    }
+
+    protected function handleExportPdf(Request $request, PeticaoExportService $exportService)
     {
         $data = $request->validate([
             'nome_cli' => 'required|string|max:500',

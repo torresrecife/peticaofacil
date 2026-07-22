@@ -34,6 +34,10 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::get('/peticoes', 'PeticaoAssemblyController@index')->name('peticoes.index');
     Route::get('/peticoes/modelos/{modeloNormalizado}', 'PeticaoAssemblyController@showNormalized')->name('peticoes.normalized.show');
     Route::post('/peticoes/modelos/{modeloNormalizado}', 'PeticaoAssemblyController@composeNormalized')->name('peticoes.normalized.compose');
+    Route::post('/peticoes/modelos/{modeloNormalizado}/editor', 'PeticaoEditorController@createNormalized')->name('peticoes.normalized.editor.create');
+    Route::post('/peticoes/modelos/{modeloNormalizado}/salvar', 'PeticaoEditorController@saveNormalized')->name('peticoes.normalized.editor.save');
+    Route::post('/peticoes/modelos/{modeloNormalizado}/exportar/pdf', 'PeticaoEditorController@exportNormalizedPdf')->name('peticoes.normalized.editor.export.pdf');
+    Route::post('/peticoes/modelos/{modeloNormalizado}/exportar/word', 'PeticaoEditorController@exportNormalizedWord')->name('peticoes.normalized.editor.export.word');
     Route::get('/peticoes/{modelo}', 'PeticaoAssemblyController@show')->name('peticoes.show');
     Route::post('/peticoes/{modelo}', 'PeticaoAssemblyController@compose')->name('peticoes.compose');
     Route::post('/peticoes/{modelo}/editor', 'PeticaoEditorController@create')->name('peticoes.editor.create');
