@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Paragrafo;
+use App\Support\LegacyEditorContent;
 use App\Tipo;
 use Illuminate\Http\Request;
 
@@ -18,6 +19,7 @@ class ParagrafoController extends Controller
 
         $titulo = mb_strtoupper($data['fund_titulo'], 'UTF-8');
         $texto = $data['fund_text'] ?: '<div class="titulos">' . e($titulo) . '</div><p>&nbsp;</p><p align="left"></p>';
+        $texto = LegacyEditorContent::denormalize($texto);
 
         Paragrafo::create([
             'tipo_id' => $modelo->tipo_id,
@@ -39,6 +41,8 @@ class ParagrafoController extends Controller
             'fund_text' => 'nullable|string',
             'fund_order' => 'nullable|integer|min:1',
         ]);
+
+        $data['fund_text'] = LegacyEditorContent::denormalize($data['fund_text'] ?? null);
 
         $paragrafo->fill($data)->save();
 
