@@ -22,8 +22,70 @@
     </div>
 </div>
 
-<div class="panel" style="margin-top:24px;">
-    <h2 style="margin-top:0;">Etapa atual</h2>
-    <p>A base Laravel 6 ja esta conectada ao banco atual e os primeiros modulos administrativos usam dados reais do sistema legado.</p>
+<div style="display:grid; gap:24px; grid-template-columns:minmax(0, 1.4fr) minmax(320px, 0.9fr); margin-top:24px;">
+    <div class="panel">
+        <h2 style="margin-top:0;">Etapa atual</h2>
+        <p>A base Laravel 6 ja esta conectada ao banco atual e os primeiros modulos administrativos usam dados reais do sistema legado.</p>
+    </div>
+
+    <div class="stack">
+        <div class="panel">
+            <div class="section-title">
+                <h3>Peticoes de hoje</h3>
+                <div class="editor-note">{{ $todayLabel }} · ultimas 10</div>
+            </div>
+            @if($peticoesHoje->isEmpty())
+                <div class="editor-note">Nenhuma peticao salva hoje.</div>
+            @else
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Horario</th>
+                            <th>Cliente</th>
+                            <th>Modelo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($peticoesHoje as $peticao)
+                        <tr>
+                            <td>{{ optional($peticao->salvo_em)->format('H:i') }}</td>
+                            <td>
+                                <a href="{{ route('peticoes.saved.edit', $peticao) }}">{{ $peticao->cliente_referencia }}</a>
+                            </td>
+                            <td>{{ optional($peticao->modelo)->nome ?: $peticao->nome_arquivo }}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+
+        <div class="panel">
+            <div class="section-title">
+                <h3>Usuarios do dia</h3>
+                <div class="editor-note">{{ $todayLabel }}</div>
+            </div>
+            @if($usuariosHoje->isEmpty())
+                <div class="editor-note">Nenhuma peticao atribuida a usuarios hoje.</div>
+            @else
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Qtd.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($usuariosHoje as $linha)
+                        <tr>
+                            <td>{{ optional($linha->legacyUsuario)->nome_usu ?: ('Usuario #' . $linha->legacy_usuario_id) }}</td>
+                            <td>{{ $linha->total_peticoes }}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+    </div>
 </div>
 @endsection
