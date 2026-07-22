@@ -241,6 +241,21 @@
             border-radius: 6px;
             padding: 24px;
         }
+        mark.diff-changed {
+            background: #ffe58f;
+            color: inherit;
+            padding: 0;
+        }
+        mark.diff-added {
+            background: #c6f6d5;
+            color: inherit;
+            padding: 0;
+        }
+        mark.diff-removed {
+            background: #fed7d7;
+            color: inherit;
+            padding: 0;
+        }
         @media (max-width: 900px) {
             .shell {
                 grid-template-columns: 1fr;

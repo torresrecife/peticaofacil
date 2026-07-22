@@ -75,7 +75,8 @@ class PeticaoSavedEditorTest extends TestCase
             ->get('/peticoes-salvas/4001/editar')
             ->assertStatus(200)
             ->assertSee('Editor de peticao salva')
-            ->assertSee('Entidade principal: `peticoes`.', false);
+            ->assertSee('Entidade principal: `peticoes`.', false)
+            ->assertSee('Filtrar historico');
 
         $this->actingAs($user)
             ->put('/peticoes-salvas/4001', [
@@ -118,7 +119,8 @@ class PeticaoSavedEditorTest extends TestCase
             ->get('/peticoes-salvas/4001/versoes/' . $versionId . '/comparar')
             ->assertStatus(200)
             ->assertSee('Comparacao de versoes')
-            ->assertSee('Texto atualizado');
+            ->assertSee('Texto atualizado')
+            ->assertSee('diff-changed', false);
 
         DB::table('peticao_versoes')->insert([
             'peticao_id' => 4001,
@@ -147,5 +149,12 @@ class PeticaoSavedEditorTest extends TestCase
         $normalizedAfterRestore = DB::table('peticoes')->where('id', 4001)->first();
         $this->assertSame('Cliente Restaurado', $normalizedAfterRestore->cliente_referencia);
         $this->assertStringContainsString('Texto restaurado', $normalizedAfterRestore->conteudo_html);
+
+        $this->actingAs($user)
+            ->get('/peticoes-salvas/4001/editar?origin=restore')
+            ->assertStatus(200)
+            ->assertSee('restore')
+            ->assertSee('Cliente Restaurado')
+            ->assertDontSee('Cliente Atualizado');
     }
 }

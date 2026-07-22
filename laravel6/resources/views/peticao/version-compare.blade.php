@@ -50,8 +50,8 @@
                 @forelse($comparison['rows'] as $row)
                     <tr>
                         <td>{{ $row['line'] }}</td>
-                        <td><pre style="white-space:pre-wrap;margin:0;">{{ $row['left'] }}</pre></td>
-                        <td><pre style="white-space:pre-wrap;margin:0;">{{ $row['right'] }}</pre></td>
+                        <td><pre style="white-space:pre-wrap;margin:0;">{!! $row['left_html'] !!}</pre></td>
+                        <td><pre style="white-space:pre-wrap;margin:0;">{!! $row['right_html'] !!}</pre></td>
                         <td>{{ $row['status'] }}</td>
                     </tr>
                 @empty

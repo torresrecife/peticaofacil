@@ -29,11 +29,15 @@ class PeticaoVersionAuditService
                 $status = 'changed';
             }
 
+            $highlighted = $this->highlightLineDiff($left, $right, $status);
+
             $rows[] = [
                 'line' => $i + 1,
                 'status' => $status,
                 'left' => $left,
                 'right' => $right,
+                'left_html' => $highlighted['left'],
+                'right_html' => $highlighted['right'],
             ];
         }
 
@@ -68,5 +72,75 @@ class PeticaoVersionAuditService
         $normalized = preg_replace("/\n{2,}/u", "\n", $normalized);
 
         return preg_split("/\n/u", trim((string) $normalized)) ?: [];
+    }
+
+    protected function highlightLineDiff($left, $right, $status)
+    {
+        if ($status === 'same') {
+            return [
+                'left' => e($left),
+                'right' => e($right),
+            ];
+        }
+
+        if ($status === 'added') {
+            return [
+                'left' => '',
+                'right' => '<mark class="diff-added">' . e($right) . '</mark>',
+            ];
+        }
+
+        if ($status === 'removed') {
+            return [
+                'left' => '<mark class="diff-removed">' . e($left) . '</mark>',
+                'right' => '',
+            ];
+        }
+
+        $prefixLength = $this->commonPrefixLength($left, $right);
+        $suffixLength = $this->commonSuffixLength($left, $right, $prefixLength);
+
+        $leftMiddle = mb_substr($left, $prefixLength, mb_strlen($left) - $prefixLength - $suffixLength);
+        $rightMiddle = mb_substr($right, $prefixLength, mb_strlen($right) - $prefixLength - $suffixLength);
+        $leftPrefix = mb_substr($left, 0, $prefixLength);
+        $rightPrefix = mb_substr($right, 0, $prefixLength);
+        $leftSuffix = $suffixLength > 0 ? mb_substr($left, -$suffixLength) : '';
+        $rightSuffix = $suffixLength > 0 ? mb_substr($right, -$suffixLength) : '';
+
+        return [
+            'left' => e($leftPrefix) . '<mark class="diff-changed">' . e($leftMiddle) . '</mark>' . e($leftSuffix),
+            'right' => e($rightPrefix) . '<mark class="diff-changed">' . e($rightMiddle) . '</mark>' . e($rightSuffix),
+        ];
+    }
+
+    protected function commonPrefixLength($left, $right)
+    {
+        $max = min(mb_strlen($left), mb_strlen($right));
+
+        for ($i = 0; $i < $max; $i++) {
+            if (mb_substr($left, $i, 1) !== mb_substr($right, $i, 1)) {
+                return $i;
+            }
+        }
+
+        return $max;
+    }
+
+    protected function commonSuffixLength($left, $right, $prefixLength)
+    {
+        $leftLength = mb_strlen($left);
+        $rightLength = mb_strlen($right);
+        $max = min($leftLength, $rightLength) - $prefixLength;
+
+        for ($i = 0; $i < $max; $i++) {
+            if (
+                mb_substr($left, $leftLength - $i - 1, 1) !==
+                mb_substr($right, $rightLength - $i - 1, 1)
+            ) {
+                return $i;
+            }
+        }
+
+        return $max;
     }
 }

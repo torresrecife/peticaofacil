@@ -34,10 +34,21 @@ class PeticaoSavedController extends Controller
 
     public function edit(PeticaoNormalizada $peticao)
     {
-        $peticao->load(['modelo', 'legacyPeca.tipo', 'legacyUsuario', 'versoes']);
+        $origin = request()->query('origin');
+
+        $peticao->load(['modelo', 'legacyPeca.tipo', 'legacyUsuario']);
+
+        $versionsQuery = $peticao->versoes();
+        if ($origin) {
+            $versionsQuery->where('origem_snapshot', $origin);
+        }
+
+        $versoes = $versionsQuery->paginate(10)->appends(request()->query());
 
         return view('peticao.saved-editor', [
             'peticao' => $peticao,
+            'versoes' => $versoes,
+            'selectedOrigin' => $origin,
         ]);
     }
 

@@ -94,6 +94,23 @@
         </div>
         <div class="panel-muted" style="margin-top:16px;">
             <strong>Historico de versoes</strong>
+            <form method="get" action="{{ route('peticoes.saved.edit', $peticao) }}" style="margin-top:12px;">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Origem</label>
+                        <select name="origin">
+                            <option value="">Todas</option>
+                            @foreach(['draft', 'save', 'restore', 'manual'] as $origin)
+                                <option value="{{ $origin }}" @if(($selectedOrigin ?? '') === $origin) selected @endif>{{ $origin }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="actions" style="margin-top:12px;">
+                    <button type="submit">Filtrar historico</button>
+                    <a class="button secondary link" href="{{ route('peticoes.saved.edit', $peticao) }}">Limpar</a>
+                </div>
+            </form>
             <table style="margin-top:12px;">
                 <thead>
                     <tr>
@@ -106,7 +123,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($peticao->versoes as $versao)
+                    @forelse($versoes as $versao)
                         <tr>
                             <td>{{ $versao->versao_numero }}</td>
                             <td>{{ $versao->origem_snapshot }}</td>
@@ -116,8 +133,8 @@
                             <td>
                                 <div class="actions">
                                     <a href="{{ route('peticoes.saved.versions.compare', [$peticao, $versao]) }}">Comparar com atual</a>
-                                    @if($loop->index + 1 < $peticao->versoes->count())
-                                        <a href="{{ route('peticoes.saved.versions.compare', [$peticao, $versao]) }}?target_version={{ $peticao->versoes[$loop->index + 1]->id }}">Comparar anterior</a>
+                                    @if(isset($versoes[$loop->index + 1]))
+                                        <a href="{{ route('peticoes.saved.versions.compare', [$peticao, $versao]) }}?target_version={{ $versoes[$loop->index + 1]->id }}">Comparar anterior</a>
                                     @endif
                                     <form method="post" action="{{ route('peticoes.saved.versions.restore', [$peticao, $versao]) }}">
                                         @csrf
@@ -133,6 +150,9 @@
                     @endforelse
                 </tbody>
             </table>
+            <div class="pagination-wrap">
+                {{ $versoes->links('vendor.pagination.default') }}
+            </div>
         </div>
     </div>
 </div>
