@@ -17,11 +17,6 @@ class TipoController extends Controller
         return redirect()->route('admin.modelos-normalizados.index');
     }
 
-    public function create()
-    {
-        return redirect()->route('admin.modelos-normalizados.create');
-    }
-
     public function store(Request $request, NormalizedModeloLegacySyncService $normalizedSyncService)
     {
         return app(NormalizedTipoController::class)->store($request, $normalizedSyncService);

@@ -67,7 +67,7 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
         Route::resource('clientes', 'Admin\ClienteController')->except(['show', 'destroy'])->parameters([
             'clientes' => 'cliente',
         ]);
-        Route::get('servidores', 'Admin\SqlServerConfigController@index')->name('servidores.index');
+        Route::redirect('servidores', 'admin/servidores-normalizados')->name('servidores.index');
         Route::get('servidores/{servidore}/edit', 'Admin\SqlServerConfigController@edit')->name('servidores.edit');
         Route::match(['put', 'patch'], 'servidores/{servidore}', 'Admin\SqlServerConfigController@update')->name('servidores.update');
         Route::get('servidores-normalizados', 'Admin\NormalizedSqlServerConfigController@index')->name('servidores-normalizados.index');
