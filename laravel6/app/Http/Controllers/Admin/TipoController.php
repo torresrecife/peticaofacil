@@ -17,17 +17,19 @@ class TipoController extends Controller
 {
     public function index()
     {
-        $tipos = Tipo::with(['setor', 'cliente', 'servidor'])
-            ->orderBy('id_setor')
-            ->orderBy('tipo_nome')
+        $modelos = PeticaoModelo::with(['setor', 'cliente', 'servidor'])
+            ->withCount(['paragrafos', 'campos'])
+            ->orderBy('legacy_setor_id')
+            ->orderBy('nome')
             ->paginate(20);
 
-        $mirrors = PeticaoModelo::withCount(['paragrafos', 'campos'])
-            ->whereIn('legacy_tipo_id', $tipos->pluck('tipo_id')->all())
-            ->get()
-            ->keyBy('legacy_tipo_id');
+        $legacyFallbacks = Tipo::with(['setor', 'cliente', 'servidor'])
+            ->orderBy('id_setor')
+            ->orderBy('tipo_nome')
+            ->whereNotIn('tipo_id', PeticaoModelo::whereNotNull('legacy_tipo_id')->pluck('legacy_tipo_id'))
+            ->get();
 
-        return view('admin.tipos.index', compact('tipos', 'mirrors'));
+        return view('admin.tipos.index', compact('modelos', 'legacyFallbacks'));
     }
 
     public function create()

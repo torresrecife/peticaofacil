@@ -25,4 +25,24 @@ class PeticaoModeloCampoOpcao extends Model
     {
         return $this->belongsTo(PeticaoModeloCampo::class, 'campo_id');
     }
+
+    public function getIdDadosAttribute()
+    {
+        return $this->legacy_dado_id ?: $this->id;
+    }
+
+    public function getNomeDadosAttribute()
+    {
+        return $this->rotulo;
+    }
+
+    public function getReturn1Attribute()
+    {
+        return $this->valor_retorno;
+    }
+
+    public function getDadosOrderAttribute()
+    {
+        return $this->ordem;
+    }
 }

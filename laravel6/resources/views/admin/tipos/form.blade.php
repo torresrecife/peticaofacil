@@ -16,8 +16,23 @@
 <div class="topbar" style="margin-bottom:16px;">
     <h2 style="margin:0;">{{ $modelo->exists ? 'Editar modelo' : 'Novo modelo' }}</h2>
     <div class="actions">
+        @php
+            $isNormalizedAdmin = $modelo instanceof \App\PeticaoModelo;
+            $montagemRoute = $isNormalizedAdmin
+                ? route('peticoes.normalized.show', $modelo)
+                : route('peticoes.show', $modelo);
+            $saveRoute = $isNormalizedAdmin
+                ? route('admin.modelos-normalizados.update', $modelo)
+                : route('admin.modelos.update', $modelo);
+            $storeParagrafoRoute = $isNormalizedAdmin
+                ? route('admin.modelos-normalizados.paragrafos.store', $modelo)
+                : route('admin.modelos.paragrafos.store', $modelo);
+            $storeCampoRoute = $isNormalizedAdmin
+                ? route('admin.modelos-normalizados.campos.store', $modelo)
+                : route('admin.modelos.campos.store', $modelo);
+        @endphp
         @if($modelo->exists)
-            <a class="button link" href="{{ route('peticoes.show', $modelo) }}">Abrir montagem</a>
+            <a class="button link" href="{{ $montagemRoute }}">Abrir montagem</a>
         @endif
         <a class="button secondary link" href="{{ route('admin.modelos.index') }}">Voltar</a>
     </div>
@@ -29,7 +44,7 @@
             <h3>Configuracao do modelo</h3>
             <div class="editor-note">Setor, cliente, servidor externo, cabecalho e rodape.</div>
         </div>
-        <form method="post" action="{{ $modelo->exists ? route('admin.modelos.update', $modelo) : route('admin.modelos.store') }}">
+        <form method="post" action="{{ $modelo->exists ? $saveRoute : route('admin.modelos.store') }}">
             @csrf
             @if($modelo->exists)
                 @method('put')
@@ -103,7 +118,7 @@
         <div class="panel">
             <div class="section-title">
                 <h3>Leitura normalizada</h3>
-                <div class="editor-note">Snapshot atual do mirror paralelo.</div>
+                <div class="editor-note">{{ $isNormalizedAdmin ? 'Fonte principal atual da edicao.' : 'Snapshot atual do mirror paralelo.' }}</div>
             </div>
             <div class="grid">
                 <div class="stat">
@@ -134,7 +149,7 @@
             </div>
 
             <div class="panel-muted" style="margin-bottom:20px;">
-                <form method="post" action="{{ route('admin.modelos.paragrafos.store', $modelo) }}">
+                <form method="post" action="{{ $storeParagrafoRoute }}">
                     @csrf
                     <div class="form-grid">
                         <div class="form-group">
@@ -157,7 +172,12 @@
                     <details class="accordion-item" open>
                         <summary>{{ $paragrafo->fund_order }}. {{ $paragrafo->fund_titulo }}</summary>
                         <div class="accordion-body">
-                            <form method="post" action="{{ route('admin.modelos.paragrafos.update', [$modelo, $paragrafo]) }}">
+                            @php
+                                $updateParagrafoRoute = $isNormalizedAdmin
+                                    ? route('admin.modelos-normalizados.paragrafos.update', [$modelo, $paragrafo])
+                                    : route('admin.modelos.paragrafos.update', [$modelo, $paragrafo]);
+                            @endphp
+                            <form method="post" action="{{ $updateParagrafoRoute }}">
                                 @csrf
                                 @method('put')
                                 <div class="form-grid">
@@ -191,7 +211,7 @@
             </div>
 
             <div class="panel-muted" style="margin-bottom:20px;">
-                <form method="post" action="{{ route('admin.modelos.campos.store', $modelo) }}">
+                <form method="post" action="{{ $storeCampoRoute }}">
                     @csrf
                     <div class="form-grid">
                         <div class="form-group">
@@ -278,7 +298,12 @@
                                     <div class="editor-note" style="margin-top:6px;">As opcoes seguem o formato `Rotulo|Retorno`.</div>
                                 @endif
                             </div>
-                            <form method="post" action="{{ route('admin.modelos.campos.update', [$modelo, $campo]) }}">
+                            @php
+                                $updateCampoRoute = $isNormalizedAdmin
+                                    ? route('admin.modelos-normalizados.campos.update', [$modelo, $campo])
+                                    : route('admin.modelos.campos.update', [$modelo, $campo]);
+                            @endphp
+                            <form method="post" action="{{ $updateCampoRoute }}">
                                 @csrf
                                 @method('put')
                                 <div class="form-grid">

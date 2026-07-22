@@ -156,4 +156,9 @@ class PeticaoModeloCampo extends Model
             ];
         })->values()->all();
     }
+
+    public function getDadosAttribute()
+    {
+        return $this->opcoes;
+    }
 }

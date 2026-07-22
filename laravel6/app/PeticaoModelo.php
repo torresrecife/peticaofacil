@@ -61,6 +61,16 @@ class PeticaoModelo extends Model
         return $this->nome;
     }
 
+    public function getNomePreAttribute()
+    {
+        return $this->metadata['nome_pre'] ?? null;
+    }
+
+    public function getNomePosAttribute()
+    {
+        return $this->metadata['nome_pos'] ?? null;
+    }
+
     public function getCodCabecAttribute()
     {
         return $this->cabecalho_html;

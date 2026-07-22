@@ -73,6 +73,12 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
         Route::resource('modelos', 'Admin\TipoController')->except(['show', 'destroy'])->parameters([
             'modelos' => 'modelo',
         ]);
+        Route::get('modelos-normalizados/{modeloNormalizado}/edit', 'Admin\NormalizedTipoController@edit')->name('modelos-normalizados.edit');
+        Route::put('modelos-normalizados/{modeloNormalizado}', 'Admin\NormalizedTipoController@update')->name('modelos-normalizados.update');
+        Route::post('modelos-normalizados/{modeloNormalizado}/paragrafos', 'Admin\NormalizedParagrafoController@store')->name('modelos-normalizados.paragrafos.store');
+        Route::put('modelos-normalizados/{modeloNormalizado}/paragrafos/{paragrafo}', 'Admin\NormalizedParagrafoController@update')->name('modelos-normalizados.paragrafos.update');
+        Route::post('modelos-normalizados/{modeloNormalizado}/campos', 'Admin\NormalizedInputCampoController@store')->name('modelos-normalizados.campos.store');
+        Route::put('modelos-normalizados/{modeloNormalizado}/campos/{campo}', 'Admin\NormalizedInputCampoController@update')->name('modelos-normalizados.campos.update');
         Route::resource('listas', 'Admin\ListaController')->except(['show'])->parameters([
             'listas' => 'lista',
         ]);

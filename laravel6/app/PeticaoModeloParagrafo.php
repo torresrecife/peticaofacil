@@ -33,6 +33,16 @@ class PeticaoModeloParagrafo extends Model
         return $this->conteudo_html;
     }
 
+    public function getFundIdAttribute()
+    {
+        return $this->legacy_fund_id ?: $this->id;
+    }
+
+    public function getFundTituloAttribute()
+    {
+        return $this->titulo;
+    }
+
     public function getFundOrderAttribute()
     {
         return $this->ordem;
