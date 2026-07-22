@@ -18,9 +18,9 @@ class LegacyInputCampoFallbackController extends Controller
         $this->fillCampo($campo, $modelo, $data);
         $campo->save();
         $this->syncDados($campo, $data['opcoes'] ?? '');
-        $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
+        $mirror = $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
-        return redirect()->route('admin.modelos.edit', $modelo)->with('status', 'Campo criado.');
+        return redirect()->route('admin.modelos-normalizados.edit', $mirror)->with('status', 'Campo criado.');
     }
 
     public function update(Request $request, Tipo $modelo, InputCampo $campo, LegacyModeloSyncService $syncService)
@@ -29,9 +29,9 @@ class LegacyInputCampoFallbackController extends Controller
         $this->fillCampo($campo, $modelo, $data);
         $campo->save();
         $this->syncDados($campo, $data['opcoes'] ?? '');
-        $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
+        $mirror = $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
-        return redirect()->route('admin.modelos.edit', $modelo)->with('status', 'Campo atualizado.');
+        return redirect()->route('admin.modelos-normalizados.edit', $mirror)->with('status', 'Campo atualizado.');
     }
 
     protected function validateData(Request $request)

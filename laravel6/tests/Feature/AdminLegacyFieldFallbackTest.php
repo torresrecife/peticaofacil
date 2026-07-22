@@ -36,7 +36,7 @@ class AdminLegacyFieldFallbackTest extends TestCase
                 'fund_titulo' => 'Paragrafo Fallback',
                 'fund_text' => '<p>Texto legado puro</p>',
             ])
-            ->assertRedirect('/admin/modelos/310/edit');
+            ->assertRedirect('/admin/modelos-normalizados/1/edit');
 
         $this->actingAs($admin)
             ->post('/admin/modelos/310/campos', [

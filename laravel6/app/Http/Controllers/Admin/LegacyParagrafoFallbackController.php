@@ -32,9 +32,9 @@ class LegacyParagrafoFallbackController extends Controller
             'fund_stt' => 'Y',
         ]);
 
-        $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
+        $mirror = $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
-        return redirect()->route('admin.modelos.edit', $modelo)->with('status', 'Paragrafo criado.');
+        return redirect()->route('admin.modelos-normalizados.edit', $mirror)->with('status', 'Paragrafo criado.');
     }
 
     public function update(Request $request, Tipo $modelo, Paragrafo $paragrafo, LegacyModeloSyncService $syncService)
@@ -48,8 +48,8 @@ class LegacyParagrafoFallbackController extends Controller
         $data['fund_text'] = LegacyEditorContent::denormalize($data['fund_text'] ?? null);
 
         $paragrafo->fill($data)->save();
-        $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
+        $mirror = $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
-        return redirect()->route('admin.modelos.edit', $modelo)->with('status', 'Paragrafo atualizado.');
+        return redirect()->route('admin.modelos-normalizados.edit', $mirror)->with('status', 'Paragrafo atualizado.');
     }
 }

@@ -51,7 +51,7 @@ class AdminLegacyTipoFallbackTest extends TestCase
                 'cod_cabec' => '<p>Cabecalho Novo</p>',
                 'cod_rodap' => '<p>Rodape Novo</p>',
             ])
-            ->assertRedirect('/admin/modelos/210/edit');
+            ->assertRedirect('/admin/modelos-normalizados/1/edit');
 
         $tipo = DB::table('tp_tipo_tb')->where('tipo_id', 210)->first();
         $mirror = DB::table('peticao_modelos')->where('legacy_tipo_id', 210)->first();

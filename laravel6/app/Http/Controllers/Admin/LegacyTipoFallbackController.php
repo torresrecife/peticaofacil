@@ -31,9 +31,9 @@ class LegacyTipoFallbackController extends Controller
     public function update(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService)
     {
         $modelo->fill($this->validateData($request))->save();
-        $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
+        $mirror = $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
-        return redirect()->route('admin.modelos.edit', $modelo)->with('status', 'Modelo atualizado.');
+        return redirect()->route('admin.modelos-normalizados.edit', $mirror)->with('status', 'Modelo atualizado.');
     }
 
     protected function validateData(Request $request)
