@@ -27,6 +27,7 @@ abstract class TestCase extends BaseTestCase
         Schema::dropIfExists('peticao_modelo_campos');
         Schema::dropIfExists('peticao_modelo_paragrafos');
         Schema::dropIfExists('peticao_modelos');
+        Schema::dropIfExists('sql_server_profiles');
         Schema::dropIfExists('tp_pecas_tb');
         Schema::dropIfExists('tp_dados_tb');
         Schema::dropIfExists('tp_inputs_tb');
@@ -83,6 +84,22 @@ abstract class TestCase extends BaseTestCase
             $table->text('query_db')->nullable();
             $table->text('where_db')->nullable();
             $table->string('stt', 1)->default('Y');
+        });
+
+        Schema::create('sql_server_profiles', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedInteger('legacy_config_id')->nullable()->unique();
+            $table->string('nome', 255);
+            $table->string('host', 255);
+            $table->string('database_name', 255);
+            $table->string('username', 255);
+            $table->string('password', 255)->nullable();
+            $table->string('table_name', 255)->nullable();
+            $table->string('lookup_key', 255)->nullable();
+            $table->longText('base_query')->nullable();
+            $table->longText('where_clause')->nullable();
+            $table->string('status', 20)->default('ativo');
+            $table->timestamps();
         });
 
         Schema::create('tp_tipo_tb', function (Blueprint $table) {

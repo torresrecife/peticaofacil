@@ -6,7 +6,7 @@ use App\Cliente;
 use App\Http\Controllers\Controller;
 use App\PeticaoModelo;
 use App\Setor;
-use App\SqlServerConfig;
+use App\SqlServerProfile;
 use App\Support\LegacyEditorContent;
 use App\Services\NormalizedModeloLegacySyncService;
 use Illuminate\Http\Request;
@@ -27,7 +27,7 @@ class NormalizedTipoController extends Controller
             'mirror' => null,
             'setores' => Setor::orderBy('nome_setor')->get(),
             'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
-            'servidores' => SqlServerConfig::active()->orderBy('nome_db')->get(),
+            'servidores' => SqlServerProfile::active()->orderBy('nome')->get(),
         ]);
     }
 
@@ -67,7 +67,7 @@ class NormalizedTipoController extends Controller
             'mirror' => $modeloNormalizado,
             'setores' => Setor::orderBy('nome_setor')->get(),
             'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
-            'servidores' => SqlServerConfig::active()->orderBy('nome_db')->get(),
+            'servidores' => SqlServerProfile::active()->orderBy('nome')->get(),
         ]);
     }
 

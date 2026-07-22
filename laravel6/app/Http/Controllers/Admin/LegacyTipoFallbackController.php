@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Cliente;
 use App\Http\Controllers\Controller;
 use App\Setor;
-use App\SqlServerConfig;
+use App\SqlServerProfile;
 use App\Support\LegacyEditorContent;
 use App\Services\LegacyModeloSyncService;
 use App\Tipo;
@@ -24,7 +24,7 @@ class LegacyTipoFallbackController extends Controller
             'mirror' => null,
             'setores' => Setor::orderBy('nome_setor')->get(),
             'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
-            'servidores' => SqlServerConfig::active()->orderBy('nome_db')->get(),
+            'servidores' => SqlServerProfile::active()->orderBy('nome')->get(),
         ]);
     }
 

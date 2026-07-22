@@ -3,61 +3,64 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\SqlServerProfile;
 use App\SqlServerConfig;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class SqlServerConfigController extends Controller
 {
     public function index()
     {
-        $configs = SqlServerConfig::orderBy('id_db')->paginate(20);
+        $configs = SqlServerProfile::orderBy('id')->paginate(20);
+        $legacyIds = $configs->pluck('legacy_config_id')->filter()->values()->all();
 
-        return view('admin.sqlserver.index', compact('configs'));
+        $legacyFallback = SqlServerConfig::orderBy('id_db');
+        if (!empty($legacyIds)) {
+            $legacyFallback->whereNotIn('id_db', $legacyIds);
+        }
+
+        return view('admin.sqlserver.index', [
+            'configs' => $configs,
+            'legacyFallback' => $legacyFallback->get(),
+        ]);
     }
 
     public function create()
     {
-        return view('admin.sqlserver.form', [
-            'config' => new SqlServerConfig([
-                'stt' => 'Y',
-                'where_db' => 'where 1=1',
-            ]),
-        ]);
+        return redirect()->route('admin.servidores-normalizados.create');
     }
 
-    public function store(Request $request)
+    public function store(\Illuminate\Http\Request $request, NormalizedSqlServerConfigController $controller)
     {
-        SqlServerConfig::create($this->validateData($request));
-
-        return redirect()->route('admin.servidores.index')->with('status', 'Servidor SQL criado.');
+        return $controller->store($request, app(\App\Services\NormalizedSqlServerConfigSyncService::class));
     }
 
     public function edit(SqlServerConfig $servidore)
     {
-        return view('admin.sqlserver.form', ['config' => $servidore]);
+        $mirror = SqlServerProfile::where('legacy_config_id', $servidore->id_db)->first();
+
+        if ($mirror) {
+            return redirect()->route('admin.servidores-normalizados.edit', $mirror);
+        }
+
+        return app(LegacySqlServerConfigFallbackController::class)->edit($servidore);
     }
 
-    public function update(Request $request, SqlServerConfig $servidore)
+    public function update(\Illuminate\Http\Request $request, SqlServerConfig $servidore)
     {
-        $servidore->fill($this->validateData($request))->save();
+        $mirror = SqlServerProfile::where('legacy_config_id', $servidore->id_db)->first();
 
-        return redirect()->route('admin.servidores.index')->with('status', 'Servidor SQL atualizado.');
-    }
+        if ($mirror) {
+            return app(NormalizedSqlServerConfigController::class)->update(
+                $request,
+                $mirror,
+                app(\App\Services\NormalizedSqlServerConfigSyncService::class)
+            );
+        }
 
-    protected function validateData(Request $request)
-    {
-        return $request->validate([
-            'nome_db' => 'required|string|max:50',
-            'ip_db' => 'required|string|max:50',
-            'data_db' => 'required|string|max:50',
-            'usu_db' => 'required|string|max:50',
-            'senha_db' => 'nullable|string|max:50',
-            'table_db' => 'nullable|string|max:50',
-            'chave_db' => 'nullable|string|max:50',
-            'query_db' => 'nullable|string',
-            'where_db' => 'nullable|string|max:15000',
-            'stt' => ['required', Rule::in(['Y', 'N'])],
-        ]);
+        return app(LegacySqlServerConfigFallbackController::class)->update(
+            $request,
+            $servidore,
+            app(\App\Services\NormalizedSqlServerConfigSyncService::class)
+        );
     }
 }

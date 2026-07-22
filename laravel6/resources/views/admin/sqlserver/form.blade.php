@@ -9,7 +9,23 @@
 </div>
 
 <div class="panel">
-    <form method="post" action="{{ $config->exists ? route('admin.servidores.update', $config) : route('admin.servidores.store') }}">
+    @php
+        $isNormalized = $mirror || $config instanceof \App\SqlServerProfile;
+        $formAction = $config->exists
+            ? ($isNormalized ? route('admin.servidores-normalizados.update', $config) : route('admin.servidores.update', $config))
+            : ($isNormalized ? route('admin.servidores-normalizados.store') : route('admin.servidores.store'));
+    @endphp
+
+    @if($isNormalized)
+        <div style="margin-bottom:16px; padding:12px 14px; border:1px solid #dbeafe; background:#eff6ff; color:#1d4ed8; border-radius:8px;">
+            Fonte principal atual da edicao.
+            @if($config->legacy_config_id)
+                Mirror legado: {{ $config->legacy_config_id }}.
+            @endif
+        </div>
+    @endif
+
+    <form method="post" action="{{ $formAction }}">
         @csrf
         @if($config->exists)
             @method('put')
