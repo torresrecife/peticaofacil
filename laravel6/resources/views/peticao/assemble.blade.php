@@ -20,12 +20,12 @@
         @endif
 
         @php
-            $isNormalizedRoute = $modelo instanceof \App\PeticaoModelo;
-            $composeRoute = $isNormalizedRoute
-                ? route('peticoes.normalized.compose', $modelo)
+            $usesNormalizedSource = $modeloFonte instanceof \App\PeticaoModelo;
+            $composeRoute = $usesNormalizedSource
+                ? route('peticoes.normalized.compose', $modeloFonte)
                 : route('peticoes.compose', $modelo);
-            $normalizedStoreRoute = $isNormalizedRoute
-                ? route('peticoes.normalized.saved.store', $modelo)
+            $normalizedStoreRoute = $usesNormalizedSource
+                ? route('peticoes.normalized.saved.store', $modeloFonte)
                 : route('peticoes.saved.store', $modelo);
         @endphp
 
@@ -103,10 +103,10 @@
                 <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>
                 <button type="submit">Abrir peticao normalizada</button>
             </form>
-            @if(!$isNormalizedRoute || $modelo->legacy_tipo_id)
+            @if(!$usesNormalizedSource || $modeloFonte->legacy_tipo_id)
                 @php
-                    $legacyEditorRoute = $isNormalizedRoute
-                        ? route('peticoes.normalized.editor.create', $modelo)
+                    $legacyEditorRoute = $usesNormalizedSource
+                        ? route('peticoes.normalized.editor.create', $modeloFonte)
                         : route('peticoes.editor.create', $modelo);
                 @endphp
                 <form method="post" action="{{ $legacyEditorRoute }}" style="margin-top:12px;">

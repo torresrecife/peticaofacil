@@ -21,7 +21,8 @@ class PeticaoFlowTest extends TestCase
             ->get('/peticoes/' . $modeloId)
             ->assertStatus(200)
             ->assertSee('Montagem de peticao')
-            ->assertSee('Cliente');
+            ->assertSee('Cliente')
+            ->assertSee('/peticoes/modelos/' . $modeloId, false);
 
         $previewResponse = $this->actingAs($user)->post('/peticoes/' . $modeloId, [
             'action_type' => 'preview',
@@ -39,7 +40,9 @@ class PeticaoFlowTest extends TestCase
             ->assertSee('Cabecalho Normalizado', false)
             ->assertSee('Pedido Normalizado', false)
             ->assertSee('Rodape Normalizado', false)
-            ->assertSee('deferimento imediato', false);
+            ->assertSee('deferimento imediato', false)
+            ->assertSee('/peticoes/modelos/' . $modeloId . '/peticao-normalizada', false)
+            ->assertSee('/peticoes/modelos/' . $modeloId . '/editor', false);
 
         $previewHtml = $previewResponse->viewData('preview')['html'];
         $this->assertStringNotContainsString('@CAMPO1@', $previewHtml);
