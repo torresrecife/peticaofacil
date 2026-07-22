@@ -15,28 +15,28 @@ if($_POST['hid_enviar']==5){
 					?>
 					<div class="icon-wrapper">
 						<div class="icon">
-							<a href="#" onclick="return EnviarDados('index.php','11','')">
+							<a href="<?php echo htmlspecialchars(legacy_bridge_url('/admin/servidores')); ?>">
 								<img src="css/images/header/icon-48-sql.png" alt=""  /><span>Servidor</span>
 							</a>
 						</div>
 					</div>
 					<div class="icon-wrapper">
 						<div class="icon">
-							<a href="#" onclick="return EnviarDados('index.php','9','')">
+							<a href="<?php echo htmlspecialchars(legacy_bridge_url('/admin/setores')); ?>">
 								<img src="css/images/header/icon-48-move.png" alt=""  /><span>Setores</span>
 							</a>
 						</div>
 					</div>
 					<div class="icon-wrapper">
 						<div class="icon">
-							<a href="#" onclick="return EnviarDados('index.php','13','')">
+							<a href="<?php echo htmlspecialchars(legacy_bridge_url('/admin/clientes')); ?>">
 								<img src="css/images/header/icon-48-module.png" alt=""  /><span>Clientes</span>
 							</a>
 						</div>
 					</div>
 					<div class="icon-wrapper">
 						<div class="icon">
-							<a href="#" onclick="return EnviarDados('index.php','8','')">
+							<a href="<?php echo htmlspecialchars(legacy_bridge_url('/admin/usuarios')); ?>">
 								<img src="css/images/header/icon-48-user.png" alt=""  /><span>Usuários</span>
 							</a>
 						</div>
@@ -46,14 +46,14 @@ if($_POST['hid_enviar']==5){
 				?>
 				<div class="icon-wrapper">
 					<div class="icon">
-						<a href="#" id="prg" onclick="return novo_tipo()">
+						<a href="<?php echo htmlspecialchars(legacy_bridge_url('/admin/modelos/create')); ?>" id="prg">
 							<img src="css/images/header/icon-48-article-add.png" alt=""  /><span>Novo Modelo</span>
 						</a>
 					</div>
 				</div>
 				<div class="icon-wrapper">
 					<div class="icon">
-						<a href="#" onclick="return EnviarDados('index.php','12','')">
+						<a href="<?php echo htmlspecialchars(legacy_bridge_url('/admin/modelos')); ?>">
 							<img src="css/images/header/icon-48-list.png" alt=""  /><span>Lista</span>
 						</a>
 					</div>

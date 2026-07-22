@@ -5,9 +5,94 @@
 	session_cache_limiter('private_no_expire'); // works //
 	session_cache_limiter('public'); // works too session_start(); 
 	
-	include("inc/seguranca.php");
-	include("inc/functions.php");
-	protegePagina();
+include("inc/seguranca.php");
+include("inc/functions.php");
+protegePagina();
+
+if (!function_exists('legacy_modern_base_url')) {
+	function legacy_modern_base_url()
+	{
+		$url = getenv('LARAVEL_APP_URL');
+		if (!$url) {
+			$url = 'http://127.0.0.1:8086';
+		}
+
+		return rtrim($url, '/');
+	}
+}
+
+if (!function_exists('legacy_bridge_key')) {
+	function legacy_bridge_key()
+	{
+		$envPath = __DIR__ . DIRECTORY_SEPARATOR . 'laravel6' . DIRECTORY_SEPARATOR . '.env';
+		if (is_file($envPath)) {
+			$lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+			foreach ($lines as $line) {
+				$line = trim($line);
+				if ($line === '' || $line[0] === '#') {
+					continue;
+				}
+				if (strpos($line, 'LEGACY_BRIDGE_KEY=') === 0) {
+					return trim(substr($line, strlen('LEGACY_BRIDGE_KEY=')), "\"'");
+				}
+				if (strpos($line, 'APP_KEY=') === 0) {
+					return trim(substr($line, strlen('APP_KEY=')), "\"'");
+				}
+			}
+		}
+
+		return 'peticaofacil-legacy-bridge';
+	}
+}
+
+if (!function_exists('legacy_bridge_url')) {
+	function legacy_bridge_url($path)
+	{
+		$uid = isset($_SESSION['usuarioID']) ? (int) $_SESSION['usuarioID'] : 0;
+		$path = '/' . ltrim($path, '/');
+		$ts = time();
+		$sig = hash_hmac('sha256', $uid . '|' . $ts . '|' . $path, legacy_bridge_key());
+
+		return legacy_modern_base_url() . '/legacy/bridge?uid=' . $uid . '&ts=' . $ts . '&path=' . rawurlencode($path) . '&sig=' . $sig;
+	}
+}
+
+if (!function_exists('legacy_redirect_to_modern')) {
+	function legacy_redirect_to_modern($path)
+	{
+		header('Location: ' . legacy_bridge_url($path));
+		exit;
+	}
+}
+
+$hidEnviar = isset($_POST['hid_enviar']) ? (string) $_POST['hid_enviar'] : '';
+$tipoPet = isset($_POST['TIPOPET']) && $_POST['TIPOPET'] !== '' ? trim((string) $_POST['TIPOPET']) : (isset($_GET['TIPOPET']) ? trim((string) $_GET['TIPOPET']) : '');
+
+if ($hidEnviar === '') {
+	legacy_redirect_to_modern('/painel');
+}
+
+$redirectMap = array(
+	'5' => '/admin/modelos',
+	'8' => '/admin/usuarios',
+	'9' => '/admin/setores',
+	'10' => '/pecas',
+	'11' => '/admin/servidores',
+	'12' => '/admin/modelos',
+	'13' => '/admin/clientes',
+);
+
+if (isset($redirectMap[$hidEnviar])) {
+	legacy_redirect_to_modern($redirectMap[$hidEnviar]);
+}
+
+if (($hidEnviar === '6' || $hidEnviar === '7') && $tipoPet !== '') {
+	legacy_redirect_to_modern('/admin/modelos/' . rawurlencode($tipoPet) . '/edit');
+}
+
+if (in_array($hidEnviar, array('1', '2', '3', '4'), true) && $tipoPet !== '') {
+	legacy_redirect_to_modern('/peticoes/' . rawurlencode($tipoPet));
+}
 
 	if (!empty($_POST) && getenv('APP_DEBUG') === 'true') {
 		$logDir = __DIR__ . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'logs';
@@ -110,7 +195,7 @@ $dados2 = null;
 	<div class="head_fixed">
 		<div id="border-top" class="h_blue">
 			<span class="logo"><img src="css/images/logo.png" alt="Sistema de Petição" /></span>
-			<span class="title"><a href="index.php">Petição Fácil - NEO</a></span>
+			<span class="title"><a href="<?php echo htmlspecialchars(legacy_bridge_url('/painel')); ?>">Petição Fácil - NEO</a></span>
 		</div>
 		<?php
 		// echo ">>>>>>>>>>>>>>>>>>>".$_POST['hid_enviar']."<<<<<<<";
@@ -118,7 +203,7 @@ $dados2 = null;
 			?>
 			<div id="header-box">
 				<div id="module-status">
-					<span class="viewsite"><a href="javascript:EnviarDados('index.php','','');">In&iacute;cio</a></span>
+					<span class="viewsite"><a href="<?php echo htmlspecialchars(legacy_bridge_url('/painel')); ?>">In&iacute;cio</a></span>
 					<span class="voltar"><a href="javascript:window.history.go(-1)">Voltar</a></span>
 					<span class="logout"><a href="sair.php">Sair</a></span>
 				</div>
@@ -151,24 +236,24 @@ $dados2 = null;
 			<!--Painel de Administração-->
 			<div id="header-box">
 				<div id="module-status">
-					<span class="viewsite"><a href="javascript:EnviarDados('index.php','','');">Início</a></span>
+					<span class="viewsite"><a href="<?php echo htmlspecialchars(legacy_bridge_url('/painel')); ?>">Início</a></span>
 					<?php 
 					if($usu_nivel=='ADM'){
 						if($_POST['hid_enviar']==8){
 							?>
-							<span class='newuser'><a href='javascript:fc_edit_usu("","I");'>Novo Usuário</a></span>
+							<span class='newuser'><a href='<?php echo htmlspecialchars(legacy_bridge_url('/admin/usuarios/create')); ?>'>Novo Usuário</a></span>
 							<?php
 						}elseif($_POST['hid_enviar']==9){
 							?>
-							<span class='newsetor'><a href='javascript:fc_edit_setor("","I");'>Novo Setor</a></span>
+							<span class='newsetor'><a href='<?php echo htmlspecialchars(legacy_bridge_url('/admin/setores/create')); ?>'>Novo Setor</a></span>
 							<?php
 						}elseif($_POST['hid_enviar']==13){
 							?>
-							<span class='newcliente'><a href='javascript:fc_edit_cliente("","I");'>Novo Cliente</a></span>
+							<span class='newcliente'><a href='<?php echo htmlspecialchars(legacy_bridge_url('/admin/clientes/create')); ?>'>Novo Cliente</a></span>
 							<?php
 						}
 						?>
-						<span class="viewconfig"><a href="#" onclick="return EnviarDados('index.php','5','')">Administrar</a></span>
+						<span class="viewconfig"><a href="<?php echo htmlspecialchars(legacy_bridge_url('/admin/modelos')); ?>">Administrar</a></span>
 						<?php
 					}
 					?>
@@ -211,16 +296,16 @@ $dados2 = null;
 			<!--Painel do Usuário-->
 			<div id="header-box">
 				<div id="module-status">
-					<span class="viewsite"><a href="javascript:EnviarDados('index.php','','');">Início</a></span>
+					<span class="viewsite"><a href="<?php echo htmlspecialchars(legacy_bridge_url('/painel')); ?>">Início</a></span>
 					<?php 
 					if($usu_nivel=='ADM' || $usu_nivel=='GER'){
 						?>
-						<span class="viewconfig"><a href="#" onclick="return EnviarDados('index.php','5','')">Administrar</a></span>
+						<span class="viewconfig"><a href="<?php echo htmlspecialchars(legacy_bridge_url('/admin/modelos')); ?>">Administrar</a></span>
 						<?php
 					}
 					if($usu_nivel=='USU'){
 						?>
-						<span class="viewcopy"><a href="#" onclick="return EnviarDados('index.php','10','')">Minhas Petições</a></span>
+						<span class="viewcopy"><a href="<?php echo htmlspecialchars(legacy_bridge_url('/pecas')); ?>">Minhas Petições</a></span>
 						<?php
 					}
 					if($usu_nivel=='ADM' || $usu_nivel=='GER'){
@@ -230,7 +315,7 @@ $dados2 = null;
 						<?php 
 						}else{
 						?>
-						<span class="viewcopy"><a href="#" onclick="return EnviarDados('index.php','10','')">Petições Salvas</a></span>
+						<span class="viewcopy"><a href="<?php echo htmlspecialchars(legacy_bridge_url('/pecas')); ?>">Petições Salvas</a></span>
 						<?php
 						}
 					}
