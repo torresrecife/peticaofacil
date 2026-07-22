@@ -17,11 +17,6 @@ class TipoController extends Controller
         return redirect()->route('admin.modelos-normalizados.index');
     }
 
-    public function store(Request $request, NormalizedModeloLegacySyncService $normalizedSyncService)
-    {
-        return app(NormalizedTipoController::class)->store($request, $normalizedSyncService);
-    }
-
     public function edit(Tipo $modelo)
     {
         $mirror = PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->first();

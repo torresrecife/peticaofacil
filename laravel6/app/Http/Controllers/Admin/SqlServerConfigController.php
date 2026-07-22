@@ -13,16 +13,6 @@ class SqlServerConfigController extends Controller
         return redirect()->route('admin.servidores-normalizados.index');
     }
 
-    public function create()
-    {
-        return redirect()->route('admin.servidores-normalizados.create');
-    }
-
-    public function store(\Illuminate\Http\Request $request, NormalizedSqlServerConfigController $controller)
-    {
-        return $controller->store($request, app(\App\Services\NormalizedSqlServerConfigSyncService::class));
-    }
-
     public function edit(SqlServerConfig $servidore)
     {
         $mirror = SqlServerProfile::where('legacy_config_id', $servidore->id_db)->first();
