@@ -1,28 +1,5 @@
 <?php
 
-require_once __DIR__ . "/seguranca.php";
-require_once __DIR__ . "/response.php";
-protegePagina();
+require_once __DIR__ . '/legacy_gone.php';
 
-$tabela = $_POST['tabela'] 	? $_POST['tabela'] : "''";
-$campo0 = $_POST['campo0']	? $_POST['campo0'] : "''";
-$id_ref = $_POST['id_ref']	? $_POST['id_ref'] : "''";
-$id_val = $_POST['id_val']	? $_POST['id_val'] : "''";
-
-if($_POST['conex']==1)
-{
-	$conex 	= $conexao1;
-}
-elseif($_POST['conex']==2)
-{
-	$conex 	= $conexao2;
-}
-
-if (!class_exists(\App\Services\CompService::class)) {
-	json_err("Servico indisponivel.");
-}
-
-$service = new \App\Services\CompService($conex);
-json_ok(array('value' => $service->fetchSingleValue($tabela, $campo0, $id_ref, $id_val)));
-
-?>
+legacy_gone_json('/peticoes', 'Busca de dados antiga foi substituida pelo fluxo novo de montagem.');

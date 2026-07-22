@@ -55,6 +55,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('modelos', 'Admin\TipoController')->except(['show', 'destroy'])->parameters([
             'modelos' => 'modelo',
         ]);
+        Route::resource('listas', 'Admin\ListaController')->except(['show'])->parameters([
+            'listas' => 'lista',
+        ]);
         Route::post('modelos/{modelo}/paragrafos', 'Admin\ParagrafoController@store')->name('modelos.paragrafos.store');
         Route::put('modelos/{modelo}/paragrafos/{paragrafo}', 'Admin\ParagrafoController@update')->name('modelos.paragrafos.update');
         Route::post('modelos/{modelo}/campos', 'Admin\InputCampoController@store')->name('modelos.campos.store');
