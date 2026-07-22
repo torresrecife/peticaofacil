@@ -10,6 +10,29 @@ use Illuminate\Support\Facades\DB;
 
 class LegacyPecaSyncService
 {
+    public function countForYear($year = null)
+    {
+        $query = Peca::query();
+
+        if ($year !== null) {
+            $query->whereYear('data_cad', $year);
+        }
+
+        return $query->count();
+    }
+
+    public function countSyncableForYear($year = null)
+    {
+        $query = Peca::query()
+            ->join('peticao_modelos', 'peticao_modelos.legacy_tipo_id', '=', 'tp_pecas_tb.tipo_id');
+
+        if ($year !== null) {
+            $query->whereYear('tp_pecas_tb.data_cad', $year);
+        }
+
+        return $query->count();
+    }
+
     public function syncPeca(Peca $peca, $source = null)
     {
         $modelo = $this->resolveModelo($peca, $source);
@@ -39,9 +62,10 @@ class LegacyPecaSyncService
         );
     }
 
-    public function syncAll($year = null)
+    public function syncAll($year = null, $chunkSize = 100, $limit = null, $fromId = null, $progressCallback = null)
     {
         $synced = 0;
+        $processed = 0;
 
         $query = Peca::with('modeloNormalizado');
 
@@ -49,17 +73,29 @@ class LegacyPecaSyncService
             $query->whereYear('data_cad', $year);
         }
 
+        if ($fromId !== null) {
+            $query->where('id_pecas', '>=', $fromId);
+        }
+
         $query
             ->orderBy('id_pecas')
-            ->chunk(100, function ($pecas) use (&$synced) {
-                DB::transaction(function () use ($pecas, &$synced) {
-                    foreach ($pecas as $peca) {
-                        if ($this->syncPeca($peca, $peca->modeloNormalizado)) {
-                            $synced++;
-                        }
+            ->chunkById($chunkSize, function ($pecas) use (&$synced, &$processed, $limit, $progressCallback) {
+                foreach ($pecas as $peca) {
+                    if ($limit !== null && $processed >= $limit) {
+                        return false;
                     }
-                });
-            });
+
+                    if ($this->syncPeca($peca, $peca->modeloNormalizado)) {
+                        $synced++;
+                    }
+
+                    $processed++;
+                }
+
+                if ($progressCallback) {
+                    call_user_func($progressCallback, $processed, $synced, $pecas->last()->id_pecas);
+                }
+            }, 'id_pecas', 'id_pecas');
 
         return $synced;
     }

@@ -124,6 +124,21 @@ class DashboardTodaySummaryTest extends TestCase
                 'created_at' => now()->subDay(),
                 'updated_at' => now()->subDay(),
             ],
+            [
+                'id' => 5,
+                'legacy_peca_id' => 1005,
+                'modelo_id' => 901,
+                'legacy_usuario_id' => 901,
+                'codigo_externo' => null,
+                'nome_arquivo' => 'Modelo Civel',
+                'cliente_referencia' => 'Cliente Sincronizado Hoje',
+                'conteudo_html' => '<p>E</p>',
+                'campos_resolvidos' => null,
+                'gerado_em' => now()->subYears(4),
+                'salvo_em' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
 
         DB::table('tp_tipo_tb')->insert([
@@ -155,6 +170,7 @@ class DashboardTodaySummaryTest extends TestCase
             ->assertSee('Cliente Gama')
             ->assertSee('Cliente Legado')
             ->assertDontSee('Cliente Ontem')
+            ->assertDontSee('Cliente Sincronizado Hoje')
             ->assertSee('Fabio')
             ->assertSee('Maria')
             ->assertSee('Modelo Civel')

@@ -15,8 +15,8 @@ class DashboardController extends Controller
         $today = now()->toDateString();
 
         $peticoesHojeNormalizadas = PeticaoNormalizada::with(['modelo', 'legacyUsuario'])
-            ->whereDate('salvo_em', $today)
-            ->orderByDesc('salvo_em')
+            ->whereDate('gerado_em', $today)
+            ->orderByDesc('gerado_em')
             ->orderByDesc('id')
             ->get();
 
@@ -58,7 +58,7 @@ class DashboardController extends Controller
 
         foreach ($normalizadas as $peticao) {
             $items->push((object) [
-                'momento' => $peticao->salvo_em ?: $peticao->created_at,
+                'momento' => $peticao->gerado_em ?: $peticao->created_at,
                 'cliente' => $peticao->cliente_referencia,
                 'modelo' => optional($peticao->modelo)->nome ?: $peticao->nome_arquivo,
                 'usuario' => optional($peticao->legacyUsuario)->nome_usu,

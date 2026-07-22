@@ -247,7 +247,7 @@ abstract class TestCase extends BaseTestCase
             $table->unsignedBigInteger('campo_id');
             $table->unsignedInteger('legacy_dado_id')->nullable()->unique();
             $table->string('rotulo', 255);
-            $table->string('valor_retorno', 255)->nullable();
+            $table->text('valor_retorno')->nullable();
             $table->text('valores_extras')->nullable();
             $table->unsignedInteger('ordem')->default(0);
             $table->timestamps();
