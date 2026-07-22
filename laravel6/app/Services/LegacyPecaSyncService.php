@@ -39,11 +39,17 @@ class LegacyPecaSyncService
         );
     }
 
-    public function syncAll()
+    public function syncAll($year = null)
     {
         $synced = 0;
 
-        Peca::with('modeloNormalizado')
+        $query = Peca::with('modeloNormalizado');
+
+        if ($year !== null) {
+            $query->whereYear('data_cad', $year);
+        }
+
+        $query
             ->orderBy('id_pecas')
             ->chunk(100, function ($pecas) use (&$synced) {
                 DB::transaction(function () use ($pecas, &$synced) {

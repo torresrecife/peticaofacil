@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 
 class SyncLegacyPecas extends Command
 {
-    protected $signature = 'peticao:sync-pecas {peca_id? : ID legado da peca}';
+    protected $signature = 'peticao:sync-pecas {peca_id? : ID legado da peca} {--year= : Ano das pecas a sincronizar} {--all : Sincroniza todo o historico legado}';
 
     protected $description = 'Sincroniza pecas legadas para a tabela normalizada peticoes.';
 
@@ -31,8 +31,17 @@ class SyncLegacyPecas extends Command
             return 0;
         }
 
-        $count = $syncService->syncAll();
-        $this->info('Pecas sincronizadas: ' . $count);
+        $year = $this->option('all')
+            ? null
+            : (int) ($this->option('year') ?: now()->year);
+
+        $count = $syncService->syncAll($year);
+
+        if ($year !== null) {
+            $this->info('Pecas sincronizadas de ' . $year . ': ' . $count);
+        } else {
+            $this->info('Pecas sincronizadas: ' . $count);
+        }
 
         return 0;
     }

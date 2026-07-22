@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 
@@ -19,35 +20,44 @@ abstract class TestCase extends BaseTestCase
 
     protected function setUpLegacySchema(): void
     {
+        $tables = [
+            'peticao_versoes',
+            'peticoes',
+            'peticao_modelo_campo_opcoes',
+            'peticao_modelo_campos',
+            'peticao_modelo_paragrafos',
+            'peticao_modelos',
+            'sql_server_profiles',
+            'tp_pecas_tb',
+            'tp_dados_tb',
+            'tp_inputs_tb',
+            'tp_funda_tb',
+            'tp_tipo_tb',
+            'tp_config_db',
+            'tp_clientes_db',
+            'tp_setor_tb',
+            'tp_usu_tb',
+        ];
+
         Schema::disableForeignKeyConstraints();
 
-        Schema::dropIfExists('peticao_versoes');
-        Schema::dropIfExists('peticoes');
-        Schema::dropIfExists('peticao_modelo_campo_opcoes');
-        Schema::dropIfExists('peticao_modelo_campos');
-        Schema::dropIfExists('peticao_modelo_paragrafos');
-        Schema::dropIfExists('peticao_modelos');
-        Schema::dropIfExists('sql_server_profiles');
-        Schema::dropIfExists('tp_pecas_tb');
-        Schema::dropIfExists('tp_dados_tb');
-        Schema::dropIfExists('tp_inputs_tb');
-        Schema::dropIfExists('tp_funda_tb');
-        Schema::dropIfExists('tp_tipo_tb');
-        Schema::dropIfExists('tp_config_db');
-        Schema::dropIfExists('tp_clientes_db');
-        Schema::dropIfExists('tp_setor_tb');
-        Schema::dropIfExists('tp_usu_tb');
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
+        foreach ($tables as $table) {
+            DB::statement('DROP TABLE IF EXISTS `' . $table . '`');
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
         Schema::enableForeignKeyConstraints();
 
-        Schema::create('tp_setor_tb', function (Blueprint $table) {
+        $this->createOrResetTable('tp_setor_tb', function (Blueprint $table) {
             $table->increments('id_setor');
             $table->string('nome_setor', 500);
             $table->string('cod_setor', 50)->nullable();
             $table->dateTime('data_cad')->nullable();
         });
 
-        Schema::create('tp_clientes_db', function (Blueprint $table) {
+        $this->createOrResetTable('tp_clientes_db', function (Blueprint $table) {
             $table->increments('cliente_id');
             $table->string('cliente_name', 500);
             $table->string('cliente_cod', 500)->nullable();
@@ -56,7 +66,7 @@ abstract class TestCase extends BaseTestCase
             $table->dateTime('cliente_creator')->nullable();
         });
 
-        Schema::create('tp_usu_tb', function (Blueprint $table) {
+        $this->createOrResetTable('tp_usu_tb', function (Blueprint $table) {
             $table->increments('id_usu');
             $table->string('nome_usu', 50);
             $table->string('login_usu', 50)->unique();
@@ -72,7 +82,7 @@ abstract class TestCase extends BaseTestCase
             $table->string('comarca_usu', 255)->nullable();
         });
 
-        Schema::create('tp_config_db', function (Blueprint $table) {
+        $this->createOrResetTable('tp_config_db', function (Blueprint $table) {
             $table->increments('id_db');
             $table->string('nome_db', 255);
             $table->string('ip_db', 255)->nullable();
@@ -86,7 +96,7 @@ abstract class TestCase extends BaseTestCase
             $table->string('stt', 1)->default('Y');
         });
 
-        Schema::create('sql_server_profiles', function (Blueprint $table) {
+        $this->createOrResetTable('sql_server_profiles', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedInteger('legacy_config_id')->nullable()->unique();
             $table->string('nome', 255);
@@ -102,7 +112,7 @@ abstract class TestCase extends BaseTestCase
             $table->timestamps();
         });
 
-        Schema::create('tp_tipo_tb', function (Blueprint $table) {
+        $this->createOrResetTable('tp_tipo_tb', function (Blueprint $table) {
             $table->increments('tipo_id');
             $table->unsignedInteger('id_db')->nullable();
             $table->text('nome_pre')->nullable();
@@ -117,7 +127,7 @@ abstract class TestCase extends BaseTestCase
             $table->string('tipo_arq', 255)->nullable();
         });
 
-        Schema::create('tp_funda_tb', function (Blueprint $table) {
+        $this->createOrResetTable('tp_funda_tb', function (Blueprint $table) {
             $table->increments('fund_id');
             $table->unsignedInteger('tipo_id');
             $table->string('fund_titulo', 255)->nullable();
@@ -128,7 +138,7 @@ abstract class TestCase extends BaseTestCase
             $table->string('fund_stt', 1)->default('Y');
         });
 
-        Schema::create('tp_inputs_tb', function (Blueprint $table) {
+        $this->createOrResetTable('tp_inputs_tb', function (Blueprint $table) {
             $table->increments('id_input');
             $table->unsignedInteger('tipo_id');
             $table->text('input_pre')->nullable();
@@ -154,7 +164,7 @@ abstract class TestCase extends BaseTestCase
             $table->string('add_class', 255)->nullable();
         });
 
-        Schema::create('tp_dados_tb', function (Blueprint $table) {
+        $this->createOrResetTable('tp_dados_tb', function (Blueprint $table) {
             $table->increments('id_dados');
             $table->unsignedInteger('id_input');
             $table->string('nome_dados', 255);
@@ -169,7 +179,7 @@ abstract class TestCase extends BaseTestCase
             $table->string('listsel', 1)->default('N');
         });
 
-        Schema::create('tp_pecas_tb', function (Blueprint $table) {
+        $this->createOrResetTable('tp_pecas_tb', function (Blueprint $table) {
             $table->increments('id_pecas');
             $table->unsignedInteger('tipo_id');
             $table->unsignedInteger('id_usu')->nullable();
@@ -180,7 +190,7 @@ abstract class TestCase extends BaseTestCase
             $table->string('cod_sav', 255)->nullable();
         });
 
-        Schema::create('peticao_modelos', function (Blueprint $table) {
+        $this->createOrResetTable('peticao_modelos', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedInteger('legacy_tipo_id')->nullable()->unique();
             $table->unsignedInteger('legacy_cliente_id')->nullable();
@@ -196,7 +206,7 @@ abstract class TestCase extends BaseTestCase
             $table->timestamps();
         });
 
-        Schema::create('peticao_modelo_paragrafos', function (Blueprint $table) {
+        $this->createOrResetTable('peticao_modelo_paragrafos', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('modelo_id');
             $table->unsignedInteger('legacy_fund_id')->nullable()->unique();
@@ -208,7 +218,7 @@ abstract class TestCase extends BaseTestCase
             $table->timestamps();
         });
 
-        Schema::create('peticao_modelo_campos', function (Blueprint $table) {
+        $this->createOrResetTable('peticao_modelo_campos', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('modelo_id');
             $table->unsignedInteger('legacy_input_id')->nullable()->unique();
@@ -232,7 +242,7 @@ abstract class TestCase extends BaseTestCase
             $table->timestamps();
         });
 
-        Schema::create('peticao_modelo_campo_opcoes', function (Blueprint $table) {
+        $this->createOrResetTable('peticao_modelo_campo_opcoes', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('campo_id');
             $table->unsignedInteger('legacy_dado_id')->nullable()->unique();
@@ -243,7 +253,7 @@ abstract class TestCase extends BaseTestCase
             $table->timestamps();
         });
 
-        Schema::create('peticoes', function (Blueprint $table) {
+        $this->createOrResetTable('peticoes', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedInteger('legacy_peca_id')->nullable()->unique();
             $table->unsignedBigInteger('modelo_id');
@@ -258,7 +268,7 @@ abstract class TestCase extends BaseTestCase
             $table->timestamps();
         });
 
-        Schema::create('peticao_versoes', function (Blueprint $table) {
+        $this->createOrResetTable('peticao_versoes', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('peticao_id');
             $table->unsignedInteger('versao_numero');
@@ -272,5 +282,18 @@ abstract class TestCase extends BaseTestCase
             $table->timestamp('criado_em')->nullable();
             $table->timestamps();
         });
+    }
+
+    protected function createOrResetTable(string $table, \Closure $callback): void
+    {
+        if (!Schema::hasTable($table)) {
+            Schema::create($table, $callback);
+
+            return;
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        DB::table($table)->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
     }
 }

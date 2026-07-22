@@ -13,12 +13,56 @@ class LegacyPecaSyncTest extends TestCase
         $this->seedLegacyPeca();
 
         $this->artisan('peticao:sync-pecas')
-            ->expectsOutput('Pecas sincronizadas: 1')
+            ->expectsOutput('Pecas sincronizadas de 2026: 1')
             ->assertExitCode(0);
 
         $espelho = DB::table('peticoes')->where('legacy_peca_id', 901)->first();
         $this->assertNotNull($espelho);
         $this->assertSame('Cliente Retroativo', $espelho->cliente_referencia);
+    }
+
+    public function test_command_syncs_only_requested_year_by_default()
+    {
+        $this->seedLegacyPeca();
+
+        DB::table('tp_pecas_tb')->insert([
+            'id_pecas' => 902,
+            'tipo_id' => 33,
+            'id_usu' => null,
+            'nome_pecas' => 'Modelo para Peca',
+            'nome_cli' => 'Cliente Antigo',
+            'cod_pecas' => '<p>Legado antigo</p>',
+            'data_cad' => '2025-12-20 10:00:00',
+            'cod_sav' => 'ANTIGO',
+        ]);
+
+        $count = $this->app->make(LegacyPecaSyncService::class)->syncAll(2026);
+
+        $this->assertSame(1, $count);
+        $this->assertNotNull(DB::table('peticoes')->where('legacy_peca_id', 901)->first());
+        $this->assertNull(DB::table('peticoes')->where('legacy_peca_id', 902)->first());
+    }
+
+    public function test_command_can_sync_full_legacy_history_when_requested()
+    {
+        $this->seedLegacyPeca();
+
+        DB::table('tp_pecas_tb')->insert([
+            'id_pecas' => 902,
+            'tipo_id' => 33,
+            'id_usu' => null,
+            'nome_pecas' => 'Modelo para Peca',
+            'nome_cli' => 'Cliente Antigo',
+            'cod_pecas' => '<p>Legado antigo</p>',
+            'data_cad' => '2025-12-20 10:00:00',
+            'cod_sav' => 'ANTIGO',
+        ]);
+
+        $count = $this->app->make(LegacyPecaSyncService::class)->syncAll(null);
+
+        $this->assertSame(2, $count);
+        $this->assertNotNull(DB::table('peticoes')->where('legacy_peca_id', 901)->first());
+        $this->assertNotNull(DB::table('peticoes')->where('legacy_peca_id', 902)->first());
     }
 
     public function test_service_syncs_one_legacy_piece()
