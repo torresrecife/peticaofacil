@@ -19,7 +19,7 @@ class NormalizedInputCampoController extends Controller
             'modelo_id' => $modeloNormalizado->id,
             'legacy_input_id' => null,
             'rotulo' => $data['input_title'],
-            'token' => null,
+            'token' => '@campo_novo@',
             'tipo' => $data['input_tipo'],
             'origem_coluna' => $data['input_val'] ?? null,
             'origem_alias' => $data['input_db'] ?? null,
@@ -40,6 +40,8 @@ class NormalizedInputCampoController extends Controller
                 'blur' => $data['input_blur'] ?? null,
             ]),
         ]);
+        $campo->token = $campo->placeholder;
+        $campo->save();
 
         $this->syncOpcoes($campo, $data['opcoes'] ?? '');
         $syncService->sync($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));

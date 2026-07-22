@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Cliente;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Admin\NormalizedTipoController;
 use App\PeticaoModelo;
 use App\Setor;
 use App\SqlServerConfig;
 use App\Support\LegacyEditorContent;
 use App\Services\LegacyModeloSyncService;
+use App\Services\NormalizedModeloLegacySyncService;
 use App\Tipo;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -60,8 +62,13 @@ class TipoController extends Controller
         return view('admin.tipos.form', array_merge($this->formData($modelo), ['mirror' => $mirror]));
     }
 
-    public function update(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService)
+    public function update(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService, NormalizedModeloLegacySyncService $normalizedSyncService)
     {
+        $mirror = PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->first();
+        if ($mirror) {
+            return app(NormalizedTipoController::class)->update($request, $mirror, $normalizedSyncService);
+        }
+
         $modelo->fill($this->validateData($request))->save();
         $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 

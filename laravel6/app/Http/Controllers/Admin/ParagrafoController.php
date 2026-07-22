@@ -4,15 +4,22 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Paragrafo;
+use App\PeticaoModelo;
 use App\Services\LegacyModeloSyncService;
+use App\Services\NormalizedModeloLegacySyncService;
 use App\Support\LegacyEditorContent;
 use App\Tipo;
 use Illuminate\Http\Request;
 
 class ParagrafoController extends Controller
 {
-    public function store(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService)
+    public function store(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService, NormalizedModeloLegacySyncService $normalizedSyncService)
     {
+        $mirror = PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->first();
+        if ($mirror) {
+            return app(NormalizedParagrafoController::class)->store($request, $mirror, $normalizedSyncService);
+        }
+
         $data = $request->validate([
             'fund_titulo' => 'required|string|max:200',
             'fund_text' => 'nullable|string',
@@ -37,8 +44,16 @@ class ParagrafoController extends Controller
         return redirect()->route('admin.modelos.edit', $modelo)->with('status', 'Paragrafo criado.');
     }
 
-    public function update(Request $request, Tipo $modelo, Paragrafo $paragrafo, LegacyModeloSyncService $syncService)
+    public function update(Request $request, Tipo $modelo, Paragrafo $paragrafo, LegacyModeloSyncService $syncService, NormalizedModeloLegacySyncService $normalizedSyncService)
     {
+        $mirror = PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->first();
+        if ($mirror) {
+            $normalizedParagrafo = $mirror->paragrafos()->where('legacy_fund_id', $paragrafo->fund_id)->first();
+            abort_unless($normalizedParagrafo, 404);
+
+            return app(NormalizedParagrafoController::class)->update($request, $mirror, $normalizedParagrafo, $normalizedSyncService);
+        }
+
         $data = $request->validate([
             'fund_titulo' => 'required|string|max:200',
             'fund_text' => 'nullable|string',
