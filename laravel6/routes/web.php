@@ -75,7 +75,7 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
         Route::post('servidores-normalizados', 'Admin\NormalizedSqlServerConfigController@store')->name('servidores-normalizados.store');
         Route::get('servidores-normalizados/{servidorNormalizado}/edit', 'Admin\NormalizedSqlServerConfigController@edit')->name('servidores-normalizados.edit');
         Route::put('servidores-normalizados/{servidorNormalizado}', 'Admin\NormalizedSqlServerConfigController@update')->name('servidores-normalizados.update');
-        Route::get('modelos', 'Admin\TipoController@index')->name('modelos.index');
+        Route::redirect('modelos', 'admin/modelos-normalizados')->name('modelos.index');
         Route::get('modelos/{modelo}/edit', 'Admin\TipoController@edit')->name('modelos.edit');
         Route::match(['put', 'patch'], 'modelos/{modelo}', 'Admin\TipoController@update')->name('modelos.update');
         Route::get('modelos-normalizados', 'Admin\NormalizedTipoController@index')->name('modelos-normalizados.index');
