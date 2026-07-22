@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 class PeticaoNormalizedStorageService
 {
-    public function save(PeticaoNormalizada $peticao, array $payload)
+    public function save(PeticaoNormalizada $peticao, array $payload, $origin = 'save')
     {
-        return DB::transaction(function () use ($peticao, $payload) {
+        return DB::transaction(function () use ($peticao, $payload, $origin) {
             $peticao->loadMissing(['modelo', 'legacyPeca.tipo']);
 
             $legacyPeca = $peticao->legacyPeca;
@@ -41,10 +41,18 @@ class PeticaoNormalizedStorageService
             $peticao->salvo_em = now();
             $peticao->save();
 
-            $this->createVersionSnapshot($peticao, 'save');
+            $this->createVersionSnapshot($peticao, $origin);
 
             return $peticao->fresh(['modelo', 'legacyPeca.tipo', 'legacyUsuario']);
         });
+    }
+
+    public function restoreVersion(PeticaoNormalizada $peticao, PeticaoVersao $versao)
+    {
+        return $this->save($peticao, [
+            'nome_cli' => $versao->cliente_referencia_snapshot,
+            'cod_pecas' => $versao->conteudo_html_snapshot,
+        ], 'restore');
     }
 
     public function createVersionSnapshot(PeticaoNormalizada $peticao, $origem)

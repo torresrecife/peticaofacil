@@ -102,6 +102,7 @@
                         <th>Cliente</th>
                         <th>Data</th>
                         <th>Legado</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -112,10 +113,22 @@
                             <td>{{ $versao->cliente_referencia_snapshot }}</td>
                             <td>{{ optional($versao->criado_em)->format('d/m/Y H:i') ?: optional($versao->created_at)->format('d/m/Y H:i') }}</td>
                             <td>{{ $versao->legacy_peca_id_snapshot ?: '-' }}</td>
+                            <td>
+                                <div class="actions">
+                                    <a href="{{ route('peticoes.saved.versions.compare', [$peticao, $versao]) }}">Comparar com atual</a>
+                                    @if($loop->index + 1 < $peticao->versoes->count())
+                                        <a href="{{ route('peticoes.saved.versions.compare', [$peticao, $versao]) }}?target_version={{ $peticao->versoes[$loop->index + 1]->id }}">Comparar anterior</a>
+                                    @endif
+                                    <form method="post" action="{{ route('peticoes.saved.versions.restore', [$peticao, $versao]) }}">
+                                        @csrf
+                                        <button type="submit" class="button secondary">Restaurar</button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5">Sem versoes registradas.</td>
+                            <td colspan="6">Sem versoes registradas.</td>
                         </tr>
                     @endforelse
                 </tbody>

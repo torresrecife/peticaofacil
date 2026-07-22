@@ -111,5 +111,41 @@ class PeticaoSavedEditorTest extends TestCase
         $pdfResponse->assertStatus(200);
         $pdfResponse->assertHeader('content-type', 'application/pdf');
         $this->assertStringStartsWith('%PDF', $pdfResponse->getContent());
+
+        $versionId = DB::table('peticao_versoes')->where('peticao_id', 4001)->value('id');
+
+        $this->actingAs($user)
+            ->get('/peticoes-salvas/4001/versoes/' . $versionId . '/comparar')
+            ->assertStatus(200)
+            ->assertSee('Comparacao de versoes')
+            ->assertSee('Texto atualizado');
+
+        DB::table('peticao_versoes')->insert([
+            'peticao_id' => 4001,
+            'versao_numero' => 2,
+            'legacy_peca_id_snapshot' => 3001,
+            'legacy_usuario_id_snapshot' => 30,
+            'codigo_externo_snapshot' => 'P3001',
+            'cliente_referencia_snapshot' => 'Cliente Restaurado',
+            'conteudo_html_snapshot' => '<p>Texto restaurado</p>',
+            'campos_resolvidos_snapshot' => null,
+            'origem_snapshot' => 'manual',
+            'criado_em' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $restoreVersionId = DB::table('peticao_versoes')
+            ->where('peticao_id', 4001)
+            ->where('versao_numero', 2)
+            ->value('id');
+
+        $this->actingAs($user)
+            ->post('/peticoes-salvas/4001/versoes/' . $restoreVersionId . '/restaurar')
+            ->assertRedirect('/peticoes-salvas/4001/editar');
+
+        $normalizedAfterRestore = DB::table('peticoes')->where('id', 4001)->first();
+        $this->assertSame('Cliente Restaurado', $normalizedAfterRestore->cliente_referencia);
+        $this->assertStringContainsString('Texto restaurado', $normalizedAfterRestore->conteudo_html);
     }
 }

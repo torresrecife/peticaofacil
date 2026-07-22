@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\PeticaoNormalizada;
 use App\PeticaoModelo;
+use App\PeticaoVersao;
 use App\Services\PeticaoExportService;
 use App\Services\PeticaoNormalizedDraftService;
 use App\Services\PeticaoNormalizedStorageService;
+use App\Services\PeticaoVersionAuditService;
 use Illuminate\Http\Request;
 
 class PeticaoSavedController extends Controller
@@ -49,6 +51,34 @@ class PeticaoSavedController extends Controller
         $peticao = $storage->save($peticao, $data);
 
         return redirect()->route('peticoes.saved.edit', $peticao)->with('status', 'Peticao salva.');
+    }
+
+    public function restoreVersion(PeticaoNormalizada $peticao, PeticaoVersao $versao, PeticaoNormalizedStorageService $storage)
+    {
+        abort_unless((int) $versao->peticao_id === (int) $peticao->id, 404);
+
+        $peticao = $storage->restoreVersion($peticao, $versao);
+
+        return redirect()->route('peticoes.saved.edit', $peticao)->with('status', 'Versao restaurada.');
+    }
+
+    public function compareVersions(Request $request, PeticaoNormalizada $peticao, PeticaoVersao $versao, PeticaoVersionAuditService $auditService)
+    {
+        abort_unless((int) $versao->peticao_id === (int) $peticao->id, 404);
+
+        $targetVersion = null;
+        $targetId = $request->query('target_version');
+        if ($targetId) {
+            $targetVersion = PeticaoVersao::where('peticao_id', $peticao->id)->findOrFail($targetId);
+        }
+
+        $peticao->load(['modelo', 'versoes']);
+        $comparison = $auditService->compare($peticao, $versao, $targetVersion);
+
+        return view('peticao.version-compare', [
+            'peticao' => $peticao,
+            'comparison' => $comparison,
+        ]);
     }
 
     public function exportWord(Request $request, PeticaoNormalizada $peticao, PeticaoExportService $exportService)
