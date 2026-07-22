@@ -21,6 +21,8 @@ class PecaStorageService
         $peca->cod_sav = $peca->cod_sav ?: $this->generateCodSav();
         $peca->save();
 
+        app(LegacyPecaSyncService::class)->syncPeca($peca, $modelo);
+
         return $peca;
     }
 

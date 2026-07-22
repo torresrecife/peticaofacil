@@ -65,6 +65,11 @@ class PeticaoFlowTest extends TestCase
 
         $saveResponse->assertRedirect('/pecas/' . $peca->id_pecas . '/editar');
 
+        $peticaoEspelho = DB::table('peticoes')->where('legacy_peca_id', $peca->id_pecas)->first();
+        $this->assertNotNull($peticaoEspelho);
+        $this->assertSame('Fulano da Silva', $peticaoEspelho->cliente_referencia);
+        $this->assertStringContainsString('deferimento imediato', $peticaoEspelho->conteudo_html);
+
         $wordResponse = $this->actingAs($user)->post('/peticoes/' . $modeloId . '/exportar/word', [
             'nome_cli' => 'Fulano da Silva',
             'cod_pecas' => $previewHtml,
@@ -200,6 +205,23 @@ class PeticaoFlowTest extends TestCase
                 'dados_order' => 2,
                 'listsel' => 'N',
             ],
+        ]);
+
+        DB::table('peticao_modelos')->insert([
+            'id' => 1,
+            'legacy_tipo_id' => 1,
+            'legacy_cliente_id' => 1,
+            'legacy_setor_id' => 1,
+            'legacy_sql_config_id' => null,
+            'nome' => 'Peticao de Teste',
+            'slug' => 'peticao-de-teste-1',
+            'status' => 'ativo',
+            'arquivo_padrao' => 'doc',
+            'cabecalho_html' => '<p>Cabecalho @CAMPO1@</p>',
+            'rodape_html' => '<p>Rodape @campo4@</p>',
+            'metadata' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         return 1;

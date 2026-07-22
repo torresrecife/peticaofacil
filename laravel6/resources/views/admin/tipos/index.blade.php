@@ -20,11 +20,13 @@
                 <th>Servidor</th>
                 <th>Arquivo</th>
                 <th>Status</th>
+                <th>Mirror</th>
                 <th></th>
             </tr>
         </thead>
         <tbody>
             @foreach($tipos as $tipo)
+                @php($mirror = $mirrors[$tipo->tipo_id] ?? null)
                 <tr>
                     <td>{{ $tipo->tipo_id }}</td>
                     <td>{{ $tipo->tipo_nome }}</td>
@@ -34,6 +36,14 @@
                     <td>{{ optional($tipo->servidor)->nome_db }}</td>
                     <td>{{ $tipo->tipo_arq }}</td>
                     <td>{{ $tipo->tipo_stt === 'Y' ? 'Ativo' : 'Inativo' }}</td>
+                    <td>
+                        @if($mirror)
+                            <div><strong>#{{ $mirror->id }}</strong> {{ $mirror->slug }}</div>
+                            <div class="editor-note">{{ $mirror->paragrafos_count }} paragrafos, {{ $mirror->campos_count }} campos</div>
+                        @else
+                            <div class="editor-note">Pendente</div>
+                        @endif
+                    </td>
                     <td><a href="{{ route('admin.modelos.edit', $tipo) }}">Editar</a></td>
                 </tr>
             @endforeach

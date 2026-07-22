@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Cliente;
 use App\Http\Controllers\Controller;
+use App\PeticaoModelo;
 use App\Setor;
 use App\SqlServerConfig;
 use App\Support\LegacyEditorContent;
@@ -21,7 +22,12 @@ class TipoController extends Controller
             ->orderBy('tipo_nome')
             ->paginate(20);
 
-        return view('admin.tipos.index', compact('tipos'));
+        $mirrors = PeticaoModelo::withCount(['paragrafos', 'campos'])
+            ->whereIn('legacy_tipo_id', $tipos->pluck('tipo_id')->all())
+            ->get()
+            ->keyBy('legacy_tipo_id');
+
+        return view('admin.tipos.index', compact('tipos', 'mirrors'));
     }
 
     public function create()
@@ -46,8 +52,11 @@ class TipoController extends Controller
     {
         $modelo->load(['paragrafos', 'campos.dados', 'setor', 'cliente', 'servidor']);
         $modelo = $this->prepareForEditor($modelo);
+        $mirror = PeticaoModelo::with(['paragrafos', 'campos.opcoes'])
+            ->where('legacy_tipo_id', $modelo->tipo_id)
+            ->first();
 
-        return view('admin.tipos.form', $this->formData($modelo));
+        return view('admin.tipos.form', array_merge($this->formData($modelo), ['mirror' => $mirror]));
     }
 
     public function update(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService)
@@ -83,6 +92,7 @@ class TipoController extends Controller
     {
         return [
             'modelo' => $modelo,
+            'mirror' => null,
             'setores' => Setor::orderBy('nome_setor')->get(),
             'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
             'servidores' => SqlServerConfig::active()->orderBy('nome_db')->get(),
