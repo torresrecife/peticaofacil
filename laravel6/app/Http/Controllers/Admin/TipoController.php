@@ -14,19 +14,7 @@ class TipoController extends Controller
 {
     public function index()
     {
-        $modelos = PeticaoModelo::with(['setor', 'cliente', 'servidor'])
-            ->withCount(['paragrafos', 'campos'])
-            ->orderBy('legacy_setor_id')
-            ->orderBy('nome')
-            ->paginate(20);
-
-        $legacyFallbacks = Tipo::with(['setor', 'cliente', 'servidor'])
-            ->orderBy('id_setor')
-            ->orderBy('tipo_nome')
-            ->whereNotIn('tipo_id', PeticaoModelo::whereNotNull('legacy_tipo_id')->pluck('legacy_tipo_id'))
-            ->get();
-
-        return view('admin.tipos.index', compact('modelos', 'legacyFallbacks'));
+        return redirect()->route('admin.modelos-normalizados.index');
     }
 
     public function create()

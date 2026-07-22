@@ -40,7 +40,7 @@
         @if($modelo->exists)
             <a class="button link" href="{{ $montagemRoute }}">Abrir montagem</a>
         @endif
-        <a class="button secondary link" href="{{ route('admin.modelos.index') }}">Voltar</a>
+        <a class="button secondary link" href="{{ route('admin.modelos-normalizados.index') }}">Voltar</a>
     </div>
 </div>
 
