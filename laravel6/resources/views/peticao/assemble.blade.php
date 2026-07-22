@@ -86,18 +86,18 @@
             <div class="panel-muted" style="background:#fff;">
                 {!! $preview['html'] !!}
             </div>
-            <form method="post" action="{{ route('peticoes.editor.create', $modelo) }}" style="margin-top:16px;">
-                @csrf
-                <input type="hidden" name="nome_cli" value="{{ $preview['suggested_filename'] }}">
-                <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>
-                <button type="submit">Abrir no editor final</button>
-            </form>
-            <form method="post" action="{{ route('peticoes.saved.store', $modelo) }}" style="margin-top:12px;">
+            <form method="post" action="{{ route('peticoes.saved.store', $modelo) }}" style="margin-top:16px;">
                 @csrf
                 <input type="hidden" name="nome_cli" value="{{ $preview['suggested_filename'] }}">
                 <input type="hidden" name="resolved_fields" value="{{ e(json_encode($preview['resolved_fields'])) }}">
                 <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>
-                <button type="submit" class="button secondary">Abrir como peticao normalizada</button>
+                <button type="submit">Abrir peticao normalizada</button>
+            </form>
+            <form method="post" action="{{ route('peticoes.editor.create', $modelo) }}" style="margin-top:12px;">
+                @csrf
+                <input type="hidden" name="nome_cli" value="{{ $preview['suggested_filename'] }}">
+                <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>
+                <button type="submit" class="button secondary">Abrir editor legado</button>
             </form>
         </div>
     @endif

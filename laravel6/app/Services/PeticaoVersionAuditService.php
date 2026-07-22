@@ -11,14 +11,14 @@ class PeticaoVersionAuditService
     {
         $targetVersion = $targetVersion ?: $this->buildCurrentStateVersion($peticao);
 
-        $baseLines = $this->normalizeLines($baseVersion->conteudo_html_snapshot);
-        $targetLines = $this->normalizeLines($targetVersion->conteudo_html_snapshot);
-        $max = max(count($baseLines), count($targetLines));
+        $baseBlocks = $this->extractBlocks($baseVersion->conteudo_html_snapshot);
+        $targetBlocks = $this->extractBlocks($targetVersion->conteudo_html_snapshot);
+        $max = max(count($baseBlocks), count($targetBlocks));
 
         $rows = [];
         for ($i = 0; $i < $max; $i++) {
-            $left = $baseLines[$i] ?? '';
-            $right = $targetLines[$i] ?? '';
+            $left = $baseBlocks[$i] ?? '';
+            $right = $targetBlocks[$i] ?? '';
 
             $status = 'same';
             if ($left === '' && $right !== '') {
@@ -33,6 +33,7 @@ class PeticaoVersionAuditService
 
             $rows[] = [
                 'line' => $i + 1,
+                'anchor' => 'block-' . ($i + 1),
                 'status' => $status,
                 'left' => $left,
                 'right' => $right,
@@ -41,10 +42,15 @@ class PeticaoVersionAuditService
             ];
         }
 
+        $changes = array_values(array_filter($rows, function ($row) {
+            return $row['status'] !== 'same';
+        }));
+
         return [
             'base' => $baseVersion,
             'target' => $targetVersion,
             'rows' => $rows,
+            'changes' => $changes,
             'summary' => [
                 'changed' => count(array_filter($rows, function ($row) { return $row['status'] === 'changed'; })),
                 'added' => count(array_filter($rows, function ($row) { return $row['status'] === 'added'; })),
@@ -65,13 +71,30 @@ class PeticaoVersionAuditService
         return $version;
     }
 
-    protected function normalizeLines($html)
+    protected function extractBlocks($html)
     {
+        preg_match_all('/<(p|div|li|h[1-6]|blockquote|td)[^>]*>.*?<\/\1>/isu', (string) $html, $matches);
+
+        $blocks = [];
+        foreach (($matches[0] ?? []) as $blockHtml) {
+            $text = html_entity_decode(strip_tags((string) $blockHtml), ENT_QUOTES, 'UTF-8');
+            $text = preg_replace("/\s+/u", ' ', trim($text));
+            if ($text !== '') {
+                $blocks[] = $text;
+            }
+        }
+
+        if (!empty($blocks)) {
+            return $blocks;
+        }
+
         $normalized = html_entity_decode(strip_tags((string) $html), ENT_QUOTES, 'UTF-8');
         $normalized = preg_replace("/\r\n|\r/u", "\n", $normalized);
         $normalized = preg_replace("/\n{2,}/u", "\n", $normalized);
 
-        return preg_split("/\n/u", trim((string) $normalized)) ?: [];
+        return array_values(array_filter(preg_split("/\n/u", trim((string) $normalized)) ?: [], function ($line) {
+            return trim($line) !== '';
+        }));
     }
 
     protected function highlightLineDiff($left, $right, $status)

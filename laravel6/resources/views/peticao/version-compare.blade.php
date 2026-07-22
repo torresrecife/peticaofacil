@@ -14,7 +14,7 @@
     <div class="panel">
         <div class="section-title">
             <h3>{{ optional($peticao->modelo)->nome ?: 'Peticao normalizada' }}</h3>
-            <div class="editor-note">Auditoria entre snapshots.</div>
+            <div class="editor-note">Auditoria entre snapshots por bloco/paragrafo.</div>
         </div>
         <div class="grid">
             <div class="stat">
@@ -36,11 +36,25 @@
         </div>
     </div>
 
+    @if(!empty($comparison['changes']))
+        <div class="panel">
+            <div class="section-title">
+                <h3>Navegar alteracoes</h3>
+                <div class="editor-note">{{ count($comparison['changes']) }} bloco(s) com diferenca.</div>
+            </div>
+            <div class="actions" style="flex-wrap:wrap;">
+                @foreach($comparison['changes'] as $row)
+                    <a class="button secondary link" href="#{{ $row['anchor'] }}">Bloco {{ $row['line'] }} ({{ $row['status'] }})</a>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <div class="panel" style="padding:0;">
         <table>
             <thead>
                 <tr>
-                    <th>Linha</th>
+                    <th>Bloco</th>
                     <th>Base</th>
                     <th>Alvo</th>
                     <th>Status</th>
@@ -48,7 +62,7 @@
             </thead>
             <tbody>
                 @forelse($comparison['rows'] as $row)
-                    <tr>
+                    <tr id="{{ $row['anchor'] }}">
                         <td>{{ $row['line'] }}</td>
                         <td><pre style="white-space:pre-wrap;margin:0;">{!! $row['left_html'] !!}</pre></td>
                         <td><pre style="white-space:pre-wrap;margin:0;">{!! $row['right_html'] !!}</pre></td>
