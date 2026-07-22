@@ -32,9 +32,12 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::post('/primeiro-acesso', 'Auth\LoginController@updateForcedPassword')->name('password.force.update');
     Route::get('/painel', 'DashboardController')->name('dashboard');
     Route::get('/peticoes', 'PeticaoAssemblyController@index')->name('peticoes.index');
+    Route::get('/peticoes/modelos/{modeloNormalizado}', 'PeticaoAssemblyController@showNormalized')->name('peticoes.normalized.show');
+    Route::post('/peticoes/modelos/{modeloNormalizado}', 'PeticaoAssemblyController@composeNormalized')->name('peticoes.normalized.compose');
     Route::get('/peticoes/{modelo}', 'PeticaoAssemblyController@show')->name('peticoes.show');
     Route::post('/peticoes/{modelo}', 'PeticaoAssemblyController@compose')->name('peticoes.compose');
     Route::post('/peticoes/{modelo}/editor', 'PeticaoEditorController@create')->name('peticoes.editor.create');
+    Route::post('/peticoes/modelos/{modeloNormalizado}/peticao-normalizada', 'PeticaoSavedController@storeFromNormalizedPreview')->name('peticoes.normalized.saved.store');
     Route::post('/peticoes/{modelo}/peticao-normalizada', 'PeticaoSavedController@storeFromPreview')->name('peticoes.saved.store');
     Route::post('/peticoes/{modelo}/salvar', 'PeticaoEditorController@save')->name('peticoes.editor.save');
     Route::post('/peticoes/{modelo}/exportar/pdf', 'PeticaoEditorController@exportPdf')->name('peticoes.editor.export.pdf');

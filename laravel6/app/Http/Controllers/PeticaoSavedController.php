@@ -32,6 +32,23 @@ class PeticaoSavedController extends Controller
         return redirect()->route('peticoes.saved.edit', $peticao);
     }
 
+    public function storeFromNormalizedPreview(Request $request, PeticaoModelo $modeloNormalizado, PeticaoNormalizedDraftService $draftService)
+    {
+        $data = $request->validate([
+            'nome_cli' => 'required|string|max:500',
+            'content' => 'required|string',
+            'resolved_fields' => 'nullable|string',
+        ]);
+
+        $peticao = $draftService->createFromPreview($modeloNormalizado, [
+            'nome_cli' => $data['nome_cli'],
+            'content' => $data['content'],
+            'resolved_fields' => $data['resolved_fields'] ? json_decode($data['resolved_fields'], true) : null,
+        ]);
+
+        return redirect()->route('peticoes.saved.edit', $peticao);
+    }
+
     public function edit(PeticaoNormalizada $peticao)
     {
         $origin = request()->query('origin');

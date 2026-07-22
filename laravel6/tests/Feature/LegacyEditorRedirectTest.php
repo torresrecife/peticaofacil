@@ -75,4 +75,59 @@ class LegacyEditorRedirectTest extends TestCase
             ->get('/pecas/5501/editar')
             ->assertRedirect('/peticoes-salvas/6501/editar');
     }
+
+    public function test_legacy_editor_route_creates_mirror_on_demand_when_model_is_normalized()
+    {
+        $user = factory(User::class)->create([
+            'id_usu' => 56,
+            'nivel_usu' => 'ADM',
+            'acesso_usu' => now(),
+        ]);
+
+        DB::table('tp_setor_tb')->insert([
+            'id_setor' => 56,
+            'nome_setor' => 'Execucao',
+            'cod_setor' => 'EXE',
+            'data_cad' => now(),
+        ]);
+
+        DB::table('tp_tipo_tb')->insert([
+            'tipo_id' => 56,
+            'tipo_nome' => 'Modelo Espelhavel',
+            'id_setor' => 56,
+            'tipo_data' => now(),
+            'tipo_stt' => 'Y',
+            'tipo_arq' => 'pdf',
+        ]);
+
+        DB::table('peticao_modelos')->insert([
+            'id' => 56,
+            'legacy_tipo_id' => 56,
+            'legacy_setor_id' => 56,
+            'nome' => 'Modelo Espelhavel',
+            'slug' => 'modelo-espelhavel-56',
+            'status' => 'ativo',
+            'arquivo_padrao' => 'pdf',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('tp_pecas_tb')->insert([
+            'id_pecas' => 5601,
+            'tipo_id' => 56,
+            'id_usu' => 56,
+            'nome_pecas' => 'Modelo Espelhavel',
+            'nome_cli' => 'Cliente Mirror',
+            'cod_pecas' => '<p>Conteudo Mirror</p>',
+            'data_cad' => now(),
+            'cod_sav' => 'RED56',
+        ]);
+
+        $response = $this->actingAs($user)->get('/pecas/5601/editar');
+
+        $peticaoEspelho = DB::table('peticoes')->where('legacy_peca_id', 5601)->first();
+
+        $this->assertNotNull($peticaoEspelho);
+        $response->assertRedirect('/peticoes-salvas/' . $peticaoEspelho->id . '/editar');
+    }
 }

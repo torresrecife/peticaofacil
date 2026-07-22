@@ -26,19 +26,26 @@ class PeticaoAssemblyController extends Controller
         return view('peticao.index', compact('modelos', 'legacyFallbacks'));
     }
 
+    public function showNormalized(PeticaoModelo $modeloNormalizado)
+    {
+        $modeloNormalizado->load(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor']);
+
+        return $this->renderAssemble($modeloNormalizado, $modeloNormalizado);
+    }
+
     public function show(Tipo $modelo)
     {
         $modelo->load(['campos.dados', 'paragrafos', 'setor', 'cliente', 'servidor']);
         $modeloFonte = $this->resolvePreferredModelo($modelo);
 
-        return view('peticao.assemble', [
-            'modelo' => $modelo,
-            'modeloFonte' => $modeloFonte,
-            'preview' => null,
-            'values' => [],
-            'codigoProcesso' => '',
-            'lookupStatus' => null,
-        ]);
+        return $this->renderAssemble($modelo, $modeloFonte);
+    }
+
+    public function composeNormalized(Request $request, PeticaoModelo $modeloNormalizado, PeticaoComposerService $composer, SqlServerLookupService $lookup)
+    {
+        $modeloNormalizado->load(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor']);
+
+        return $this->renderComposedAssemble($request, $modeloNormalizado, $modeloNormalizado, $composer, $lookup);
     }
 
     public function compose(Request $request, Tipo $modelo, PeticaoComposerService $composer, SqlServerLookupService $lookup)
@@ -46,6 +53,11 @@ class PeticaoAssemblyController extends Controller
         $modelo->load(['campos.dados', 'paragrafos', 'setor', 'cliente', 'servidor']);
         $modeloFonte = $this->resolvePreferredModelo($modelo);
 
+        return $this->renderComposedAssemble($request, $modelo, $modeloFonte, $composer, $lookup);
+    }
+
+    protected function renderComposedAssemble(Request $request, $modelo, $modeloFonte, PeticaoComposerService $composer, SqlServerLookupService $lookup)
+    {
         $values = [];
         foreach ($modeloFonte->campos as $campo) {
             $values['campo_' . $campo->id_input] = $request->input('campo_' . $campo->id_input);
@@ -83,6 +95,11 @@ class PeticaoAssemblyController extends Controller
             $preview = $composer->compose($modeloFonte, $values);
         }
 
+        return $this->renderAssemble($modelo, $modeloFonte, $preview, $values, $codigoProcesso, $lookupStatus);
+    }
+
+    protected function renderAssemble($modelo, $modeloFonte, $preview = null, array $values = [], $codigoProcesso = '', $lookupStatus = null)
+    {
         return view('peticao.assemble', [
             'modelo' => $modelo,
             'modeloFonte' => $modeloFonte,

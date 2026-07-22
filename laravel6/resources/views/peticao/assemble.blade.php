@@ -19,7 +19,17 @@
             <div class="flash">{{ $lookupStatus }}</div>
         @endif
 
-        <form method="post" action="{{ route('peticoes.compose', $modelo) }}">
+        @php
+            $isNormalizedRoute = $modelo instanceof \App\PeticaoModelo;
+            $composeRoute = $isNormalizedRoute
+                ? route('peticoes.normalized.compose', $modelo)
+                : route('peticoes.compose', $modelo);
+            $normalizedStoreRoute = $isNormalizedRoute
+                ? route('peticoes.normalized.saved.store', $modelo)
+                : route('peticoes.saved.store', $modelo);
+        @endphp
+
+        <form method="post" action="{{ $composeRoute }}">
             @csrf
             @if($modeloFonte->servidor)
                 <div class="panel-muted" style="margin-bottom:20px;">
@@ -86,19 +96,21 @@
             <div class="panel-muted" style="background:#fff;">
                 {!! $preview['html'] !!}
             </div>
-            <form method="post" action="{{ route('peticoes.saved.store', $modelo) }}" style="margin-top:16px;">
+            <form method="post" action="{{ $normalizedStoreRoute }}" style="margin-top:16px;">
                 @csrf
                 <input type="hidden" name="nome_cli" value="{{ $preview['suggested_filename'] }}">
                 <input type="hidden" name="resolved_fields" value="{{ e(json_encode($preview['resolved_fields'])) }}">
                 <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>
                 <button type="submit">Abrir peticao normalizada</button>
             </form>
-            <form method="post" action="{{ route('peticoes.editor.create', $modelo) }}" style="margin-top:12px;">
-                @csrf
-                <input type="hidden" name="nome_cli" value="{{ $preview['suggested_filename'] }}">
-                <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>
-                <button type="submit" class="button secondary">Abrir editor legado</button>
-            </form>
+            @if(!$isNormalizedRoute || $modelo->legacy_tipo_id)
+                <form method="post" action="{{ route('peticoes.editor.create', $isNormalizedRoute ? $modelo->legacy_tipo_id : $modelo) }}" style="margin-top:12px;">
+                    @csrf
+                    <input type="hidden" name="nome_cli" value="{{ $preview['suggested_filename'] }}">
+                    <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>
+                    <button type="submit" class="button secondary">Abrir editor legado</button>
+                </form>
+            @endif
         </div>
     @endif
 </div>

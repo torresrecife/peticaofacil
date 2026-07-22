@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Peca;
 use App\PeticaoNormalizada;
+use App\Services\LegacyPecaSyncService;
 use App\Services\PecaStorageService;
 use App\Services\PeticaoExportService;
 use App\Tipo;
@@ -26,14 +27,19 @@ class PeticaoEditorController extends Controller
         ]);
     }
 
-    public function edit(Peca $peca)
+    public function edit(Peca $peca, LegacyPecaSyncService $legacyPecaSync)
     {
         $mirror = PeticaoNormalizada::where('legacy_peca_id', $peca->id_pecas)->first();
+        if (!$mirror) {
+            $peca->load('tipo');
+            $mirror = $legacyPecaSync->syncPeca($peca, $peca->tipo);
+        }
+
         if ($mirror) {
             return redirect()->route('peticoes.saved.edit', $mirror);
         }
 
-        $peca->load('tipo');
+        $peca->loadMissing('tipo');
 
         return view('peticao.editor', [
             'modelo' => $peca->tipo,

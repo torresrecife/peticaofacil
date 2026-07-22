@@ -29,7 +29,7 @@
                     <td>{{ $modelo->nome }}</td>
                     <td>{{ optional($modelo->setor)->nome_setor }}</td>
                     <td>{{ optional($modelo->cliente)->cliente_name ?: 'Todos do setor' }}</td>
-                    <td><a href="{{ route('peticoes.show', $modelo->legacy_tipo_id ?: $modelo->id) }}">Montar</a></td>
+                    <td><a href="{{ route('peticoes.normalized.show', $modelo) }}">Montar</a></td>
                 </tr>
             @endforeach
         </tbody>
