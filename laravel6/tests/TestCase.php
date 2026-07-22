@@ -21,6 +21,7 @@ abstract class TestCase extends BaseTestCase
     {
         Schema::disableForeignKeyConstraints();
 
+        Schema::dropIfExists('peticao_versoes');
         Schema::dropIfExists('peticoes');
         Schema::dropIfExists('peticao_modelo_campo_opcoes');
         Schema::dropIfExists('peticao_modelo_campos');
@@ -237,6 +238,21 @@ abstract class TestCase extends BaseTestCase
             $table->text('campos_resolvidos')->nullable();
             $table->timestamp('gerado_em')->nullable();
             $table->timestamp('salvo_em')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('peticao_versoes', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('peticao_id');
+            $table->unsignedInteger('versao_numero');
+            $table->unsignedInteger('legacy_peca_id_snapshot')->nullable();
+            $table->unsignedInteger('legacy_usuario_id_snapshot')->nullable();
+            $table->string('codigo_externo_snapshot', 255)->nullable();
+            $table->string('cliente_referencia_snapshot', 500)->nullable();
+            $table->longText('conteudo_html_snapshot');
+            $table->text('campos_resolvidos_snapshot')->nullable();
+            $table->string('origem_snapshot', 50)->default('save');
+            $table->timestamp('criado_em')->nullable();
             $table->timestamps();
         });
     }

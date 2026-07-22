@@ -41,4 +41,9 @@ class PeticaoNormalizada extends Model
     {
         return $this->belongsTo(User::class, 'legacy_usuario_id', 'id_usu');
     }
+
+    public function versoes()
+    {
+        return $this->hasMany(PeticaoVersao::class, 'peticao_id')->orderByDesc('versao_numero');
+    }
 }

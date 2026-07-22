@@ -92,6 +92,35 @@
             <div><strong>Salva em:</strong> {{ optional($peticao->salvo_em)->format('d/m/Y H:i') ?: '-' }}</div>
             <div><strong>Usuario legado:</strong> {{ optional($peticao->legacyUsuario)->login_usu ?: '-' }}</div>
         </div>
+        <div class="panel-muted" style="margin-top:16px;">
+            <strong>Historico de versoes</strong>
+            <table style="margin-top:12px;">
+                <thead>
+                    <tr>
+                        <th>Versao</th>
+                        <th>Origem</th>
+                        <th>Cliente</th>
+                        <th>Data</th>
+                        <th>Legado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($peticao->versoes as $versao)
+                        <tr>
+                            <td>{{ $versao->versao_numero }}</td>
+                            <td>{{ $versao->origem_snapshot }}</td>
+                            <td>{{ $versao->cliente_referencia_snapshot }}</td>
+                            <td>{{ optional($versao->criado_em)->format('d/m/Y H:i') ?: optional($versao->created_at)->format('d/m/Y H:i') }}</td>
+                            <td>{{ $versao->legacy_peca_id_snapshot ?: '-' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5">Sem versoes registradas.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 @endsection

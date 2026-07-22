@@ -85,11 +85,14 @@ class PeticaoSavedEditorTest extends TestCase
 
         $legacy = DB::table('tp_pecas_tb')->where('id_pecas', 3001)->first();
         $normalized = DB::table('peticoes')->where('id', 4001)->first();
+        $versions = DB::table('peticao_versoes')->where('peticao_id', 4001)->get();
 
         $this->assertSame('Cliente Atualizado', $legacy->nome_cli);
         $this->assertSame('Cliente Atualizado', $normalized->cliente_referencia);
         $this->assertStringContainsString('Texto atualizado', $legacy->cod_pecas);
         $this->assertStringContainsString('Texto atualizado', $normalized->conteudo_html);
+        $this->assertCount(1, $versions);
+        $this->assertSame('save', $versions[0]->origem_snapshot);
 
         $this->actingAs($user)
             ->post('/peticoes-salvas/4001/exportar/word', [

@@ -35,6 +35,7 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::get('/peticoes/{modelo}', 'PeticaoAssemblyController@show')->name('peticoes.show');
     Route::post('/peticoes/{modelo}', 'PeticaoAssemblyController@compose')->name('peticoes.compose');
     Route::post('/peticoes/{modelo}/editor', 'PeticaoEditorController@create')->name('peticoes.editor.create');
+    Route::post('/peticoes/{modelo}/peticao-normalizada', 'PeticaoSavedController@storeFromPreview')->name('peticoes.saved.store');
     Route::post('/peticoes/{modelo}/salvar', 'PeticaoEditorController@save')->name('peticoes.editor.save');
     Route::post('/peticoes/{modelo}/exportar/pdf', 'PeticaoEditorController@exportPdf')->name('peticoes.editor.export.pdf');
     Route::post('/peticoes/{modelo}/exportar/word', 'PeticaoEditorController@exportWord')->name('peticoes.editor.export.word');
