@@ -32,7 +32,7 @@ class AdminNormalizedModeloCreateTest extends TestCase
             ->assertSee('Novo modelo');
 
         $response = $this->actingAs($admin)
-            ->post('/admin/modelos-normalizados', [
+            ->post('/admin/modelos', [
                 'tipo_nome' => 'Modelo Criado Normalizado',
                 'nome_pre' => 'Descricao Criada',
                 'nome_pos' => 'Pos Criado',

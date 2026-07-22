@@ -39,14 +39,9 @@ class TipoController extends Controller
         return redirect()->route('admin.modelos-normalizados.create');
     }
 
-    public function store(Request $request, LegacyModeloSyncService $syncService)
+    public function store(Request $request, NormalizedModeloLegacySyncService $normalizedSyncService)
     {
-        $tipo = new Tipo($this->validateData($request));
-        $tipo->tipo_data = now();
-        $tipo->save();
-        $syncService->syncTipo($tipo->fresh(['paragrafos', 'campos.dados']));
-
-        return redirect()->route('admin.modelos.edit', $tipo)->with('status', 'Modelo criado.');
+        return app(NormalizedTipoController::class)->store($request, $normalizedSyncService);
     }
 
     public function edit(Tipo $modelo)
