@@ -272,7 +272,7 @@
                     <strong>{{ auth()->user()->nome_usu }}</strong>
                     <div>{{ auth()->user()->nivel_usu }}</div>
                 </div>
-                <form method="post" action="{{ route('logout') }}">
+                <form method="get" action="{{ route('legacy.logout') }}">
                     @csrf
                     <button type="submit" class="button secondary">Sair</button>
                 </form>

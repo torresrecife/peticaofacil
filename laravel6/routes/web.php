@@ -19,6 +19,7 @@ Route::get('/', function () {
 
 Route::view('/status', 'status')->name('status');
 Route::get('/legacy/bridge', 'Auth\LegacyBridgeController')->name('legacy.bridge');
+Route::get('/legacy/logout', 'Auth\LoginController@logoutBridge')->name('legacy.logout');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', 'Auth\LoginController@showLoginForm')->name('login');

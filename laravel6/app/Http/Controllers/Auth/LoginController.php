@@ -11,7 +11,7 @@ class LoginController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('guest')->except('logout');
+        $this->middleware('guest')->except(['logout', 'logoutBridge']);
     }
 
     public function showLoginForm()
@@ -48,11 +48,62 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        return $this->performLogout($request);
+    }
+
+    public function logoutBridge(Request $request)
+    {
+        return $this->performLogout($request);
+    }
+
+    protected function performLogout(Request $request)
+    {
+        $this->purgeLegacySession();
+
+        if (Auth::check()) {
+            Auth::logout();
+        }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
+    }
+
+    protected function purgeLegacySession()
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            @session_write_close();
+        }
+
+        $legacyName = 'PHPSESSID';
+        $legacyId = request()->cookie($legacyName);
+
+        if (!$legacyId) {
+            return;
+        }
+
+        $previousName = session_name();
+        $previousId = session_id();
+
+        @session_name($legacyName);
+        @session_id($legacyId);
+
+        if (@session_start()) {
+            $_SESSION = [];
+            @session_destroy();
+        }
+
+        @session_write_close();
+
+        if ($previousName) {
+            @session_name($previousName);
+        }
+
+        if ($previousId) {
+            @session_id($previousId);
+        }
+
+        setcookie($legacyName, '', time() - 3600, '/');
     }
 }
