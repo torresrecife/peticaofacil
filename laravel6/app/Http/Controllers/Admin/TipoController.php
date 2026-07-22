@@ -34,10 +34,7 @@ class TipoController extends Controller
 
     public function create()
     {
-        return view('admin.tipos.form', $this->formData(new Tipo([
-            'tipo_stt' => 'Y',
-            'tipo_arq' => 'pdf',
-        ])));
+        return redirect()->route('admin.modelos-normalizados.create');
     }
 
     public function store(Request $request, LegacyModeloSyncService $syncService)
@@ -52,11 +49,13 @@ class TipoController extends Controller
 
     public function edit(Tipo $modelo)
     {
+        $mirror = PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->first();
+        if ($mirror) {
+            return redirect()->route('admin.modelos-normalizados.edit', $mirror);
+        }
+
         $modelo->load(['paragrafos', 'campos.dados', 'setor', 'cliente', 'servidor']);
         $modelo = $this->prepareForEditor($modelo);
-        $mirror = PeticaoModelo::with(['paragrafos', 'campos.opcoes'])
-            ->where('legacy_tipo_id', $modelo->tipo_id)
-            ->first();
 
         return view('admin.tipos.form', array_merge($this->formData($modelo), ['mirror' => $mirror]));
     }

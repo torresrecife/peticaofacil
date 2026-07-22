@@ -14,6 +14,49 @@ use Illuminate\Validation\Rule;
 
 class NormalizedTipoController extends Controller
 {
+    public function create()
+    {
+        $modelo = new PeticaoModelo([
+            'status' => 'ativo',
+            'arquivo_padrao' => 'pdf',
+            'metadata' => [],
+        ]);
+
+        return view('admin.tipos.form', [
+            'modelo' => $modelo,
+            'mirror' => null,
+            'setores' => Setor::orderBy('nome_setor')->get(),
+            'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
+            'servidores' => SqlServerConfig::active()->orderBy('nome_db')->get(),
+        ]);
+    }
+
+    public function store(Request $request, NormalizedModeloLegacySyncService $syncService)
+    {
+        $data = $this->validateData($request);
+
+        $modelo = PeticaoModelo::create([
+            'legacy_tipo_id' => null,
+            'legacy_sql_config_id' => $data['id_db'] ?: null,
+            'legacy_cliente_id' => $data['id_cliente'] ?: null,
+            'legacy_setor_id' => $data['id_setor'],
+            'nome' => $data['tipo_nome'],
+            'slug' => $this->buildSlug($data['tipo_nome']),
+            'status' => $data['tipo_stt'] === 'Y' ? 'ativo' : 'inativo',
+            'arquivo_padrao' => $data['tipo_arq'],
+            'cabecalho_html' => $data['cod_cabec'] ?? null,
+            'rodape_html' => $data['cod_rodap'] ?? null,
+            'metadata' => [
+                'nome_pre' => $data['nome_pre'] ?? null,
+                'nome_pos' => $data['nome_pos'] ?? null,
+            ],
+        ]);
+
+        $syncService->sync($modelo->fresh(['paragrafos', 'campos.opcoes']));
+
+        return redirect()->route('admin.modelos-normalizados.edit', $modelo)->with('status', 'Modelo criado.');
+    }
+
     public function edit(PeticaoModelo $modeloNormalizado)
     {
         $modeloNormalizado->load(['paragrafos', 'campos.opcoes', 'setor', 'cliente', 'servidor']);
@@ -88,5 +131,16 @@ class NormalizedTipoController extends Controller
         }
 
         return $modelo;
+    }
+
+    protected function buildSlug($nome)
+    {
+        $slug = \Illuminate\Support\Str::slug($nome ?: 'modelo');
+
+        if ($slug === '') {
+            $slug = 'modelo';
+        }
+
+        return $slug . '-' . substr(md5((string) microtime(true)), 0, 8);
     }
 }

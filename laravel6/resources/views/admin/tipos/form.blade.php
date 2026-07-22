@@ -18,18 +18,24 @@
     <div class="actions">
         @php
             $isNormalizedAdmin = $modelo instanceof \App\PeticaoModelo;
-            $montagemRoute = $isNormalizedAdmin
-                ? route('peticoes.normalized.show', $modelo)
-                : route('peticoes.show', $modelo);
-            $saveRoute = $isNormalizedAdmin
-                ? route('admin.modelos-normalizados.update', $modelo)
-                : route('admin.modelos.update', $modelo);
-            $storeParagrafoRoute = $isNormalizedAdmin
-                ? route('admin.modelos-normalizados.paragrafos.store', $modelo)
-                : route('admin.modelos.paragrafos.store', $modelo);
-            $storeCampoRoute = $isNormalizedAdmin
-                ? route('admin.modelos-normalizados.campos.store', $modelo)
-                : route('admin.modelos.campos.store', $modelo);
+            $montagemRoute = null;
+            $saveRoute = null;
+            $storeParagrafoRoute = null;
+            $storeCampoRoute = null;
+            if ($modelo->exists) {
+                $montagemRoute = $isNormalizedAdmin
+                    ? route('peticoes.normalized.show', $modelo)
+                    : route('peticoes.show', $modelo);
+                $saveRoute = $isNormalizedAdmin
+                    ? route('admin.modelos-normalizados.update', $modelo)
+                    : route('admin.modelos.update', $modelo);
+                $storeParagrafoRoute = $isNormalizedAdmin
+                    ? route('admin.modelos-normalizados.paragrafos.store', $modelo)
+                    : route('admin.modelos.paragrafos.store', $modelo);
+                $storeCampoRoute = $isNormalizedAdmin
+                    ? route('admin.modelos-normalizados.campos.store', $modelo)
+                    : route('admin.modelos.campos.store', $modelo);
+            }
         @endphp
         @if($modelo->exists)
             <a class="button link" href="{{ $montagemRoute }}">Abrir montagem</a>
@@ -44,7 +50,7 @@
             <h3>Configuracao do modelo</h3>
             <div class="editor-note">Setor, cliente, servidor externo, cabecalho e rodape.</div>
         </div>
-        <form method="post" action="{{ $modelo->exists ? $saveRoute : route('admin.modelos.store') }}">
+        <form method="post" action="{{ $modelo->exists ? $saveRoute : ($isNormalizedAdmin ? route('admin.modelos-normalizados.store') : route('admin.modelos.store')) }}">
             @csrf
             @if($modelo->exists)
                 @method('put')

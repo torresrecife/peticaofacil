@@ -5,7 +5,7 @@
 @section('content')
 <div class="topbar" style="margin-bottom:16px;">
     <h2 style="margin:0;">Modelos de peticao</h2>
-    <a class="button link" href="{{ route('admin.modelos.create') }}">Novo modelo</a>
+    <a class="button link" href="{{ route('admin.modelos-normalizados.create') }}">Novo modelo</a>
 </div>
 
 <div class="panel" style="padding:0;">

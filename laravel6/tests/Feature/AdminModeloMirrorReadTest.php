@@ -77,6 +77,10 @@ class AdminModeloMirrorReadTest extends TestCase
 
         $this->actingAs($admin)
             ->get('/admin/modelos/77/edit')
+            ->assertRedirect('/admin/modelos-normalizados/77/edit');
+
+        $this->actingAs($admin)
+            ->get('/admin/modelos-normalizados/77/edit')
             ->assertStatus(200)
             ->assertSee('Leitura normalizada')
             ->assertSee('modelo-lido-do-mirror-77');
