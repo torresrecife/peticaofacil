@@ -88,6 +88,11 @@ class PeticaoEditorController extends Controller
         }
 
         $peca = $storage->save($modelo, $data, $peca);
+        $mirror = PeticaoNormalizada::where('legacy_peca_id', $peca->id_pecas)->first();
+
+        if ($mirror) {
+            return redirect()->route('peticoes.saved.edit', $mirror)->with('status', 'Peca salva.');
+        }
 
         return redirect()->route('peticoes.editor.edit', $peca)->with('status', 'Peca salva.');
     }

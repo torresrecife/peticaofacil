@@ -69,12 +69,11 @@ class PeticaoFlowTest extends TestCase
         $this->assertSame($modeloId, (int) $peca->tipo_id);
         $this->assertStringContainsString('deferimento imediato', $peca->cod_pecas);
 
-        $saveResponse->assertRedirect('/pecas/' . $peca->id_pecas . '/editar');
-
         $peticaoEspelho = DB::table('peticoes')->where('legacy_peca_id', $peca->id_pecas)->first();
         $this->assertNotNull($peticaoEspelho);
         $this->assertSame('Fulano da Silva', $peticaoEspelho->cliente_referencia);
         $this->assertStringContainsString('deferimento imediato', $peticaoEspelho->conteudo_html);
+        $saveResponse->assertRedirect('/peticoes-salvas/' . $peticaoEspelho->id . '/editar');
 
         $wordResponse = $this->actingAs($user)->post('/peticoes/' . $modeloId . '/exportar/word', [
             'nome_cli' => 'Fulano da Silva',
@@ -134,7 +133,9 @@ class PeticaoFlowTest extends TestCase
 
         $this->assertNotNull($peca);
         $this->assertSame($modeloId, (int) $peca->tipo_id);
-        $saveResponse->assertRedirect('/pecas/' . $peca->id_pecas . '/editar');
+        $peticaoEspelho = DB::table('peticoes')->where('legacy_peca_id', $peca->id_pecas)->first();
+        $this->assertNotNull($peticaoEspelho);
+        $saveResponse->assertRedirect('/peticoes-salvas/' . $peticaoEspelho->id . '/editar');
 
         $this->actingAs($user)
             ->get('/pecas/' . $peca->id_pecas . '/editar')

@@ -8,11 +8,6 @@ use App\SqlServerConfig;
 
 class SqlServerConfigController extends Controller
 {
-    public function index()
-    {
-        return redirect()->route('admin.servidores-normalizados.index');
-    }
-
     public function edit(SqlServerConfig $servidore)
     {
         $mirror = SqlServerProfile::where('legacy_config_id', $servidore->id_db)->first();

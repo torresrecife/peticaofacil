@@ -12,11 +12,6 @@ use Illuminate\Http\Request;
 
 class TipoController extends Controller
 {
-    public function index()
-    {
-        return redirect()->route('admin.modelos-normalizados.index');
-    }
-
     public function edit(Tipo $modelo)
     {
         $mirror = PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->first();
