@@ -26,8 +26,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', 'Auth\LoginController@login')->name('login.attempt');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::post('/logout', 'Auth\LoginController@logout')->name('logout');
+    Route::get('/primeiro-acesso', 'Auth\LoginController@showForcePasswordForm')->name('password.force');
+    Route::post('/primeiro-acesso', 'Auth\LoginController@updateForcedPassword')->name('password.force.update');
     Route::get('/painel', 'DashboardController')->name('dashboard');
     Route::get('/peticoes', 'PeticaoAssemblyController@index')->name('peticoes.index');
     Route::get('/peticoes/{modelo}', 'PeticaoAssemblyController@show')->name('peticoes.show');

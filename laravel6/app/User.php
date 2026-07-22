@@ -65,6 +65,15 @@ class User extends Authenticatable
         return in_array($this->nivel_usu, ['ADM', 'GER'], true);
     }
 
+    public function requiresInitialPasswordChange()
+    {
+        $access = $this->getOriginal('acesso_usu');
+
+        return $access === null
+            || $access === ''
+            || $access === '0000-00-00 00:00:00';
+    }
+
     public function getClientIdsAttribute()
     {
         if (!$this->id_cliente || $this->id_cliente === '0') {

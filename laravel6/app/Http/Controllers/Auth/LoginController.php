@@ -11,7 +11,12 @@ class LoginController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('guest')->except(['logout', 'logoutBridge']);
+        $this->middleware('guest')->except([
+            'logout',
+            'logoutBridge',
+            'showForcePasswordForm',
+            'updateForcedPassword',
+        ]);
     }
 
     public function showLoginForm()
@@ -39,11 +44,37 @@ class LoginController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
+        if ($user->requiresInitialPasswordChange()) {
+            return redirect()->route('password.force');
+        }
+
         $user->forceFill([
             'acesso_usu' => now(),
         ])->save();
 
         return redirect()->intended(route('dashboard'));
+    }
+
+    public function showForcePasswordForm()
+    {
+        return view('auth.force-password');
+    }
+
+    public function updateForcedPassword(Request $request)
+    {
+        $data = $request->validate([
+            'password' => 'required|string|min:4|confirmed',
+        ]);
+
+        /** @var \App\User $user */
+        $user = Auth::user();
+
+        $user->forceFill([
+            'senha_usu' => md5($data['password']),
+            'acesso_usu' => now(),
+        ])->save();
+
+        return redirect()->route('dashboard')->with('status', 'Senha atualizada com sucesso.');
     }
 
     public function logout(Request $request)
