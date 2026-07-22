@@ -19,10 +19,17 @@ use Illuminate\Support\Str;
 
 $factory->define(User::class, function (Faker $faker) {
     return [
-        'name' => $faker->name,
-        'email' => $faker->unique()->safeEmail,
-        'email_verified_at' => now(),
-        'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
-        'remember_token' => Str::random(10),
+        'nome_usu' => $faker->name,
+        'login_usu' => $faker->unique()->userName,
+        'senha_usu' => md5('secret'),
+        'email_usu' => $faker->unique()->safeEmail,
+        'nivel_usu' => 'USU',
+        'acesso_usu' => now(),
+        'data_cad' => now(),
+        'id_setor' => null,
+        'id_cliente' => '0',
+        'status_usu' => 'ATI',
+        'estados_usu' => null,
+        'comarca_usu' => null,
     ];
 });

@@ -41,7 +41,7 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::get('/pecas/{peca}/editar', 'PeticaoEditorController@edit')->name('peticoes.editor.edit');
     Route::get('/pecas', 'PecaController@index')->name('pecas.index');
 
-    Route::prefix('admin')->name('admin.')->middleware('legacy.role:ADM,GER')->group(function () {
+    Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function () {
         Route::resource('usuarios', 'Admin\UserController')->except(['show', 'destroy'])->parameters([
             'usuarios' => 'user',
         ]);
