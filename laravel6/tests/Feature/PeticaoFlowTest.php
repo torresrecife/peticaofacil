@@ -36,6 +36,9 @@ class PeticaoFlowTest extends TestCase
             ->assertSee('Fulano da Silva')
             ->assertSee('Urgente')
             ->assertSee('Linha 1<br', false)
+            ->assertSee('Cabecalho Normalizado', false)
+            ->assertSee('Pedido Normalizado', false)
+            ->assertSee('Rodape Normalizado', false)
             ->assertSee('deferimento imediato', false);
 
         $previewHtml = $previewResponse->viewData('preview')['html'];

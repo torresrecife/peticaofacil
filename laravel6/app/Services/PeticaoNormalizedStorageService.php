@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Peca;
 use App\PeticaoNormalizada;
 use App\PeticaoVersao;
-use App\Tipo;
 use Illuminate\Support\Facades\DB;
 
 class PeticaoNormalizedStorageService
@@ -16,9 +15,7 @@ class PeticaoNormalizedStorageService
             $peticao->loadMissing(['modelo', 'legacyPeca.tipo']);
 
             $legacyPeca = $peticao->legacyPeca;
-            $tipo = $legacyPeca && $legacyPeca->tipo
-                ? $legacyPeca->tipo
-                : Tipo::find(optional($peticao->modelo)->legacy_tipo_id);
+            $tipo = $legacyPeca && $legacyPeca->tipo ? $legacyPeca->tipo : null;
 
             if ($legacyPeca) {
                 $legacyPeca->nome_cli = $payload['nome_cli'];
@@ -32,8 +29,8 @@ class PeticaoNormalizedStorageService
                 $peticao->nome_arquivo = $legacyPeca->nome_pecas ?: $peticao->nome_arquivo;
             }
 
-            if (!$legacyPeca && $tipo && !$peticao->nome_arquivo) {
-                $peticao->nome_arquivo = $tipo->tipo_nome;
+            if (!$legacyPeca && !$peticao->nome_arquivo) {
+                $peticao->nome_arquivo = optional($peticao->modelo)->nome ?: 'Peticao normalizada';
             }
 
             $peticao->cliente_referencia = $payload['nome_cli'];

@@ -12,12 +12,18 @@ class PeticaoAssemblyController extends Controller
 {
     public function index()
     {
-        $modelos = Tipo::with(['setor', 'cliente'])
-            ->where('tipo_stt', 'Y')
-            ->orderBy('tipo_nome')
+        $modelos = PeticaoModelo::with(['setor', 'cliente'])
+            ->where('status', 'ativo')
+            ->orderBy('nome')
             ->paginate(20);
 
-        return view('peticao.index', compact('modelos'));
+        $legacyFallbacks = Tipo::with(['setor', 'cliente'])
+            ->where('tipo_stt', 'Y')
+            ->whereNotIn('tipo_id', PeticaoModelo::whereNotNull('legacy_tipo_id')->pluck('legacy_tipo_id'))
+            ->orderBy('tipo_nome')
+            ->get();
+
+        return view('peticao.index', compact('modelos', 'legacyFallbacks'));
     }
 
     public function show(Tipo $modelo)
