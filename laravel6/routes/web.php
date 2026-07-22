@@ -67,17 +67,17 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
         Route::resource('clientes', 'Admin\ClienteController')->except(['show', 'destroy'])->parameters([
             'clientes' => 'cliente',
         ]);
-        Route::resource('servidores', 'Admin\SqlServerConfigController')->except(['show', 'destroy'])->parameters([
-            'servidores' => 'servidore',
-        ]);
+        Route::get('servidores', 'Admin\SqlServerConfigController@index')->name('servidores.index');
+        Route::get('servidores/{servidore}/edit', 'Admin\SqlServerConfigController@edit')->name('servidores.edit');
+        Route::match(['put', 'patch'], 'servidores/{servidore}', 'Admin\SqlServerConfigController@update')->name('servidores.update');
         Route::get('servidores-normalizados', 'Admin\NormalizedSqlServerConfigController@index')->name('servidores-normalizados.index');
         Route::get('servidores-normalizados/create', 'Admin\NormalizedSqlServerConfigController@create')->name('servidores-normalizados.create');
         Route::post('servidores-normalizados', 'Admin\NormalizedSqlServerConfigController@store')->name('servidores-normalizados.store');
         Route::get('servidores-normalizados/{servidorNormalizado}/edit', 'Admin\NormalizedSqlServerConfigController@edit')->name('servidores-normalizados.edit');
         Route::put('servidores-normalizados/{servidorNormalizado}', 'Admin\NormalizedSqlServerConfigController@update')->name('servidores-normalizados.update');
-        Route::resource('modelos', 'Admin\TipoController')->except(['show', 'destroy'])->parameters([
-            'modelos' => 'modelo',
-        ]);
+        Route::get('modelos', 'Admin\TipoController@index')->name('modelos.index');
+        Route::get('modelos/{modelo}/edit', 'Admin\TipoController@edit')->name('modelos.edit');
+        Route::match(['put', 'patch'], 'modelos/{modelo}', 'Admin\TipoController@update')->name('modelos.update');
         Route::get('modelos-normalizados', 'Admin\NormalizedTipoController@index')->name('modelos-normalizados.index');
         Route::get('modelos-normalizados/create', 'Admin\NormalizedTipoController@create')->name('modelos-normalizados.create');
         Route::post('modelos-normalizados', 'Admin\NormalizedTipoController@store')->name('modelos-normalizados.store');

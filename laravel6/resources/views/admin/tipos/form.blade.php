@@ -50,7 +50,7 @@
             <h3>Configuracao do modelo</h3>
             <div class="editor-note">Setor, cliente, servidor externo, cabecalho e rodape.</div>
         </div>
-        <form method="post" action="{{ $modelo->exists ? $saveRoute : ($isNormalizedAdmin ? route('admin.modelos-normalizados.store') : route('admin.modelos.store')) }}">
+        <form method="post" action="{{ $modelo->exists ? $saveRoute : route('admin.modelos-normalizados.store') }}">
             @csrf
             @if($modelo->exists)
                 @method('put')

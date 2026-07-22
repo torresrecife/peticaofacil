@@ -23,16 +23,12 @@ class AdminNormalizedModeloCreateTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->get('/admin/modelos/create')
-            ->assertRedirect('/admin/modelos-normalizados/create');
-
-        $this->actingAs($admin)
             ->get('/admin/modelos-normalizados/create')
             ->assertStatus(200)
             ->assertSee('Novo modelo');
 
         $response = $this->actingAs($admin)
-            ->post('/admin/modelos', [
+            ->post('/admin/modelos-normalizados', [
                 'tipo_nome' => 'Modelo Criado Normalizado',
                 'nome_pre' => 'Descricao Criada',
                 'nome_pos' => 'Pos Criado',

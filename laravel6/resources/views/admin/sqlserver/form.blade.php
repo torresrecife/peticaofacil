@@ -13,7 +13,7 @@
         $isNormalized = $mirror || $config instanceof \App\SqlServerProfile;
         $formAction = $config->exists
             ? ($isNormalized ? route('admin.servidores-normalizados.update', $config) : route('admin.servidores.update', $config))
-            : ($isNormalized ? route('admin.servidores-normalizados.store') : route('admin.servidores.store'));
+            : route('admin.servidores-normalizados.store');
     @endphp
 
     @if($isNormalized)

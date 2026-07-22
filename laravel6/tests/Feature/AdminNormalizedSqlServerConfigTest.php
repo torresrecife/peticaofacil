@@ -16,16 +16,12 @@ class AdminNormalizedSqlServerConfigTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->get('/admin/servidores/create')
-            ->assertRedirect('/admin/servidores-normalizados/create');
-
-        $this->actingAs($admin)
             ->get('/admin/servidores-normalizados/create')
             ->assertStatus(200)
             ->assertSee('Novo servidor SQL');
 
         $response = $this->actingAs($admin)
-            ->post('/admin/servidores', [
+            ->post('/admin/servidores-normalizados', [
                 'nome_db' => 'Consulta Processos',
                 'ip_db' => '10.0.0.15',
                 'data_db' => 'juridico',
