@@ -54,11 +54,7 @@
                     <td>{{ optional($peca->legacyUsuario)->login_usu }}</td>
                     <td><span class="editor-note">Normalizada</span></td>
                     <td>
-                        @if($peca->legacyPeca)
-                            <a href="{{ route('peticoes.editor.edit', $peca->legacyPeca) }}">Editar</a>
-                        @else
-                            <span class="editor-note">Sem vinculo legado</span>
-                        @endif
+                        <a href="{{ route('peticoes.saved.edit', $peca) }}">Editar</a>
                     </td>
                 </tr>
             @empty
