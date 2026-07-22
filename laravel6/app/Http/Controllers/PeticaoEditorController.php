@@ -76,6 +76,8 @@ class PeticaoEditorController extends Controller
             'cod_pecas' => 'required|string',
         ]);
 
+        $this->prepareLegacyPdfEnvironment($request);
+
         $library = base_path('..\\html2pdf\\html2pdf.class.php');
         if (!file_exists($library)) {
             abort(500, 'Biblioteca de PDF nao encontrada.');
@@ -100,6 +102,25 @@ class PeticaoEditorController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="' . $this->sanitizeFileName($data['nome_cli']) . '.pdf"',
         ]);
+    }
+
+    protected function prepareLegacyPdfEnvironment(Request $request)
+    {
+        $appUrl = (string) config('app.url', 'http://localhost');
+        $parts = parse_url($appUrl);
+
+        $host = $parts['host'] ?? ($request->getHost() ?: 'localhost');
+        $scheme = $parts['scheme'] ?? ($request->getScheme() ?: 'http');
+        $basePath = isset($parts['path']) ? rtrim($parts['path'], '/') : '';
+        $scriptPath = ($basePath !== '' ? $basePath : '') . '/index.php';
+
+        $_SERVER['HTTP_HOST'] = $_SERVER['HTTP_HOST'] ?? $host;
+        $_SERVER['HTTPS'] = $_SERVER['HTTPS'] ?? ($scheme === 'https' ? 'on' : 'off');
+        $_SERVER['PHP_SELF'] = $_SERVER['PHP_SELF'] ?? $scriptPath;
+        $_SERVER['SCRIPT_NAME'] = $_SERVER['SCRIPT_NAME'] ?? $scriptPath;
+        $_SERVER['REQUEST_URI'] = $_SERVER['REQUEST_URI'] ?? $scriptPath;
+        $_SERVER['SCRIPT_FILENAME'] = $_SERVER['SCRIPT_FILENAME'] ?? public_path('index.php');
+        $_SERVER['DOCUMENT_ROOT'] = $_SERVER['DOCUMENT_ROOT'] ?? realpath(public_path());
     }
 
     protected function normalizePdfImageSrc($html)
