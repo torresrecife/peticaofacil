@@ -111,13 +111,41 @@
 
 <div class="model-section">
     <div class="panel">
+        <form method="get" action="{{ route('peticoes.index') }}">
+            <div class="form-grid" style="grid-template-columns:minmax(0, 1fr) auto;">
+                <div class="form-group">
+                    <label>Buscar modelo</label>
+                    <input
+                        name="search"
+                        value="{{ $search ?? '' }}"
+                        list="peticao-modelo-suggestions"
+                        placeholder="Digite o nome ou ID da peticao">
+                    <datalist id="peticao-modelo-suggestions">
+                        @foreach($suggestions as $suggestion)
+                            <option value="{{ $suggestion }}"></option>
+                        @endforeach
+                    </datalist>
+                    <div class="editor-note">Busca por nome, slug ou ID. O autocomplete sugere modelos cadastrados.</div>
+                </div>
+                <div class="form-group" style="justify-content:end;">
+                    <label>&nbsp;</label>
+                    <div class="actions">
+                        <button type="submit">Buscar</button>
+                        <a class="button secondary link" href="{{ route('peticoes.index') }}">Limpar</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="panel">
         <div class="section-title" style="margin-bottom:10px;">
             <h3>Modelos normalizados</h3>
             <div class="editor-note">Selecione um modelo para iniciar a montagem. A trilha principal usa os modelos normalizados.</div>
         </div>
 
         @if($modelos->isEmpty())
-            <div class="model-empty">Nenhum modelo normalizado disponivel.</div>
+            <div class="model-empty">Nenhum modelo normalizado encontrado para este filtro.</div>
         @else
             <div class="model-grid">
                 @foreach($modelos as $modelo)
@@ -195,6 +223,10 @@
 
         <div class="pagination-wrap">
             {{ $legacyFallbacks->links('vendor.pagination.default') }}
+        </div>
+    @elseif(($search ?? '') !== '')
+        <div class="panel">
+            <div class="model-empty">Nenhum modelo legado encontrado para este filtro.</div>
         </div>
     @endif
 </div>

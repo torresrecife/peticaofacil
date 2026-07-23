@@ -13,6 +13,8 @@ class PeticaoAssemblyController extends Controller
 {
     public function index(Request $request)
     {
+        $search = trim((string) $request->query('search', ''));
+
         $favoriteRows = Auth::user()
             ->favoriteModelos()
             ->get()
@@ -26,6 +28,13 @@ class PeticaoAssemblyController extends Controller
 
         $modelos = PeticaoModelo::with(['setor', 'cliente'])
             ->where('status', 'ativo')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($builder) use ($search) {
+                    $builder->where('nome', 'like', '%' . $search . '%')
+                        ->orWhere('slug', 'like', '%' . $search . '%')
+                        ->orWhere('legacy_tipo_id', 'like', '%' . $search . '%');
+                });
+            })
             ->orderBy('nome')
             ->paginate(18, ['*'], 'modelos_page')
             ->appends($request->except('modelos_page'));
@@ -33,11 +42,43 @@ class PeticaoAssemblyController extends Controller
         $legacyFallbacks = Tipo::with(['setor', 'cliente'])
             ->where('tipo_stt', 'Y')
             ->whereNotIn('tipo_id', PeticaoModelo::whereNotNull('legacy_tipo_id')->pluck('legacy_tipo_id'))
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($builder) use ($search) {
+                    $builder->where('tipo_nome', 'like', '%' . $search . '%')
+                        ->orWhere('tipo_id', 'like', '%' . $search . '%');
+                });
+            })
             ->orderBy('tipo_nome')
             ->paginate(12, ['*'], 'legacy_page')
             ->appends($request->except('legacy_page'));
 
-        return view('peticao.index', compact('modelos', 'legacyFallbacks', 'favoriteRows'));
+        $suggestions = collect();
+
+        $normalizedSuggestions = PeticaoModelo::where('status', 'ativo')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where('nome', 'like', '%' . $search . '%');
+            })
+            ->orderBy('nome')
+            ->limit(30)
+            ->pluck('nome');
+
+        $legacySuggestions = Tipo::where('tipo_stt', 'Y')
+            ->whereNotIn('tipo_id', PeticaoModelo::whereNotNull('legacy_tipo_id')->pluck('legacy_tipo_id'))
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where('tipo_nome', 'like', '%' . $search . '%');
+            })
+            ->orderBy('tipo_nome')
+            ->limit(20)
+            ->pluck('tipo_nome');
+
+        $suggestions = $suggestions
+            ->merge($normalizedSuggestions)
+            ->merge($legacySuggestions)
+            ->filter()
+            ->unique()
+            ->values();
+
+        return view('peticao.index', compact('modelos', 'legacyFallbacks', 'favoriteRows', 'search', 'suggestions'));
     }
 
     public function showNormalized(PeticaoModelo $modeloNormalizado)
