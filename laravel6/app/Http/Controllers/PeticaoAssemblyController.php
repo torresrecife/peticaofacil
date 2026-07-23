@@ -14,10 +14,14 @@ class PeticaoAssemblyController extends Controller
     public function index(Request $request)
     {
         $search = trim((string) $request->query('search', ''));
+        $favoriteNormalizedIds = [];
+        $favoriteLegacyTipoIds = [];
 
-        $favoriteRows = Auth::user()
+        $favoriteCollection = Auth::user()
             ->favoriteModelos()
-            ->get()
+            ->get();
+
+        $favoriteRows = $favoriteCollection
             ->mapWithKeys(function ($favorite) {
                 $key = $favorite->source === 'normalized'
                     ? 'normalized:' . $favorite->modelo_id
@@ -26,7 +30,27 @@ class PeticaoAssemblyController extends Controller
                 return [$key => true];
             });
 
-        $modelos = PeticaoModelo::with(['setor', 'cliente'])
+        $favoriteNormalizedIds = $favoriteCollection
+            ->where('source', 'normalized')
+            ->pluck('modelo_id')
+            ->filter()
+            ->map(function ($id) {
+                return (int) $id;
+            })
+            ->values()
+            ->all();
+
+        $favoriteLegacyTipoIds = $favoriteCollection
+            ->where('source', 'legacy')
+            ->pluck('legacy_tipo_id')
+            ->filter()
+            ->map(function ($id) {
+                return (int) $id;
+            })
+            ->values()
+            ->all();
+
+        $modelosQuery = PeticaoModelo::with(['setor', 'cliente'])
             ->where('status', 'ativo')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($builder) use ($search) {
@@ -34,12 +58,20 @@ class PeticaoAssemblyController extends Controller
                         ->orWhere('slug', 'like', '%' . $search . '%')
                         ->orWhere('legacy_tipo_id', 'like', '%' . $search . '%');
                 });
-            })
+            });
+
+        if (!empty($favoriteNormalizedIds)) {
+            $modelosQuery->orderByRaw(
+                'CASE WHEN id IN (' . implode(',', $favoriteNormalizedIds) . ') THEN 0 ELSE 1 END'
+            );
+        }
+
+        $modelos = $modelosQuery
             ->orderBy('nome')
             ->paginate(18, ['*'], 'modelos_page')
             ->appends($request->except('modelos_page'));
 
-        $legacyFallbacks = Tipo::with(['setor', 'cliente'])
+        $legacyFallbacksQuery = Tipo::with(['setor', 'cliente'])
             ->where('tipo_stt', 'Y')
             ->whereNotIn('tipo_id', PeticaoModelo::whereNotNull('legacy_tipo_id')->pluck('legacy_tipo_id'))
             ->when($search !== '', function ($query) use ($search) {
@@ -47,7 +79,15 @@ class PeticaoAssemblyController extends Controller
                     $builder->where('tipo_nome', 'like', '%' . $search . '%')
                         ->orWhere('tipo_id', 'like', '%' . $search . '%');
                 });
-            })
+            });
+
+        if (!empty($favoriteLegacyTipoIds)) {
+            $legacyFallbacksQuery->orderByRaw(
+                'CASE WHEN tipo_id IN (' . implode(',', $favoriteLegacyTipoIds) . ') THEN 0 ELSE 1 END'
+            );
+        }
+
+        $legacyFallbacks = $legacyFallbacksQuery
             ->orderBy('tipo_nome')
             ->paginate(12, ['*'], 'legacy_page')
             ->appends($request->except('legacy_page'));
