@@ -27,6 +27,7 @@ abstract class TestCase extends BaseTestCase
             'peticao_modelo_campos',
             'peticao_modelo_paragrafos',
             'peticao_modelos',
+            'user_model_favorites',
             'sql_server_profiles',
             'tp_pecas_tb',
             'tp_dados_tb',
@@ -206,6 +207,15 @@ abstract class TestCase extends BaseTestCase
             $table->timestamps();
         });
 
+        $this->createOrResetTable('user_model_favorites', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedInteger('legacy_usuario_id');
+            $table->string('source', 20);
+            $table->unsignedBigInteger('modelo_id')->default(0);
+            $table->unsignedInteger('legacy_tipo_id')->default(0);
+            $table->timestamps();
+        });
+
         $this->createOrResetTable('peticao_modelo_paragrafos', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('modelo_id');
@@ -287,7 +297,17 @@ abstract class TestCase extends BaseTestCase
     protected function createOrResetTable(string $table, \Closure $callback): void
     {
         if (!Schema::hasTable($table)) {
-            Schema::create($table, $callback);
+            try {
+                Schema::create($table, $callback);
+            } catch (\Throwable $e) {
+                if (!Schema::hasTable($table)) {
+                    throw $e;
+                }
+
+                DB::statement('SET FOREIGN_KEY_CHECKS=0');
+                DB::table($table)->truncate();
+                DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            }
 
             return;
         }

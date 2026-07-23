@@ -6,24 +6,38 @@ use App\PeticaoModelo;
 use App\Services\SqlServerLookupService;
 use App\Services\PeticaoComposerService;
 use App\Tipo;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class PeticaoAssemblyController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $favoriteRows = Auth::user()
+            ->favoriteModelos()
+            ->get()
+            ->mapWithKeys(function ($favorite) {
+                $key = $favorite->source === 'normalized'
+                    ? 'normalized:' . $favorite->modelo_id
+                    : 'legacy:' . $favorite->legacy_tipo_id;
+
+                return [$key => true];
+            });
+
         $modelos = PeticaoModelo::with(['setor', 'cliente'])
             ->where('status', 'ativo')
             ->orderBy('nome')
-            ->paginate(20);
+            ->paginate(18, ['*'], 'modelos_page')
+            ->appends($request->except('modelos_page'));
 
         $legacyFallbacks = Tipo::with(['setor', 'cliente'])
             ->where('tipo_stt', 'Y')
             ->whereNotIn('tipo_id', PeticaoModelo::whereNotNull('legacy_tipo_id')->pluck('legacy_tipo_id'))
             ->orderBy('tipo_nome')
-            ->get();
+            ->paginate(12, ['*'], 'legacy_page')
+            ->appends($request->except('legacy_page'));
 
-        return view('peticao.index', compact('modelos', 'legacyFallbacks'));
+        return view('peticao.index', compact('modelos', 'legacyFallbacks', 'favoriteRows'));
     }
 
     public function showNormalized(PeticaoModelo $modeloNormalizado)
@@ -102,6 +116,8 @@ class PeticaoAssemblyController extends Controller
 
     protected function renderAssemble($modelo, $modeloFonte, $preview = null, array $values = [], $codigoProcesso = '', $lookupStatus = null)
     {
+        $lookupConfig = $this->resolveLookupConfig($modeloFonte);
+
         return view('peticao.assemble', [
             'modelo' => $modelo,
             'modeloFonte' => $modeloFonte,
@@ -109,6 +125,7 @@ class PeticaoAssemblyController extends Controller
             'values' => $values,
             'codigoProcesso' => $codigoProcesso,
             'lookupStatus' => $lookupStatus,
+            'lookupConfig' => $lookupConfig,
         ]);
     }
 

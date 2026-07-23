@@ -27,16 +27,20 @@
             $normalizedStoreRoute = $usesNormalizedSource
                 ? route('peticoes.normalized.saved.store', $modeloFonte)
                 : route('peticoes.saved.store', $modelo);
+            $lookupKey = '';
+            if (!empty($lookupConfig)) {
+                $lookupKey = $lookupConfig->lookup_key ?? $lookupConfig->chave_db ?? '';
+            }
         @endphp
 
         <form method="post" action="{{ $composeRoute }}">
             @csrf
-            @if($modeloFonte->servidor)
+            @if(!empty($lookupConfig))
                 <div class="panel-muted" style="margin-bottom:20px;">
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Pesquisa por processo</label>
-                            <input name="codigo_processo" value="{{ $codigoProcesso ?? '' }}" placeholder="{{ $modeloFonte->servidor->chave_db ?: 'Codigo do processo' }}">
+                            <input name="codigo_processo" value="{{ $codigoProcesso ?? '' }}" placeholder="{{ $lookupKey ?: 'Codigo do processo' }}">
                             <div class="editor-note">Busca no SQL Server configurado para este modelo e preenche automaticamente os campos mapeados.</div>
                         </div>
                         <div class="form-group" style="justify-content:end;">

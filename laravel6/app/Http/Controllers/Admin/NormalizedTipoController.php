@@ -7,8 +7,10 @@ use App\Http\Controllers\Controller;
 use App\PeticaoModelo;
 use App\Setor;
 use App\SqlServerProfile;
+use App\SqlServerConfig;
 use App\Support\LegacyEditorContent;
 use App\Services\NormalizedModeloLegacySyncService;
+use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -44,7 +46,7 @@ class NormalizedTipoController extends Controller
             'mirror' => null,
             'setores' => Setor::orderBy('nome_setor')->get(),
             'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
-            'servidores' => SqlServerProfile::active()->orderBy('nome')->get(),
+            'servidores' => $this->availableServidores(),
         ]);
     }
 
@@ -84,7 +86,7 @@ class NormalizedTipoController extends Controller
             'mirror' => $modeloNormalizado,
             'setores' => Setor::orderBy('nome_setor')->get(),
             'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
-            'servidores' => SqlServerProfile::active()->orderBy('nome')->get(),
+            'servidores' => $this->availableServidores(),
         ]);
     }
 
@@ -159,5 +161,24 @@ class NormalizedTipoController extends Controller
         }
 
         return $slug . '-' . substr(md5((string) microtime(true)), 0, 8);
+    }
+
+    protected function availableServidores(): Collection
+    {
+        $profiles = SqlServerProfile::active()->orderBy('nome')->get();
+
+        if ($profiles->isEmpty()) {
+            return SqlServerConfig::active()->orderBy('nome_db')->get();
+        }
+
+        $legacyIds = $profiles->pluck('legacy_config_id')->filter()->values()->all();
+        $legacyFallback = SqlServerConfig::active()
+            ->when(!empty($legacyIds), function ($query) use ($legacyIds) {
+                $query->whereNotIn('id_db', $legacyIds);
+            })
+            ->orderBy('nome_db')
+            ->get();
+
+        return $profiles->concat($legacyFallback)->values();
     }
 }

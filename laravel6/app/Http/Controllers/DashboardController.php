@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Cliente;
 use App\Peca;
+use App\PeticaoModelo;
 use App\PeticaoNormalizada;
 use App\Setor;
+use App\Tipo;
 use App\User;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -40,6 +43,7 @@ class DashboardController extends Controller
             ->values();
 
         $usuariosHoje = $this->buildUsuariosHoje($peticoesHojeNormalizadas, $peticoesHojeLegadas);
+        $favoritos = $this->buildFavoritos();
 
         return view('dashboard', [
             'userCount' => User::count(),
@@ -49,7 +53,58 @@ class DashboardController extends Controller
             'todayLabel' => now()->format('d/m/Y'),
             'peticoesHoje' => $peticoesHoje,
             'usuariosHoje' => $usuariosHoje,
+            'favoritos' => $favoritos,
         ]);
+    }
+
+    protected function buildFavoritos()
+    {
+        $favorites = Auth::user()
+            ->favoriteModelos()
+            ->orderBy('created_at')
+            ->get();
+
+        return $favorites->map(function ($favorite) {
+            if ($favorite->source === 'normalized' && $favorite->modelo_id) {
+                $modelo = PeticaoModelo::with(['setor', 'cliente'])->find($favorite->modelo_id);
+
+                if ($modelo) {
+                    return (object) [
+                        'nome' => $modelo->nome,
+                        'subtitulo' => optional($modelo->setor)->nome_setor ?: 'Modelo normalizado',
+                        'badge' => 'Normalizado',
+                        'link' => route('peticoes.normalized.show', $modelo),
+                    ];
+                }
+            }
+
+            $legacyTipoId = (int) $favorite->legacy_tipo_id;
+            $mirror = $legacyTipoId > 0
+                ? PeticaoModelo::with(['setor', 'cliente'])->where('legacy_tipo_id', $legacyTipoId)->first()
+                : null;
+
+            if ($mirror) {
+                return (object) [
+                    'nome' => $mirror->nome,
+                    'subtitulo' => optional($mirror->setor)->nome_setor ?: 'Modelo normalizado',
+                    'badge' => 'Normalizado',
+                    'link' => route('peticoes.normalized.show', $mirror),
+                ];
+            }
+
+            $tipo = $legacyTipoId > 0 ? Tipo::with(['setor', 'cliente'])->find($legacyTipoId) : null;
+
+            if ($tipo) {
+                return (object) [
+                    'nome' => $tipo->tipo_nome,
+                    'subtitulo' => optional($tipo->setor)->nome_setor ?: 'Modelo legado',
+                    'badge' => 'Legado',
+                    'link' => route('peticoes.show', $tipo),
+                ];
+            }
+
+            return null;
+        })->filter()->values();
     }
 
     protected function mergePeticoesHoje($normalizadas, $legadas)

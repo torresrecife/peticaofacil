@@ -4,6 +4,7 @@ namespace App;
 
 use App\Support\LegacyEncoding;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -53,6 +54,11 @@ class User extends Authenticatable
     public function setor()
     {
         return $this->belongsTo(Setor::class, 'id_setor', 'id_setor');
+    }
+
+    public function favoriteModelos(): HasMany
+    {
+        return $this->hasMany(UserFavoriteModelo::class, 'legacy_usuario_id', 'id_usu');
     }
 
     public function scopeActive($query)

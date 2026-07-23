@@ -22,10 +22,25 @@ class AdminNormalizedModeloCreateTest extends TestCase
             'data_cad' => now(),
         ]);
 
+        DB::table('tp_config_db')->insert([
+            'id_db' => 54,
+            'nome_db' => 'NEO',
+            'ip_db' => '127.0.0.1',
+            'data_db' => 'neo',
+            'usu_db' => 'sa',
+            'senha_db' => '123',
+            'table_db' => 'Processos',
+            'chave_db' => 'CodigoProcesso',
+            'query_db' => 'select * from Processos',
+            'where_db' => 'where CodigoProcesso = ?',
+            'stt' => 'Y',
+        ]);
+
         $this->actingAs($admin)
             ->get('/admin/modelos-normalizados/create')
             ->assertStatus(200)
-            ->assertSee('Novo modelo');
+            ->assertSee('Novo modelo')
+            ->assertSee('NEO');
 
         $response = $this->actingAs($admin)
             ->post('/admin/modelos-normalizados', [

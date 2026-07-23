@@ -6,10 +6,12 @@ use App\Cliente;
 use App\Http\Controllers\Controller;
 use App\Setor;
 use App\SqlServerProfile;
+use App\SqlServerConfig;
 use App\Support\LegacyEditorContent;
 use App\Services\LegacyModeloSyncService;
 use App\Tipo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 class LegacyTipoFallbackController extends Controller
@@ -24,7 +26,7 @@ class LegacyTipoFallbackController extends Controller
             'mirror' => null,
             'setores' => Setor::orderBy('nome_setor')->get(),
             'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
-            'servidores' => SqlServerProfile::active()->orderBy('nome')->get(),
+            'servidores' => $this->availableServidores(),
         ]);
     }
 
@@ -71,5 +73,24 @@ class LegacyTipoFallbackController extends Controller
         }
 
         return $modelo;
+    }
+
+    protected function availableServidores(): Collection
+    {
+        $profiles = SqlServerProfile::active()->orderBy('nome')->get();
+
+        if ($profiles->isEmpty()) {
+            return SqlServerConfig::active()->orderBy('nome_db')->get();
+        }
+
+        $legacyIds = $profiles->pluck('legacy_config_id')->filter()->values()->all();
+        $legacyFallback = SqlServerConfig::active()
+            ->when(!empty($legacyIds), function ($query) use ($legacyIds) {
+                $query->whereNotIn('id_db', $legacyIds);
+            })
+            ->orderBy('nome_db')
+            ->get();
+
+        return $profiles->concat($legacyFallback)->values();
     }
 }

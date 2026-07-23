@@ -32,6 +32,10 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::post('/primeiro-acesso', 'Auth\LoginController@updateForcedPassword')->name('password.force.update');
     Route::get('/painel', 'DashboardController')->name('dashboard');
     Route::get('/peticoes', 'PeticaoAssemblyController@index')->name('peticoes.index');
+    Route::post('/peticoes/modelos/{modeloNormalizado}/favorito', 'FavoriteModeloController@storeNormalized')->name('peticoes.normalized.favorite.store');
+    Route::delete('/peticoes/modelos/{modeloNormalizado}/favorito', 'FavoriteModeloController@destroyNormalized')->name('peticoes.normalized.favorite.destroy');
+    Route::post('/peticoes/{modelo}/favorito', 'FavoriteModeloController@storeLegacy')->name('peticoes.legacy.favorite.store');
+    Route::delete('/peticoes/{modelo}/favorito', 'FavoriteModeloController@destroyLegacy')->name('peticoes.legacy.favorite.destroy');
     Route::get('/peticoes/modelos/{modeloNormalizado}', 'PeticaoAssemblyController@showNormalized')->name('peticoes.normalized.show');
     Route::post('/peticoes/modelos/{modeloNormalizado}', 'PeticaoAssemblyController@composeNormalized')->name('peticoes.normalized.compose');
     Route::post('/peticoes/modelos/{modeloNormalizado}/editor', 'PeticaoEditorController@createNormalized')->name('peticoes.normalized.editor.create');
