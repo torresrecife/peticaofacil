@@ -88,6 +88,49 @@ class AdminListaPersistenceTest extends TestCase
         $this->assertSame('2026-01-10 10:00:00', $item->data_cad);
     }
 
+    public function test_edit_page_filters_items_by_search_term()
+    {
+        $this->ensureListaTables();
+
+        $admin = factory(User::class)->create([
+            'nivel_usu' => 'ADM',
+            'id_setor' => 7,
+            'acesso_usu' => now(),
+        ]);
+
+        DB::table('tp_grupo_tb')->insert([
+            'id_grupo' => 1,
+            'nome_grupo' => 'Lista Teste',
+            'data_cad' => '2026-01-10 10:00:00',
+        ]);
+
+        DB::table('tp_lista_tb')->insert([
+            [
+                'id_lista' => 10,
+                'id_grupo' => 1,
+                'nome_lista' => 'Alpha',
+                'return_1' => 'Primeiro',
+                'data_cad' => '2026-01-10 10:00:00',
+                'id_setor' => 7,
+            ],
+            [
+                'id_lista' => 11,
+                'id_grupo' => 1,
+                'nome_lista' => 'Beta',
+                'return_1' => 'Segundo',
+                'data_cad' => '2026-01-10 10:00:00',
+                'id_setor' => 7,
+            ],
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/listas/1/edit?search=Alpha')
+            ->assertStatus(200)
+            ->assertSee('Alpha')
+            ->assertDontSee('Beta')
+            ->assertSee('para "Alpha"');
+    }
+
     protected function ensureListaTables()
     {
         if (!Schema::hasTable('tp_grupo_tb')) {

@@ -38,13 +38,27 @@ class ListaController extends Controller
         return redirect()->route('admin.listas.index')->with('status', 'Lista criada.');
     }
 
-    public function edit(ListaGrupo $lista)
+    public function edit(Request $request, ListaGrupo $lista)
     {
-        $lista->load(['itens' => function ($query) {
-            $query->orderBy('id_lista');
-        }]);
+        $search = trim((string) $request->query('search', ''));
+        $itensQuery = $lista->itens()->orderBy('id_lista');
 
-        return view('admin.listas.form', compact('lista'));
+        if ($search !== '') {
+            $itensQuery->where(function ($query) use ($search) {
+                $query->where('nome_lista', 'like', '%' . $search . '%')
+                    ->orWhere('return_1', 'like', '%' . $search . '%')
+                    ->orWhere('return_2', 'like', '%' . $search . '%')
+                    ->orWhere('return_3', 'like', '%' . $search . '%')
+                    ->orWhere('return_4', 'like', '%' . $search . '%')
+                    ->orWhere('return_5', 'like', '%' . $search . '%')
+                    ->orWhere('return_6', 'like', '%' . $search . '%');
+            });
+        }
+
+        $itens = $itensQuery->get();
+        $lista->setRelation('itens', $itens);
+
+        return view('admin.listas.form', compact('lista', 'search'));
     }
 
     public function update(Request $request, ListaGrupo $lista)

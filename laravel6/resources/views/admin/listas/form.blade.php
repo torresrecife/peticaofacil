@@ -36,7 +36,26 @@
     <div class="panel">
         <div class="section-title">
             <h3>Itens da lista</h3>
-            <a class="button link" href="{{ route('admin.listas.itens.create', $lista) }}">Novo item</a>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <form method="get" action="{{ route('admin.listas.edit', $lista) }}" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:0;">
+                    <input
+                        type="search"
+                        name="search"
+                        value="{{ $search ?? '' }}"
+                        placeholder="Buscar item ou retorno"
+                        style="min-width:260px;"
+                    >
+                    <button type="submit" class="button secondary">Buscar</button>
+                    @if(!empty($search))
+                        <a class="button secondary link" href="{{ route('admin.listas.edit', $lista) }}">Limpar</a>
+                    @endif
+                </form>
+                <a class="button link" href="{{ route('admin.listas.itens.create', $lista) }}">Novo item</a>
+            </div>
+        </div>
+
+        <div style="font-size:13px; color:#6b7280; margin-bottom:14px;">
+            {{ $lista->itens->count() }} item(ns) exibido(s)@if(!empty($search)) para "{{ $search }}"@endif
         </div>
 
         @if($lista->itens->isEmpty())
