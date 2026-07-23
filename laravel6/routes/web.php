@@ -94,6 +94,11 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
         Route::resource('listas', 'Admin\ListaController')->except(['show'])->parameters([
             'listas' => 'lista',
         ]);
+        Route::get('listas/{lista}/itens/create', 'Admin\ListaItemController@create')->name('listas.itens.create');
+        Route::post('listas/{lista}/itens', 'Admin\ListaItemController@store')->name('listas.itens.store');
+        Route::get('listas/{lista}/itens/{item}/edit', 'Admin\ListaItemController@edit')->name('listas.itens.edit');
+        Route::put('listas/{lista}/itens/{item}', 'Admin\ListaItemController@update')->name('listas.itens.update');
+        Route::delete('listas/{lista}/itens/{item}', 'Admin\ListaItemController@destroy')->name('listas.itens.destroy');
         Route::post('modelos/{modelo}/paragrafos', 'Admin\ParagrafoController@store')->name('modelos.paragrafos.store');
         Route::put('modelos/{modelo}/paragrafos/{paragrafo}', 'Admin\ParagrafoController@update')->name('modelos.paragrafos.update');
         Route::post('modelos/{modelo}/campos', 'Admin\InputCampoController@store')->name('modelos.campos.store');

@@ -34,6 +34,8 @@ abstract class TestCase extends BaseTestCase
             'tp_inputs_tb',
             'tp_funda_tb',
             'tp_tipo_tb',
+            'tp_lista_tb',
+            'tp_grupo_tb',
             'tp_config_db',
             'tp_clientes_db',
             'tp_setor_tb',
@@ -126,6 +128,30 @@ abstract class TestCase extends BaseTestCase
             $table->longText('cod_cabec')->nullable();
             $table->longText('cod_rodap')->nullable();
             $table->string('tipo_arq', 255)->nullable();
+        });
+
+        $this->createOrResetTable('tp_grupo_tb', function (Blueprint $table) {
+            $table->increments('id_grupo');
+            $table->string('nome_grupo', 500);
+            $table->string('titulo_1', 500)->nullable();
+            $table->string('titulo_2', 500)->nullable();
+            $table->string('titulo_3', 500)->nullable();
+            $table->string('titulo_4', 500)->nullable();
+            $table->dateTime('data_cad')->nullable();
+        });
+
+        $this->createOrResetTable('tp_lista_tb', function (Blueprint $table) {
+            $table->increments('id_lista');
+            $table->unsignedInteger('id_grupo');
+            $table->string('nome_lista', 500)->nullable();
+            $table->string('return_1', 500)->nullable();
+            $table->string('return_2', 500)->nullable();
+            $table->string('return_3', 500)->nullable();
+            $table->string('return_4', 500)->nullable();
+            $table->string('return_5', 500)->nullable();
+            $table->string('return_6', 500)->nullable();
+            $table->dateTime('data_cad')->nullable();
+            $table->unsignedInteger('id_setor')->nullable();
         });
 
         $this->createOrResetTable('tp_funda_tb', function (Blueprint $table) {

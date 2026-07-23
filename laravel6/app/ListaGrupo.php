@@ -11,11 +11,9 @@ class ListaGrupo extends Model
 
     protected $table = 'tp_grupo_tb';
     protected $primaryKey = 'id_grupo';
-    public $incrementing = false;
     public $timestamps = false;
 
     protected $fillable = [
-        'id_grupo',
         'nome_grupo',
         'data_cad',
     ];
