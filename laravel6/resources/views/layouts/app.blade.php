@@ -53,11 +53,17 @@
             gap: 12px;
             padding: 10px 12px;
             border-radius: 6px;
-            transition: background .15s ease, color .15s ease;
+            border-left: 3px solid transparent;
+            transition: background .15s ease, color .15s ease, border-color .15s ease;
         }
         .sidebar-link:hover {
             background: rgba(217, 226, 236, 0.08);
             color: #f0f4f8;
+        }
+        .sidebar-link.is-active {
+            background: rgba(217, 226, 236, 0.12);
+            color: #f0f4f8;
+            border-left-color: #5fb3f3;
         }
         .sidebar-link__icon {
             width: 24px;
@@ -67,7 +73,8 @@
             justify-content: center;
         }
         .sidebar-link__icon svg,
-        .sidebar-brand__icon svg {
+        .sidebar-brand__icon svg,
+        .app-icon {
             width: 18px;
             height: 18px;
             stroke: currentColor;
@@ -358,127 +365,83 @@
 </head>
 <body>
 @auth
+    @php
+        $isActiveMenu = function (array $patterns) {
+            foreach ($patterns as $pattern) {
+                if (request()->routeIs($pattern)) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+    @endphp
     <div class="shell" id="app-shell">
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <span class="sidebar-brand__icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M6 3h9l3 3v15H6z"></path>
-                        <path d="M15 3v4h4"></path>
-                        <path d="M9 13h6"></path>
-                        <path d="M9 17h4"></path>
-                    </svg>
+                    <i data-lucide="file-text"></i>
                 </span>
                 <strong class="sidebar-brand__label">Peticao Facil</strong>
             </div>
             <nav class="sidebar-nav">
-                <a class="sidebar-link" href="{{ route('dashboard') }}">
+                <a class="sidebar-link {{ $isActiveMenu(['dashboard']) ? 'is-active' : '' }}" href="{{ route('dashboard') }}" @if($isActiveMenu(['dashboard'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M3 10.5 12 3l9 7.5"></path>
-                            <path d="M5 9.5V21h14V9.5"></path>
-                            <path d="M9 21v-6h6v6"></path>
-                        </svg>
+                        <i data-lucide="house"></i>
                     </span>
                     <span class="sidebar-link__label">Painel</span>
                 </a>
-                <a class="sidebar-link" href="{{ route('admin.usuarios.index') }}">
+                <a class="sidebar-link {{ $isActiveMenu(['admin.usuarios.*']) ? 'is-active' : '' }}" href="{{ route('admin.usuarios.index') }}" @if($isActiveMenu(['admin.usuarios.*'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9.5" cy="7" r="3"></circle>
-                            <path d="M20 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M14.5 4.2a3 3 0 0 1 0 5.6"></path>
-                        </svg>
+                        <i data-lucide="users"></i>
                     </span>
                     <span class="sidebar-link__label">Usuarios</span>
                 </a>
-                <a class="sidebar-link" href="{{ route('admin.setores.index') }}">
+                <a class="sidebar-link {{ $isActiveMenu(['admin.setores.*']) ? 'is-active' : '' }}" href="{{ route('admin.setores.index') }}" @if($isActiveMenu(['admin.setores.*'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M3 21h18"></path>
-                            <path d="M5 21V7l7-4 7 4v14"></path>
-                            <path d="M9 9h.01"></path>
-                            <path d="M9 13h.01"></path>
-                            <path d="M15 9h.01"></path>
-                            <path d="M15 13h.01"></path>
-                            <path d="M10 21v-4h4v4"></path>
-                        </svg>
+                        <i data-lucide="building-2"></i>
                     </span>
                     <span class="sidebar-link__label">Setores</span>
                 </a>
-                <a class="sidebar-link" href="{{ route('admin.clientes.index') }}">
+                <a class="sidebar-link {{ $isActiveMenu(['admin.clientes.*']) ? 'is-active' : '' }}" href="{{ route('admin.clientes.index') }}" @if($isActiveMenu(['admin.clientes.*'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M7 3h10l3 3v15H7z"></path>
-                            <path d="M17 3v4h4"></path>
-                            <path d="M10 11h7"></path>
-                            <path d="M10 15h7"></path>
-                            <path d="M10 19h4"></path>
-                        </svg>
+                        <i data-lucide="file-text"></i>
                     </span>
                     <span class="sidebar-link__label">Clientes</span>
                 </a>
-                <a class="sidebar-link" href="{{ route('admin.servidores-normalizados.index') }}">
+                <a class="sidebar-link {{ $isActiveMenu(['admin.servidores.*', 'admin.servidores-normalizados.*']) ? 'is-active' : '' }}" href="{{ route('admin.servidores-normalizados.index') }}" @if($isActiveMenu(['admin.servidores.*', 'admin.servidores-normalizados.*'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <rect x="3" y="4" width="18" height="6" rx="2"></rect>
-                            <rect x="3" y="14" width="18" height="6" rx="2"></rect>
-                            <path d="M7 7h.01"></path>
-                            <path d="M7 17h.01"></path>
-                        </svg>
+                        <i data-lucide="database"></i>
                     </span>
                     <span class="sidebar-link__label">Servidores SQL</span>
                 </a>
-                <a class="sidebar-link" href="{{ route('admin.modelos-normalizados.index') }}">
+                <a class="sidebar-link {{ $isActiveMenu(['admin.modelos.*', 'admin.modelos-normalizados.*']) ? 'is-active' : '' }}" href="{{ route('admin.modelos-normalizados.index') }}" @if($isActiveMenu(['admin.modelos.*', 'admin.modelos-normalizados.*'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M6 3h9l3 3v15H6z"></path>
-                            <path d="M15 3v4h4"></path>
-                            <path d="M9 12h6"></path>
-                            <path d="M9 16h6"></path>
-                        </svg>
+                        <i data-lucide="file-text"></i>
                     </span>
                     <span class="sidebar-link__label">Modelos</span>
                 </a>
-                <a class="sidebar-link" href="{{ route('admin.listas.index') }}">
+                <a class="sidebar-link {{ $isActiveMenu(['admin.listas.*']) ? 'is-active' : '' }}" href="{{ route('admin.listas.index') }}" @if($isActiveMenu(['admin.listas.*'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <rect x="6" y="4" width="12" height="17" rx="2"></rect>
-                            <path d="M9 4.5h6"></path>
-                            <path d="M9 9h6"></path>
-                            <path d="M9 13h6"></path>
-                            <path d="M9 17h4"></path>
-                        </svg>
+                        <i data-lucide="clipboard-list"></i>
                     </span>
                     <span class="sidebar-link__label">Listas</span>
                 </a>
-                <a class="sidebar-link" href="{{ route('peticoes.index') }}">
+                <a class="sidebar-link {{ $isActiveMenu(['peticoes.*']) ? 'is-active' : '' }}" href="{{ route('peticoes.index') }}" @if($isActiveMenu(['peticoes.*'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 20h9"></path>
-                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"></path>
-                        </svg>
+                        <i data-lucide="notebook-pen"></i>
                     </span>
                     <span class="sidebar-link__label">Montagem</span>
                 </a>
-                <a class="sidebar-link" href="{{ route('pecas.index') }}">
+                <a class="sidebar-link {{ $isActiveMenu(['pecas.*', 'peticoes.saved.*', 'peticoes.editor.edit']) ? 'is-active' : '' }}" href="{{ route('pecas.index') }}" @if($isActiveMenu(['pecas.*', 'peticoes.saved.*', 'peticoes.editor.edit'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                            <path d="M3 10h18"></path>
-                        </svg>
+                        <i data-lucide="folder-open"></i>
                     </span>
                     <span class="sidebar-link__label">Pecas salvas</span>
                 </a>
-                <a class="sidebar-link" href="{{ route('status') }}">
+                <a class="sidebar-link {{ $isActiveMenu(['status']) ? 'is-active' : '' }}" href="{{ route('status') }}" @if($isActiveMenu(['status'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 19h16"></path>
-                            <path d="M7 16V9"></path>
-                            <path d="M12 16V5"></path>
-                            <path d="M17 16v-4"></path>
-                        </svg>
+                        <i data-lucide="chart-column"></i>
                     </span>
                     <span class="sidebar-link__label">Status da migracao</span>
                 </a>
@@ -519,8 +482,22 @@
 @endauth
 @stack('scripts')
 @auth
+<script src="{{ asset('vendor/lucide/lucide.js') }}"></script>
+@endauth
+@auth
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons({
+            attrs: {
+                class: 'app-icon',
+                width: 18,
+                height: 18,
+                'stroke-width': 1.8
+            }
+        });
+    }
+
     var shell = document.getElementById('app-shell');
     var toggle = document.getElementById('sidebar-toggle');
     var storageKey = 'peticaofacil.sidebar.collapsed';
