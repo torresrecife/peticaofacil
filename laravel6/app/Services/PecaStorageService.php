@@ -19,7 +19,7 @@ class PecaStorageService
         $peca = $peca ?: new Peca();
 
         $peca->tipo_id = $legacyTipoId;
-        $peca->id_usu = Auth::id();
+        $peca->id_usu = Auth::user()->id_usu;
         $peca->nome_pecas = $this->resolveLegacyNome($modelo);
         $peca->nome_cli = $payload['nome_cli'];
         $peca->cod_pecas = $payload['cod_pecas'];

@@ -10,6 +10,8 @@ class ModeloFavoritoTest extends TestCase
 {
     public function test_user_can_toggle_normalized_and_legacy_favorites()
     {
+        $this->setUpLegacySchema();
+
         $user = factory(User::class)->create([
             'id_usu' => 500,
             'nivel_usu' => 'USU',
@@ -68,6 +70,8 @@ class ModeloFavoritoTest extends TestCase
 
     public function test_dashboard_shows_user_favorites()
     {
+        $this->setUpLegacySchema();
+
         $user = factory(User::class)->create([
             'id_usu' => 500,
             'nivel_usu' => 'USU',

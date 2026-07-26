@@ -173,7 +173,7 @@ function modernLoginUrl()
         }
     }
 
-    return 'http://127.0.0.1:8086/login';
+    return 'http://bvaa.test/peticaofacil/login';
 }
 
 function getRequestBasePath()

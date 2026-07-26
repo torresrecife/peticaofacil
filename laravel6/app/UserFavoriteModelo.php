@@ -17,7 +17,7 @@ class UserFavoriteModelo extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'legacy_usuario_id', 'id_usu');
+        return $this->belongsTo(User::class, 'legacy_usuario_id', 'legacy_usuario_id');
     }
 
     public function modelo()

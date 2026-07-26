@@ -10,11 +10,13 @@ class User extends Authenticatable
 {
     use LegacyEncoding;
 
-    protected $table = 'tp_usu_tb';
-    protected $primaryKey = 'id_usu';
-    public $timestamps = false;
+    protected $table = 'users';
 
     protected $fillable = [
+        'legacy_usuario_id',
+        'name',
+        'email',
+        'password',
         'nome_usu',
         'login_usu',
         'senha_usu',
@@ -31,6 +33,8 @@ class User extends Authenticatable
 
     protected $hidden = [
         'senha_usu',
+        'password',
+        'remember_token',
     ];
 
     protected $legacyUtf8Fields = [
@@ -48,7 +52,17 @@ class User extends Authenticatable
 
     public function getAuthPassword()
     {
-        return $this->senha_usu;
+        return $this->password;
+    }
+
+    public function getIdUsuAttribute()
+    {
+        return $this->legacy_usuario_id;
+    }
+
+    public function setIdUsuAttribute($value)
+    {
+        $this->attributes['legacy_usuario_id'] = $value;
     }
 
     public function setor()
@@ -58,7 +72,7 @@ class User extends Authenticatable
 
     public function favoriteModelos(): HasMany
     {
-        return $this->hasMany(UserFavoriteModelo::class, 'legacy_usuario_id', 'id_usu');
+        return $this->hasMany(UserFavoriteModelo::class, 'legacy_usuario_id', 'legacy_usuario_id');
     }
 
     public function scopeActive($query)

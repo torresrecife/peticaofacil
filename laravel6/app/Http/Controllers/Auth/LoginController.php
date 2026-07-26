@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\LegacyUser;
 use App\User;
+use App\Services\UserSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -24,21 +26,31 @@ class LoginController extends Controller
         return view('auth.login');
     }
 
-    public function login(Request $request)
+    public function login(Request $request, UserSyncService $userSyncService)
     {
         $credentials = $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
         ]);
 
+        $passwordHash = md5($credentials['password']);
+
         $user = User::where('login_usu', $credentials['username'])
             ->where('status_usu', 'ATI')
             ->first();
 
-        if (!$user || $user->senha_usu !== md5($credentials['password'])) {
-            return back()
-                ->withErrors(['username' => 'Usuario ou senha invalidos.'])
-                ->withInput($request->only('username'));
+        if (!$user || $user->senha_usu !== $passwordHash) {
+            $legacyUser = LegacyUser::where('login_usu', $credentials['username'])
+                ->where('status_usu', 'ATI')
+                ->first();
+
+            if (!$legacyUser || $legacyUser->senha_usu !== $passwordHash) {
+                return back()
+                    ->withErrors(['username' => 'Usuario ou senha invalidos.'])
+                    ->withInput($request->only('username'));
+            }
+
+            $user = $userSyncService->syncFromLegacy($legacyUser);
         }
 
         Auth::login($user);
@@ -48,9 +60,7 @@ class LoginController extends Controller
             return redirect()->route('password.force');
         }
 
-        $user->forceFill([
-            'acesso_usu' => now(),
-        ])->save();
+        $userSyncService->touchAccess($user);
 
         return redirect()->intended(route('dashboard'));
     }
@@ -60,7 +70,7 @@ class LoginController extends Controller
         return view('auth.force-password');
     }
 
-    public function updateForcedPassword(Request $request)
+    public function updateForcedPassword(Request $request, UserSyncService $userSyncService)
     {
         $data = $request->validate([
             'password' => 'required|string|min:4|confirmed',
@@ -69,10 +79,8 @@ class LoginController extends Controller
         /** @var \App\User $user */
         $user = Auth::user();
 
-        $user->forceFill([
-            'senha_usu' => md5($data['password']),
-            'acesso_usu' => now(),
-        ])->save();
+        $userSyncService->updatePassword($user, $data['password']);
+        $userSyncService->touchAccess($user);
 
         return redirect()->route('dashboard')->with('status', 'Senha atualizada com sucesso.');
     }

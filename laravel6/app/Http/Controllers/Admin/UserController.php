@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Cliente;
 use App\Http\Controllers\Controller;
+use App\Services\UserSyncService;
 use App\Setor;
 use App\User;
 use Illuminate\Http\Request;
@@ -13,7 +14,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::with('setor')->orderBy('id_usu')->paginate(20);
+        $users = User::with('setor')->orderBy('legacy_usuario_id')->paginate(20);
         $clientMap = Cliente::active()->orderBy('cliente_name')->get()->keyBy('cliente_id');
 
         foreach ($users as $user) {
@@ -43,11 +44,7 @@ class UserController extends Controller
     {
         $data = $this->validateData($request);
 
-        $user = new User();
-        $this->fillUser($user, $data);
-        $user->senha_usu = md5($data['password']);
-        $user->data_cad = now();
-        $user->save();
+        app(UserSyncService::class)->create($this->normalizeData($data), md5($data['password']));
 
         return redirect()->route('admin.usuarios.index')->with('status', 'Usuario criado.');
     }
@@ -66,11 +63,11 @@ class UserController extends Controller
     {
         $data = $this->validateData($request, $user->id_usu);
 
-        $this->fillUser($user, $data);
-        if (!empty($data['password'])) {
-            $user->senha_usu = md5($data['password']);
-        }
-        $user->save();
+        app(UserSyncService::class)->update(
+            $user,
+            $this->normalizeData($data),
+            !empty($data['password']) ? md5($data['password']) : null
+        );
 
         return redirect()->route('admin.usuarios.index')->with('status', 'Usuario atualizado.');
     }
@@ -97,14 +94,10 @@ class UserController extends Controller
         ]);
     }
 
-    protected function fillUser(User $user, array $data)
+    protected function normalizeData(array $data)
     {
-        $user->nome_usu = $data['nome_usu'];
-        $user->login_usu = $data['login_usu'];
-        $user->email_usu = $data['email_usu'] ?? null;
-        $user->nivel_usu = $data['nivel_usu'];
-        $user->status_usu = $data['status_usu'];
-        $user->id_setor = $data['id_setor'] ?: null;
-        $user->id_cliente = !empty($data['cliente_ids']) ? implode(',', $data['cliente_ids']) : '0';
+        $data['id_cliente'] = !empty($data['cliente_ids']) ? implode(',', $data['cliente_ids']) : '0';
+
+        return $data;
     }
 }

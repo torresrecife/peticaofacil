@@ -45,6 +45,6 @@ class Peca extends Model
 
     public function usuario()
     {
-        return $this->belongsTo(User::class, 'id_usu', 'id_usu');
+        return $this->belongsTo(LegacyUser::class, 'id_usu', 'id_usu');
     }
 }

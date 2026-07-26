@@ -29,6 +29,7 @@ abstract class TestCase extends BaseTestCase
             'peticao_modelos',
             'user_model_favorites',
             'sql_server_profiles',
+            'users',
             'tp_pecas_tb',
             'tp_dados_tb',
             'tp_inputs_tb',
@@ -83,6 +84,29 @@ abstract class TestCase extends BaseTestCase
             $table->string('status_usu', 3)->default('ATI');
             $table->string('estados_usu', 255)->nullable();
             $table->string('comarca_usu', 255)->nullable();
+        });
+
+        $this->createOrResetTable('users', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedInteger('legacy_usuario_id')->nullable()->unique();
+            $table->string('name')->nullable();
+            $table->string('email')->nullable();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password')->nullable();
+            $table->string('nome_usu', 50)->nullable();
+            $table->string('login_usu', 50)->nullable();
+            $table->string('senha_usu', 255)->nullable();
+            $table->string('email_usu', 50)->nullable();
+            $table->string('nivel_usu', 3)->default('USU');
+            $table->dateTime('acesso_usu')->nullable();
+            $table->dateTime('data_cad')->nullable();
+            $table->integer('id_setor')->nullable();
+            $table->string('id_cliente', 255)->nullable()->default('0');
+            $table->string('status_usu', 3)->default('ATI');
+            $table->string('estados_usu', 255)->nullable();
+            $table->string('comarca_usu', 255)->nullable();
+            $table->rememberToken();
+            $table->timestamps();
         });
 
         $this->createOrResetTable('tp_config_db', function (Blueprint $table) {
@@ -338,8 +362,14 @@ abstract class TestCase extends BaseTestCase
             return;
         }
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        DB::table($table)->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        try {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            DB::table($table)->truncate();
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        } catch (\Throwable $e) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            Schema::dropIfExists($table);
+            Schema::create($table, $callback);
+        }
     }
 }

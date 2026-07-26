@@ -33,6 +33,6 @@ class PeticaoVersao extends Model
 
     public function legacyUsuario()
     {
-        return $this->belongsTo(User::class, 'legacy_usuario_id_snapshot', 'id_usu');
+        return $this->belongsTo(LegacyUser::class, 'legacy_usuario_id_snapshot', 'id_usu');
     }
 }
