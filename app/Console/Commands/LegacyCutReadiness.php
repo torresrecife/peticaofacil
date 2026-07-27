@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class LegacyCutReadiness extends Command
 {
@@ -33,18 +34,21 @@ class LegacyCutReadiness extends Command
 
     protected function auditListas(): void
     {
-        $legacyGrupos = DB::table('tp_grupo_tb')->count();
-        $normalizedGrupos = DB::table('lista_grupos')->count();
-        $legacyItens = DB::table('tp_lista_tb')->count();
-        $normalizedItens = DB::table('lista_itens')->count();
+        $legacyGruposExists = Schema::hasTable('tp_grupo_tb');
+        $legacyItensExists = Schema::hasTable('tp_lista_tb');
+
+        $legacyGrupos = $legacyGruposExists ? DB::table('tp_grupo_tb')->count() : 'arquivada';
+        $normalizedGrupos = Schema::hasTable('lista_grupos') ? DB::table('lista_grupos')->count() : 'ausente';
+        $legacyItens = $legacyItensExists ? DB::table('tp_lista_tb')->count() : 'arquivada';
+        $normalizedItens = Schema::hasTable('lista_itens') ? DB::table('lista_itens')->count() : 'ausente';
         $mirrorEnabled = (bool) config('legacy.mirror_legacy_listas', false);
 
         $this->line('Listas');
         $this->table(
             ['Item', 'Legado', 'Normalizado', 'Status'],
             [
-                ['Grupos', $legacyGrupos, $normalizedGrupos, $legacyGrupos === $normalizedGrupos ? 'OK' : 'DIVERGENTE'],
-                ['Itens', $legacyItens, $normalizedItens, $legacyItens === $normalizedItens ? 'OK' : 'DIVERGENTE'],
+                ['Grupos', $legacyGrupos, $normalizedGrupos, $this->statusForPair($legacyGrupos, $normalizedGrupos)],
+                ['Itens', $legacyItens, $normalizedItens, $this->statusForPair($legacyItens, $normalizedItens)],
                 ['Mirror legado', $mirrorEnabled ? 'ligado' : 'desligado', '-', $mirrorEnabled ? 'PENDENTE' : 'OK'],
             ]
         );
@@ -52,8 +56,8 @@ class LegacyCutReadiness extends Command
 
     protected function auditSql(): void
     {
-        $legacyConfigs = DB::table('tp_config_db')->count();
-        $normalizedProfiles = DB::table('sql_server_profiles')->count();
+        $legacyConfigs = Schema::hasTable('tp_config_db') ? DB::table('tp_config_db')->count() : 'arquivada';
+        $normalizedProfiles = Schema::hasTable('sql_server_profiles') ? DB::table('sql_server_profiles')->count() : 'ausente';
         $mirrorEnabled = (bool) config('legacy.mirror_legacy_sql_configs', false);
         $compatRoutesEnabled = (bool) config('legacy.compat_admin_sql_routes', true);
 
@@ -61,10 +65,19 @@ class LegacyCutReadiness extends Command
         $this->table(
             ['Item', 'Legado', 'Normalizado', 'Status'],
             [
-                ['Perfis', $legacyConfigs, $normalizedProfiles, $legacyConfigs === $normalizedProfiles ? 'OK' : 'DIVERGENTE'],
+                ['Perfis', $legacyConfigs, $normalizedProfiles, $this->statusForPair($legacyConfigs, $normalizedProfiles)],
                 ['Mirror legado', $mirrorEnabled ? 'ligado' : 'desligado', '-', $mirrorEnabled ? 'PENDENTE' : 'OK'],
                 ['Rotas admin legacy', $compatRoutesEnabled ? 'ligadas' : 'desligadas', '-', $compatRoutesEnabled ? 'PENDENTE' : 'OK'],
             ]
         );
+    }
+
+    protected function statusForPair($legacyValue, $normalizedValue): string
+    {
+        if ($legacyValue === 'arquivada' && $normalizedValue !== 'ausente') {
+            return 'ARQUIVADA';
+        }
+
+        return $legacyValue === $normalizedValue ? 'OK' : 'DIVERGENTE';
     }
 }

@@ -106,6 +106,7 @@ class PeticaoLegacyMirrorToggleTest extends TestCase
     public function test_legacy_save_route_uses_normalized_path_when_model_has_mirror_and_legacy_mirror_is_disabled()
     {
         config()->set('legacy.mirror_legacy_pecas', false);
+        config()->set('legacy.compat_public_model_routes', true);
 
         $user = factory(User::class)->create([
             'id_usu' => 79,

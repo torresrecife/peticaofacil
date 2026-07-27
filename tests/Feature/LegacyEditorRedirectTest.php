@@ -10,6 +10,8 @@ class LegacyEditorRedirectTest extends TestCase
 {
     public function test_legacy_editor_route_redirects_to_normalized_editor_when_mirror_exists_without_loading_legacy_piece()
     {
+        config()->set('legacy.compat_public_piece_editor_route', true);
+
         $user = factory(User::class)->create([
             'id_usu' => 55,
             'nivel_usu' => 'ADM',
@@ -67,6 +69,8 @@ class LegacyEditorRedirectTest extends TestCase
 
     public function test_legacy_editor_route_returns_to_historic_list_when_piece_has_no_normalized_mirror_even_without_legacy_piece_record()
     {
+        config()->set('legacy.compat_public_piece_editor_route', true);
+
         $user = factory(User::class)->create([
             'id_usu' => 56,
             'nivel_usu' => 'ADM',
@@ -105,5 +109,20 @@ class LegacyEditorRedirectTest extends TestCase
 
         $this->assertNull(DB::table('peticoes')->where('legacy_peca_id', 5601)->first());
         $response->assertRedirect('/pecas');
+    }
+
+    public function test_legacy_editor_route_returns_gone_when_piece_compat_is_disabled()
+    {
+        config()->set('legacy.compat_public_piece_editor_route', false);
+
+        $user = factory(User::class)->create([
+            'id_usu' => 57,
+            'nivel_usu' => 'ADM',
+            'acesso_usu' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get('/pecas/5701/editar')
+            ->assertStatus(410);
     }
 }

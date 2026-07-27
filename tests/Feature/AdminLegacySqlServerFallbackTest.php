@@ -10,6 +10,8 @@ class AdminLegacySqlServerFallbackTest extends TestCase
 {
     public function test_legacy_sql_server_fallback_update_still_works_without_mirror()
     {
+        config()->set('legacy.compat_admin_sql_routes', true);
+
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
             'acesso_usu' => now(),
@@ -61,5 +63,33 @@ class AdminLegacySqlServerFallbackTest extends TestCase
         $this->assertNotNull($profile);
         $this->assertSame('Servidor Legado Ajustado', $profile->nome);
         $this->assertSame('inativo', $profile->status);
+    }
+
+    public function test_legacy_sql_server_admin_route_returns_gone_when_compat_is_disabled()
+    {
+        config()->set('legacy.compat_admin_sql_routes', false);
+
+        $admin = factory(User::class)->create([
+            'nivel_usu' => 'ADM',
+            'acesso_usu' => now(),
+        ]);
+
+        DB::table('tp_config_db')->insert([
+            'id_db' => 79,
+            'nome_db' => 'Servidor Legado',
+            'ip_db' => '192.168.0.20',
+            'data_db' => 'base_antiga',
+            'usu_db' => 'legacy',
+            'senha_db' => '123',
+            'table_db' => 'tbl',
+            'chave_db' => 'Codigo',
+            'query_db' => 'SELECT * FROM tbl',
+            'where_db' => 'where 1=1',
+            'stt' => 'Y',
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/servidores/79/edit')
+            ->assertStatus(410);
     }
 }

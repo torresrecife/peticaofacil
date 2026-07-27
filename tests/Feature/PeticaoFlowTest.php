@@ -11,6 +11,7 @@ class PeticaoFlowTest extends TestCase
     public function test_user_can_compose_preview_open_editor_save_and_export_peticao()
     {
         config()->set('legacy.mirror_legacy_pecas', false);
+        config()->set('legacy.compat_public_model_routes', true);
 
         $user = factory(User::class)->create([
             'nivel_usu' => 'USU',
@@ -96,6 +97,7 @@ class PeticaoFlowTest extends TestCase
     public function test_legacy_editor_residual_flow_accepts_normalized_model_routes()
     {
         config()->set('legacy.mirror_legacy_pecas', false);
+        config()->set('legacy.compat_public_model_routes', true);
 
         $user = factory(User::class)->create([
             'id_usu' => 88,

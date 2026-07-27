@@ -10,6 +10,8 @@ class AdminSqlServerMirrorRedirectTest extends TestCase
 {
     public function test_legacy_edit_route_redirects_to_normalized_server_when_mirror_exists()
     {
+        config()->set('legacy.compat_admin_sql_routes', true);
+
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
             'acesso_usu' => now(),
