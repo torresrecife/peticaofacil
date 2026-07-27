@@ -20,16 +20,16 @@
             $isNormalizedEditor = $modelo instanceof \App\PeticaoModelo;
             $backRoute = $isNormalizedEditor
                 ? route('peticoes.normalized.show', $modelo)
-                : route('peticoes.show', $modelo);
+                : route('legacy.peticoes.modelos.show', $modelo);
             $saveRoute = $isNormalizedEditor
                 ? route('peticoes.normalized.editor.save', $modelo)
-                : route('peticoes.editor.save', $modelo);
+                : route('legacy.peticoes.modelos.editor.save', $modelo);
             $wordRoute = $isNormalizedEditor
                 ? route('peticoes.normalized.editor.export.word', $modelo)
-                : route('peticoes.editor.export.word', $modelo);
+                : route('legacy.peticoes.modelos.editor.export.word', $modelo);
             $pdfRoute = $isNormalizedEditor
                 ? route('peticoes.normalized.editor.export.pdf', $modelo)
-                : route('peticoes.editor.export.pdf', $modelo);
+                : route('legacy.peticoes.modelos.editor.export.pdf', $modelo);
         @endphp
         <a class="button secondary link" href="{{ $backRoute }}">Voltar para montagem</a>
     </div>

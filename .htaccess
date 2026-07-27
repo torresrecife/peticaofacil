@@ -10,7 +10,7 @@
     RewriteRule ^vendor/(.*)$ laravel6/public/vendor/$1 [L,NC]
     RewriteRule ^(favicon\.ico|robots\.txt)$ laravel6/public/$1 [L,NC]
 
-    RewriteRule ^(index\.php|login\.php|sair\.php|admin\.php|cliente\.php|dados\.php|editor\.php|list\.php|parag\.php|pecas\.php|setor\.php|sql\.php|usu\.php|assinatura\.php)$ $1 [L,NC]
+    RewriteRule ^(index\.php|login\.php|sair\.php)$ $1 [L,NC]
 
     RewriteRule ^ index.php [L]
 </IfModule>
