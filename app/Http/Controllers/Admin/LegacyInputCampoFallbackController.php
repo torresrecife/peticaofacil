@@ -9,8 +9,14 @@ use Illuminate\Http\Request;
 
 class LegacyInputCampoFallbackController extends Controller
 {
+    protected function ensureCompatEnabled(): void
+    {
+        abort_unless((bool) config('legacy.compat_admin_model_routes', true), 410);
+    }
+
     public function store(Request $request, $modelo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloMirrorService $mirrorService)
     {
+        $this->ensureCompatEnabled();
         $legacyAccess->findTipoOrFail($modelo);
         return redirect()
             ->route('admin.modelos-normalizados.index')
@@ -19,6 +25,7 @@ class LegacyInputCampoFallbackController extends Controller
 
     public function update(Request $request, $modelo, $campo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloMirrorService $mirrorService)
     {
+        $this->ensureCompatEnabled();
         $tipo = $legacyAccess->findTipoOrFail($modelo);
         $legacyAccess->findCampoForTipoOrFail($tipo->tipo_id, $campo);
         return redirect()

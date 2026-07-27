@@ -10,8 +10,15 @@ use Illuminate\Http\Request;
 
 class InputCampoController extends Controller
 {
+    protected function ensureCompatEnabled(): void
+    {
+        abort_unless((bool) config('legacy.compat_admin_model_routes', true), 410);
+    }
+
     public function store(Request $request, $modelo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloMirrorService $mirrorService)
     {
+        $this->ensureCompatEnabled();
+
         $modelo = $legacyAccess->findTipoOrFail($modelo);
         $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {
@@ -28,6 +35,8 @@ class InputCampoController extends Controller
 
     public function update(Request $request, $modelo, $campo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloMirrorService $mirrorService)
     {
+        $this->ensureCompatEnabled();
+
         $modelo = $legacyAccess->findTipoOrFail($modelo);
         $campo = $legacyAccess->findCampoForTipoOrFail($modelo->tipo_id, $campo);
         $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 
 class ArchiveLegacyOperationalTables extends Command
 {
-    protected $signature = 'legacy:archive-operational {--targets=listas,sql : listas|sql|all} {--execute : Executa o arquivamento fisico}';
+    protected $signature = 'legacy:archive-operational {--targets=listas,sql,modelos,pecas,users : listas|sql|modelos|pecas|users|all} {--execute : Executa o arquivamento fisico}';
     protected $description = 'Arquiva tabelas legadas operacionais por rename controlado';
 
     public function handle()
@@ -16,8 +16,8 @@ class ArchiveLegacyOperationalTables extends Command
         $targets = strtolower((string) $this->option('targets'));
         $execute = (bool) $this->option('execute');
 
-        if (!in_array($targets, ['listas', 'sql', 'all'], true)) {
-            $this->error('Targets invalidos. Use listas, sql ou all.');
+        if (!in_array($targets, ['listas', 'sql', 'modelos', 'pecas', 'users', 'all'], true)) {
+            $this->error('Targets invalidos. Use listas, sql, modelos, pecas, users ou all.');
 
             return 1;
         }
@@ -30,6 +30,18 @@ class ArchiveLegacyOperationalTables extends Command
 
         if ($targets === 'sql' || $targets === 'all') {
             $tables[] = 'tp_config_db';
+        }
+
+        if ($targets === 'modelos' || $targets === 'all') {
+            $tables = array_merge($tables, ['tp_funda_tb', 'tp_inputs_tb', 'tp_dados_tb', 'tp_tipo_tb']);
+        }
+
+        if ($targets === 'pecas' || $targets === 'all') {
+            $tables[] = 'tp_pecas_tb';
+        }
+
+        if ($targets === 'users' || $targets === 'all') {
+            $tables[] = 'tp_usu_tb';
         }
 
         $suffix = 'archive_20260727';

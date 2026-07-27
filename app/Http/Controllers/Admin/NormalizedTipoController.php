@@ -12,6 +12,7 @@ use App\Services\LegacyModeloMirrorService;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Schema;
 
 class NormalizedTipoController extends Controller
 {
@@ -23,11 +24,15 @@ class NormalizedTipoController extends Controller
             ->orderBy('nome')
             ->paginate(20);
 
-        $legacyFallbacks = \App\Tipo::with(['setor', 'cliente', 'servidor'])
-            ->orderBy('id_setor')
-            ->orderBy('tipo_nome')
-            ->whereNotIn('tipo_id', PeticaoModelo::whereNotNull('legacy_tipo_id')->pluck('legacy_tipo_id'))
-            ->get();
+        $legacyFallbacks = collect();
+
+        if ((bool) config('legacy.compat_admin_model_routes', true) && Schema::hasTable('tp_tipo_tb')) {
+            $legacyFallbacks = \App\Tipo::with(['setor', 'cliente', 'servidor'])
+                ->orderBy('id_setor')
+                ->orderBy('tipo_nome')
+                ->whereNotIn('tipo_id', PeticaoModelo::whereNotNull('legacy_tipo_id')->pluck('legacy_tipo_id'))
+                ->get();
+        }
 
         return view('admin.tipos.index', compact('modelos', 'legacyFallbacks'));
     }

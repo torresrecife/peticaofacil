@@ -10,6 +10,8 @@ class AdminLegacyTipoFallbackTest extends TestCase
 {
     public function test_legacy_tipo_routes_require_explicit_sync_before_normalized_editing()
     {
+        config()->set('legacy.compat_admin_model_routes', true);
+
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
             'acesso_usu' => now(),
@@ -73,5 +75,19 @@ class AdminLegacyTipoFallbackTest extends TestCase
         $this->assertSame('pdf', $tipo->tipo_arq);
         $this->assertSame('Y', $tipo->tipo_stt);
         $this->assertSame(21, (int) $tipo->id_setor);
+    }
+
+    public function test_legacy_tipo_route_returns_gone_when_admin_model_compat_is_disabled()
+    {
+        config()->set('legacy.compat_admin_model_routes', false);
+
+        $admin = factory(User::class)->create([
+            'nivel_usu' => 'ADM',
+            'acesso_usu' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/admin/modelos/210/edit')
+            ->assertStatus(410);
     }
 }

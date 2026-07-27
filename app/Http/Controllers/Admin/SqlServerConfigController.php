@@ -8,9 +8,11 @@ use App\SqlServerConfig;
 
 class SqlServerConfigController extends Controller
 {
-    public function edit(SqlServerConfig $servidore)
+    public function edit($servidore)
     {
         abort_unless((bool) config('legacy.compat_admin_sql_routes', true), 410);
+
+        $servidore = SqlServerConfig::findOrFail($servidore);
 
         $mirror = SqlServerProfile::where('legacy_config_id', $servidore->id_db)->first();
 
@@ -21,9 +23,11 @@ class SqlServerConfigController extends Controller
         return app(LegacySqlServerConfigFallbackController::class)->edit($servidore);
     }
 
-    public function update(\Illuminate\Http\Request $request, SqlServerConfig $servidore)
+    public function update(\Illuminate\Http\Request $request, $servidore)
     {
         abort_unless((bool) config('legacy.compat_admin_sql_routes', true), 410);
+
+        $servidore = SqlServerConfig::findOrFail($servidore);
 
         $mirror = SqlServerProfile::where('legacy_config_id', $servidore->id_db)->first();
 

@@ -13,8 +13,15 @@ use Illuminate\Http\Request;
 
 class TipoController extends Controller
 {
+    protected function ensureCompatEnabled(): void
+    {
+        abort_unless((bool) config('legacy.compat_admin_model_routes', true), 410);
+    }
+
     public function edit($modelo, LegacyModeloAdminAccessService $legacyAccess)
     {
+        $this->ensureCompatEnabled();
+
         $modelo = $legacyAccess->findTipoOrFail($modelo);
         $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {
@@ -29,6 +36,8 @@ class TipoController extends Controller
 
     public function syncLegacy($modelo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloSyncService $syncService)
     {
+        $this->ensureCompatEnabled();
+
         $modelo = $legacyAccess->findTipoOrFail($modelo);
         $mirror = $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
@@ -39,6 +48,8 @@ class TipoController extends Controller
 
     public function update(Request $request, $modelo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloMirrorService $mirrorService)
     {
+        $this->ensureCompatEnabled();
+
         $modelo = $legacyAccess->findTipoOrFail($modelo);
         $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {

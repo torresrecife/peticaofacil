@@ -11,8 +11,14 @@ use Illuminate\Http\Request;
 
 class LegacyTipoFallbackController extends Controller
 {
+    protected function ensureCompatEnabled(): void
+    {
+        abort_unless((bool) config('legacy.compat_admin_model_routes', true), 410);
+    }
+
     public function edit($modelo, LegacyModeloAdminAccessService $legacyAccess)
     {
+        $this->ensureCompatEnabled();
         $legacyAccess->findTipoOrFail($modelo);
         return redirect()
             ->route('admin.modelos-normalizados.index')
@@ -21,6 +27,7 @@ class LegacyTipoFallbackController extends Controller
 
     public function update(Request $request, $modelo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloMirrorService $mirrorService)
     {
+        $this->ensureCompatEnabled();
         $legacyAccess->findTipoOrFail($modelo);
         return redirect()
             ->route('admin.modelos-normalizados.index')

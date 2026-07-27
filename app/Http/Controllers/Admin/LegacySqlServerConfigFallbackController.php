@@ -10,16 +10,20 @@ use Illuminate\Validation\Rule;
 
 class LegacySqlServerConfigFallbackController extends Controller
 {
-    public function edit(SqlServerConfig $servidore)
+    public function edit($servidore)
     {
+        $servidore = $servidore instanceof SqlServerConfig ? $servidore : SqlServerConfig::findOrFail($servidore);
+
         return view('admin.sqlserver.form', [
             'config' => $servidore,
             'mirror' => null,
         ]);
     }
 
-    public function update(Request $request, SqlServerConfig $servidore, NormalizedSqlServerConfigSyncService $syncService)
+    public function update(Request $request, $servidore, NormalizedSqlServerConfigSyncService $syncService)
     {
+        $servidore = $servidore instanceof SqlServerConfig ? $servidore : SqlServerConfig::findOrFail($servidore);
+
         $servidore->fill($this->validateData($request))->save();
         $syncService->syncLegacy($servidore);
 

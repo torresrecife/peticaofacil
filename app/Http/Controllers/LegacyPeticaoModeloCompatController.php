@@ -22,7 +22,7 @@ class LegacyPeticaoModeloCompatController extends Controller
 
         $mirror = $modeloResolver->findLoadedNormalizedByLegacyTipoId(
             (int) $modelo,
-            ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
+            ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor']
         );
 
         if (!$mirror) {

@@ -10,6 +10,8 @@ class AdminLegacyFieldFallbackTest extends TestCase
 {
     public function test_legacy_paragraph_and_field_routes_require_explicit_sync_before_normalized_editing()
     {
+        config()->set('legacy.compat_admin_model_routes', true);
+
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
             'acesso_usu' => now(),

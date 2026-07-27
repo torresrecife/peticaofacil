@@ -4,12 +4,19 @@ namespace App\Services;
 
 use App\PeticaoModelo;
 use App\Support\PeticaoModeloRuntime;
+use Illuminate\Support\Facades\Schema;
 
 class PeticaoModeloRuntimeFactory
 {
     public function fromNormalized(PeticaoModelo $modelo)
     {
-        $modelo->loadMissing(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']);
+        $relations = ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor'];
+
+        if (Schema::hasTable('tp_config_db')) {
+            $relations[] = 'servidorLegacy';
+        }
+
+        $modelo->loadMissing($relations);
 
         return new PeticaoModeloRuntime([
             'id' => $modelo->id,
@@ -30,7 +37,7 @@ class PeticaoModeloRuntimeFactory
             'setor' => $modelo->setor,
             'cliente' => $modelo->cliente,
             'servidor' => $modelo->servidor,
-            'servidorLegacy' => $modelo->servidorLegacy,
+            'servidorLegacy' => Schema::hasTable('tp_config_db') ? $modelo->servidorLegacy : null,
             'is_normalized' => true,
             'source' => $modelo,
         ]);

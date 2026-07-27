@@ -10,6 +10,8 @@ class AdminModeloMirrorReadTest extends TestCase
 {
     public function test_modelos_index_and_edit_show_normalized_read_data()
     {
+        config()->set('legacy.compat_admin_model_routes', true);
+
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
             'acesso_usu' => now(),

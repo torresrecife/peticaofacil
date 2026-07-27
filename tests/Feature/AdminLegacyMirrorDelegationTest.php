@@ -10,6 +10,8 @@ class AdminLegacyMirrorDelegationTest extends TestCase
 {
     public function test_legacy_admin_routes_delegate_writes_to_normalized_models_without_legacy_writeback_by_default()
     {
+        config()->set('legacy.compat_admin_model_routes', true);
+
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
             'acesso_usu' => now(),
