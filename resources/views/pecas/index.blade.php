@@ -1,13 +1,17 @@
 @extends('layouts.app')
 
-@section('title', 'Pecas salvas')
+@section('title', 'Historico de peticoes salvas')
 
 @section('content')
 <div class="topbar" style="margin-bottom:16px;">
-    <h2 style="margin:0;">Pecas salvas</h2>
+    <h2 style="margin:0;">Historico de peticoes salvas</h2>
 </div>
 
 <div class="panel" style="margin-bottom:20px;">
+    <div class="panel-muted" style="margin-bottom:16px;">
+        <strong>Consulta historica</strong>
+        <div class="editor-note">Esta tela consulta apenas `peticoes`. O runtime principal de edicao e salvamento segue pela trilha normalizada.</div>
+    </div>
     <form method="get" action="{{ route('pecas.index') }}">
         <div class="form-grid">
             <div class="form-group">
@@ -52,7 +56,7 @@
                     <td>{{ optional($peca->gerado_em)->format('d/m/Y H:i') ?: optional($peca->created_at)->format('d/m/Y H:i') }}</td>
                     <td>{{ optional($peca->user)->login_usu ?: '-' }}</td>
                     <td>
-                        <a href="{{ route('peticoes.saved.edit', $peca) }}">Editar</a>
+                        <a href="{{ route('peticoes.saved.edit', $peca) }}">Abrir historico</a>
                     </td>
                 </tr>
             @empty
