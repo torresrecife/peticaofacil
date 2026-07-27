@@ -43,7 +43,7 @@ class PecaStorageService
         }
 
         if ($modelo instanceof Tipo) {
-            return app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo) !== null;
+            return app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo) !== null;
         }
 
         return false;

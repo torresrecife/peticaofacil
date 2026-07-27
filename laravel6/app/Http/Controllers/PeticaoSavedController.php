@@ -22,7 +22,7 @@ class PeticaoSavedController extends Controller
             'resolved_fields' => 'nullable|string',
         ]);
 
-        $mirrorModelo = $modeloResolver->findMirrorForTipo($modelo);
+        $mirrorModelo = $modeloResolver->findNormalizedForLegacyTipo($modelo);
         abort_unless($mirrorModelo, 404);
 
         $peticao = $draftService->createFromPreview($mirrorModelo, [

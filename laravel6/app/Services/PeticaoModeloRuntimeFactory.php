@@ -4,26 +4,9 @@ namespace App\Services;
 
 use App\PeticaoModelo;
 use App\Support\PeticaoModeloRuntime;
-use App\Tipo;
 
 class PeticaoModeloRuntimeFactory
 {
-    public function fromPreferred(Tipo $tipo)
-    {
-        $mirror = app(PeticaoModeloResolverService::class)->findLoadedMirrorForTipo(
-            $tipo,
-            ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
-        );
-
-        if ($mirror) {
-            return $this->fromNormalized($mirror);
-        }
-
-        $tipo->loadMissing(['campos.dados', 'paragrafos', 'setor', 'cliente', 'servidor']);
-
-        return $this->fromLegacy($tipo);
-    }
-
     public function fromNormalized(PeticaoModelo $modelo)
     {
         $modelo->loadMissing(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']);
@@ -50,33 +33,6 @@ class PeticaoModeloRuntimeFactory
             'servidorLegacy' => $modelo->servidorLegacy,
             'is_normalized' => true,
             'source' => $modelo,
-        ]);
-    }
-
-    public function fromLegacy(Tipo $tipo)
-    {
-        return new PeticaoModeloRuntime([
-            'id' => $tipo->tipo_id,
-            'legacy_tipo_id' => $tipo->tipo_id,
-            'tipo_id' => $tipo->tipo_id,
-            'tipo_nome' => $tipo->tipo_nome,
-            'nome_pre' => $tipo->nome_pre,
-            'nome_pos' => $tipo->nome_pos,
-            'cod_cabec' => $tipo->cod_cabec,
-            'cod_rodap' => $tipo->cod_rodap,
-            'tipo_stt' => $tipo->tipo_stt,
-            'tipo_arq' => $tipo->tipo_arq,
-            'id_db' => $tipo->id_db,
-            'id_cliente' => $tipo->id_cliente,
-            'id_setor' => $tipo->id_setor,
-            'campos' => $tipo->campos,
-            'paragrafos' => $tipo->paragrafos,
-            'setor' => $tipo->setor,
-            'cliente' => $tipo->cliente,
-            'servidor' => $tipo->servidor,
-            'servidorLegacy' => null,
-            'is_normalized' => false,
-            'source' => $tipo,
         ]);
     }
 }

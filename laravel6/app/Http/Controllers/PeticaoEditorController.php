@@ -16,7 +16,7 @@ class PeticaoEditorController extends Controller
 {
     public function create(Request $request, Tipo $modelo)
     {
-        $modeloNormalizado = app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo);
+        $modeloNormalizado = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if (!$modeloNormalizado) {
             return redirect()
                 ->route('peticoes.index')
@@ -61,7 +61,7 @@ class PeticaoEditorController extends Controller
 
     public function save(Request $request, Tipo $modelo, PecaStorageService $storage, PeticaoNormalizedStorageService $normalizedStorage, PeticaoModeloResolverService $modeloResolver)
     {
-        $modeloNormalizado = $modeloResolver->findMirrorForTipo($modelo);
+        $modeloNormalizado = $modeloResolver->findNormalizedForLegacyTipo($modelo);
         if (!$modeloNormalizado) {
             return redirect()
                 ->route('peticoes.index')
@@ -155,7 +155,7 @@ class PeticaoEditorController extends Controller
 
     public function exportWord(Request $request, Tipo $modelo, PeticaoExportService $exportService)
     {
-        if (!app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo)) {
+        if (!app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo)) {
             return redirect()
                 ->route('peticoes.index')
                 ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
@@ -181,7 +181,7 @@ class PeticaoEditorController extends Controller
 
     public function exportPdf(Request $request, Tipo $modelo, PeticaoExportService $exportService)
     {
-        if (!app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo)) {
+        if (!app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo)) {
             return redirect()
                 ->route('peticoes.index')
                 ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');

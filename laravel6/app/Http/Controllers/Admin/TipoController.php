@@ -15,7 +15,7 @@ class TipoController extends Controller
 {
     public function edit(Tipo $modelo)
     {
-        $mirror = app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo);
+        $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {
             return redirect()->route('admin.modelos-normalizados.edit', $mirror);
         }
@@ -34,7 +34,7 @@ class TipoController extends Controller
 
     public function update(Request $request, Tipo $modelo, LegacyModeloMirrorService $mirrorService)
     {
-        $mirror = app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo);
+        $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {
             return app(NormalizedTipoController::class)->update($request, $mirror, $mirrorService);
         }

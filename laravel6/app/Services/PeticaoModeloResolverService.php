@@ -7,12 +7,12 @@ use App\Tipo;
 
 class PeticaoModeloResolverService
 {
-    public function findMirrorForTipo(Tipo $tipo)
+    public function findNormalizedForLegacyTipo(Tipo $tipo)
     {
-        return $this->findMirrorByLegacyTipoId($tipo->tipo_id);
+        return $this->findNormalizedByLegacyTipoId($tipo->tipo_id);
     }
 
-    public function findMirrorByLegacyTipoId($legacyTipoId)
+    public function findNormalizedByLegacyTipoId($legacyTipoId)
     {
         if (!$legacyTipoId) {
             return null;
@@ -21,7 +21,7 @@ class PeticaoModeloResolverService
         return PeticaoModelo::where('legacy_tipo_id', $legacyTipoId)->first();
     }
 
-    public function findLoadedMirrorForTipo(Tipo $tipo, array $relations = [])
+    public function findLoadedNormalizedForLegacyTipo(Tipo $tipo, array $relations = [])
     {
         $query = PeticaoModelo::query();
 

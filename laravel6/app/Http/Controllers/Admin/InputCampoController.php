@@ -13,7 +13,7 @@ class InputCampoController extends Controller
 {
     public function store(Request $request, Tipo $modelo, LegacyModeloMirrorService $mirrorService)
     {
-        $mirror = app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo);
+        $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {
             return app(NormalizedInputCampoController::class)->store($request, $mirror, $mirrorService);
         }
@@ -27,7 +27,7 @@ class InputCampoController extends Controller
 
     public function update(Request $request, Tipo $modelo, InputCampo $campo, LegacyModeloMirrorService $mirrorService)
     {
-        $mirror = app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo);
+        $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {
             $normalizedCampo = $mirror->campos()->where('legacy_input_id', $campo->id_input)->first();
             abort_unless($normalizedCampo, 404);

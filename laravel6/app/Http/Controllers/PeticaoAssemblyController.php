@@ -90,7 +90,7 @@ class PeticaoAssemblyController extends Controller
 
     public function show(Tipo $modelo)
     {
-        $mirror = app(PeticaoModeloResolverService::class)->findLoadedMirrorForTipo(
+        $mirror = app(PeticaoModeloResolverService::class)->findLoadedNormalizedForLegacyTipo(
             $modelo,
             ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
         );
@@ -115,7 +115,7 @@ class PeticaoAssemblyController extends Controller
 
     public function compose(Request $request, Tipo $modelo, PeticaoComposerService $composer, SqlServerLookupService $lookup)
     {
-        $mirror = app(PeticaoModeloResolverService::class)->findLoadedMirrorForTipo(
+        $mirror = app(PeticaoModeloResolverService::class)->findLoadedNormalizedForLegacyTipo(
             $modelo,
             ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
         );

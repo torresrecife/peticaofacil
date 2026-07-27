@@ -13,7 +13,7 @@ class ParagrafoController extends Controller
 {
     public function store(Request $request, Tipo $modelo, LegacyModeloMirrorService $mirrorService)
     {
-        $mirror = app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo);
+        $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {
             return app(NormalizedParagrafoController::class)->store($request, $mirror, $mirrorService);
         }
@@ -27,7 +27,7 @@ class ParagrafoController extends Controller
 
     public function update(Request $request, Tipo $modelo, Paragrafo $paragrafo, LegacyModeloMirrorService $mirrorService)
     {
-        $mirror = app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo);
+        $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {
             $normalizedParagrafo = $mirror->paragrafos()->where('legacy_fund_id', $paragrafo->fund_id)->first();
             abort_unless($normalizedParagrafo, 404);
