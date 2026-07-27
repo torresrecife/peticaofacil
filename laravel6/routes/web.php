@@ -58,7 +58,7 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/exportar/pdf', 'PeticaoSavedController@exportVersionPdf')->name('peticoes.saved.versions.export.pdf');
     Route::post('/peticoes-salvas/{peticao}/exportar/pdf', 'PeticaoSavedController@exportPdf')->name('peticoes.saved.export.pdf');
     Route::post('/peticoes-salvas/{peticao}/exportar/word', 'PeticaoSavedController@exportWord')->name('peticoes.saved.export.word');
-    Route::get('/pecas/{peca}/editar', 'PeticaoEditorController@edit')->name('peticoes.editor.edit');
+    Route::get('/pecas/{peca}/editar', 'PeticaoEditorController@edit')->name('legacy.peticoes.editor.edit');
     Route::get('/pecas', 'PecaController@index')->name('pecas.index');
 
     Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function () {

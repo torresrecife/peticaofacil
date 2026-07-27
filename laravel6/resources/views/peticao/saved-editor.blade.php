@@ -84,7 +84,7 @@
                 <button type="submit">Exportar PDF</button>
             </form>
             @if($peticao->legacyPeca)
-                <a class="button secondary link" href="{{ route('peticoes.editor.edit', $peticao->legacyPeca) }}">Abrir versao legado</a>
+                <a class="button secondary link" href="{{ route('legacy.peticoes.editor.edit', $peticao->legacyPeca) }}">Abrir compatibilidade legado</a>
             @endif
         </div>
         <div class="panel-muted" style="margin-top:16px;">

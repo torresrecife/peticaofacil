@@ -91,7 +91,7 @@ class PeticaoEditorController extends Controller
             return redirect()->route('peticoes.saved.edit', $mirror)->with('status', 'Peca salva.');
         }
 
-        return redirect()->route('peticoes.editor.edit', $peca)->with('status', 'Peca salva.');
+        return redirect()->route('legacy.peticoes.editor.edit', $peca)->with('status', 'Peca salva.');
     }
 
     protected function handleSaveNormalized(Request $request, PeticaoModelo $modelo, PeticaoNormalizedStorageService $storage)

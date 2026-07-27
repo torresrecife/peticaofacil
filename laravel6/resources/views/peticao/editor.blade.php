@@ -80,7 +80,7 @@
                 <button type="submit">Exportar PDF</button>
             </form>
             @if($peca)
-                <a class="button secondary link" href="{{ route('peticoes.editor.edit', $peca) }}">Recarregar versao salva</a>
+                <a class="button secondary link" href="{{ route('legacy.peticoes.editor.edit', $peca) }}">Abrir compatibilidade legado</a>
             @endif
         </div>
     </div>
