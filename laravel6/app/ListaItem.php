@@ -9,11 +9,13 @@ class ListaItem extends Model
 {
     use LegacyEncoding;
 
-    protected $table = 'tp_lista_tb';
+    protected $table = 'lista_itens';
     protected $primaryKey = 'id_lista';
-    public $timestamps = false;
+    public $incrementing = false;
 
     protected $fillable = [
+        'id_lista',
+        'legacy_lista_id',
         'id_grupo',
         'nome_lista',
         'return_1',
@@ -39,5 +41,22 @@ class ListaItem extends Model
     public function grupo()
     {
         return $this->belongsTo(ListaGrupo::class, 'id_grupo', 'id_grupo');
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $field = $field ?: $this->getRouteKeyName();
+
+        $item = $this->where($field, $value)->first();
+        if ($item) {
+            return $item;
+        }
+
+        $legacyItem = LegacyListaItem::find($value);
+        if (!$legacyItem) {
+            return null;
+        }
+
+        return app(\App\Services\ListaSyncService::class)->syncLegacyItem($legacyItem);
     }
 }

@@ -16,6 +16,8 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\SyncLegacyModelos::class,
         \App\Console\Commands\SyncLegacyPecas::class,
         \App\Console\Commands\SyncLegacyUsers::class,
+        \App\Console\Commands\SyncUserInternalLinks::class,
+        \App\Console\Commands\SyncLegacyListas::class,
     ];
 
     /**

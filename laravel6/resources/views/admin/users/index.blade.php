@@ -13,6 +13,7 @@
         <thead>
             <tr>
                 <th>ID</th>
+                <th>ID legado</th>
                 <th>Nome</th>
                 <th>Login</th>
                 <th>Nivel</th>
@@ -25,7 +26,8 @@
         <tbody>
             @foreach($users as $user)
                 <tr>
-                    <td>{{ $user->id_usu }}</td>
+                    <td>{{ $user->id }}</td>
+                    <td>{{ $user->legacy_usuario_id ?: '-' }}</td>
                     <td>{{ $user->nome_usu }}</td>
                     <td>{{ $user->login_usu }}</td>
                     <td>{{ $user->nivel_usu }}</td>

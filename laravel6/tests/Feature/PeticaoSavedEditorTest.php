@@ -59,6 +59,7 @@ class PeticaoSavedEditorTest extends TestCase
             'id' => 4001,
             'legacy_peca_id' => 3001,
             'modelo_id' => 300,
+            'user_id' => $user->id,
             'legacy_usuario_id' => 30,
             'codigo_externo' => 'P3001',
             'nome_arquivo' => 'Modelo Persistido',
@@ -127,6 +128,7 @@ class PeticaoSavedEditorTest extends TestCase
             'versao_numero' => 2,
             'legacy_peca_id_snapshot' => 3001,
             'legacy_usuario_id_snapshot' => 30,
+            'user_id_snapshot' => $user->id,
             'codigo_externo_snapshot' => 'P3001',
             'cliente_referencia_snapshot' => 'Cliente Restaurado',
             'conteudo_html_snapshot' => '<p>Texto restaurado</p>',
@@ -162,7 +164,7 @@ class PeticaoSavedEditorTest extends TestCase
         $this->assertStringContainsString('Texto restaurado', $normalizedAfterRestore->conteudo_html);
 
         $this->actingAs($user)
-            ->get('/peticoes-salvas/4001/editar?origin=restore&user_id=30&date_from=2026-07-22&date_to=2026-07-22')
+            ->get('/peticoes-salvas/4001/editar?origin=restore&user_id=' . $user->id . '&date_from=2026-07-22&date_to=2026-07-22')
             ->assertStatus(200)
             ->assertSee('restore')
             ->assertSee('Cliente Restaurado')

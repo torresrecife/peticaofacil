@@ -17,7 +17,7 @@ class DashboardController extends Controller
     {
         $today = now()->toDateString();
 
-        $peticoesHojeNormalizadas = PeticaoNormalizada::with(['modelo', 'legacyUsuario'])
+        $peticoesHojeNormalizadas = PeticaoNormalizada::with(['modelo', 'user'])
             ->whereDate('gerado_em', $today)
             ->orderByDesc('gerado_em')
             ->orderByDesc('id')
@@ -116,7 +116,7 @@ class DashboardController extends Controller
                 'momento' => $peticao->gerado_em ?: $peticao->created_at,
                 'cliente' => $peticao->cliente_referencia,
                 'modelo' => optional($peticao->modelo)->nome ?: $peticao->nome_arquivo,
-                'usuario' => optional($peticao->legacyUsuario)->nome_usu,
+                'usuario' => optional($peticao->user)->nome_usu,
                 'origem' => 'Normalizada',
                 'link' => route('peticoes.saved.edit', $peticao),
             ]);
@@ -143,20 +143,22 @@ class DashboardController extends Controller
         $totais = [];
 
         foreach ($normalizadas as $peticao) {
-            if (!$peticao->legacy_usuario_id) {
+            $userId = $peticao->user_id ?: null;
+            if (!$userId) {
                 continue;
             }
 
-            $userId = (int) $peticao->legacy_usuario_id;
-            if (!isset($totais[$userId])) {
-                $totais[$userId] = [
-                    'legacy_usuario_id' => $userId,
-                    'nome_usu' => optional($peticao->legacyUsuario)->nome_usu ?: ('Usuario #' . $userId),
+            $indexKey = 'user:' . $userId;
+            if (!isset($totais[$indexKey])) {
+                $totais[$indexKey] = [
+                    'user_id' => $userId,
+                    'legacy_usuario_id' => $peticao->legacy_usuario_id ?: null,
+                    'nome_usu' => optional($peticao->user)->nome_usu ?: ('Usuario #' . $userId),
                     'total_peticoes' => 0,
                 ];
             }
 
-            $totais[$userId]['total_peticoes']++;
+            $totais[$indexKey]['total_peticoes']++;
         }
 
         foreach ($legadas as $peca) {
@@ -165,15 +167,17 @@ class DashboardController extends Controller
             }
 
             $userId = (int) $peca->id_usu;
-            if (!isset($totais[$userId])) {
-                $totais[$userId] = [
+            $indexKey = 'legacy:' . $userId;
+            if (!isset($totais[$indexKey])) {
+                $totais[$indexKey] = [
+                    'user_id' => null,
                     'legacy_usuario_id' => $userId,
                     'nome_usu' => optional($peca->usuario)->nome_usu ?: ('Usuario #' . $userId),
                     'total_peticoes' => 0,
                 ];
             }
 
-            $totais[$userId]['total_peticoes']++;
+            $totais[$indexKey]['total_peticoes']++;
         }
 
         return collect($totais)
@@ -182,7 +186,7 @@ class DashboardController extends Controller
             })
             ->sort(function ($a, $b) {
                 if ($a->total_peticoes === $b->total_peticoes) {
-                    return $a->legacy_usuario_id <=> $b->legacy_usuario_id;
+                    return ($a->user_id ?: $a->legacy_usuario_id) <=> ($b->user_id ?: $b->legacy_usuario_id);
                 }
 
                 return $b->total_peticoes <=> $a->total_peticoes;

@@ -4,13 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\ListaGrupo;
+use App\LegacyListaGrupo;
+use App\Services\ListaSyncService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ListaController extends Controller
 {
     public function index()
     {
+        if (ListaGrupo::count() === 0 && LegacyListaGrupo::count() > 0) {
+            app(ListaSyncService::class)->syncAll();
+        }
+
         $listas = ListaGrupo::withCount('itens')
             ->orderBy('id_grupo')
             ->paginate(20);
@@ -29,11 +34,7 @@ class ListaController extends Controller
     public function store(Request $request)
     {
         $data = $this->validateData($request);
-
-        ListaGrupo::create([
-            'nome_grupo' => $data['nome_grupo'],
-            'data_cad' => now(),
-        ]);
+        app(ListaSyncService::class)->createGroup($data);
 
         return redirect()->route('admin.listas.index')->with('status', 'Lista criada.');
     }
@@ -64,19 +65,14 @@ class ListaController extends Controller
     public function update(Request $request, ListaGrupo $lista)
     {
         $data = $this->validateData($request);
-
-        $lista->nome_grupo = $data['nome_grupo'];
-        $lista->save();
+        app(ListaSyncService::class)->updateGroup($lista, $data);
 
         return redirect()->route('admin.listas.edit', $lista)->with('status', 'Lista atualizada.');
     }
 
     public function destroy(ListaGrupo $lista)
     {
-        DB::transaction(function () use ($lista) {
-            $lista->itens()->delete();
-            $lista->delete();
-        });
+        app(ListaSyncService::class)->deleteGroup($lista);
 
         return redirect()->route('admin.listas.index')->with('status', 'Lista removida.');
     }

@@ -11,10 +11,14 @@ class UserSyncService
 {
     public function syncFromLegacy(LegacyUser $legacyUser): User
     {
-        return User::updateOrCreate(
+        $user = User::updateOrCreate(
             ['legacy_usuario_id' => $legacyUser->id_usu],
             $this->mapLegacyToApp($legacyUser)
         );
+
+        $this->syncInternalReferences($user);
+
+        return $user;
     }
 
     public function syncAll(): int
@@ -69,6 +73,8 @@ class UserSyncService
             $user->acesso_usu = now();
             $user->save();
 
+            $this->syncInternalReferences($user);
+
             return $user;
         }
 
@@ -78,6 +84,25 @@ class UserSyncService
         return tap($this->syncFromLegacy($legacyUser), function ($synced) use ($user) {
             $user->forceFill($synced->getAttributes())->syncOriginal();
         });
+    }
+
+    public function syncInternalReferences(User $user): void
+    {
+        if (!$user->legacy_usuario_id) {
+            return;
+        }
+
+        DB::table('user_model_favorites')
+            ->where('legacy_usuario_id', $user->legacy_usuario_id)
+            ->update(['user_id' => $user->id]);
+
+        DB::table('peticoes')
+            ->where('legacy_usuario_id', $user->legacy_usuario_id)
+            ->update(['user_id' => $user->id]);
+
+        DB::table('peticao_versoes')
+            ->where('legacy_usuario_id_snapshot', $user->legacy_usuario_id)
+            ->update(['user_id_snapshot' => $user->id]);
     }
 
     public function updatePassword(User $user, string $plainPassword): User

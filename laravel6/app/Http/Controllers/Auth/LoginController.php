@@ -55,6 +55,7 @@ class LoginController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
+        $userSyncService->syncInternalReferences($user);
 
         if ($user->requiresInitialPasswordChange()) {
             return redirect()->route('password.force');

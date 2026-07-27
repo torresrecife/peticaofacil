@@ -13,7 +13,8 @@ class FavoriteModeloController extends Controller
     public function storeNormalized(PeticaoModelo $modeloNormalizado): RedirectResponse
     {
         UserFavoriteModelo::firstOrCreate([
-            'legacy_usuario_id' => Auth::user()->id_usu,
+            'user_id' => Auth::id(),
+            'legacy_usuario_id' => Auth::user()->legacy_usuario_id,
             'source' => 'normalized',
             'modelo_id' => $modeloNormalizado->id,
             'legacy_tipo_id' => 0,
@@ -25,7 +26,7 @@ class FavoriteModeloController extends Controller
     public function destroyNormalized(PeticaoModelo $modeloNormalizado): RedirectResponse
     {
         UserFavoriteModelo::where([
-            'legacy_usuario_id' => Auth::user()->id_usu,
+            'user_id' => Auth::id(),
             'source' => 'normalized',
             'modelo_id' => $modeloNormalizado->id,
             'legacy_tipo_id' => 0,
@@ -37,7 +38,8 @@ class FavoriteModeloController extends Controller
     public function storeLegacy(Tipo $modelo): RedirectResponse
     {
         UserFavoriteModelo::firstOrCreate([
-            'legacy_usuario_id' => Auth::user()->id_usu,
+            'user_id' => Auth::id(),
+            'legacy_usuario_id' => Auth::user()->legacy_usuario_id,
             'source' => 'legacy',
             'modelo_id' => 0,
             'legacy_tipo_id' => $modelo->tipo_id,
@@ -49,7 +51,7 @@ class FavoriteModeloController extends Controller
     public function destroyLegacy(Tipo $modelo): RedirectResponse
     {
         UserFavoriteModelo::where([
-            'legacy_usuario_id' => Auth::user()->id_usu,
+            'user_id' => Auth::id(),
             'source' => 'legacy',
             'modelo_id' => 0,
             'legacy_tipo_id' => $modelo->tipo_id,

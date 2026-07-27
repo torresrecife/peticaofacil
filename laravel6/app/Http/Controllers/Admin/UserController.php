@@ -14,7 +14,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::with('setor')->orderBy('legacy_usuario_id')->paginate(20);
+        $users = User::with('setor')->orderBy('id')->paginate(20);
         $clientMap = Cliente::active()->orderBy('cliente_name')->get()->keyBy('cliente_id');
 
         foreach ($users as $user) {
@@ -61,7 +61,7 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        $data = $this->validateData($request, $user->id_usu);
+        $data = $this->validateData($request, $user);
 
         app(UserSyncService::class)->update(
             $user,
@@ -72,9 +72,11 @@ class UserController extends Controller
         return redirect()->route('admin.usuarios.index')->with('status', 'Usuario atualizado.');
     }
 
-    protected function validateData(Request $request, $userId = null)
+    protected function validateData(Request $request, User $user = null)
     {
-        $passwordRule = $userId ? 'nullable|string|min:4|confirmed' : 'required|string|min:4|confirmed';
+        $passwordRule = $user ? 'nullable|string|min:4|confirmed' : 'required|string|min:4|confirmed';
+        $legacyUserId = $user ? $user->legacy_usuario_id : null;
+        $appUserId = $user ? $user->id : null;
 
         return $request->validate([
             'nome_usu' => 'required|string|max:50',
@@ -82,7 +84,8 @@ class UserController extends Controller
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('tp_usu_tb', 'login_usu')->ignore($userId, 'id_usu'),
+                Rule::unique('users', 'login_usu')->ignore($appUserId),
+                Rule::unique('tp_usu_tb', 'login_usu')->ignore($legacyUserId, 'id_usu'),
             ],
             'email_usu' => 'nullable|email|max:50',
             'nivel_usu' => ['required', Rule::in(['ADM', 'GER', 'USU'])],

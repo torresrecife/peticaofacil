@@ -46,13 +46,13 @@ class ModeloFavoritoTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseHas('user_model_favorites', [
-            'legacy_usuario_id' => 500,
+            'user_id' => $user->id,
             'source' => 'normalized',
             'modelo_id' => 701,
         ]);
 
         $this->assertDatabaseHas('user_model_favorites', [
-            'legacy_usuario_id' => 500,
+            'user_id' => $user->id,
             'source' => 'legacy',
             'legacy_tipo_id' => 801,
         ]);
@@ -62,7 +62,7 @@ class ModeloFavoritoTest extends TestCase
             ->assertRedirect();
 
         $this->assertDatabaseMissing('user_model_favorites', [
-            'legacy_usuario_id' => 500,
+            'user_id' => $user->id,
             'source' => 'normalized',
             'modelo_id' => 701,
         ]);
@@ -109,6 +109,7 @@ class ModeloFavoritoTest extends TestCase
         DB::table('user_model_favorites')->insert([
             [
                 'legacy_usuario_id' => 500,
+                'user_id' => $user->id,
                 'source' => 'normalized',
                 'modelo_id' => 701,
                 'legacy_tipo_id' => 0,
@@ -117,6 +118,7 @@ class ModeloFavoritoTest extends TestCase
             ],
             [
                 'legacy_usuario_id' => 500,
+                'user_id' => $user->id,
                 'source' => 'legacy',
                 'modelo_id' => 0,
                 'legacy_tipo_id' => 801,

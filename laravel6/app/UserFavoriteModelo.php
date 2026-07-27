@@ -9,6 +9,7 @@ class UserFavoriteModelo extends Model
     protected $table = 'user_model_favorites';
 
     protected $fillable = [
+        'user_id',
         'legacy_usuario_id',
         'source',
         'modelo_id',
@@ -17,7 +18,7 @@ class UserFavoriteModelo extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'legacy_usuario_id', 'legacy_usuario_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function modelo()

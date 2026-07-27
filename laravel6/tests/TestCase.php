@@ -27,6 +27,8 @@ abstract class TestCase extends BaseTestCase
             'peticao_modelo_campos',
             'peticao_modelo_paragrafos',
             'peticao_modelos',
+            'lista_itens',
+            'lista_grupos',
             'user_model_favorites',
             'sql_server_profiles',
             'users',
@@ -178,6 +180,30 @@ abstract class TestCase extends BaseTestCase
             $table->unsignedInteger('id_setor')->nullable();
         });
 
+        $this->createOrResetTable('lista_grupos', function (Blueprint $table) {
+            $table->unsignedInteger('id_grupo')->primary();
+            $table->unsignedInteger('legacy_grupo_id')->nullable()->unique();
+            $table->string('nome_grupo', 500);
+            $table->dateTime('data_cad')->nullable();
+            $table->timestamps();
+        });
+
+        $this->createOrResetTable('lista_itens', function (Blueprint $table) {
+            $table->unsignedInteger('id_lista')->primary();
+            $table->unsignedInteger('legacy_lista_id')->nullable()->unique();
+            $table->unsignedInteger('id_grupo');
+            $table->string('nome_lista', 500)->nullable();
+            $table->string('return_1', 500)->nullable();
+            $table->string('return_2', 500)->nullable();
+            $table->string('return_3', 500)->nullable();
+            $table->string('return_4', 500)->nullable();
+            $table->string('return_5', 500)->nullable();
+            $table->string('return_6', 500)->nullable();
+            $table->dateTime('data_cad')->nullable();
+            $table->unsignedInteger('id_setor')->nullable();
+            $table->timestamps();
+        });
+
         $this->createOrResetTable('tp_funda_tb', function (Blueprint $table) {
             $table->increments('fund_id');
             $table->unsignedInteger('tipo_id');
@@ -259,6 +285,7 @@ abstract class TestCase extends BaseTestCase
 
         $this->createOrResetTable('user_model_favorites', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->unsignedInteger('legacy_usuario_id');
             $table->string('source', 20);
             $table->unsignedBigInteger('modelo_id')->default(0);
@@ -317,6 +344,7 @@ abstract class TestCase extends BaseTestCase
             $table->bigIncrements('id');
             $table->unsignedInteger('legacy_peca_id')->nullable()->unique();
             $table->unsignedBigInteger('modelo_id');
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->unsignedInteger('legacy_usuario_id')->nullable();
             $table->string('codigo_externo', 255)->nullable();
             $table->string('nome_arquivo', 500);
@@ -334,6 +362,7 @@ abstract class TestCase extends BaseTestCase
             $table->unsignedInteger('versao_numero');
             $table->unsignedInteger('legacy_peca_id_snapshot')->nullable();
             $table->unsignedInteger('legacy_usuario_id_snapshot')->nullable();
+            $table->unsignedBigInteger('user_id_snapshot')->nullable();
             $table->string('codigo_externo_snapshot', 255)->nullable();
             $table->string('cliente_referencia_snapshot', 500)->nullable();
             $table->longText('conteudo_html_snapshot');

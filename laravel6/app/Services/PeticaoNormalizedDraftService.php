@@ -15,6 +15,7 @@ class PeticaoNormalizedDraftService
             $peticao = PeticaoNormalizada::create([
                 'legacy_peca_id' => null,
                 'modelo_id' => $modelo->id,
+                'user_id' => Auth::id(),
                 'legacy_usuario_id' => Auth::user()->id_usu,
                 'codigo_externo' => null,
                 'nome_arquivo' => $modelo->nome,

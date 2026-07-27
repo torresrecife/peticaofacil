@@ -11,6 +11,7 @@ class PeticaoNormalizada extends Model
     protected $fillable = [
         'legacy_peca_id',
         'modelo_id',
+        'user_id',
         'legacy_usuario_id',
         'codigo_externo',
         'nome_arquivo',
@@ -40,6 +41,11 @@ class PeticaoNormalizada extends Model
     public function legacyUsuario()
     {
         return $this->belongsTo(LegacyUser::class, 'legacy_usuario_id', 'id_usu');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function versoes()

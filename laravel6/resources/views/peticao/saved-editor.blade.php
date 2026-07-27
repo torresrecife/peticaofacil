@@ -90,7 +90,8 @@
         <div class="panel-muted" style="margin-top:16px;">
             <div><strong>Gerada em:</strong> {{ optional($peticao->gerado_em)->format('d/m/Y H:i') ?: '-' }}</div>
             <div><strong>Salva em:</strong> {{ optional($peticao->salvo_em)->format('d/m/Y H:i') ?: '-' }}</div>
-            <div><strong>Usuario legado:</strong> {{ optional($peticao->legacyUsuario)->login_usu ?: '-' }}</div>
+            <div><strong>Usuario:</strong> {{ optional($peticao->user)->login_usu ?: optional($peticao->legacyUsuario)->login_usu ?: '-' }}</div>
+            <div><strong>ID usuario:</strong> {{ $peticao->user_id ?: '-' }}</div>
         </div>
         <div class="panel-muted" style="margin-top:16px;">
             <strong>Historico de versoes</strong>
@@ -110,7 +111,7 @@
                         <select name="user_id">
                             <option value="">Todos</option>
                             @foreach($usuariosHistorico as $usuarioHistorico)
-                                <option value="{{ $usuarioHistorico->id_usu }}" @if((string) ($selectedUserId ?? '') === (string) $usuarioHistorico->id_usu) selected @endif>{{ $usuarioHistorico->login_usu }}</option>
+                                <option value="{{ $usuarioHistorico->id }}" @if((string) ($selectedUserId ?? '') === (string) $usuarioHistorico->id) selected @endif>{{ $usuarioHistorico->login_usu }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -146,7 +147,7 @@
                             <td>{{ $versao->versao_numero }}</td>
                             <td>{{ $versao->origem_snapshot }}</td>
                             <td>{{ $versao->cliente_referencia_snapshot }}</td>
-                            <td>{{ optional($versao->legacyUsuario)->login_usu ?: '-' }}</td>
+                            <td>{{ optional($versao->user)->login_usu ?: optional($versao->legacyUsuario)->login_usu ?: '-' }}</td>
                             <td>{{ optional($versao->criado_em)->format('d/m/Y H:i') ?: optional($versao->created_at)->format('d/m/Y H:i') }}</td>
                             <td>{{ $versao->legacy_peca_id_snapshot ?: '-' }}</td>
                             <td>

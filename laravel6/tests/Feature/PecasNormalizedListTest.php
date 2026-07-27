@@ -59,6 +59,7 @@ class PecasNormalizedListTest extends TestCase
             'id' => 1001,
             'legacy_peca_id' => 501,
             'modelo_id' => 90,
+            'user_id' => $admin->id,
             'legacy_usuario_id' => 10,
             'codigo_externo' => 'ABC123',
             'nome_arquivo' => 'Modelo Normalizado',

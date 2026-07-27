@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Peca;
 use App\PeticaoNormalizada;
 use App\PeticaoVersao;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PeticaoNormalizedStorageService
@@ -29,6 +30,10 @@ class PeticaoNormalizedStorageService
                 $peticao->nome_arquivo = $legacyPeca->nome_pecas ?: $peticao->nome_arquivo;
             }
 
+            if (!$peticao->user_id && Auth::check()) {
+                $peticao->user_id = Auth::id();
+            }
+
             if (!$legacyPeca && !$peticao->nome_arquivo) {
                 $peticao->nome_arquivo = optional($peticao->modelo)->nome ?: 'Peticao normalizada';
             }
@@ -40,7 +45,7 @@ class PeticaoNormalizedStorageService
 
             $this->createVersionSnapshot($peticao, $origin);
 
-            return $peticao->fresh(['modelo', 'legacyPeca.tipo', 'legacyUsuario']);
+            return $peticao->fresh(['modelo', 'legacyPeca.tipo', 'user']);
         });
     }
 
@@ -61,6 +66,7 @@ class PeticaoNormalizedStorageService
             'versao_numero' => $nextVersion,
             'legacy_peca_id_snapshot' => $peticao->legacy_peca_id,
             'legacy_usuario_id_snapshot' => $peticao->legacy_usuario_id,
+            'user_id_snapshot' => $peticao->user_id,
             'codigo_externo_snapshot' => $peticao->codigo_externo,
             'cliente_referencia_snapshot' => $peticao->cliente_referencia,
             'conteudo_html_snapshot' => $peticao->conteudo_html,

@@ -13,6 +13,7 @@ class PeticaoVersao extends Model
         'versao_numero',
         'legacy_peca_id_snapshot',
         'legacy_usuario_id_snapshot',
+        'user_id_snapshot',
         'codigo_externo_snapshot',
         'cliente_referencia_snapshot',
         'conteudo_html_snapshot',
@@ -34,5 +35,10 @@ class PeticaoVersao extends Model
     public function legacyUsuario()
     {
         return $this->belongsTo(LegacyUser::class, 'legacy_usuario_id_snapshot', 'id_usu');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id_snapshot');
     }
 }

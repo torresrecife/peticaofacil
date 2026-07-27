@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\ListaGrupo;
 use App\ListaItem;
+use App\Services\ListaSyncService;
 use Illuminate\Http\Request;
 
 class ListaItemController extends Controller
@@ -20,9 +21,7 @@ class ListaItemController extends Controller
     public function store(Request $request, ListaGrupo $lista)
     {
         $data = $this->validateData($request);
-        $data['data_cad'] = now();
-
-        $lista->itens()->create($data);
+        app(ListaSyncService::class)->createItem($lista, $data);
 
         return redirect()->route('admin.listas.edit', $lista)->with('status', 'Item criado.');
     }
@@ -37,8 +36,7 @@ class ListaItemController extends Controller
     public function update(Request $request, ListaGrupo $lista, ListaItem $item)
     {
         $this->ensureBelongsToLista($lista, $item);
-
-        $item->fill($this->validateData($request))->save();
+        app(ListaSyncService::class)->updateItem($item, $this->validateData($request));
 
         return redirect()->route('admin.listas.edit', $lista)->with('status', 'Item atualizado.');
     }
@@ -46,7 +44,7 @@ class ListaItemController extends Controller
     public function destroy(ListaGrupo $lista, ListaItem $item)
     {
         $this->ensureBelongsToLista($lista, $item);
-        $item->delete();
+        app(ListaSyncService::class)->deleteItem($item);
 
         return redirect()->route('admin.listas.edit', $lista)->with('status', 'Item removido.');
     }

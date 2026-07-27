@@ -56,14 +56,14 @@ class PeticaoSavedController extends Controller
         $dateFrom = request()->query('date_from');
         $dateTo = request()->query('date_to');
 
-        $peticao->load(['modelo', 'legacyPeca.tipo', 'legacyUsuario']);
+        $peticao->load(['modelo', 'legacyPeca.tipo', 'user']);
 
-        $versionsQuery = $peticao->versoes()->with('legacyUsuario');
+        $versionsQuery = $peticao->versoes()->with('user');
         if ($origin) {
             $versionsQuery->where('origem_snapshot', $origin);
         }
         if ($userId) {
-            $versionsQuery->where('legacy_usuario_id_snapshot', $userId);
+            $versionsQuery->where('user_id_snapshot', $userId);
         }
         if ($dateFrom) {
             $versionsQuery->whereDate('criado_em', '>=', $dateFrom);
@@ -74,12 +74,12 @@ class PeticaoSavedController extends Controller
 
         $versoes = $versionsQuery->paginate(10)->appends(request()->query());
         $usuariosHistorico = $peticao->versoes()
-            ->with('legacyUsuario')
-            ->whereNotNull('legacy_usuario_id_snapshot')
+            ->with('user')
+            ->whereNotNull('user_id_snapshot')
             ->get()
-            ->pluck('legacyUsuario')
+            ->pluck('user')
             ->filter()
-            ->unique('id_usu')
+            ->unique('id')
             ->sortBy('login_usu')
             ->values();
 

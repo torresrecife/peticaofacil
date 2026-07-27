@@ -16,13 +16,22 @@ class PecaController extends Controller
         $legacyTipoId = $request->query('tipo_id');
         $search = trim((string) $request->query('search', ''));
 
-        $query = PeticaoNormalizada::with(['modelo', 'legacyPeca', 'legacyUsuario'])
+        $query = PeticaoNormalizada::with(['modelo', 'legacyPeca', 'user'])
             ->orderByRaw('COALESCE(gerado_em, created_at) DESC')
             ->orderByDesc('id');
 
         $user = Auth::user();
         if ($user && $user->nivel_usu !== 'ADM') {
-            $query->where('legacy_usuario_id', $user->id_usu);
+            $query->where(function ($builder) use ($user) {
+                $builder->where('user_id', $user->id);
+
+                if ($user->legacy_usuario_id) {
+                    $builder->orWhere(function ($legacyBuilder) use ($user) {
+                        $legacyBuilder->whereNull('user_id')
+                            ->where('legacy_usuario_id', $user->legacy_usuario_id);
+                    });
+                }
+            });
         }
 
         if ($modeloId) {
