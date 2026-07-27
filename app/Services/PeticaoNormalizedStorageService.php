@@ -19,10 +19,6 @@ class PeticaoNormalizedStorageService
                 $peticao->user_id = Auth::id();
             }
 
-            if (!$peticao->legacy_usuario_id && Auth::check()) {
-                $peticao->legacy_usuario_id = Auth::user()->legacy_usuario_id ?: Auth::user()->id_usu;
-            }
-
             if (!$peticao->nome_arquivo) {
                 $peticao->nome_arquivo = optional($peticao->modelo)->nome ?: 'Peticao normalizada';
             }

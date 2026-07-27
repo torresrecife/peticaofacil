@@ -21,16 +21,7 @@ class PecaController extends Controller
 
         $user = Auth::user();
         if ($user && $user->nivel_usu !== 'ADM') {
-            $query->where(function ($builder) use ($user) {
-                $builder->where('user_id', $user->id);
-
-                if ($user->legacy_usuario_id) {
-                    $builder->orWhere(function ($legacyBuilder) use ($user) {
-                        $legacyBuilder->whereNull('user_id')
-                            ->where('legacy_usuario_id', $user->legacy_usuario_id);
-                    });
-                }
-            });
+            $query->where('user_id', $user->id);
         }
 
         if ($modeloId) {

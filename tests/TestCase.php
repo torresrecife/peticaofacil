@@ -290,7 +290,7 @@ abstract class TestCase extends BaseTestCase
         $this->createOrResetTable('user_model_favorites', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('user_id')->nullable();
-            $table->unsignedInteger('legacy_usuario_id');
+            $table->unsignedInteger('legacy_usuario_id')->nullable();
             $table->string('source', 20);
             $table->unsignedBigInteger('modelo_id')->default(0);
             $table->unsignedInteger('legacy_tipo_id')->default(0);

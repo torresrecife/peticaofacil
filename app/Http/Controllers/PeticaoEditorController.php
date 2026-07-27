@@ -109,7 +109,6 @@ class PeticaoEditorController extends Controller
             $peticao = new PeticaoNormalizada([
                 'modelo_id' => $modelo->id,
                 'user_id' => auth()->id(),
-                'legacy_usuario_id' => optional(auth()->user())->legacy_usuario_id ?: optional(auth()->user())->id_usu,
                 'codigo_externo' => null,
                 'nome_arquivo' => $modelo->nome,
                 'cliente_referencia' => $data['nome_cli'],

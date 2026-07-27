@@ -72,16 +72,7 @@ class User extends Authenticatable
 
     public function favoriteModelos(): HasMany
     {
-        $relation = $this->hasMany(UserFavoriteModelo::class, 'user_id');
-
-        if ($this->legacy_usuario_id) {
-            $relation->orWhere(function ($query) {
-                $query->whereNull('user_id')
-                    ->where('legacy_usuario_id', $this->legacy_usuario_id);
-            });
-        }
-
-        return $relation;
+        return $this->hasMany(UserFavoriteModelo::class, 'user_id');
     }
 
     public function scopeActive($query)

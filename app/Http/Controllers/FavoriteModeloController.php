@@ -13,7 +13,6 @@ class FavoriteModeloController extends Controller
     {
         UserFavoriteModelo::firstOrCreate([
             'user_id' => Auth::id(),
-            'legacy_usuario_id' => Auth::user()->legacy_usuario_id,
             'source' => 'normalized',
             'modelo_id' => $modeloNormalizado->id,
             'legacy_tipo_id' => $modeloNormalizado->legacy_tipo_id ?: 0,
