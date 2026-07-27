@@ -1,16 +1,10 @@
-<IfModule mod_rewrite.c>
+﻿<IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /peticaofacil/
 
-    RewriteCond %{REQUEST_FILENAME} -f [OR]
-    RewriteCond %{REQUEST_FILENAME} -d
-    RewriteRule ^ - [L]
+    RewriteRule ^public/ - [L]
 
-    RewriteRule ^(css|js|img|ckeditor|ckfinder|inc)/(.*)$ public/$1/$2 [L,NC]
-    RewriteRule ^vendor/(.*)$ laravel6/public/vendor/$1 [L,NC]
-    RewriteRule ^(favicon\.ico|robots\.txt)$ laravel6/public/$1 [L,NC]
-
-    RewriteRule ^(index\.php|login\.php|sair\.php)$ $1 [L,NC]
-
-    RewriteRule ^ index.php [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>

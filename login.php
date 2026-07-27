@@ -1,6 +1,4 @@
-<?php
+﻿<?php
 
-require_once __DIR__ . '/inc/seguranca.php';
-
-header('Location: ' . modernLoginUrl());
+header('Location: /peticaofacil/login');
 exit;

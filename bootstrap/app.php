@@ -1,104 +1,55 @@
 <?php
 
-$rootPath = dirname(__DIR__);
-$autoloadPath = $rootPath . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+/*
+|--------------------------------------------------------------------------
+| Create The Application
+|--------------------------------------------------------------------------
+|
+| The first thing we will do is create a new Laravel application instance
+| which serves as the "glue" for all the components of Laravel, and is
+| the IoC container for the system binding all of the various parts.
+|
+*/
 
-if (file_exists($autoloadPath)) {
-	require_once $autoloadPath;
-} else {
-	spl_autoload_register(function ($class) use ($rootPath) {
-		$prefix = 'App\\';
-		$prefixLen = strlen($prefix);
-		if (strncmp($prefix, $class, $prefixLen) !== 0) {
-			return;
-		}
-		$relativeClass = substr($class, $prefixLen);
-		$file = $rootPath . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR
-			. str_replace('\\', DIRECTORY_SEPARATOR, $relativeClass) . '.php';
-		if (file_exists($file)) {
-			require_once $file;
-		}
-	});
-}
+$app = new Illuminate\Foundation\Application(
+    $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
+);
 
-if (class_exists(\Dotenv\Dotenv::class)) {
-	$envPath = $rootPath . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'env.local';
-	if (file_exists($envPath)) {
-		$dotenv = \Dotenv\Dotenv::createImmutable($rootPath, 'config/env.local');
-		$dotenv->safeLoad();
-	}
-}
+/*
+|--------------------------------------------------------------------------
+| Bind Important Interfaces
+|--------------------------------------------------------------------------
+|
+| Next, we need to bind some important interfaces into the container so
+| we will be able to resolve them when needed. The kernels serve the
+| incoming requests to this application from both the web and CLI.
+|
+*/
 
-if (getenv('APP_DEBUG') === false) {
-	$envPath = $rootPath . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'env.local';
-	if (file_exists($envPath)) {
-		$envValues = @parse_ini_file($envPath, false, INI_SCANNER_RAW);
-		if (is_array($envValues)) {
-			foreach ($envValues as $key => $value) {
-				if (getenv($key) === false) {
-					putenv($key . '=' . $value);
-					$_ENV[$key] = $value;
-					$_SERVER[$key] = $value;
-				}
-			}
-		}
-	}
-}
+$app->singleton(
+    Illuminate\Contracts\Http\Kernel::class,
+    App\Http\Kernel::class
+);
 
-if (!function_exists('asset_version')) {
-	function asset_version($relativePath) {
-		$rootPath = dirname(__DIR__);
-		$relativePath = ltrim($relativePath, '/');
-		$fullPath = $rootPath . DIRECTORY_SEPARATOR
-			. str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $relativePath);
-		if (file_exists($fullPath)) {
-			return (string) filemtime($fullPath);
-		}
-		return '1';
-	}
-}
+$app->singleton(
+    Illuminate\Contracts\Console\Kernel::class,
+    App\Console\Kernel::class
+);
 
-if (!function_exists('app_charset')) {
-	function app_charset() {
-		return 'UTF-8';
-	}
-}
+$app->singleton(
+    Illuminate\Contracts\Debug\ExceptionHandler::class,
+    App\Exceptions\Handler::class
+);
 
-if (!function_exists('app_to_utf8')) {
-	function app_to_utf8($value) {
-		if (!is_string($value)) {
-			return $value;
-		}
-		$dbCharset = strtolower(getenv('DB_CHARSET') ?: '');
-		if ($dbCharset === 'latin1') {
-			if (function_exists('mb_detect_encoding') && mb_detect_encoding($value, 'UTF-8', true)) {
-				return $value;
-			}
-			if (preg_match('//u', $value)) {
-				return $value;
-			}
-			$converted = @iconv('ISO-8859-1', 'UTF-8//IGNORE', $value);
-			if ($converted !== false) {
-				return $converted;
-			}
-			return utf8_encode($value);
-		}
-		return $value;
-	}
-}
+/*
+|--------------------------------------------------------------------------
+| Return The Application
+|--------------------------------------------------------------------------
+|
+| This script returns the application instance. The instance is given to
+| the calling script so we can separate the building of the instances
+| from the actual running of the application and sending responses.
+|
+*/
 
-if (!function_exists('app_from_utf8')) {
-	function app_from_utf8($value) {
-		if (!is_string($value)) {
-			return $value;
-		}
-		$dbCharset = strtolower(getenv('DB_CHARSET') ?: '');
-		if ($dbCharset === 'latin1') {
-			$converted = @iconv('UTF-8', 'ISO-8859-1//IGNORE', $value);
-			if ($converted !== false) {
-				return $converted;
-			}
-		}
-		return $value;
-	}
-}
+return $app;
