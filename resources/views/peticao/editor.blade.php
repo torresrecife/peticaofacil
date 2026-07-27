@@ -17,19 +17,10 @@
     <h2 style="margin:0;">Editor final da peca</h2>
     <div class="actions">
         @php
-            $isNormalizedEditor = $modelo instanceof \App\PeticaoModelo;
-            $backRoute = $isNormalizedEditor
-                ? route('peticoes.normalized.show', $modelo)
-                : route('legacy.peticoes.modelos.show', $modelo);
-            $saveRoute = $isNormalizedEditor
-                ? route('peticoes.normalized.editor.save', $modelo)
-                : route('legacy.peticoes.modelos.editor.save', $modelo);
-            $wordRoute = $isNormalizedEditor
-                ? route('peticoes.normalized.editor.export.word', $modelo)
-                : route('legacy.peticoes.modelos.editor.export.word', $modelo);
-            $pdfRoute = $isNormalizedEditor
-                ? route('peticoes.normalized.editor.export.pdf', $modelo)
-                : route('legacy.peticoes.modelos.editor.export.pdf', $modelo);
+            $backRoute = route('peticoes.normalized.show', $modelo);
+            $saveRoute = route('peticoes.normalized.editor.save', $modelo);
+            $wordRoute = route('peticoes.normalized.editor.export.word', $modelo);
+            $pdfRoute = route('peticoes.normalized.editor.export.pdf', $modelo);
         @endphp
         <a class="button secondary link" href="{{ $backRoute }}">Voltar para montagem</a>
     </div>

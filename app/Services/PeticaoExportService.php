@@ -20,7 +20,7 @@ class PeticaoExportService
     {
         $this->prepareLegacyPdfEnvironment($request);
 
-        $library = base_path('..\\html2pdf\\html2pdf.class.php');
+        $library = $this->resolvePdfLibraryPath();
         if (!file_exists($library)) {
             abort(500, 'Biblioteca de PDF nao encontrada.');
         }
@@ -71,6 +71,22 @@ class PeticaoExportService
         $_SERVER['REQUEST_URI'] = $_SERVER['REQUEST_URI'] ?? $scriptPath;
         $_SERVER['SCRIPT_FILENAME'] = $_SERVER['SCRIPT_FILENAME'] ?? public_path('index.php');
         $_SERVER['DOCUMENT_ROOT'] = $_SERVER['DOCUMENT_ROOT'] ?? realpath(public_path());
+    }
+
+    protected function resolvePdfLibraryPath()
+    {
+        $candidates = [
+            base_path('html2pdf\\html2pdf.class.php'),
+            base_path('..\\html2pdf\\html2pdf.class.php'),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (file_exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $candidates[0];
     }
 
     protected function normalizePdfImageSrc($html)

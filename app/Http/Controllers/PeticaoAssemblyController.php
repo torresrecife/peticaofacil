@@ -136,9 +136,7 @@ class PeticaoAssemblyController extends Controller
                 ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
         }
 
-        $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromNormalized($mirror);
-
-        return $this->renderComposedAssemble($request, $modelo, $modeloFonte, $composer, $lookup);
+        return $this->composeNormalized($request, $mirror, $composer, $lookup);
     }
 
     protected function renderComposedAssemble(Request $request, $modelo, $modeloFonte, PeticaoComposerService $composer, SqlServerLookupService $lookup)
