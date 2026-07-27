@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class AdminNormalizedModeloCreateTest extends TestCase
 {
-    public function test_admin_can_create_model_first_in_normalized_schema_and_reflect_to_legacy()
+    public function test_admin_can_create_model_first_in_normalized_schema_without_legacy_reflection_by_default()
     {
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
@@ -58,13 +58,18 @@ class AdminNormalizedModeloCreateTest extends TestCase
 
         $modelo = DB::table('peticao_modelos')->where('nome', 'Modelo Criado Normalizado')->first();
         $this->assertNotNull($modelo);
-        $this->assertNotNull($modelo->legacy_tipo_id);
+        $this->assertNull($modelo->legacy_tipo_id);
+        $this->assertSame('Modelo Criado Normalizado', $modelo->nome);
+        $this->assertSame('ativo', $modelo->status);
+        $this->assertSame('pdf', $modelo->arquivo_padrao);
+        $this->assertSame('<p>Cabecalho Criado</p>', $modelo->cabecalho_html);
+        $this->assertSame('<p>Rodape Criado</p>', $modelo->rodape_html);
 
-        $tipo = DB::table('tp_tipo_tb')->where('tipo_id', $modelo->legacy_tipo_id)->first();
-        $this->assertNotNull($tipo);
-        $this->assertSame('Modelo Criado Normalizado', $tipo->tipo_nome);
-        $this->assertSame('Descricao Criada', $tipo->nome_pre);
-        $this->assertSame('Pos Criado', $tipo->nome_pos);
+        $metadata = json_decode($modelo->metadata, true);
+        $this->assertSame('Descricao Criada', $metadata['nome_pre']);
+        $this->assertSame('Pos Criado', $metadata['nome_pos']);
+
+        $this->assertNull(DB::table('tp_tipo_tb')->where('tipo_nome', 'Modelo Criado Normalizado')->first());
 
         $response->assertRedirect('/admin/modelos-normalizados/' . $modelo->id . '/edit');
     }

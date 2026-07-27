@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class AdminNormalizedModeloUpdateTest extends TestCase
 {
-    public function test_admin_can_update_normalized_model_and_reflect_changes_to_legacy_tipo()
+    public function test_admin_can_update_normalized_model_without_reflecting_changes_to_legacy_by_default()
     {
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
@@ -74,14 +74,20 @@ class AdminNormalizedModeloUpdateTest extends TestCase
         $this->assertSame('inativo', $modelo->status);
         $this->assertSame('word', $modelo->arquivo_padrao);
         $this->assertSame(9, (int) $modelo->legacy_setor_id);
+        $this->assertSame('<p>Cabecalho Novo</p>', $modelo->cabecalho_html);
+        $this->assertSame('<p>Rodape Novo</p>', $modelo->rodape_html);
 
-        $this->assertSame('Modelo Atualizado', $tipo->tipo_nome);
-        $this->assertSame('Descricao Atualizada', $tipo->nome_pre);
-        $this->assertSame('Posfixo', $tipo->nome_pos);
-        $this->assertSame('N', $tipo->tipo_stt);
-        $this->assertSame('word', $tipo->tipo_arq);
-        $this->assertSame(9, (int) $tipo->id_setor);
-        $this->assertSame('<p>Cabecalho Novo</p>', $tipo->cod_cabec);
-        $this->assertSame('<p>Rodape Novo</p>', $tipo->cod_rodap);
+        $metadata = json_decode($modelo->metadata, true);
+        $this->assertSame('Descricao Atualizada', $metadata['nome_pre']);
+        $this->assertSame('Posfixo', $metadata['nome_pos']);
+
+        $this->assertSame('Modelo Original', $tipo->tipo_nome);
+        $this->assertSame('Descricao Original', $tipo->nome_pre);
+        $this->assertNull($tipo->nome_pos);
+        $this->assertSame('Y', $tipo->tipo_stt);
+        $this->assertSame('pdf', $tipo->tipo_arq);
+        $this->assertSame(8, (int) $tipo->id_setor);
+        $this->assertSame('<p>Cabecalho Antigo</p>', $tipo->cod_cabec);
+        $this->assertSame('<p>Rodape Antigo</p>', $tipo->cod_rodap);
     }
 }

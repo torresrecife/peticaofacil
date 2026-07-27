@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class AdminLegacyTipoFallbackTest extends TestCase
 {
-    public function test_legacy_tipo_fallback_edit_and_update_still_work_without_mirror()
+    public function test_legacy_tipo_fallback_syncs_and_updates_normalized_model_without_legacy_writeback_by_default()
     {
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
@@ -54,14 +54,20 @@ class AdminLegacyTipoFallbackTest extends TestCase
         $tipo = DB::table('tp_tipo_tb')->where('tipo_id', 210)->first();
         $mirror = DB::table('peticao_modelos')->where('legacy_tipo_id', 210)->first();
 
-        $this->assertSame('Modelo Legado Atualizado', $tipo->tipo_nome);
-        $this->assertSame('Descricao Atualizada', $tipo->nome_pre);
-        $this->assertSame('Pos Legado', $tipo->nome_pos);
-        $this->assertSame('word', $tipo->tipo_arq);
-        $this->assertSame('N', $tipo->tipo_stt);
-        $this->assertSame(22, (int) $tipo->id_setor);
-
         $this->assertNotNull($mirror);
         $this->assertSame('Modelo Legado Atualizado', $mirror->nome);
+        $this->assertSame('word', $mirror->arquivo_padrao);
+        $this->assertSame(22, (int) $mirror->legacy_setor_id);
+
+        $metadata = json_decode($mirror->metadata, true);
+        $this->assertSame('Descricao Atualizada', $metadata['nome_pre']);
+        $this->assertSame('Pos Legado', $metadata['nome_pos']);
+
+        $this->assertSame('Modelo So Legado', $tipo->tipo_nome);
+        $this->assertSame('Descricao Legada', $tipo->nome_pre);
+        $this->assertNull($tipo->nome_pos);
+        $this->assertSame('pdf', $tipo->tipo_arq);
+        $this->assertSame('Y', $tipo->tipo_stt);
+        $this->assertSame(21, (int) $tipo->id_setor);
     }
 }

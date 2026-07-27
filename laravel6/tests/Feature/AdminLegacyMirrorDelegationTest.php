@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class AdminLegacyMirrorDelegationTest extends TestCase
 {
-    public function test_legacy_admin_routes_delegate_writes_to_normalized_models_when_mirror_exists()
+    public function test_legacy_admin_routes_delegate_writes_to_normalized_models_without_legacy_writeback_by_default()
     {
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
@@ -97,19 +97,18 @@ class AdminLegacyMirrorDelegationTest extends TestCase
         $modelo = DB::table('peticao_modelos')->where('id', 111)->first();
         $tipo = DB::table('tp_tipo_tb')->where('tipo_id', 111)->first();
         $paragrafo = DB::table('peticao_modelo_paragrafos')->where('modelo_id', 111)->first();
-        $legacyParagrafo = DB::table('tp_funda_tb')->where('tipo_id', 111)->first();
         $campo = DB::table('peticao_modelo_campos')->where('modelo_id', 111)->first();
-        $legacyCampo = DB::table('tp_inputs_tb')->where('tipo_id', 111)->first();
-        $legacyOpcoes = DB::table('tp_dados_tb')->where('id_input', $legacyCampo->id_input)->orderBy('dados_order')->get();
+        $opcoes = DB::table('peticao_modelo_campo_opcoes')->where('campo_id', $campo->id)->orderBy('ordem')->get();
 
         $this->assertSame('Modelo Delegado Atualizado', $modelo->nome);
-        $this->assertSame('Modelo Delegado Atualizado', $tipo->tipo_nome);
         $this->assertSame('PARAGRAFO DELEGADO', $paragrafo->titulo);
-        $this->assertSame('PARAGRAFO DELEGADO', $legacyParagrafo->fund_titulo);
         $this->assertSame('Campo Delegado', $campo->rotulo);
-        $this->assertSame('Campo Delegado', $legacyCampo->input_title);
-        $this->assertCount(2, $legacyOpcoes);
-        $this->assertSame('Sim', $legacyOpcoes[0]->nome_dados);
-        $this->assertSame('SIM', $legacyOpcoes[0]->return_1);
+        $this->assertCount(2, $opcoes);
+        $this->assertSame('Sim', $opcoes[0]->rotulo);
+        $this->assertSame('SIM', $opcoes[0]->valor_retorno);
+
+        $this->assertSame('Modelo Delegado', $tipo->tipo_nome);
+        $this->assertNull(DB::table('tp_funda_tb')->where('tipo_id', 111)->first());
+        $this->assertNull(DB::table('tp_inputs_tb')->where('tipo_id', 111)->first());
     }
 }

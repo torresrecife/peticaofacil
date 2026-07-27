@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class AdminLegacyFieldFallbackTest extends TestCase
 {
-    public function test_legacy_paragraph_and_field_fallback_still_work_without_mirror()
+    public function test_legacy_paragraph_and_field_fallback_sync_to_normalized_without_legacy_writeback_by_default()
     {
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
@@ -63,14 +63,19 @@ class AdminLegacyFieldFallbackTest extends TestCase
             ])
             ->assertRedirect('/admin/modelos-normalizados/1/edit');
 
-        $legacyParagrafo = DB::table('tp_funda_tb')->where('tipo_id', 310)->first();
-        $legacyCampo = DB::table('tp_inputs_tb')->where('tipo_id', 310)->first();
-        $legacyOpcoes = DB::table('tp_dados_tb')->where('id_input', $legacyCampo->id_input)->orderBy('dados_order')->get();
         $mirror = DB::table('peticao_modelos')->where('legacy_tipo_id', 310)->first();
+        $paragrafo = DB::table('peticao_modelo_paragrafos')->where('modelo_id', $mirror->id)->first();
+        $campo = DB::table('peticao_modelo_campos')->where('modelo_id', $mirror->id)->first();
+        $opcoes = DB::table('peticao_modelo_campo_opcoes')->where('campo_id', $campo->id)->orderBy('ordem')->get();
 
-        $this->assertSame('PARAGRAFO FALLBACK', $legacyParagrafo->fund_titulo);
-        $this->assertSame('Campo Fallback', $legacyCampo->input_title);
-        $this->assertCount(2, $legacyOpcoes);
         $this->assertNotNull($mirror);
+        $this->assertSame('PARAGRAFO FALLBACK', $paragrafo->titulo);
+        $this->assertSame('Campo Fallback', $campo->rotulo);
+        $this->assertCount(2, $opcoes);
+        $this->assertSame('Sim', $opcoes[0]->rotulo);
+        $this->assertSame('SIM', $opcoes[0]->valor_retorno);
+
+        $this->assertNull(DB::table('tp_funda_tb')->where('tipo_id', 310)->first());
+        $this->assertNull(DB::table('tp_inputs_tb')->where('tipo_id', 310)->first());
     }
 }
