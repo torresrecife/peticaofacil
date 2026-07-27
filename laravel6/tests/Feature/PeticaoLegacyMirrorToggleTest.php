@@ -102,4 +102,55 @@ class PeticaoLegacyMirrorToggleTest extends TestCase
         $this->assertSame(0, DB::table('tp_pecas_tb')->count());
         $response->assertRedirect('/peticoes-salvas/' . $peticao->id . '/editar');
     }
+
+    public function test_legacy_save_route_uses_normalized_path_when_model_has_mirror_and_legacy_mirror_is_disabled()
+    {
+        config()->set('legacy.mirror_legacy_pecas', false);
+
+        $user = factory(User::class)->create([
+            'id_usu' => 79,
+            'nivel_usu' => 'ADM',
+            'acesso_usu' => now(),
+        ]);
+
+        DB::table('tp_setor_tb')->insert([
+            'id_setor' => 79,
+            'nome_setor' => 'Civel',
+            'cod_setor' => 'CIV',
+            'data_cad' => now(),
+        ]);
+
+        DB::table('tp_tipo_tb')->insert([
+            'tipo_id' => 79,
+            'tipo_nome' => 'Modelo Legado Migrado',
+            'id_setor' => 79,
+            'tipo_data' => now(),
+            'tipo_stt' => 'Y',
+            'tipo_arq' => 'pdf',
+        ]);
+
+        DB::table('peticao_modelos')->insert([
+            'id' => 79,
+            'legacy_tipo_id' => 79,
+            'legacy_setor_id' => 79,
+            'nome' => 'Modelo Legado Migrado',
+            'slug' => 'modelo-legado-migrado-79',
+            'status' => 'ativo',
+            'arquivo_padrao' => 'pdf',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->post('/peticoes/79/salvar', [
+            'nome_cli' => 'Cliente via rota antiga',
+            'cod_pecas' => '<p>Persistencia normalizada</p>',
+        ]);
+
+        $peticao = DB::table('peticoes')->where('modelo_id', 79)->first();
+
+        $this->assertNotNull($peticao);
+        $this->assertNull($peticao->legacy_peca_id);
+        $this->assertSame(0, DB::table('tp_pecas_tb')->count());
+        $response->assertRedirect('/peticoes-salvas/' . $peticao->id . '/editar');
+    }
 }

@@ -61,8 +61,13 @@ class PeticaoEditorController extends Controller
         ]);
     }
 
-    public function save(Request $request, Tipo $modelo, PecaStorageService $storage)
+    public function save(Request $request, Tipo $modelo, PecaStorageService $storage, PeticaoNormalizedStorageService $normalizedStorage)
     {
+        $modeloNormalizado = PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->first();
+        if ($modeloNormalizado) {
+            return $this->handleSaveNormalized($request, $modeloNormalizado, $normalizedStorage);
+        }
+
         return $this->handleSave($request, $modelo, $storage);
     }
 
