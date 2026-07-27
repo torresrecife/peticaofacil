@@ -1,0 +1,17 @@
+﻿Root promotion staging generated: 2026-07-27 09:55:14
+
+Base source:
+- laravel6/*
+
+Public base:
+- laravel6/public/*
+
+Legacy public assets preserved:
+- public/ckeditor
+- public/ckfinder
+- public/img
+
+Legacy public assets intentionally excluded:
+- public/css
+- public/js
+- public/inc
