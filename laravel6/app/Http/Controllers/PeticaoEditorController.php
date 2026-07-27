@@ -21,8 +21,6 @@ class PeticaoEditorController extends Controller
 
     public function createNormalized(Request $request, PeticaoModelo $modeloNormalizado)
     {
-        abort_unless($modeloNormalizado->legacy_tipo_id, 404);
-
         return $this->renderCreateEditor($request, $modeloNormalizado);
     }
 
@@ -70,8 +68,6 @@ class PeticaoEditorController extends Controller
 
     public function saveNormalized(Request $request, PeticaoModelo $modeloNormalizado, PeticaoNormalizedStorageService $storage)
     {
-        abort_unless($modeloNormalizado->legacy_tipo_id, 404);
-
         return $this->handleSaveNormalized($request, $modeloNormalizado, $storage);
     }
 
@@ -159,8 +155,6 @@ class PeticaoEditorController extends Controller
 
     public function exportNormalizedWord(Request $request, PeticaoModelo $modeloNormalizado, PeticaoExportService $exportService)
     {
-        abort_unless($modeloNormalizado->legacy_tipo_id, 404);
-
         return $this->handleExportWord($request, $exportService);
     }
 
@@ -181,8 +175,6 @@ class PeticaoEditorController extends Controller
 
     public function exportNormalizedPdf(Request $request, PeticaoModelo $modeloNormalizado, PeticaoExportService $exportService)
     {
-        abort_unless($modeloNormalizado->legacy_tipo_id, 404);
-
         return $this->handleExportPdf($request, $exportService);
     }
 

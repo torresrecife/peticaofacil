@@ -47,7 +47,7 @@
         <tbody>
             @forelse($pecas as $peca)
                 <tr>
-                    <td>{{ $peca->legacy_peca_id ?: $peca->id }}</td>
+                    <td>{{ $peca->id }}</td>
                     <td>{{ optional($peca->modelo)->nome }}</td>
                     <td>{{ $peca->cliente_referencia }}</td>
                     <td>{{ optional($peca->gerado_em)->format('d/m/Y H:i') ?: optional($peca->created_at)->format('d/m/Y H:i') }}</td>

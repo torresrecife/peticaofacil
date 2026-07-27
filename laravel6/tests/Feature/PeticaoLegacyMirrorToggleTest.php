@@ -58,4 +58,48 @@ class PeticaoLegacyMirrorToggleTest extends TestCase
         $this->assertSame(0, DB::table('tp_pecas_tb')->count());
         $response->assertRedirect('/peticoes-salvas/' . $peticao->id . '/editar');
     }
+
+    public function test_normalized_editor_routes_work_without_legacy_tipo_id()
+    {
+        config()->set('legacy.mirror_legacy_pecas', false);
+
+        $user = factory(User::class)->create([
+            'id_usu' => 78,
+            'nivel_usu' => 'ADM',
+            'acesso_usu' => now(),
+        ]);
+
+        DB::table('peticao_modelos')->insert([
+            'id' => 78,
+            'legacy_tipo_id' => null,
+            'legacy_setor_id' => null,
+            'nome' => 'Modelo Puro',
+            'slug' => 'modelo-puro-78',
+            'status' => 'ativo',
+            'arquivo_padrao' => 'pdf',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->post('/peticoes/modelos/78/editor', [
+                'nome_cli' => 'Cliente Puro',
+                'content' => '<p>Fluxo puro</p>',
+            ])
+            ->assertStatus(200)
+            ->assertSee('Editor final da peca');
+
+        $response = $this->actingAs($user)
+            ->post('/peticoes/modelos/78/salvar', [
+                'nome_cli' => 'Cliente Puro',
+                'cod_pecas' => '<p>Fluxo puro</p>',
+            ]);
+
+        $peticao = DB::table('peticoes')->where('modelo_id', 78)->first();
+
+        $this->assertNotNull($peticao);
+        $this->assertNull($peticao->legacy_peca_id);
+        $this->assertSame(0, DB::table('tp_pecas_tb')->count());
+        $response->assertRedirect('/peticoes-salvas/' . $peticao->id . '/editar');
+    }
 }
