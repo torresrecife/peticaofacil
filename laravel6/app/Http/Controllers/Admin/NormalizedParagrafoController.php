@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\PeticaoModelo;
 use App\PeticaoModeloParagrafo;
 use App\Support\LegacyEditorContent;
-use App\Services\NormalizedModeloLegacySyncService;
+use App\Services\LegacyModeloMirrorService;
 use Illuminate\Http\Request;
 
 class NormalizedParagrafoController extends Controller
 {
-    public function store(Request $request, PeticaoModelo $modeloNormalizado, NormalizedModeloLegacySyncService $syncService)
+    public function store(Request $request, PeticaoModelo $modeloNormalizado, LegacyModeloMirrorService $mirrorService)
     {
         $data = $request->validate([
             'fund_titulo' => 'required|string|max:200',
@@ -31,12 +31,12 @@ class NormalizedParagrafoController extends Controller
             'ativo' => true,
         ]);
 
-        $syncService->sync($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
+        $mirrorService->syncIfEnabled($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
 
         return redirect()->route('admin.modelos-normalizados.edit', $modeloNormalizado)->with('status', 'Paragrafo criado.');
     }
 
-    public function update(Request $request, PeticaoModelo $modeloNormalizado, PeticaoModeloParagrafo $paragrafo, NormalizedModeloLegacySyncService $syncService)
+    public function update(Request $request, PeticaoModelo $modeloNormalizado, PeticaoModeloParagrafo $paragrafo, LegacyModeloMirrorService $mirrorService)
     {
         abort_unless((int) $paragrafo->modelo_id === (int) $modeloNormalizado->id, 404);
 
@@ -52,7 +52,7 @@ class NormalizedParagrafoController extends Controller
             'ordem' => $data['fund_order'] ?: $paragrafo->ordem,
         ])->save();
 
-        $syncService->sync($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
+        $mirrorService->syncIfEnabled($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
 
         return redirect()->route('admin.modelos-normalizados.edit', $modeloNormalizado)->with('status', 'Paragrafo atualizado.');
     }

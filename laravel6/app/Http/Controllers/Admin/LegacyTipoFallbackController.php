@@ -10,7 +10,7 @@ use App\SqlServerProfile;
 use App\SqlServerConfig;
 use App\Support\LegacyEditorContent;
 use App\Services\LegacyModeloSyncService;
-use App\Services\NormalizedModeloLegacySyncService;
+use App\Services\LegacyModeloMirrorService;
 use App\Tipo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -26,11 +26,11 @@ class LegacyTipoFallbackController extends Controller
             ->with('status', 'Modelo legado sincronizado para a trilha normalizada.');
     }
 
-    public function update(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService, NormalizedModeloLegacySyncService $normalizedSyncService)
+    public function update(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService, LegacyModeloMirrorService $mirrorService)
     {
         $mirror = $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
-        return app(NormalizedTipoController::class)->update($request, $mirror, $normalizedSyncService);
+        return app(NormalizedTipoController::class)->update($request, $mirror, $mirrorService);
     }
 
     protected function validateData(Request $request)

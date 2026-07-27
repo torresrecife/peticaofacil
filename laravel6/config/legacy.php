@@ -5,4 +5,5 @@ return [
     'ckfinder_root' => env('LEGACY_CKFINDER_ROOT', ''),
     'ckfinder_base_url' => env('LEGACY_CKFINDER_BASE_URL', ''),
     'mirror_legacy_pecas' => env('LEGACY_PECAS_MIRROR', true),
+    'mirror_legacy_modelos' => env('LEGACY_MODELOS_MIRROR', true),
 ];

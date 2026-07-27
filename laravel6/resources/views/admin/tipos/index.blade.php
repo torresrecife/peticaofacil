@@ -11,7 +11,7 @@
 <div class="panel" style="padding:0;">
     <div class="panel-muted" style="margin:16px;">
         <strong>Modelos normalizados</strong>
-        <div class="editor-note">A edicao principal agora parte de `peticao_modelos`. O legado abaixo fica como fallback.</div>
+        <div class="editor-note">A edicao principal agora parte de `peticao_modelos`.</div>
     </div>
     <table>
         <thead>
@@ -55,41 +55,51 @@
 </div>
 
 @if($legacyFallbacks->isNotEmpty())
-    <div class="panel" style="padding:0;margin-top:20px;">
-        <div class="panel-muted" style="margin:16px;">
-            <strong>Fallback legado</strong>
-            <div class="editor-note">Modelos ainda nao espelhados em `peticao_modelos`.</div>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Modelo</th>
-                    <th>Descricao</th>
-                    <th>Setor</th>
-                    <th>Cliente</th>
-                    <th>Servidor</th>
-                    <th>Arquivo</th>
-                    <th>Status</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($legacyFallbacks as $tipo)
-                    <tr>
-                        <td>{{ $tipo->tipo_id }}</td>
-                        <td>{{ $tipo->tipo_nome }}</td>
-                        <td>{{ $tipo->nome_pre }}</td>
-                        <td>{{ optional($tipo->setor)->nome_setor }}</td>
-                        <td>{{ optional($tipo->cliente)->cliente_name ?: 'Todos do setor' }}</td>
-                        <td>{{ optional($tipo->servidor)->nome_db }}</td>
-                        <td>{{ $tipo->tipo_arq }}</td>
-                        <td>{{ $tipo->tipo_stt === 'Y' ? 'Ativo' : 'Inativo' }}</td>
-                        <td><a href="{{ route('admin.modelos.edit', $tipo) }}">Editar</a></td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+    <div class="panel" style="margin-top:20px;">
+        <details class="accordion-item">
+            <summary>Compatibilidade legado ({{ $legacyFallbacks->count() }} modelo(s) pendente(s))</summary>
+            <div class="accordion-body">
+                <div class="panel-muted" style="margin-bottom:16px;">
+                    <strong>Area residual</strong>
+                    <div class="editor-note">Modelos ainda nao espelhados em `peticao_modelos`. Use a sincronizacao explicita para trazer cada item para a trilha normalizada.</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Modelo</th>
+                            <th>Descricao</th>
+                            <th>Setor</th>
+                            <th>Cliente</th>
+                            <th>Servidor</th>
+                            <th>Arquivo</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($legacyFallbacks as $tipo)
+                            <tr>
+                                <td>{{ $tipo->tipo_id }}</td>
+                                <td>{{ $tipo->tipo_nome }}</td>
+                                <td>{{ $tipo->nome_pre }}</td>
+                                <td>{{ optional($tipo->setor)->nome_setor }}</td>
+                                <td>{{ optional($tipo->cliente)->cliente_name ?: 'Todos do setor' }}</td>
+                                <td>{{ optional($tipo->servidor)->nome_db }}</td>
+                                <td>{{ $tipo->tipo_arq }}</td>
+                                <td>{{ $tipo->tipo_stt === 'Y' ? 'Ativo' : 'Inativo' }}</td>
+                                <td>
+                                    <form method="post" action="{{ route('admin.modelos.sync', $tipo) }}">
+                                        @csrf
+                                        <button type="submit" class="button secondary">Sincronizar legado</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </details>
     </div>
 @endif
 @endsection

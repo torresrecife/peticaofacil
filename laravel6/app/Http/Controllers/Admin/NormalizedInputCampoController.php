@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\PeticaoModelo;
 use App\PeticaoModeloCampo;
 use App\PeticaoModeloCampoOpcao;
-use App\Services\NormalizedModeloLegacySyncService;
+use App\Services\LegacyModeloMirrorService;
 use Illuminate\Http\Request;
 
 class NormalizedInputCampoController extends Controller
 {
-    public function store(Request $request, PeticaoModelo $modeloNormalizado, NormalizedModeloLegacySyncService $syncService)
+    public function store(Request $request, PeticaoModelo $modeloNormalizado, LegacyModeloMirrorService $mirrorService)
     {
         $data = $this->validateData($request);
 
@@ -44,12 +44,12 @@ class NormalizedInputCampoController extends Controller
         $campo->save();
 
         $this->syncOpcoes($campo, $data['opcoes'] ?? '');
-        $syncService->sync($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
+        $mirrorService->syncIfEnabled($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
 
         return redirect()->route('admin.modelos-normalizados.edit', $modeloNormalizado)->with('status', 'Campo criado.');
     }
 
-    public function update(Request $request, PeticaoModelo $modeloNormalizado, PeticaoModeloCampo $campo, NormalizedModeloLegacySyncService $syncService)
+    public function update(Request $request, PeticaoModelo $modeloNormalizado, PeticaoModeloCampo $campo, LegacyModeloMirrorService $mirrorService)
     {
         abort_unless((int) $campo->modelo_id === (int) $modeloNormalizado->id, 404);
 
@@ -79,7 +79,7 @@ class NormalizedInputCampoController extends Controller
         ])->save();
 
         $this->syncOpcoes($campo, $data['opcoes'] ?? '');
-        $syncService->sync($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
+        $mirrorService->syncIfEnabled($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
 
         return redirect()->route('admin.modelos-normalizados.edit', $modeloNormalizado)->with('status', 'Campo atualizado.');
     }

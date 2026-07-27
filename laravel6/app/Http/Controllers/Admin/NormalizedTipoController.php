@@ -9,7 +9,7 @@ use App\Setor;
 use App\SqlServerProfile;
 use App\SqlServerConfig;
 use App\Support\LegacyEditorContent;
-use App\Services\NormalizedModeloLegacySyncService;
+use App\Services\LegacyModeloMirrorService;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -50,7 +50,7 @@ class NormalizedTipoController extends Controller
         ]);
     }
 
-    public function store(Request $request, NormalizedModeloLegacySyncService $syncService)
+    public function store(Request $request, LegacyModeloMirrorService $mirrorService)
     {
         $data = $this->validateData($request);
 
@@ -71,7 +71,7 @@ class NormalizedTipoController extends Controller
             ],
         ]);
 
-        $syncService->sync($modelo->fresh(['paragrafos', 'campos.opcoes']));
+        $mirrorService->syncIfEnabled($modelo->fresh(['paragrafos', 'campos.opcoes']));
 
         return redirect()->route('admin.modelos-normalizados.edit', $modelo)->with('status', 'Modelo criado.');
     }
@@ -90,7 +90,7 @@ class NormalizedTipoController extends Controller
         ]);
     }
 
-    public function update(Request $request, PeticaoModelo $modeloNormalizado, NormalizedModeloLegacySyncService $syncService)
+    public function update(Request $request, PeticaoModelo $modeloNormalizado, LegacyModeloMirrorService $mirrorService)
     {
         $data = $this->validateData($request);
 
@@ -110,7 +110,7 @@ class NormalizedTipoController extends Controller
             'metadata' => $metadata,
         ])->save();
 
-        $syncService->sync($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
+        $mirrorService->syncIfEnabled($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
 
         return redirect()->route('admin.modelos-normalizados.edit', $modeloNormalizado)->with('status', 'Modelo atualizado.');
     }

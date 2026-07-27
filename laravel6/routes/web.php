@@ -81,6 +81,7 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
         Route::put('servidores-normalizados/{servidorNormalizado}', 'Admin\NormalizedSqlServerConfigController@update')->name('servidores-normalizados.update');
         Route::redirect('modelos', 'admin/modelos-normalizados')->name('modelos.index');
         Route::get('modelos/{modelo}/edit', 'Admin\TipoController@edit')->name('modelos.edit');
+        Route::post('modelos/{modelo}/sincronizar', 'Admin\TipoController@syncLegacy')->name('modelos.sync');
         Route::match(['put', 'patch'], 'modelos/{modelo}', 'Admin\TipoController@update')->name('modelos.update');
         Route::get('modelos-normalizados', 'Admin\NormalizedTipoController@index')->name('modelos-normalizados.index');
         Route::get('modelos-normalizados/create', 'Admin\NormalizedTipoController@create')->name('modelos-normalizados.create');
