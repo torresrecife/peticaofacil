@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\InputCampo;
+use App\Services\LegacyModeloAdminAccessService;
 use App\Services\LegacyModeloMirrorService;
 use App\Services\PeticaoModeloResolverService;
-use App\Tipo;
 use Illuminate\Http\Request;
 
 class InputCampoController extends Controller
 {
-    public function store(Request $request, Tipo $modelo, LegacyModeloMirrorService $mirrorService)
+    public function store(Request $request, $modelo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloMirrorService $mirrorService)
     {
+        $modelo = $legacyAccess->findTipoOrFail($modelo);
         $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {
             return app(NormalizedInputCampoController::class)->store($request, $mirror, $mirrorService);
@@ -20,13 +20,16 @@ class InputCampoController extends Controller
 
         return app(LegacyInputCampoFallbackController::class)->store(
             $request,
-            $modelo,
+            $modelo->tipo_id,
+            app(LegacyModeloAdminAccessService::class),
             $mirrorService
         );
     }
 
-    public function update(Request $request, Tipo $modelo, InputCampo $campo, LegacyModeloMirrorService $mirrorService)
+    public function update(Request $request, $modelo, $campo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloMirrorService $mirrorService)
     {
+        $modelo = $legacyAccess->findTipoOrFail($modelo);
+        $campo = $legacyAccess->findCampoForTipoOrFail($modelo->tipo_id, $campo);
         $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {
             $normalizedCampo = $mirror->campos()->where('legacy_input_id', $campo->id_input)->first();
@@ -37,8 +40,9 @@ class InputCampoController extends Controller
 
         return app(LegacyInputCampoFallbackController::class)->update(
             $request,
-            $modelo,
-            $campo,
+            $modelo->tipo_id,
+            $campo->id_input,
+            app(LegacyModeloAdminAccessService::class),
             $mirrorService
         );
     }

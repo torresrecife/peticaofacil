@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Paragrafo;
+use App\Services\LegacyModeloAdminAccessService;
 use App\Services\LegacyModeloMirrorService;
 use App\Services\PeticaoModeloResolverService;
-use App\Tipo;
 use Illuminate\Http\Request;
 
 class ParagrafoController extends Controller
 {
-    public function store(Request $request, Tipo $modelo, LegacyModeloMirrorService $mirrorService)
+    public function store(Request $request, $modelo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloMirrorService $mirrorService)
     {
+        $modelo = $legacyAccess->findTipoOrFail($modelo);
         $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {
             return app(NormalizedParagrafoController::class)->store($request, $mirror, $mirrorService);
@@ -20,13 +20,16 @@ class ParagrafoController extends Controller
 
         return app(LegacyParagrafoFallbackController::class)->store(
             $request,
-            $modelo,
+            $modelo->tipo_id,
+            app(LegacyModeloAdminAccessService::class),
             $mirrorService
         );
     }
 
-    public function update(Request $request, Tipo $modelo, Paragrafo $paragrafo, LegacyModeloMirrorService $mirrorService)
+    public function update(Request $request, $modelo, $paragrafo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloMirrorService $mirrorService)
     {
+        $modelo = $legacyAccess->findTipoOrFail($modelo);
+        $paragrafo = $legacyAccess->findParagrafoForTipoOrFail($modelo->tipo_id, $paragrafo);
         $mirror = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($mirror) {
             $normalizedParagrafo = $mirror->paragrafos()->where('legacy_fund_id', $paragrafo->fund_id)->first();
@@ -37,8 +40,9 @@ class ParagrafoController extends Controller
 
         return app(LegacyParagrafoFallbackController::class)->update(
             $request,
-            $modelo,
-            $paragrafo,
+            $modelo->tipo_id,
+            $paragrafo->fund_id,
+            app(LegacyModeloAdminAccessService::class),
             $mirrorService
         );
     }

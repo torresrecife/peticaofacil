@@ -3,22 +3,24 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\InputCampo;
+use App\Services\LegacyModeloAdminAccessService;
 use App\Services\LegacyModeloMirrorService;
-use App\Tipo;
 use Illuminate\Http\Request;
 
 class LegacyInputCampoFallbackController extends Controller
 {
-    public function store(Request $request, Tipo $modelo, LegacyModeloMirrorService $mirrorService)
+    public function store(Request $request, $modelo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloMirrorService $mirrorService)
     {
+        $legacyAccess->findTipoOrFail($modelo);
         return redirect()
             ->route('admin.modelos-normalizados.index')
             ->with('status', 'Modelo legado sem mirror. Use "Sincronizar legado" antes de editar campos.');
     }
 
-    public function update(Request $request, Tipo $modelo, InputCampo $campo, LegacyModeloMirrorService $mirrorService)
+    public function update(Request $request, $modelo, $campo, LegacyModeloAdminAccessService $legacyAccess, LegacyModeloMirrorService $mirrorService)
     {
+        $tipo = $legacyAccess->findTipoOrFail($modelo);
+        $legacyAccess->findCampoForTipoOrFail($tipo->tipo_id, $campo);
         return redirect()
             ->route('admin.modelos-normalizados.index')
             ->with('status', 'Modelo legado sem mirror. Use "Sincronizar legado" antes de editar campos.');
