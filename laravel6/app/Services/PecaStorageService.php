@@ -5,12 +5,17 @@ namespace App\Services;
 use App\Peca;
 use App\PeticaoModelo;
 use App\Tipo;
+use LogicException;
 use Illuminate\Support\Facades\Auth;
 
 class PecaStorageService
 {
     public function save($modelo, array $payload, Peca $peca = null)
     {
+        if ($this->mustUseNormalizedStorage($modelo)) {
+            throw new LogicException('Modelos normalizados ou espelhados devem usar a persistencia principal em peticoes.');
+        }
+
         $legacyTipoId = $this->resolveLegacyTipoId($modelo);
         if (!$legacyTipoId) {
             throw new \InvalidArgumentException('Nao foi possivel resolver o modelo legado para salvar a peca.');
@@ -30,6 +35,19 @@ class PecaStorageService
         app(LegacyPecaSyncService::class)->syncPeca($peca, $modelo);
 
         return $peca;
+    }
+
+    protected function mustUseNormalizedStorage($modelo): bool
+    {
+        if ($modelo instanceof PeticaoModelo) {
+            return true;
+        }
+
+        if ($modelo instanceof Tipo) {
+            return PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->exists();
+        }
+
+        return false;
     }
 
     protected function resolveLegacyTipoId($modelo)
