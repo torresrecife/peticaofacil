@@ -24,7 +24,7 @@
     <div class="panel">
         <div class="section-title">
             <h3>{{ optional($peticao->modelo)->nome ?: 'Peticao normalizada' }}</h3>
-            <div class="editor-note">Entidade principal: `peticoes`.</div>
+            <div class="editor-note">Edicao, exportacao e historico no fluxo principal.</div>
         </div>
 
         <div class="grid" style="margin-bottom:16px;">
@@ -68,7 +68,7 @@
     <div class="panel">
         <div class="section-title">
             <h3>Exportacao e historico</h3>
-            <div class="editor-note">Operando sobre a entidade normalizada.</div>
+            <div class="editor-note">Usando o conteudo atual da peticao salva.</div>
         </div>
         <div class="actions">
             <form method="post" action="{{ route('peticoes.saved.export.word', $peticao) }}" class="js-saved-export-form">
@@ -88,7 +88,6 @@
             <div><strong>Gerada em:</strong> {{ optional($peticao->gerado_em)->format('d/m/Y H:i') ?: '-' }}</div>
             <div><strong>Salva em:</strong> {{ optional($peticao->salvo_em)->format('d/m/Y H:i') ?: '-' }}</div>
             <div><strong>Usuario:</strong> {{ optional($peticao->user)->login_usu ?: '-' }}</div>
-            <div><strong>ID usuario:</strong> {{ $peticao->user_id ?: '-' }}</div>
         </div>
         <div class="panel-muted" style="margin-top:16px;">
             <strong>Historico de versoes</strong>

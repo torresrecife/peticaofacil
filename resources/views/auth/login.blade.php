@@ -6,7 +6,7 @@
 <div class="login-wrap">
     <div class="login-card">
         <h1 style="margin-top:0;">Acesso ao novo painel</h1>
-        <p style="margin-bottom:20px;">Autenticacao principal pela base normalizada de usuarios.</p>
+        <p style="margin-bottom:20px;">Use suas credenciais para entrar no painel.</p>
 
         @if($errors->any())
             <div class="errors">

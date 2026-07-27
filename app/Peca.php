@@ -43,7 +43,7 @@ class Peca extends Model
         return $this->belongsTo(PeticaoModelo::class, 'tipo_id', 'legacy_tipo_id');
     }
 
-    public function usuario()
+    public function legacyUsuario()
     {
         return $this->belongsTo(LegacyUser::class, 'id_usu', 'id_usu');
     }

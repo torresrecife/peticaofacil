@@ -106,7 +106,6 @@ class DashboardController extends Controller
             if (!isset($totais[$indexKey])) {
                 $totais[$indexKey] = [
                     'user_id' => $userId,
-                    'legacy_usuario_id' => $peticao->legacy_usuario_id ?: null,
                     'nome_usu' => optional($peticao->user)->nome_usu ?: ('Usuario #' . $userId),
                     'total_peticoes' => 0,
                 ];
@@ -121,7 +120,7 @@ class DashboardController extends Controller
             })
             ->sort(function ($a, $b) {
                 if ($a->total_peticoes === $b->total_peticoes) {
-                    return ($a->user_id ?: $a->legacy_usuario_id) <=> ($b->user_id ?: $b->legacy_usuario_id);
+                    return $a->user_id <=> $b->user_id;
                 }
 
                 return $b->total_peticoes <=> $a->total_peticoes;
