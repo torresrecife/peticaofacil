@@ -43,6 +43,8 @@ class PeticaoEditorController extends Controller
 
     public function edit($peca)
     {
+        abort_unless((bool) config('legacy.compat_public_piece_editor_route', true), 410);
+
         $mirror = PeticaoNormalizada::where('legacy_peca_id', (int) $peca)->first();
 
         if ($mirror) {

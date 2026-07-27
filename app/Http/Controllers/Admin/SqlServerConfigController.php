@@ -10,6 +10,8 @@ class SqlServerConfigController extends Controller
 {
     public function edit(SqlServerConfig $servidore)
     {
+        abort_unless((bool) config('legacy.compat_admin_sql_routes', true), 410);
+
         $mirror = SqlServerProfile::where('legacy_config_id', $servidore->id_db)->first();
 
         if ($mirror) {
@@ -21,6 +23,8 @@ class SqlServerConfigController extends Controller
 
     public function update(\Illuminate\Http\Request $request, SqlServerConfig $servidore)
     {
+        abort_unless((bool) config('legacy.compat_admin_sql_routes', true), 410);
+
         $mirror = SqlServerProfile::where('legacy_config_id', $servidore->id_db)->first();
 
         if ($mirror) {

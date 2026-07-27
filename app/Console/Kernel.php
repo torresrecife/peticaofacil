@@ -19,6 +19,7 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\SyncUserInternalLinks::class,
         \App\Console\Commands\SyncLegacyListas::class,
         \App\Console\Commands\SyncLegacySqlServerConfigs::class,
+        \App\Console\Commands\LegacyCutReadiness::class,
     ];
 
     /**

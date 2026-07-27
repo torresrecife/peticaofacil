@@ -97,6 +97,8 @@ class PeticaoAssemblyController extends Controller
 
     public function show($modelo, PeticaoModeloResolverService $modeloResolver)
     {
+        abort_unless((bool) config('legacy.compat_public_model_routes', true), 410);
+
         $mirror = $modeloResolver->findNormalizedByLegacyTipoId((int) $modelo);
 
         if (!$mirror) {

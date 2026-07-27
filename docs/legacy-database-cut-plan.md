@@ -64,6 +64,17 @@ LEGACY_LISTAS_MIRROR=false
 LEGACY_SQL_CONFIGS_MIRROR=false
 LEGACY_USERS_MIRROR=false
 LEGACY_USERS_AUTH_FALLBACK=false
+LEGACY_PUBLIC_MODEL_ROUTE_COMPAT=true
+LEGACY_PUBLIC_PIECE_EDITOR_COMPAT=true
+LEGACY_ADMIN_SQL_ROUTE_COMPAT=true
+```
+
+Quando a compatibilidade terminal puder sair:
+
+```env
+LEGACY_PUBLIC_MODEL_ROUTE_COMPAT=false
+LEGACY_PUBLIC_PIECE_EDITOR_COMPAT=false
+LEGACY_ADMIN_SQL_ROUTE_COMPAT=false
 ```
 
 ## Ordem recomendada do corte final
@@ -262,4 +273,21 @@ Para tirar `SqlServerConfig` do admin normalizado, a trilha nova precisa estar p
 
 ```powershell
 & "C:\\laragon\\bin\\php\\php-7.2.34-nts-Win32-VC15-x64\\php.exe" artisan servidores:sync-legado
+```
+
+## Auditoria local em 27 de julho de 2026
+
+Base local atual:
+
+- `tp_grupo_tb = 6`
+- `lista_grupos = 6`
+- `tp_lista_tb = 162`
+- `lista_itens = 162`
+- `tp_config_db = 1`
+- `sql_server_profiles = 1`
+
+Comando de auditoria:
+
+```powershell
+& "C:\\laragon\\bin\\php\\php-7.2.34-nts-Win32-VC15-x64\\php.exe" artisan legacy:cut-readiness
 ```

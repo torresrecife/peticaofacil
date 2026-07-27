@@ -7,12 +7,19 @@ use Illuminate\Http\Request;
 
 class LegacyPeticaoModeloCompatController extends Controller
 {
+    protected function ensureCompatEnabled(): void
+    {
+        abort_unless((bool) config('legacy.compat_public_model_routes', true), 410);
+    }
+
     public function compose(
         Request $request,
         $modelo,
         PeticaoModeloResolverService $modeloResolver,
         PeticaoAssemblyController $assemblyController
     ) {
+        $this->ensureCompatEnabled();
+
         $mirror = $modeloResolver->findLoadedNormalizedByLegacyTipoId(
             (int) $modelo,
             ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
@@ -31,6 +38,8 @@ class LegacyPeticaoModeloCompatController extends Controller
         PeticaoModeloResolverService $modeloResolver,
         PeticaoEditorController $editorController
     ) {
+        $this->ensureCompatEnabled();
+
         $mirror = $modeloResolver->findNormalizedByLegacyTipoId((int) $modelo);
         if (!$mirror) {
             return $this->redirectLegacyModelWithoutMirror();
@@ -45,6 +54,8 @@ class LegacyPeticaoModeloCompatController extends Controller
         PeticaoModeloResolverService $modeloResolver,
         PeticaoSavedController $savedController
     ) {
+        $this->ensureCompatEnabled();
+
         $mirror = $modeloResolver->findNormalizedByLegacyTipoId((int) $modelo);
         abort_unless($mirror, 404);
 
@@ -57,6 +68,8 @@ class LegacyPeticaoModeloCompatController extends Controller
         PeticaoModeloResolverService $modeloResolver,
         PeticaoEditorController $editorController
     ) {
+        $this->ensureCompatEnabled();
+
         $mirror = $modeloResolver->findNormalizedByLegacyTipoId((int) $modelo);
         if (!$mirror) {
             return $this->redirectLegacyModelWithoutMirror();
@@ -71,6 +84,8 @@ class LegacyPeticaoModeloCompatController extends Controller
         PeticaoModeloResolverService $modeloResolver,
         PeticaoEditorController $editorController
     ) {
+        $this->ensureCompatEnabled();
+
         $mirror = $modeloResolver->findNormalizedByLegacyTipoId((int) $modelo);
         if (!$mirror) {
             return $this->redirectLegacyModelWithoutMirror();
@@ -85,6 +100,8 @@ class LegacyPeticaoModeloCompatController extends Controller
         PeticaoModeloResolverService $modeloResolver,
         PeticaoEditorController $editorController
     ) {
+        $this->ensureCompatEnabled();
+
         $mirror = $modeloResolver->findNormalizedByLegacyTipoId((int) $modelo);
         if (!$mirror) {
             return $this->redirectLegacyModelWithoutMirror();
