@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\ListaGrupo;
-use App\LegacyListaGrupo;
 use App\Services\ListaSyncService;
 use Illuminate\Http\Request;
 
@@ -12,10 +11,6 @@ class ListaController extends Controller
 {
     public function index()
     {
-        if (ListaGrupo::count() === 0 && LegacyListaGrupo::count() > 0) {
-            app(ListaSyncService::class)->syncAll();
-        }
-
         $listas = ListaGrupo::withCount('itens')
             ->orderBy('id_grupo')
             ->paginate(20);

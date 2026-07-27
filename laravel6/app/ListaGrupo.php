@@ -28,21 +28,4 @@ class ListaGrupo extends Model
     {
         return $this->hasMany(ListaItem::class, 'id_grupo', 'id_grupo');
     }
-
-    public function resolveRouteBinding($value, $field = null)
-    {
-        $field = $field ?: $this->getRouteKeyName();
-
-        $grupo = $this->where($field, $value)->first();
-        if ($grupo) {
-            return $grupo;
-        }
-
-        $legacyGrupo = LegacyListaGrupo::find($value);
-        if (!$legacyGrupo) {
-            return null;
-        }
-
-        return app(\App\Services\ListaSyncService::class)->syncLegacyGroup($legacyGrupo);
-    }
 }

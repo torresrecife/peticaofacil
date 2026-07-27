@@ -25,6 +25,14 @@ class AdminListaPersistenceTest extends TestCase
             'nome_grupo' => 'Lista Teste',
             'data_cad' => '2026-01-10 10:00:00',
         ]);
+        DB::table('lista_grupos')->insert([
+            'id_grupo' => 1,
+            'legacy_grupo_id' => 1,
+            'nome_grupo' => 'Lista Teste',
+            'data_cad' => '2026-01-10 10:00:00',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         DB::table('tp_lista_tb')->insert([
             'id_lista' => 10,
@@ -34,6 +42,18 @@ class AdminListaPersistenceTest extends TestCase
             'return_2' => 'A2',
             'data_cad' => '2026-01-10 10:00:00',
             'id_setor' => 7,
+        ]);
+        DB::table('lista_itens')->insert([
+            'id_lista' => 10,
+            'legacy_lista_id' => 10,
+            'id_grupo' => 1,
+            'nome_lista' => 'Item A',
+            'return_1' => 'A1',
+            'return_2' => 'A2',
+            'data_cad' => '2026-01-10 10:00:00',
+            'id_setor' => 7,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $this->actingAs($admin)
@@ -61,6 +81,14 @@ class AdminListaPersistenceTest extends TestCase
             'nome_grupo' => 'Lista Teste',
             'data_cad' => '2026-01-10 10:00:00',
         ]);
+        DB::table('lista_grupos')->insert([
+            'id_grupo' => 1,
+            'legacy_grupo_id' => 1,
+            'nome_grupo' => 'Lista Teste',
+            'data_cad' => '2026-01-10 10:00:00',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         DB::table('tp_lista_tb')->insert([
             'id_lista' => 10,
@@ -69,6 +97,17 @@ class AdminListaPersistenceTest extends TestCase
             'return_1' => 'A1',
             'data_cad' => '2026-01-10 10:00:00',
             'id_setor' => 7,
+        ]);
+        DB::table('lista_itens')->insert([
+            'id_lista' => 10,
+            'legacy_lista_id' => 10,
+            'id_grupo' => 1,
+            'nome_lista' => 'Item A',
+            'return_1' => 'A1',
+            'data_cad' => '2026-01-10 10:00:00',
+            'id_setor' => 7,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $this->actingAs($admin)->put('/admin/listas/1/itens/10', [
@@ -103,6 +142,14 @@ class AdminListaPersistenceTest extends TestCase
             'nome_grupo' => 'Lista Teste',
             'data_cad' => '2026-01-10 10:00:00',
         ]);
+        DB::table('lista_grupos')->insert([
+            'id_grupo' => 1,
+            'legacy_grupo_id' => 1,
+            'nome_grupo' => 'Lista Teste',
+            'data_cad' => '2026-01-10 10:00:00',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         DB::table('tp_lista_tb')->insert([
             [
@@ -120,6 +167,30 @@ class AdminListaPersistenceTest extends TestCase
                 'return_1' => 'Segundo',
                 'data_cad' => '2026-01-10 10:00:00',
                 'id_setor' => 7,
+            ],
+        ]);
+        DB::table('lista_itens')->insert([
+            [
+                'id_lista' => 10,
+                'legacy_lista_id' => 10,
+                'id_grupo' => 1,
+                'nome_lista' => 'Alpha',
+                'return_1' => 'Primeiro',
+                'data_cad' => '2026-01-10 10:00:00',
+                'id_setor' => 7,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id_lista' => 11,
+                'legacy_lista_id' => 11,
+                'id_grupo' => 1,
+                'nome_lista' => 'Beta',
+                'return_1' => 'Segundo',
+                'data_cad' => '2026-01-10 10:00:00',
+                'id_setor' => 7,
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ]);
 

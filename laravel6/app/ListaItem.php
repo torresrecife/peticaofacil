@@ -42,21 +42,4 @@ class ListaItem extends Model
     {
         return $this->belongsTo(ListaGrupo::class, 'id_grupo', 'id_grupo');
     }
-
-    public function resolveRouteBinding($value, $field = null)
-    {
-        $field = $field ?: $this->getRouteKeyName();
-
-        $item = $this->where($field, $value)->first();
-        if ($item) {
-            return $item;
-        }
-
-        $legacyItem = LegacyListaItem::find($value);
-        if (!$legacyItem) {
-            return null;
-        }
-
-        return app(\App\Services\ListaSyncService::class)->syncLegacyItem($legacyItem);
-    }
 }

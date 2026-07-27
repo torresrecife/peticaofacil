@@ -71,7 +71,7 @@
                         <td>{{ optional($peca->modelo)->nome }}</td>
                         <td>{{ $peca->cliente_referencia }}</td>
                         <td>{{ optional($peca->gerado_em)->format('d/m/Y H:i') ?: optional($peca->created_at)->format('d/m/Y H:i') }}</td>
-                        <td>{{ optional($peca->legacyUsuario)->login_usu }}</td>
+                        <td>{{ optional($peca->user)->login_usu ?: '-' }}</td>
                         <td><span class="editor-note">Normalizada</span></td>
                         <td>
                             <a href="{{ route('peticoes.saved.edit', $peca) }}">Editar</a>

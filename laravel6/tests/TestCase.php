@@ -181,16 +181,18 @@ abstract class TestCase extends BaseTestCase
         });
 
         $this->createOrResetTable('lista_grupos', function (Blueprint $table) {
-            $table->unsignedInteger('id_grupo')->primary();
-            $table->unsignedInteger('legacy_grupo_id')->nullable()->unique();
+            $table->increments('id_grupo');
+            $table->unsignedInteger('legacy_grupo_id')->nullable();
             $table->string('nome_grupo', 500);
             $table->dateTime('data_cad')->nullable();
             $table->timestamps();
+
+            $table->unique('legacy_grupo_id');
         });
 
         $this->createOrResetTable('lista_itens', function (Blueprint $table) {
-            $table->unsignedInteger('id_lista')->primary();
-            $table->unsignedInteger('legacy_lista_id')->nullable()->unique();
+            $table->increments('id_lista');
+            $table->unsignedInteger('legacy_lista_id')->nullable();
             $table->unsignedInteger('id_grupo');
             $table->string('nome_lista', 500)->nullable();
             $table->string('return_1', 500)->nullable();
@@ -202,6 +204,8 @@ abstract class TestCase extends BaseTestCase
             $table->dateTime('data_cad')->nullable();
             $table->unsignedInteger('id_setor')->nullable();
             $table->timestamps();
+
+            $table->unique('legacy_lista_id');
         });
 
         $this->createOrResetTable('tp_funda_tb', function (Blueprint $table) {
