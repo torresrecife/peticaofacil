@@ -143,22 +143,4 @@ $rootHtaccess = @'
 
 Set-Content -Path (Join-Path $stagingRoot '.htaccess') -Value $rootHtaccess -Encoding UTF8
 
-$rootLogin = @'
-<?php
-
-header('Location: /peticaofacil/login');
-exit;
-'@
-
-Set-Content -Path (Join-Path $stagingRoot 'login.php') -Value $rootLogin -Encoding UTF8
-
-$rootLogout = @'
-<?php
-
-header('Location: /peticaofacil/legacy/logout');
-exit;
-'@
-
-Set-Content -Path (Join-Path $stagingRoot 'sair.php') -Value $rootLogout -Encoding UTF8
-
 Write-Host "Staging prepared at: $stagingRoot"

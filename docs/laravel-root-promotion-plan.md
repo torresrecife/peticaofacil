@@ -15,6 +15,16 @@ Estado alvo:
 - `public/` da raiz = `public/` oficial do Laravel + assets legados ainda necessarios
 - wrappers PHP antigos removidos
 
+## Status atual
+
+Esta promocao ja foi executada.
+
+Hoje:
+
+- a raiz e o runtime oficial do Laravel
+- `public/` final ja preserva `ckeditor/`, `ckfinder/` e `img/`
+- a antiga casca PHP ficou reduzida a compatibilidade residual por rota
+
 ## Pre-condicoes
 
 Antes da promocao fisica:
@@ -187,9 +197,8 @@ Validar:
 ### Fase 1: congelar a casca antiga
 
 - manter apenas:
-  - `login.php`
-  - `sair.php`
-  - bridge residual
+  - front controller minimo da raiz
+  - bridge residual estritamente necessaria
 - nenhuma nova funcionalidade entra fora do Laravel
 
 ### Fase 2: preparar `public/` final
@@ -219,12 +228,15 @@ Validar:
 
 So depois da validacao:
 
-- `legacy_redirect_bootstrap.php`
-- `login.php`
-- `sair.php`
-- `inc/seguranca.php`
-- `inc/bootstrap.php`
-- o restante do legado raiz
+## Proximo passo
+
+- continuar o corte das compatibilidades residuais
+- reduzir as rotas `legacy.*` restantes a compatibilidade estrita
+- concluir a retirada das tabelas legadas do runtime
+
+- remover a duplicata `laravel6/`
+- limpar qualquer resquicio residual fora do runtime
+- manter apenas backup datado em `_legacy_backup`
 
 ## Riscos tecnicos principais
 
@@ -239,13 +251,18 @@ So depois da validacao:
 
 4. `bootstrap/app.php` legado e `bootstrap/app.php` do Laravel nao podem coexistir como se tivessem o mesmo papel
 
-## Proximo passo tecnico recomendado
+## Estado atual
 
-Antes de mover arquivos fisicamente:
+Promocao fisica executada:
 
-1. auditar se `public/css`, `public/js` e `public/inc` ainda sao usados pelo Laravel
-2. preparar um staging de promocao com:
-   - `public/` final
-   - `.env` final
-   - `composer.json` final
-3. so depois executar a movimentacao fisica da pasta `laravel6/`
+- a raiz ja e o runtime principal do Laravel
+- `public/` final ja foi montado com:
+  - `ckeditor/`
+  - `ckfinder/`
+  - `img/`
+- `public/css`, `public/js` e `public/inc` antigos ficaram fora da promocao
+
+Pendencia restante:
+
+1. remover a pasta `laravel6/` duplicada quando o processo externo liberar o lock
+2. seguir no corte final da compatibilidade residual e das tabelas legadas

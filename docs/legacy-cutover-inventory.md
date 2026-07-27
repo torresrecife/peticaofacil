@@ -6,8 +6,7 @@ Data de referencia: 2026-07-27
 
 Hoje o runtime funcional do sistema esta assim:
 
-- aplicacao principal: `laravel6/`
-- raiz antiga: casca de compatibilidade + assets legados
+- aplicacao principal: raiz do projeto
 - banco: legado + tabelas normalizadas
 
 O codigo quente da aplicacao ja esta centrado no Laravel para:
@@ -30,43 +29,43 @@ Esses arquivos ainda participam diretamente da entrada HTTP:
 
 - [`.htaccess`](C:/laragon/www/bvaa/peticaofacil/.htaccess)
 - [`index.php`](C:/laragon/www/bvaa/peticaofacil/index.php)
-- [`legacy_redirect_bootstrap.php`](C:/laragon/www/bvaa/peticaofacil/legacy_redirect_bootstrap.php)
 
 Papel atual:
 
-- roteiam assets legados
-- deixam algumas URLs antigas funcionarem
-- delegam o resto para `laravel6/public/index.php`
+- roteiam assets legados ainda preservados
+- deixam URLs residuais como `login.php` e `sair.php` entrarem por rota Laravel
+- delegam o resto para `public/index.php`
 
 ### 2. Wrappers PHP antigos ainda expostos
 
-Depois da consolidacao da entrada unica, a raiz ficou reduzida a:
+Depois da promocao fisica, a raiz ficou reduzida a:
 
 - [`index.php`](C:/laragon/www/bvaa/peticaofacil/index.php)
-- [`legacy_redirect_bootstrap.php`](C:/laragon/www/bvaa/peticaofacil/legacy_redirect_bootstrap.php)
-- [`login.php`](C:/laragon/www/bvaa/peticaofacil/login.php)
-- [`sair.php`](C:/laragon/www/bvaa/peticaofacil/sair.php)
+- [`.htaccess`](C:/laragon/www/bvaa/peticaofacil/.htaccess)
 
 Estado atual:
 
 - `admin.php`, `cliente.php`, `dados.php`, `editor.php`, `list.php`, `parag.php`, `pecas.php`, `setor.php`, `sql.php`, `usu.php` e `assinatura.php` ja foram removidos da raiz
-- as URLs antigas agora entram por `index.php`
-- `index.php` ainda tem a unica logica residual relevante de compatibilidade de POST legado com `hid_enviar`
-- `login.php` e `sair.php` ainda participam do fluxo de sessao/bridge
+- `login.php` e `sair.php` tambem ja sairam como arquivos fisicos
+- essas URLs agora sao atendidas por rotas Laravel:
+  - `/login.php`
+  - `/sair.php`
 
-### 3. Camada legado de sessao e bootstrap ainda ativa
+### 3. Camada legado PHP residual
 
-Esses arquivos ainda sao usados por wrappers antigos:
+Na raiz ativa, essa camada ja nao participa mais do runtime.
 
-- [`inc/seguranca.php`](C:/laragon/www/bvaa/peticaofacil/inc/seguranca.php)
-- [`inc/bootstrap.php`](C:/laragon/www/bvaa/peticaofacil/inc/bootstrap.php)
+O que restou dela esta no backup local:
 
-Papel atual:
+- [`_legacy_backup`](C:/laragon/www/bvaa/peticaofacil/_legacy_backup)
 
-- sessao/cookie legado
-- redirect para login moderno
-- compatibilidade de bridge e logout
-- bootstrap de env/DB do codigo antigo
+Compatibilidade residual ainda ativa no runtime:
+
+- rota `/login.php` -> redirect Laravel para `/login`
+- rota `/sair.php` -> logout compatível via controller Laravel
+- rotas `legacy.*` de modelos e pecas, ja tratadas como compatibilidade explicita
+
+A antiga bridge de sessao (`/legacy/bridge`) ja saiu do runtime.
 
 ### 4. Assets legados ainda servidos pela raiz
 
@@ -74,15 +73,12 @@ Pastas ainda publicadas pela raiz:
 
 - [`public/ckeditor`](C:/laragon/www/bvaa/peticaofacil/public/ckeditor)
 - [`public/ckfinder`](C:/laragon/www/bvaa/peticaofacil/public/ckfinder)
-- [`public/css`](C:/laragon/www/bvaa/peticaofacil/public/css)
-- [`public/js`](C:/laragon/www/bvaa/peticaofacil/public/js)
 - [`public/img`](C:/laragon/www/bvaa/peticaofacil/public/img)
-- [`public/inc`](C:/laragon/www/bvaa/peticaofacil/public/inc)
 
 Observacao:
 
 - CKEditor/CKFinder ainda sao dependencias reais do editor.
-- esses assets precisam ser preservados ou realocados para o `public/` final do Laravel antes do corte fisico.
+- esses assets ja foram preservados no `public/` final do Laravel.
 
 ## Arquivos da raiz que ja sao candidatos a remocao futura
 
@@ -143,16 +139,12 @@ Estado atual desta fase:
 
 - `.htaccess`
 - `index.php`
-- `legacy_redirect_bootstrap.php`
-- `login.php`
-- `sair.php`
-- `inc/seguranca.php`
-- `inc/bootstrap.php`
 - `public/ckeditor`
 - `public/ckfinder`
 - `public/img`
 
 Os wrappers antigos de navegacao ja sairam.
+`login.php` e `sair.php` foram absorvidos por rotas Laravel.
 
 ### Fase B: promocao de `laravel6/` para raiz
 
@@ -160,7 +152,11 @@ Objetivo:
 
 - transformar a raiz do repositorio na estrutura oficial do Laravel
 
-Movimentos previstos:
+Status:
+
+- concluida
+
+Movimentos executados:
 
 - mover conteudo de `laravel6/app` para `app`
 - mover `laravel6/bootstrap` para `bootstrap`
@@ -229,9 +225,7 @@ Remocoes previstas por modulo:
 
 ## Proximo passo tecnico recomendado
 
-Antes de mover `laravel6/` para a raiz:
+Pendencia atual:
 
-1. reduzir a raiz para front controller + bridge + assets essenciais
-2. trocar wrappers antigos por redirects de servidor quando possivel
-3. copiar CKEditor/CKFinder e imagens para o `public/` definitivo do Laravel
-4. so entao promover fisicamente `laravel6/` para a raiz
+1. seguir no corte final das tabelas legadas e compatibilidades residuais
+2. decidir quando as rotas `legacy.*` restantes podem virar redirect estrito ou ser removidas

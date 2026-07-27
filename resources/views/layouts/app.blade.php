@@ -456,7 +456,7 @@
                         <div>{{ auth()->user()->nivel_usu }}</div>
                     </div>
                 </div>
-                <form method="get" action="{{ route('legacy.logout') }}">
+                <form method="post" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="button secondary">Sair</button>
                 </form>

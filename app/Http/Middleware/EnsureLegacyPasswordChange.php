@@ -17,7 +17,7 @@ class EnsureLegacyPasswordChange
         $routeName = optional($request->route())->getName();
         $allowedRoutes = [
             'logout',
-            'legacy.logout',
+            'legacy.logout.file',
             'password.force',
             'password.force.update',
         ];
