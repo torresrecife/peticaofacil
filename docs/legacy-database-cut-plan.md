@@ -126,3 +126,62 @@ So depois de backup e janela formal:
 
 1. revisar `LegacyUser`, `LegacyListaGrupo`, `LegacyListaItem`, `SqlServerConfig`, `Tipo`, `Paragrafo`, `InputCampo` e `Peca` para garantir que ficaram fora do runtime web;
 2. depois preparar a remocao controlada das rotas residuais `legacy.*` que ainda sobraram.
+
+## Auditoria das classes legadas remanescentes
+
+### Fora do runtime web normal
+
+- `LegacyListaGrupo`
+  - usado por `listas:sync-legado`
+  - usado por `LegacyListaMirrorService` quando `LEGACY_LISTAS_MIRROR=true`
+- `LegacyListaItem`
+  - usado por `listas:sync-legado`
+  - usado por `LegacyListaMirrorService` quando `LEGACY_LISTAS_MIRROR=true`
+- `Tipo`
+  - usado por `peticao:sync-legado`
+  - usado pelo admin residual de modelos
+- `Paragrafo`
+  - usado por `peticao:sync-legado`
+  - usado pelo admin residual de modelos
+- `InputCampo`
+  - usado por `peticao:sync-legado`
+  - usado pelo admin residual de modelos
+
+### Ainda residuais no runtime web
+
+- `Peca`
+  - compatibilidade explicita em `/pecas/{peca}/editar`
+  - reaproveitamento de `peca_id` em save normalizado quando a origem ainda e uma peca antiga
+  - sync/backfill em `peticao:sync-pecas`
+- `SqlServerConfig`
+  - compatibilidade explicita em `/admin/servidores/{id}/edit`
+  - sync/manual via `servidores:sync-legado`
+  - espelhamento opcional quando `LEGACY_SQL_CONFIGS_MIRROR=true`
+
+## Rotas `legacy.*` restantes
+
+### Podadas para compatibilidade fina
+
+- `legacy.login.file`
+- `legacy.logout.file`
+- `legacy.peticoes.editor.edit`
+
+### Ainda mantidas por compatibilidade externa de modelos
+
+- `legacy.peticoes.modelos.show`
+- `legacy.peticoes.modelos.compose`
+- `legacy.peticoes.modelos.editor.create`
+- `legacy.peticoes.modelos.saved.store`
+- `legacy.peticoes.modelos.editor.save`
+- `legacy.peticoes.modelos.editor.export.pdf`
+- `legacy.peticoes.modelos.editor.export.word`
+
+Essas rotas ja nao carregam `Tipo` diretamente no runtime web. Elas resolvem o modelo normalizado por `legacy_tipo_id` e delegam para a trilha `peticoes.normalized.*`.
+
+## Sync manual necessario antes do corte final de servidores SQL
+
+Para tirar `SqlServerConfig` do admin normalizado, a trilha nova precisa estar preenchida:
+
+```powershell
+& "C:\\laragon\\bin\\php\\php-7.2.34-nts-Win32-VC15-x64\\php.exe" artisan servidores:sync-legado
+```

@@ -23,12 +23,21 @@ class PeticaoModeloResolverService
 
     public function findLoadedNormalizedForLegacyTipo(Tipo $tipo, array $relations = [])
     {
+        return $this->findLoadedNormalizedByLegacyTipoId($tipo->tipo_id, $relations);
+    }
+
+    public function findLoadedNormalizedByLegacyTipoId($legacyTipoId, array $relations = [])
+    {
+        if (!$legacyTipoId) {
+            return null;
+        }
+
         $query = PeticaoModelo::query();
 
         if (!empty($relations)) {
             $query->with($relations);
         }
 
-        return $query->where('legacy_tipo_id', $tipo->tipo_id)->first();
+        return $query->where('legacy_tipo_id', $legacyTipoId)->first();
     }
 }

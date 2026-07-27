@@ -22,18 +22,21 @@ class AdminNormalizedModeloCreateTest extends TestCase
             'data_cad' => now(),
         ]);
 
-        DB::table('tp_config_db')->insert([
-            'id_db' => 54,
-            'nome_db' => 'NEO',
-            'ip_db' => '127.0.0.1',
-            'data_db' => 'neo',
-            'usu_db' => 'sa',
-            'senha_db' => '123',
-            'table_db' => 'Processos',
-            'chave_db' => 'CodigoProcesso',
-            'query_db' => 'select * from Processos',
-            'where_db' => 'where CodigoProcesso = ?',
-            'stt' => 'Y',
+        DB::table('sql_server_profiles')->insert([
+            'id' => 54,
+            'legacy_config_id' => null,
+            'nome' => 'NEO',
+            'host' => '127.0.0.1',
+            'database_name' => 'neo',
+            'username' => 'sa',
+            'password' => '123',
+            'table_name' => 'Processos',
+            'lookup_key' => 'CodigoProcesso',
+            'base_query' => 'select * from Processos',
+            'where_clause' => 'where CodigoProcesso = ?',
+            'status' => 'ativo',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $this->actingAs($admin)

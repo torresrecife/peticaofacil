@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\PeticaoModelo;
 use App\Setor;
 use App\SqlServerProfile;
-use App\SqlServerConfig;
 use App\Support\LegacyEditorContent;
 use App\Services\LegacyModeloMirrorService;
 use Illuminate\Support\Collection;
@@ -165,20 +164,6 @@ class NormalizedTipoController extends Controller
 
     protected function availableServidores(): Collection
     {
-        $profiles = SqlServerProfile::active()->orderBy('nome')->get();
-
-        if ($profiles->isEmpty()) {
-            return SqlServerConfig::active()->orderBy('nome_db')->get();
-        }
-
-        $legacyIds = $profiles->pluck('legacy_config_id')->filter()->values()->all();
-        $legacyFallback = SqlServerConfig::active()
-            ->when(!empty($legacyIds), function ($query) use ($legacyIds) {
-                $query->whereNotIn('id_db', $legacyIds);
-            })
-            ->orderBy('nome_db')
-            ->get();
-
-        return $profiles->concat($legacyFallback)->values();
+        return SqlServerProfile::active()->orderBy('nome')->get();
     }
 }
