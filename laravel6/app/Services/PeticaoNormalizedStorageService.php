@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Peca;
 use App\PeticaoNormalizada;
 use App\PeticaoVersao;
 use Illuminate\Support\Facades\Auth;
@@ -14,24 +13,14 @@ class PeticaoNormalizedStorageService
     {
         return DB::transaction(function () use ($peticao, $payload, $origin) {
             $peticao->loadMissing(['modelo', 'legacyPeca.tipo']);
-
             $legacyPeca = $peticao->legacyPeca;
-            $tipo = $legacyPeca && $legacyPeca->tipo ? $legacyPeca->tipo : null;
-
-            if ($legacyPeca) {
-                $legacyPeca->nome_cli = $payload['nome_cli'];
-                $legacyPeca->cod_pecas = $payload['cod_pecas'];
-                $legacyPeca->data_cad = now();
-                $legacyPeca->save();
-
-                $peticao->legacy_peca_id = $legacyPeca->id_pecas;
-                $peticao->legacy_usuario_id = $legacyPeca->id_usu;
-                $peticao->codigo_externo = $legacyPeca->cod_sav;
-                $peticao->nome_arquivo = $legacyPeca->nome_pecas ?: $peticao->nome_arquivo;
-            }
 
             if (!$peticao->user_id && Auth::check()) {
                 $peticao->user_id = Auth::id();
+            }
+
+            if (!$peticao->legacy_usuario_id && Auth::check()) {
+                $peticao->legacy_usuario_id = Auth::user()->legacy_usuario_id ?: Auth::user()->id_usu;
             }
 
             if (!$legacyPeca && !$peticao->nome_arquivo) {
@@ -40,8 +29,14 @@ class PeticaoNormalizedStorageService
 
             $peticao->cliente_referencia = $payload['nome_cli'];
             $peticao->conteudo_html = $payload['cod_pecas'];
+            $peticao->gerado_em = $peticao->gerado_em ?: now();
             $peticao->salvo_em = now();
             $peticao->save();
+
+            $legacyPeca = app(LegacyPecaMirrorService::class)->syncFromNormalized($peticao);
+            if ($legacyPeca) {
+                $peticao->save();
+            }
 
             $this->createVersionSnapshot($peticao, $origin);
 

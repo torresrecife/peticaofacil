@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Cliente;
-use App\Peca;
 use App\PeticaoModelo;
 use App\PeticaoNormalizada;
 use App\Setor;
@@ -23,26 +22,11 @@ class DashboardController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        $legacyIdsEspelhadosHoje = $peticoesHojeNormalizadas
-            ->pluck('legacy_peca_id')
-            ->filter()
-            ->values()
-            ->all();
-
-        $peticoesHojeLegadas = Peca::with(['modeloNormalizado', 'tipo', 'usuario'])
-            ->whereDate('data_cad', $today)
-            ->when(!empty($legacyIdsEspelhadosHoje), function ($query) use ($legacyIdsEspelhadosHoje) {
-                $query->whereNotIn('id_pecas', $legacyIdsEspelhadosHoje);
-            })
-            ->orderByDesc('data_cad')
-            ->orderByDesc('id_pecas')
-            ->get();
-
-        $peticoesHoje = $this->mergePeticoesHoje($peticoesHojeNormalizadas, $peticoesHojeLegadas)
+        $peticoesHoje = $this->mapPeticoesHoje($peticoesHojeNormalizadas)
             ->take(10)
             ->values();
 
-        $usuariosHoje = $this->buildUsuariosHoje($peticoesHojeNormalizadas, $peticoesHojeLegadas);
+        $usuariosHoje = $this->buildUsuariosHoje($peticoesHojeNormalizadas);
         $favoritos = $this->buildFavoritos();
 
         return view('dashboard', [
@@ -107,7 +91,7 @@ class DashboardController extends Controller
         })->filter()->values();
     }
 
-    protected function mergePeticoesHoje($normalizadas, $legadas)
+    protected function mapPeticoesHoje($normalizadas)
     {
         $items = collect();
 
@@ -122,23 +106,12 @@ class DashboardController extends Controller
             ]);
         }
 
-        foreach ($legadas as $peca) {
-            $items->push((object) [
-                'momento' => $peca->data_cad,
-                'cliente' => $peca->nome_cli,
-                'modelo' => optional($peca->modeloNormalizado)->nome ?: optional($peca->tipo)->tipo_nome ?: $peca->nome_pecas,
-                'usuario' => optional($peca->usuario)->nome_usu,
-                'origem' => 'Legada',
-                'link' => route('peticoes.editor.edit', $peca),
-            ]);
-        }
-
         return $items->sortByDesc(function ($item) {
             return optional($item->momento)->timestamp ?: 0;
         });
     }
 
-    protected function buildUsuariosHoje($normalizadas, $legadas)
+    protected function buildUsuariosHoje($normalizadas)
     {
         $totais = [];
 
@@ -154,25 +127,6 @@ class DashboardController extends Controller
                     'user_id' => $userId,
                     'legacy_usuario_id' => $peticao->legacy_usuario_id ?: null,
                     'nome_usu' => optional($peticao->user)->nome_usu ?: ('Usuario #' . $userId),
-                    'total_peticoes' => 0,
-                ];
-            }
-
-            $totais[$indexKey]['total_peticoes']++;
-        }
-
-        foreach ($legadas as $peca) {
-            if (!$peca->id_usu) {
-                continue;
-            }
-
-            $userId = (int) $peca->id_usu;
-            $indexKey = 'legacy:' . $userId;
-            if (!isset($totais[$indexKey])) {
-                $totais[$indexKey] = [
-                    'user_id' => null,
-                    'legacy_usuario_id' => $userId,
-                    'nome_usu' => optional($peca->usuario)->nome_usu ?: ('Usuario #' . $userId),
                     'total_peticoes' => 0,
                 ];
             }

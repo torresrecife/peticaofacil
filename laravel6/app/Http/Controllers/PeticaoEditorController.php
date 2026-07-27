@@ -8,6 +8,7 @@ use App\PeticaoNormalizada;
 use App\Services\LegacyPecaSyncService;
 use App\Services\PecaStorageService;
 use App\Services\PeticaoExportService;
+use App\Services\PeticaoNormalizedStorageService;
 use App\Tipo;
 use Illuminate\Http\Request;
 
@@ -67,11 +68,11 @@ class PeticaoEditorController extends Controller
         return $this->handleSave($request, $modelo, $storage);
     }
 
-    public function saveNormalized(Request $request, PeticaoModelo $modeloNormalizado, PecaStorageService $storage)
+    public function saveNormalized(Request $request, PeticaoModelo $modeloNormalizado, PeticaoNormalizedStorageService $storage)
     {
         abort_unless($modeloNormalizado->legacy_tipo_id, 404);
 
-        return $this->handleSave($request, $modeloNormalizado, $storage);
+        return $this->handleSaveNormalized($request, $modeloNormalizado, $storage);
     }
 
     protected function handleSave(Request $request, $modelo, PecaStorageService $storage)
@@ -95,6 +96,60 @@ class PeticaoEditorController extends Controller
         }
 
         return redirect()->route('peticoes.editor.edit', $peca)->with('status', 'Peca salva.');
+    }
+
+    protected function handleSaveNormalized(Request $request, PeticaoModelo $modelo, PeticaoNormalizedStorageService $storage)
+    {
+        $data = $request->validate([
+            'nome_cli' => 'required|string|max:500',
+            'cod_pecas' => 'required|string',
+            'peca_id' => 'nullable|integer',
+        ]);
+
+        $peticao = null;
+        if (!empty($data['peca_id'])) {
+            $legacyPeca = Peca::findOrFail($data['peca_id']);
+            $peticao = PeticaoNormalizada::firstOrNew(['legacy_peca_id' => $legacyPeca->id_pecas]);
+
+            if (!$peticao->exists) {
+                $peticao->fill([
+                    'modelo_id' => $modelo->id,
+                    'user_id' => auth()->id(),
+                    'legacy_usuario_id' => $legacyPeca->id_usu,
+                    'codigo_externo' => $legacyPeca->cod_sav,
+                    'nome_arquivo' => $legacyPeca->nome_pecas ?: $modelo->nome,
+                    'cliente_referencia' => $legacyPeca->nome_cli,
+                    'conteudo_html' => $legacyPeca->cod_pecas,
+                    'campos_resolvidos' => [
+                        'legacy_tipo_id' => $modelo->legacy_tipo_id,
+                        'legacy_cod_sav' => $legacyPeca->cod_sav,
+                    ],
+                    'gerado_em' => $legacyPeca->data_cad ?: now(),
+                    'salvo_em' => now(),
+                ]);
+            }
+        }
+
+        if (!$peticao) {
+            $peticao = new PeticaoNormalizada([
+                'modelo_id' => $modelo->id,
+                'user_id' => auth()->id(),
+                'legacy_usuario_id' => optional(auth()->user())->legacy_usuario_id ?: optional(auth()->user())->id_usu,
+                'codigo_externo' => null,
+                'nome_arquivo' => $modelo->nome,
+                'cliente_referencia' => $data['nome_cli'],
+                'conteudo_html' => $data['cod_pecas'],
+                'campos_resolvidos' => [
+                    'legacy_tipo_id' => $modelo->legacy_tipo_id,
+                ],
+                'gerado_em' => now(),
+                'salvo_em' => now(),
+            ]);
+        }
+
+        $peticao = $storage->save($peticao, $data);
+
+        return redirect()->route('peticoes.saved.edit', $peticao)->with('status', 'Peca salva.');
     }
 
     public function exportWord(Request $request, Tipo $modelo, PeticaoExportService $exportService)
