@@ -6,6 +6,7 @@ use App\PeticaoNormalizada;
 use App\PeticaoModelo;
 use App\PeticaoVersao;
 use App\Services\PeticaoExportService;
+use App\Services\LegacyModeloRouteAccessService;
 use App\Services\PeticaoModeloResolverService;
 use App\Services\PeticaoNormalizedDraftService;
 use App\Services\PeticaoNormalizedStorageService;
@@ -14,8 +15,9 @@ use Illuminate\Http\Request;
 
 class PeticaoSavedController extends Controller
 {
-    public function storeFromPreview(Request $request, \App\Tipo $modelo, PeticaoNormalizedDraftService $draftService, PeticaoModeloResolverService $modeloResolver)
+    public function storeFromPreview(Request $request, $modelo, LegacyModeloRouteAccessService $legacyAccess, PeticaoNormalizedDraftService $draftService, PeticaoModeloResolverService $modeloResolver)
     {
+        $modelo = $legacyAccess->findTipoOrFail($modelo);
         $mirrorModelo = $modeloResolver->findNormalizedForLegacyTipo($modelo);
         abort_unless($mirrorModelo, 404);
 

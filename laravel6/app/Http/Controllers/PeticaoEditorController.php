@@ -6,15 +6,16 @@ use App\Peca;
 use App\PeticaoModelo;
 use App\PeticaoNormalizada;
 use App\Services\PeticaoExportService;
+use App\Services\LegacyModeloRouteAccessService;
 use App\Services\PeticaoModeloResolverService;
 use App\Services\PeticaoNormalizedStorageService;
-use App\Tipo;
 use Illuminate\Http\Request;
 
 class PeticaoEditorController extends Controller
 {
-    public function create(Request $request, Tipo $modelo)
+    public function create(Request $request, $modelo, LegacyModeloRouteAccessService $legacyAccess)
     {
+        $modelo = $legacyAccess->findTipoOrFail($modelo);
         $modeloNormalizado = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($modeloNormalizado) {
             return $this->createNormalized($request, $modeloNormalizado);
@@ -56,8 +57,9 @@ class PeticaoEditorController extends Controller
             ->with('status', 'Peca legada sem espelho normalizado. Use a sincronizacao historica antes de editar.');
     }
 
-    public function save(Request $request, Tipo $modelo, PeticaoNormalizedStorageService $normalizedStorage, PeticaoModeloResolverService $modeloResolver)
+    public function save(Request $request, $modelo, LegacyModeloRouteAccessService $legacyAccess, PeticaoNormalizedStorageService $normalizedStorage, PeticaoModeloResolverService $modeloResolver)
     {
+        $modelo = $legacyAccess->findTipoOrFail($modelo);
         $modeloNormalizado = $modeloResolver->findNormalizedForLegacyTipo($modelo);
         if ($modeloNormalizado) {
             return $this->saveNormalized($request, $modeloNormalizado, $normalizedStorage);
@@ -125,8 +127,9 @@ class PeticaoEditorController extends Controller
         return redirect()->route('peticoes.saved.edit', $peticao)->with('status', 'Peca salva.');
     }
 
-    public function exportWord(Request $request, Tipo $modelo, PeticaoExportService $exportService)
+    public function exportWord(Request $request, $modelo, LegacyModeloRouteAccessService $legacyAccess, PeticaoExportService $exportService)
     {
+        $modelo = $legacyAccess->findTipoOrFail($modelo);
         $modeloNormalizado = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($modeloNormalizado) {
             return $this->exportNormalizedWord($request, $modeloNormalizado, $exportService);
@@ -150,8 +153,9 @@ class PeticaoEditorController extends Controller
         return $exportService->exportWord($data['nome_cli'], $data['cod_pecas']);
     }
 
-    public function exportPdf(Request $request, Tipo $modelo, PeticaoExportService $exportService)
+    public function exportPdf(Request $request, $modelo, LegacyModeloRouteAccessService $legacyAccess, PeticaoExportService $exportService)
     {
+        $modelo = $legacyAccess->findTipoOrFail($modelo);
         $modeloNormalizado = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
         if ($modeloNormalizado) {
             return $this->exportNormalizedPdf($request, $modeloNormalizado, $exportService);

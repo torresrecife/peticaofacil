@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\PeticaoModelo;
+use App\Services\LegacyModeloRouteAccessService;
 use App\Services\PeticaoModeloResolverService;
 use App\Services\PeticaoModeloRuntimeFactory;
 use App\Services\SqlServerLookupService;
 use App\Services\PeticaoComposerService;
-use App\Tipo;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
@@ -96,8 +96,9 @@ class PeticaoAssemblyController extends Controller
         return $this->renderAssemble($modeloNormalizado, $modeloFonte);
     }
 
-    public function show(Tipo $modelo)
+    public function show($modelo, LegacyModeloRouteAccessService $legacyAccess)
     {
+        $modelo = $legacyAccess->findTipoOrFail($modelo);
         $mirror = app(PeticaoModeloResolverService::class)->findLoadedNormalizedForLegacyTipo(
             $modelo,
             ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
@@ -121,8 +122,9 @@ class PeticaoAssemblyController extends Controller
         return $this->renderComposedAssemble($request, $modeloNormalizado, $modeloFonte, $composer, $lookup);
     }
 
-    public function compose(Request $request, Tipo $modelo, PeticaoComposerService $composer, SqlServerLookupService $lookup)
+    public function compose(Request $request, $modelo, LegacyModeloRouteAccessService $legacyAccess, PeticaoComposerService $composer, SqlServerLookupService $lookup)
     {
+        $modelo = $legacyAccess->findTipoOrFail($modelo);
         $mirror = app(PeticaoModeloResolverService::class)->findLoadedNormalizedForLegacyTipo(
             $modelo,
             ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
