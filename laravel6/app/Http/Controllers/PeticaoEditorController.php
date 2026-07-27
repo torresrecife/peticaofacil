@@ -16,7 +16,14 @@ class PeticaoEditorController extends Controller
 {
     public function create(Request $request, Tipo $modelo)
     {
-        return $this->renderCreateEditor($request, $modelo);
+        $modeloNormalizado = app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo);
+        if (!$modeloNormalizado) {
+            return redirect()
+                ->route('peticoes.index')
+                ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
+        }
+
+        return $this->renderCreateEditor($request, $modeloNormalizado);
     }
 
     public function createNormalized(Request $request, PeticaoModelo $modeloNormalizado)
@@ -55,11 +62,13 @@ class PeticaoEditorController extends Controller
     public function save(Request $request, Tipo $modelo, PecaStorageService $storage, PeticaoNormalizedStorageService $normalizedStorage, PeticaoModeloResolverService $modeloResolver)
     {
         $modeloNormalizado = $modeloResolver->findMirrorForTipo($modelo);
-        if ($modeloNormalizado) {
-            return $this->handleSaveNormalized($request, $modeloNormalizado, $normalizedStorage);
+        if (!$modeloNormalizado) {
+            return redirect()
+                ->route('peticoes.index')
+                ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
         }
 
-        return $this->handleSave($request, $modelo, $storage);
+        return $this->handleSaveNormalized($request, $modeloNormalizado, $normalizedStorage);
     }
 
     public function saveNormalized(Request $request, PeticaoModelo $modeloNormalizado, PeticaoNormalizedStorageService $storage)
@@ -146,6 +155,12 @@ class PeticaoEditorController extends Controller
 
     public function exportWord(Request $request, Tipo $modelo, PeticaoExportService $exportService)
     {
+        if (!app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo)) {
+            return redirect()
+                ->route('peticoes.index')
+                ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
+        }
+
         return $this->handleExportWord($request, $exportService);
     }
 
@@ -166,6 +181,12 @@ class PeticaoEditorController extends Controller
 
     public function exportPdf(Request $request, Tipo $modelo, PeticaoExportService $exportService)
     {
+        if (!app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo)) {
+            return redirect()
+                ->route('peticoes.index')
+                ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
+        }
+
         return $this->handleExportPdf($request, $exportService);
     }
 

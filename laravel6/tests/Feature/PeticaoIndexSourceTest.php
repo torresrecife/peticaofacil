@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class PeticaoIndexSourceTest extends TestCase
 {
-    public function test_peticoes_index_lists_normalized_models_first_and_legacy_as_fallback()
+    public function test_peticoes_index_lists_only_normalized_models_for_runtime_navigation()
     {
         $user = factory(User::class)->create([
             'nivel_usu' => 'USU',
@@ -55,9 +55,8 @@ class PeticaoIndexSourceTest extends TestCase
             ->get('/peticoes')
             ->assertStatus(200)
             ->assertSee('Modelos normalizados')
-            ->assertSee('Fallback legado')
             ->assertSee('Modelo Espelhado')
-            ->assertSee('Modelo So Legado');
+            ->assertDontSee('Modelo So Legado');
     }
 
     public function test_peticoes_index_can_filter_models_by_search()
@@ -168,5 +167,33 @@ class PeticaoIndexSourceTest extends TestCase
             strpos($content, $betaLink) < strpos($content, $alfaLink),
             'O modelo favorito deveria aparecer antes dos demais resultados.'
         );
+    }
+
+    public function test_legacy_peticao_route_redirects_back_when_model_has_no_normalized_mirror()
+    {
+        $user = factory(User::class)->create([
+            'nivel_usu' => 'USU',
+            'acesso_usu' => now(),
+        ]);
+
+        DB::table('tp_setor_tb')->insert([
+            'id_setor' => 9,
+            'nome_setor' => 'C',
+            'cod_setor' => 'C',
+            'data_cad' => now(),
+        ]);
+
+        DB::table('tp_tipo_tb')->insert([
+            'tipo_id' => 909,
+            'tipo_nome' => 'Modelo Apenas Legado',
+            'id_setor' => 9,
+            'tipo_data' => now(),
+            'tipo_stt' => 'Y',
+            'tipo_arq' => 'pdf',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/peticoes/909')
+            ->assertRedirect('/peticoes');
     }
 }

@@ -125,7 +125,7 @@
                             <option value="{{ $suggestion }}"></option>
                         @endforeach
                     </datalist>
-                    <div class="editor-note">Busca por nome, slug ou ID. O autocomplete sugere modelos cadastrados.</div>
+                    <div class="editor-note">Busca por nome, slug ou ID. O autocomplete sugere modelos normalizados cadastrados.</div>
                 </div>
                 <div class="form-group" style="justify-content:end;">
                     <label>&nbsp;</label>
@@ -183,51 +183,5 @@
         {{ $modelos->links('vendor.pagination.default') }}
     </div>
 
-    @if($legacyFallbacks->total() > 0)
-        <div class="panel">
-            <div class="section-title" style="margin-bottom:10px;">
-                <h3>Fallback legado</h3>
-                <div class="editor-note">Modelos ainda nao sincronizados com <code>peticao_modelos</code>.</div>
-            </div>
-
-            <div class="model-grid">
-                @foreach($legacyFallbacks as $modelo)
-                    <div class="model-card">
-                        <div class="model-card__toolbar">
-                            <div class="model-card__icon" style="background:#f8f0ff; color:#6b46c1;">LG</div>
-                            @php($favoriteKey = 'legacy:' . $modelo->tipo_id)
-                            <form method="post" action="{{ !empty($favoriteRows[$favoriteKey]) ? route('peticoes.legacy.favorite.destroy', $modelo) : route('peticoes.legacy.favorite.store', $modelo) }}">
-                                @csrf
-                                @if(!empty($favoriteRows[$favoriteKey]))
-                                    @method('DELETE')
-                                @endif
-                                <button type="submit" class="favorite-button @if(!empty($favoriteRows[$favoriteKey])) is-active @endif" title="Favorito">
-                                    @if(!empty($favoriteRows[$favoriteKey])) ★ @else ☆ @endif
-                                </button>
-                            </form>
-                        </div>
-                        <div class="model-card__title">{{ $modelo->tipo_nome }}</div>
-                        <div class="model-card__meta">
-                            <span><strong>ID:</strong> {{ $modelo->tipo_id }}</span>
-                            <span><strong>Setor:</strong> {{ optional($modelo->setor)->nome_setor ?: 'Nao informado' }}</span>
-                            <span><strong>Cliente:</strong> {{ optional($modelo->cliente)->cliente_name ?: 'Todos do setor' }}</span>
-                        </div>
-                        <div class="model-card__actions">
-                            <span class="model-card__badge">Legado</span>
-                            <a class="model-card__link" href="{{ route('peticoes.show', $modelo) }}">Montar</a>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-
-        <div class="pagination-wrap">
-            {{ $legacyFallbacks->links('vendor.pagination.default') }}
-        </div>
-    @elseif(($search ?? '') !== '')
-        <div class="panel">
-            <div class="model-empty">Nenhum modelo legado encontrado para este filtro.</div>
-        </div>
-    @endif
 </div>
 @endsection

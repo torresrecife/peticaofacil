@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\PeticaoModelo;
+use App\Services\PeticaoModeloResolverService;
 use App\Services\PeticaoModeloRuntimeFactory;
 use App\Services\SqlServerLookupService;
 use App\Services\PeticaoComposerService;
@@ -16,7 +17,6 @@ class PeticaoAssemblyController extends Controller
     {
         $search = trim((string) $request->query('search', ''));
         $favoriteNormalizedIds = [];
-        $favoriteLegacyTipoIds = [];
 
         $favoriteCollection = Auth::user()
             ->favoriteModelos()
@@ -34,16 +34,6 @@ class PeticaoAssemblyController extends Controller
         $favoriteNormalizedIds = $favoriteCollection
             ->where('source', 'normalized')
             ->pluck('modelo_id')
-            ->filter()
-            ->map(function ($id) {
-                return (int) $id;
-            })
-            ->values()
-            ->all();
-
-        $favoriteLegacyTipoIds = $favoriteCollection
-            ->where('source', 'legacy')
-            ->pluck('legacy_tipo_id')
             ->filter()
             ->map(function ($id) {
                 return (int) $id;
@@ -72,27 +62,6 @@ class PeticaoAssemblyController extends Controller
             ->paginate(18, ['*'], 'modelos_page')
             ->appends($request->except('modelos_page'));
 
-        $legacyFallbacksQuery = Tipo::with(['setor', 'cliente'])
-            ->where('tipo_stt', 'Y')
-            ->whereNotIn('tipo_id', PeticaoModelo::whereNotNull('legacy_tipo_id')->pluck('legacy_tipo_id'))
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($builder) use ($search) {
-                    $builder->where('tipo_nome', 'like', '%' . $search . '%')
-                        ->orWhere('tipo_id', 'like', '%' . $search . '%');
-                });
-            });
-
-        if (!empty($favoriteLegacyTipoIds)) {
-            $legacyFallbacksQuery->orderByRaw(
-                'CASE WHEN tipo_id IN (' . implode(',', $favoriteLegacyTipoIds) . ') THEN 0 ELSE 1 END'
-            );
-        }
-
-        $legacyFallbacks = $legacyFallbacksQuery
-            ->orderBy('tipo_nome')
-            ->paginate(12, ['*'], 'legacy_page')
-            ->appends($request->except('legacy_page'));
-
         $suggestions = collect();
 
         $normalizedSuggestions = PeticaoModelo::where('status', 'ativo')
@@ -103,23 +72,13 @@ class PeticaoAssemblyController extends Controller
             ->limit(30)
             ->pluck('nome');
 
-        $legacySuggestions = Tipo::where('tipo_stt', 'Y')
-            ->whereNotIn('tipo_id', PeticaoModelo::whereNotNull('legacy_tipo_id')->pluck('legacy_tipo_id'))
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where('tipo_nome', 'like', '%' . $search . '%');
-            })
-            ->orderBy('tipo_nome')
-            ->limit(20)
-            ->pluck('tipo_nome');
-
         $suggestions = $suggestions
             ->merge($normalizedSuggestions)
-            ->merge($legacySuggestions)
             ->filter()
             ->unique()
             ->values();
 
-        return view('peticao.index', compact('modelos', 'legacyFallbacks', 'favoriteRows', 'search', 'suggestions'));
+        return view('peticao.index', compact('modelos', 'favoriteRows', 'search', 'suggestions'));
     }
 
     public function showNormalized(PeticaoModelo $modeloNormalizado)
@@ -131,7 +90,18 @@ class PeticaoAssemblyController extends Controller
 
     public function show(Tipo $modelo)
     {
-        $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromPreferred($modelo);
+        $mirror = app(PeticaoModeloResolverService::class)->findLoadedMirrorForTipo(
+            $modelo,
+            ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
+        );
+
+        if (!$mirror) {
+            return redirect()
+                ->route('peticoes.index')
+                ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
+        }
+
+        $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromNormalized($mirror);
 
         return $this->renderAssemble($modelo, $modeloFonte);
     }
@@ -145,7 +115,18 @@ class PeticaoAssemblyController extends Controller
 
     public function compose(Request $request, Tipo $modelo, PeticaoComposerService $composer, SqlServerLookupService $lookup)
     {
-        $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromPreferred($modelo);
+        $mirror = app(PeticaoModeloResolverService::class)->findLoadedMirrorForTipo(
+            $modelo,
+            ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
+        );
+
+        if (!$mirror) {
+            return redirect()
+                ->route('peticoes.index')
+                ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
+        }
+
+        $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromNormalized($mirror);
 
         return $this->renderComposedAssemble($request, $modelo, $modeloFonte, $composer, $lookup);
     }
