@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class AdminLegacyTipoFallbackTest extends TestCase
 {
-    public function test_legacy_tipo_fallback_syncs_and_updates_normalized_model_without_legacy_writeback_by_default()
+    public function test_legacy_tipo_routes_require_explicit_sync_before_normalized_editing()
     {
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
@@ -34,6 +34,10 @@ class AdminLegacyTipoFallbackTest extends TestCase
 
         $this->actingAs($admin)
             ->get('/admin/modelos/210/edit')
+            ->assertRedirect('/admin/modelos-normalizados');
+
+        $this->actingAs($admin)
+            ->post('/admin/modelos/210/sincronizar')
             ->assertRedirect('/admin/modelos-normalizados/1/edit');
 
         $this->actingAs($admin)

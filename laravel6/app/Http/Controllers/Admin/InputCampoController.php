@@ -21,7 +21,6 @@ class InputCampoController extends Controller
         return app(LegacyInputCampoFallbackController::class)->store(
             $request,
             $modelo,
-            app(\App\Services\LegacyModeloSyncService::class),
             $mirrorService
         );
     }
@@ -40,7 +39,6 @@ class InputCampoController extends Controller
             $request,
             $modelo,
             $campo,
-            app(\App\Services\LegacyModeloSyncService::class),
             $mirrorService
         );
     }

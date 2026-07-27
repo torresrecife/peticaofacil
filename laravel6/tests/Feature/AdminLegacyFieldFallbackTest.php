@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class AdminLegacyFieldFallbackTest extends TestCase
 {
-    public function test_legacy_paragraph_and_field_fallback_sync_to_normalized_without_legacy_writeback_by_default()
+    public function test_legacy_paragraph_and_field_routes_require_explicit_sync_before_normalized_editing()
     {
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
@@ -36,6 +36,10 @@ class AdminLegacyFieldFallbackTest extends TestCase
                 'fund_titulo' => 'Paragrafo Fallback',
                 'fund_text' => '<p>Texto legado puro</p>',
             ])
+            ->assertRedirect('/admin/modelos-normalizados');
+
+        $this->actingAs($admin)
+            ->post('/admin/modelos/310/sincronizar')
             ->assertRedirect('/admin/modelos-normalizados/1/edit');
 
         $this->actingAs($admin)
@@ -60,6 +64,13 @@ class AdminLegacyFieldFallbackTest extends TestCase
                 'texto_padrao' => '',
                 'add_class' => '',
                 'opcoes' => "Sim|SIM\nNao|NAO",
+            ])
+            ->assertRedirect('/admin/modelos-normalizados/1/edit');
+
+        $this->actingAs($admin)
+            ->post('/admin/modelos/310/paragrafos', [
+                'fund_titulo' => 'Paragrafo Fallback',
+                'fund_text' => '<p>Texto legado puro</p>',
             ])
             ->assertRedirect('/admin/modelos-normalizados/1/edit');
 

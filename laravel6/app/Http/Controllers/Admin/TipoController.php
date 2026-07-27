@@ -42,7 +42,6 @@ class TipoController extends Controller
         return app(LegacyTipoFallbackController::class)->update(
             $request,
             $modelo,
-            app(\App\Services\LegacyModeloSyncService::class),
             $mirrorService
         );
     }

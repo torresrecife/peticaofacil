@@ -21,7 +21,6 @@ class ParagrafoController extends Controller
         return app(LegacyParagrafoFallbackController::class)->store(
             $request,
             $modelo,
-            app(\App\Services\LegacyModeloSyncService::class),
             $mirrorService
         );
     }
@@ -40,7 +39,6 @@ class ParagrafoController extends Controller
             $request,
             $modelo,
             $paragrafo,
-            app(\App\Services\LegacyModeloSyncService::class),
             $mirrorService
         );
     }
