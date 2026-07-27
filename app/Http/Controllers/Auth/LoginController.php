@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\LegacyUser;
 use App\User;
 use App\Services\UserSyncService;
 use Illuminate\Http\Request;
@@ -40,17 +39,16 @@ class LoginController extends Controller
             ->first();
 
         if (!$user || $user->senha_usu !== $passwordHash) {
-            $legacyUser = LegacyUser::where('login_usu', $credentials['username'])
-                ->where('status_usu', 'ATI')
-                ->first();
+            $user = $userSyncService->attemptLegacyFallbackLogin(
+                $credentials['username'],
+                $passwordHash
+            );
 
-            if (!$legacyUser || $legacyUser->senha_usu !== $passwordHash) {
+            if (!$user) {
                 return back()
                     ->withErrors(['username' => 'Usuario ou senha invalidos.'])
                     ->withInput($request->only('username'));
             }
-
-            $user = $userSyncService->syncFromLegacy($legacyUser);
         }
 
         Auth::login($user);

@@ -9,6 +9,16 @@ use Illuminate\Support\Facades\DB;
 
 class UserSyncService
 {
+    public function legacyMirrorEnabled(): bool
+    {
+        return (bool) config('legacy.mirror_legacy_users', false);
+    }
+
+    public function legacyAuthFallbackEnabled(): bool
+    {
+        return (bool) config('legacy.auth_fallback_legacy_users', false);
+    }
+
     public function syncFromLegacy(LegacyUser $legacyUser): User
     {
         $user = User::updateOrCreate(
@@ -37,6 +47,10 @@ class UserSyncService
 
     public function create(array $data, ?string $passwordHash = null): User
     {
+        if (!$this->legacyMirrorEnabled()) {
+            return $this->createAppOnly($data, $passwordHash);
+        }
+
         return DB::transaction(function () use ($data, $passwordHash) {
             $legacyUser = new LegacyUser();
             $this->fillLegacyUser($legacyUser, $data, $passwordHash ?: md5($data['password']));
@@ -49,7 +63,7 @@ class UserSyncService
 
     public function update(User $user, array $data, ?string $passwordHash = null): User
     {
-        if (!$user->legacy_usuario_id) {
+        if (!$this->legacyMirrorEnabled() || !$user->legacy_usuario_id) {
             return $this->updateAppOnly($user, $data, $passwordHash);
         }
 
@@ -67,6 +81,14 @@ class UserSyncService
 
     public function touchAccess(User $user): User
     {
+        if (!$this->legacyMirrorEnabled()) {
+            $user->acesso_usu = now();
+            $user->save();
+            $this->syncInternalReferences($user);
+
+            return $user;
+        }
+
         $legacyUser = $user->legacy_usuario_id ? LegacyUser::find($user->legacy_usuario_id) : null;
 
         if (!$legacyUser) {
@@ -107,6 +129,16 @@ class UserSyncService
 
     public function updatePassword(User $user, string $plainPassword): User
     {
+        if (!$this->legacyMirrorEnabled()) {
+            $hash = md5($plainPassword);
+            $user->password = $hash;
+            $user->senha_usu = $hash;
+            $user->acesso_usu = now();
+            $user->save();
+
+            return $user;
+        }
+
         $legacyUser = $user->legacy_usuario_id ? LegacyUser::find($user->legacy_usuario_id) : null;
 
         if (!$legacyUser) {
@@ -154,6 +186,30 @@ class UserSyncService
         $user->save();
 
         return $user;
+    }
+
+    protected function createAppOnly(array $data, ?string $passwordHash = null): User
+    {
+        $user = new User();
+
+        return $this->updateAppOnly($user, $data, $passwordHash ?: md5($data['password']));
+    }
+
+    public function attemptLegacyFallbackLogin(string $username, string $passwordHash): ?User
+    {
+        if (!$this->legacyAuthFallbackEnabled()) {
+            return null;
+        }
+
+        $legacyUser = LegacyUser::where('login_usu', $username)
+            ->where('status_usu', 'ATI')
+            ->first();
+
+        if (!$legacyUser || $legacyUser->senha_usu !== $passwordHash) {
+            return null;
+        }
+
+        return $this->syncFromLegacy($legacyUser);
     }
 
     protected function resolveLegacyUser(User $user): LegacyUser

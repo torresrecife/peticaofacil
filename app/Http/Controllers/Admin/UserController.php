@@ -75,17 +75,15 @@ class UserController extends Controller
     protected function validateData(Request $request, User $user = null)
     {
         $passwordRule = $user ? 'nullable|string|min:4|confirmed' : 'required|string|min:4|confirmed';
-        $legacyUserId = $user ? $user->legacy_usuario_id : null;
         $appUserId = $user ? $user->id : null;
 
-        return $request->validate([
+        $rules = [
             'nome_usu' => 'required|string|max:50',
             'login_usu' => [
                 'required',
                 'string',
                 'max:50',
                 Rule::unique('users', 'login_usu')->ignore($appUserId),
-                Rule::unique('tp_usu_tb', 'login_usu')->ignore($legacyUserId, 'id_usu'),
             ],
             'email_usu' => 'nullable|email|max:50',
             'nivel_usu' => ['required', Rule::in(['ADM', 'GER', 'USU'])],
@@ -94,7 +92,14 @@ class UserController extends Controller
             'cliente_ids' => 'nullable|array',
             'cliente_ids.*' => 'integer',
             'password' => $passwordRule,
-        ]);
+        ];
+
+        if (config('legacy.mirror_legacy_users', false)) {
+            $legacyUserId = $user ? $user->legacy_usuario_id : null;
+            $rules['login_usu'][] = Rule::unique('tp_usu_tb', 'login_usu')->ignore($legacyUserId, 'id_usu');
+        }
+
+        return $request->validate($rules);
     }
 
     protected function normalizeData(array $data)
