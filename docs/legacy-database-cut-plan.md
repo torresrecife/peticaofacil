@@ -112,6 +112,83 @@ So depois de backup e janela formal:
 2. mover para schema de arquivo ou manter apenas backup externo
 3. remover tabelas legadas do banco operacional
 
+## Validacao objetiva de `tp_pecas_tb` fora do runtime web
+
+Em 27 de julho de 2026, o runtime web ja opera assim:
+
+- `/pecas` consulta `peticoes`
+- `/pecas/{peca}/editar` usa apenas `legacy_peca_id` em `peticoes`
+- save normalizado nao reaproveita mais `peca_id`
+- escrita em `tp_pecas_tb` depende de `LEGACY_PECAS_MIRROR=true`
+- com `LEGACY_PECAS_MIRROR=false`, `tp_pecas_tb` fica restrita a:
+  - `peticao:sync-pecas`
+  - `LegacyPecaSyncService`
+  - `LegacyPecaMirrorService` quando reativado por configuracao
+
+## Sequencia operacional de arquivamento/remocao das tabelas legadas
+
+### Etapa A: congelamento final
+
+Confirmar em homologacao e producao:
+
+```env
+LEGACY_PECAS_MIRROR=false
+LEGACY_MODELOS_MIRROR=false
+LEGACY_LISTAS_MIRROR=false
+LEGACY_SQL_CONFIGS_MIRROR=false
+LEGACY_USERS_MIRROR=false
+LEGACY_USERS_AUTH_FALLBACK=false
+```
+
+### Etapa B: backup formal
+
+Executar dump apenas das tabelas legadas:
+
+- `tp_usu_tb`
+- `tp_pecas_tb`
+- `tp_tipo_tb`
+- `tp_funda_tb`
+- `tp_inputs_tb`
+- `tp_dados_tb`
+- `tp_grupo_tb`
+- `tp_lista_tb`
+- `tp_config_db`
+
+### Etapa C: janela de verificacao em somente leitura
+
+Manter as tabelas legadas no banco por uma janela curta, apenas para:
+
+- comandos de sync
+- rollback controlado
+- conferencia historica
+
+Sem leitura/escrita do runtime web principal.
+
+### Etapa D: retirada operacional
+
+1. bloquear execucao dos comandos de sync em rotina normal
+2. mover dumps para armazenamento de arquivo
+3. opcionalmente mover as tabelas para schema de arquivo
+4. remover as tabelas do banco operacional
+
+## Ordem recomendada de drop
+
+1. `tp_grupo_tb`
+2. `tp_lista_tb`
+3. `tp_config_db`
+4. `tp_funda_tb`
+5. `tp_inputs_tb`
+6. `tp_dados_tb`
+7. `tp_tipo_tb`
+8. `tp_pecas_tb`
+9. `tp_usu_tb`
+
+Racional:
+
+- listas e SQL ja sairam do runtime principal
+- modelos dependem entre si e devem sair juntos
+- `tp_pecas_tb` e `tp_usu_tb` ficam por ultimo por causa do historico
+
 ## Checklist operacional antes do drop
 
 - [ ] todos os toggles legados desligados

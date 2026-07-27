@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class LegacyEditorRedirectTest extends TestCase
 {
-    public function test_legacy_editor_route_redirects_to_normalized_editor_when_mirror_exists()
+    public function test_legacy_editor_route_redirects_to_normalized_editor_when_mirror_exists_without_loading_legacy_piece()
     {
         $user = factory(User::class)->create([
             'id_usu' => 55,
@@ -44,17 +44,6 @@ class LegacyEditorRedirectTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        DB::table('tp_pecas_tb')->insert([
-            'id_pecas' => 5501,
-            'tipo_id' => 55,
-            'id_usu' => 55,
-            'nome_pecas' => 'Modelo Redirecionado',
-            'nome_cli' => 'Cliente Redirect',
-            'cod_pecas' => '<p>Conteudo</p>',
-            'data_cad' => now(),
-            'cod_sav' => 'RED55',
-        ]);
-
         DB::table('peticoes')->insert([
             'id' => 6501,
             'legacy_peca_id' => 5501,
@@ -76,7 +65,7 @@ class LegacyEditorRedirectTest extends TestCase
             ->assertRedirect('/peticoes-salvas/6501/editar');
     }
 
-    public function test_legacy_editor_route_returns_to_normalized_list_when_piece_has_no_mirror()
+    public function test_legacy_editor_route_returns_to_historic_list_when_piece_has_no_normalized_mirror_even_without_legacy_piece_record()
     {
         $user = factory(User::class)->create([
             'id_usu' => 56,
@@ -110,17 +99,6 @@ class LegacyEditorRedirectTest extends TestCase
             'arquivo_padrao' => 'pdf',
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
-
-        DB::table('tp_pecas_tb')->insert([
-            'id_pecas' => 5601,
-            'tipo_id' => 56,
-            'id_usu' => 56,
-            'nome_pecas' => 'Modelo Espelhavel',
-            'nome_cli' => 'Cliente Mirror',
-            'cod_pecas' => '<p>Conteudo Mirror</p>',
-            'data_cad' => now(),
-            'cod_sav' => 'RED56',
         ]);
 
         $response = $this->actingAs($user)->get('/pecas/5601/editar');
