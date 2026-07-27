@@ -12,8 +12,8 @@ class PeticaoNormalizedStorageService
     public function save(PeticaoNormalizada $peticao, array $payload, $origin = 'save')
     {
         return DB::transaction(function () use ($peticao, $payload, $origin) {
-            $peticao->loadMissing(['modelo', 'legacyPeca.tipo']);
-            $legacyPeca = $peticao->legacyPeca;
+            $peticao->loadMissing(['modelo']);
+            $legacyPeca = null;
 
             if (!$peticao->user_id && Auth::check()) {
                 $peticao->user_id = Auth::id();
@@ -23,7 +23,7 @@ class PeticaoNormalizedStorageService
                 $peticao->legacy_usuario_id = Auth::user()->legacy_usuario_id ?: Auth::user()->id_usu;
             }
 
-            if (!$legacyPeca && !$peticao->nome_arquivo) {
+            if (!$peticao->nome_arquivo) {
                 $peticao->nome_arquivo = optional($peticao->modelo)->nome ?: 'Peticao normalizada';
             }
 
@@ -40,7 +40,7 @@ class PeticaoNormalizedStorageService
 
             $this->createVersionSnapshot($peticao, $origin);
 
-            return $peticao->fresh(['modelo', 'legacyPeca.tipo', 'user']);
+            return $peticao->fresh(['modelo', 'user']);
         });
     }
 

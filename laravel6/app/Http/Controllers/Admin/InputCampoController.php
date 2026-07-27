@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\InputCampo;
-use App\PeticaoModelo;
+use App\Services\PeticaoModeloResolverService;
 use App\Services\NormalizedModeloLegacySyncService;
 use App\Tipo;
 use Illuminate\Http\Request;
@@ -13,7 +13,7 @@ class InputCampoController extends Controller
 {
     public function store(Request $request, Tipo $modelo, NormalizedModeloLegacySyncService $normalizedSyncService)
     {
-        $mirror = PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->first();
+        $mirror = app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo);
         if ($mirror) {
             return app(NormalizedInputCampoController::class)->store($request, $mirror, $normalizedSyncService);
         }
@@ -23,7 +23,7 @@ class InputCampoController extends Controller
 
     public function update(Request $request, Tipo $modelo, InputCampo $campo, NormalizedModeloLegacySyncService $normalizedSyncService)
     {
-        $mirror = PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->first();
+        $mirror = app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo);
         if ($mirror) {
             $normalizedCampo = $mirror->campos()->where('legacy_input_id', $campo->id_input)->first();
             abort_unless($normalizedCampo, 404);

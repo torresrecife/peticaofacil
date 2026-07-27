@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Peca;
 use App\PeticaoModelo;
+use App\Services\PeticaoModeloResolverService;
 use App\Tipo;
 use LogicException;
 use Illuminate\Support\Facades\Auth;
@@ -42,7 +43,7 @@ class PecaStorageService
         }
 
         if ($modelo instanceof Tipo) {
-            return PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->exists();
+            return app(PeticaoModeloResolverService::class)->findMirrorForTipo($modelo) !== null;
         }
 
         return false;

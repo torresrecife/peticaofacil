@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\PeticaoModelo;
 use App\Services\SqlServerLookupService;
 use App\Services\PeticaoComposerService;
+use App\Services\PeticaoModeloResolverService;
 use App\Tipo;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -231,9 +232,10 @@ class PeticaoAssemblyController extends Controller
 
     protected function resolvePreferredModelo(Tipo $modelo)
     {
-        $mirror = PeticaoModelo::with(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy'])
-            ->where('legacy_tipo_id', $modelo->tipo_id)
-            ->first();
+        $mirror = app(PeticaoModeloResolverService::class)->findLoadedMirrorForTipo(
+            $modelo,
+            ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
+        );
 
         return $mirror ?: $modelo;
     }

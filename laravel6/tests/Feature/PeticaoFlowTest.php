@@ -10,6 +10,8 @@ class PeticaoFlowTest extends TestCase
 {
     public function test_user_can_compose_preview_open_editor_save_and_export_peticao()
     {
+        config()->set('legacy.mirror_legacy_pecas', false);
+
         $user = factory(User::class)->create([
             'nivel_usu' => 'USU',
             'acesso_usu' => now(),
@@ -63,14 +65,14 @@ class PeticaoFlowTest extends TestCase
             'cod_pecas' => $previewHtml,
         ]);
 
-        $peca = DB::table('tp_pecas_tb')->where('nome_cli', 'Fulano da Silva')->first();
+        $this->assertSame(0, DB::table('tp_pecas_tb')->count());
 
-        $this->assertNotNull($peca);
-        $this->assertSame($modeloId, (int) $peca->tipo_id);
-        $this->assertStringContainsString('deferimento imediato', $peca->cod_pecas);
-
-        $peticaoEspelho = DB::table('peticoes')->where('legacy_peca_id', $peca->id_pecas)->first();
+        $peticaoEspelho = DB::table('peticoes')
+            ->where('modelo_id', $modeloId)
+            ->where('cliente_referencia', 'Fulano da Silva')
+            ->first();
         $this->assertNotNull($peticaoEspelho);
+        $this->assertNull($peticaoEspelho->legacy_peca_id);
         $this->assertSame('Fulano da Silva', $peticaoEspelho->cliente_referencia);
         $this->assertStringContainsString('deferimento imediato', $peticaoEspelho->conteudo_html);
         $saveResponse->assertRedirect('/peticoes-salvas/' . $peticaoEspelho->id . '/editar');
@@ -96,6 +98,8 @@ class PeticaoFlowTest extends TestCase
 
     public function test_legacy_editor_residual_flow_accepts_normalized_model_routes()
     {
+        config()->set('legacy.mirror_legacy_pecas', false);
+
         $user = factory(User::class)->create([
             'id_usu' => 88,
             'nivel_usu' => 'USU',
@@ -129,17 +133,15 @@ class PeticaoFlowTest extends TestCase
             'cod_pecas' => $previewHtml,
         ]);
 
-        $peca = DB::table('tp_pecas_tb')->where('nome_cli', 'Beltrano')->first();
+        $this->assertSame(0, DB::table('tp_pecas_tb')->count());
 
-        $this->assertNotNull($peca);
-        $this->assertSame($modeloId, (int) $peca->tipo_id);
-        $peticaoEspelho = DB::table('peticoes')->where('legacy_peca_id', $peca->id_pecas)->first();
+        $peticaoEspelho = DB::table('peticoes')
+            ->where('modelo_id', $modeloId)
+            ->where('cliente_referencia', 'Beltrano')
+            ->first();
         $this->assertNotNull($peticaoEspelho);
+        $this->assertNull($peticaoEspelho->legacy_peca_id);
         $saveResponse->assertRedirect('/peticoes-salvas/' . $peticaoEspelho->id . '/editar');
-
-        $this->actingAs($user)
-            ->get('/pecas/' . $peca->id_pecas . '/editar')
-            ->assertRedirect();
 
         $wordResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId . '/exportar/word', [
             'nome_cli' => 'Beltrano',

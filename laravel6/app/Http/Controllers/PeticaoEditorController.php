@@ -7,6 +7,7 @@ use App\PeticaoModelo;
 use App\PeticaoNormalizada;
 use App\Services\PecaStorageService;
 use App\Services\PeticaoExportService;
+use App\Services\PeticaoModeloResolverService;
 use App\Services\PeticaoNormalizedStorageService;
 use App\Tipo;
 use Illuminate\Http\Request;
@@ -51,9 +52,9 @@ class PeticaoEditorController extends Controller
             ->with('status', 'Peca legada sem espelho normalizado. Use a sincronizacao historica antes de editar.');
     }
 
-    public function save(Request $request, Tipo $modelo, PecaStorageService $storage, PeticaoNormalizedStorageService $normalizedStorage)
+    public function save(Request $request, Tipo $modelo, PecaStorageService $storage, PeticaoNormalizedStorageService $normalizedStorage, PeticaoModeloResolverService $modeloResolver)
     {
-        $modeloNormalizado = PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->first();
+        $modeloNormalizado = $modeloResolver->findMirrorForTipo($modelo);
         if ($modeloNormalizado) {
             return $this->handleSaveNormalized($request, $modeloNormalizado, $normalizedStorage);
         }

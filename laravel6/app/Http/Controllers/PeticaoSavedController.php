@@ -6,6 +6,7 @@ use App\PeticaoNormalizada;
 use App\PeticaoModelo;
 use App\PeticaoVersao;
 use App\Services\PeticaoExportService;
+use App\Services\PeticaoModeloResolverService;
 use App\Services\PeticaoNormalizedDraftService;
 use App\Services\PeticaoNormalizedStorageService;
 use App\Services\PeticaoVersionAuditService;
@@ -13,7 +14,7 @@ use Illuminate\Http\Request;
 
 class PeticaoSavedController extends Controller
 {
-    public function storeFromPreview(Request $request, \App\Tipo $modelo, PeticaoNormalizedDraftService $draftService)
+    public function storeFromPreview(Request $request, \App\Tipo $modelo, PeticaoNormalizedDraftService $draftService, PeticaoModeloResolverService $modeloResolver)
     {
         $data = $request->validate([
             'nome_cli' => 'required|string|max:500',
@@ -21,7 +22,8 @@ class PeticaoSavedController extends Controller
             'resolved_fields' => 'nullable|string',
         ]);
 
-        $mirrorModelo = PeticaoModelo::where('legacy_tipo_id', $modelo->tipo_id)->firstOrFail();
+        $mirrorModelo = $modeloResolver->findMirrorForTipo($modelo);
+        abort_unless($mirrorModelo, 404);
 
         $peticao = $draftService->createFromPreview($mirrorModelo, [
             'nome_cli' => $data['nome_cli'],
