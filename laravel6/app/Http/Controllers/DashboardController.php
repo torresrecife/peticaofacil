@@ -6,7 +6,6 @@ use App\Cliente;
 use App\PeticaoModelo;
 use App\PeticaoNormalizada;
 use App\Setor;
-use App\Tipo;
 use App\User;
 use Illuminate\Support\Facades\Auth;
 
@@ -49,46 +48,29 @@ class DashboardController extends Controller
             ->get();
 
         return $favorites->map(function ($favorite) {
-            if ($favorite->source === 'normalized' && $favorite->modelo_id) {
+            $modelo = null;
+
+            if ($favorite->modelo_id) {
                 $modelo = PeticaoModelo::with(['setor', 'cliente'])->find($favorite->modelo_id);
-
-                if ($modelo) {
-                    return (object) [
-                        'nome' => $modelo->nome,
-                        'subtitulo' => optional($modelo->setor)->nome_setor ?: 'Modelo normalizado',
-                        'badge' => 'Normalizado',
-                        'link' => route('peticoes.normalized.show', $modelo),
-                    ];
-                }
             }
 
-            $legacyTipoId = (int) $favorite->legacy_tipo_id;
-            $mirror = $legacyTipoId > 0
-                ? PeticaoModelo::with(['setor', 'cliente'])->where('legacy_tipo_id', $legacyTipoId)->first()
-                : null;
+            if (!$modelo && (int) $favorite->legacy_tipo_id > 0) {
+                $modelo = PeticaoModelo::with(['setor', 'cliente'])
+                    ->where('legacy_tipo_id', (int) $favorite->legacy_tipo_id)
+                    ->first();
+            }
 
-            if ($mirror) {
+            if ($modelo) {
                 return (object) [
-                    'nome' => $mirror->nome,
-                    'subtitulo' => optional($mirror->setor)->nome_setor ?: 'Modelo normalizado',
+                    'nome' => $modelo->nome,
+                    'subtitulo' => optional($modelo->setor)->nome_setor ?: 'Modelo normalizado',
                     'badge' => 'Normalizado',
-                    'link' => route('peticoes.normalized.show', $mirror),
-                ];
-            }
-
-            $tipo = $legacyTipoId > 0 ? Tipo::with(['setor', 'cliente'])->find($legacyTipoId) : null;
-
-            if ($tipo) {
-                return (object) [
-                    'nome' => $tipo->tipo_nome,
-                    'subtitulo' => optional($tipo->setor)->nome_setor ?: 'Modelo legado',
-                    'badge' => 'Legado',
-                    'link' => route('peticoes.show', $tipo),
+                    'link' => route('peticoes.normalized.show', $modelo),
                 ];
             }
 
             return null;
-        })->filter()->values();
+        })->filter()->unique('link')->values();
     }
 
     protected function mapPeticoesHoje($normalizadas)

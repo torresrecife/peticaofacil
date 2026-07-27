@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class ModeloFavoritoTest extends TestCase
 {
-    public function test_user_can_toggle_normalized_and_legacy_favorites()
+    public function test_user_can_toggle_normalized_favorites()
     {
         $this->setUpLegacySchema();
 
@@ -16,14 +16,6 @@ class ModeloFavoritoTest extends TestCase
             'id_usu' => 500,
             'nivel_usu' => 'USU',
             'acesso_usu' => now(),
-        ]);
-
-        DB::table('tp_tipo_tb')->insert([
-            'tipo_id' => 801,
-            'tipo_nome' => 'Modelo So Legado',
-            'tipo_data' => now(),
-            'tipo_stt' => 'Y',
-            'tipo_arq' => 'pdf',
         ]);
 
         DB::table('peticao_modelos')->insert([
@@ -41,20 +33,10 @@ class ModeloFavoritoTest extends TestCase
             ->post('/peticoes/modelos/701/favorito')
             ->assertRedirect();
 
-        $this->actingAs($user)
-            ->post('/peticoes/801/favorito')
-            ->assertRedirect();
-
         $this->assertDatabaseHas('user_model_favorites', [
             'user_id' => $user->id,
             'source' => 'normalized',
             'modelo_id' => 701,
-        ]);
-
-        $this->assertDatabaseHas('user_model_favorites', [
-            'user_id' => $user->id,
-            'source' => 'legacy',
-            'legacy_tipo_id' => 801,
         ]);
 
         $this->actingAs($user)
@@ -83,27 +65,29 @@ class ModeloFavoritoTest extends TestCase
             ['id_setor' => 2, 'nome_setor' => 'Trabalhista', 'cod_setor' => 'TRB', 'data_cad' => now()],
         ]);
 
-        DB::table('tp_tipo_tb')->insert([
-            [
-                'tipo_id' => 801,
-                'tipo_nome' => 'Modelo So Legado',
-                'id_setor' => 2,
-                'tipo_data' => now(),
-                'tipo_stt' => 'Y',
-                'tipo_arq' => 'pdf',
-            ],
-        ]);
-
         DB::table('peticao_modelos')->insert([
-            'id' => 701,
-            'legacy_tipo_id' => 701,
-            'legacy_setor_id' => 1,
-            'nome' => 'Modelo Favorito Normalizado',
-            'slug' => 'modelo-favorito-normalizado-701',
-            'status' => 'ativo',
-            'arquivo_padrao' => 'pdf',
-            'created_at' => now(),
-            'updated_at' => now(),
+            [
+                'id' => 701,
+                'legacy_tipo_id' => 701,
+                'legacy_setor_id' => 1,
+                'nome' => 'Modelo Favorito Normalizado',
+                'slug' => 'modelo-favorito-normalizado-701',
+                'status' => 'ativo',
+                'arquivo_padrao' => 'pdf',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 801,
+                'legacy_tipo_id' => 801,
+                'legacy_setor_id' => 2,
+                'nome' => 'Modelo Espelhado de Favorito Antigo',
+                'slug' => 'modelo-espelhado-favorito-antigo-801',
+                'status' => 'ativo',
+                'arquivo_padrao' => 'pdf',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
 
         DB::table('user_model_favorites')->insert([
@@ -132,6 +116,6 @@ class ModeloFavoritoTest extends TestCase
             ->assertStatus(200)
             ->assertSee('Favoritos')
             ->assertSee('Modelo Favorito Normalizado')
-            ->assertSee('Modelo So Legado');
+            ->assertSee('Modelo Espelhado de Favorito Antigo');
     }
 }

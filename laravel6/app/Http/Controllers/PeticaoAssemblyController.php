@@ -24,9 +24,17 @@ class PeticaoAssemblyController extends Controller
 
         $favoriteRows = $favoriteCollection
             ->mapWithKeys(function ($favorite) {
-                $key = $favorite->source === 'normalized'
-                    ? 'normalized:' . $favorite->modelo_id
-                    : 'legacy:' . $favorite->legacy_tipo_id;
+                $normalizedId = $favorite->modelo_id;
+
+                if (!$normalizedId && (int) $favorite->legacy_tipo_id > 0) {
+                    $normalizedId = PeticaoModelo::where('legacy_tipo_id', (int) $favorite->legacy_tipo_id)->value('id');
+                }
+
+                if (!$normalizedId) {
+                    return [];
+                }
+
+                $key = 'normalized:' . $normalizedId;
 
                 return [$key => true];
             });

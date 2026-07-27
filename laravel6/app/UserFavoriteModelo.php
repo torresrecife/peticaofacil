@@ -25,9 +25,4 @@ class UserFavoriteModelo extends Model
     {
         return $this->belongsTo(PeticaoModelo::class, 'modelo_id');
     }
-
-    public function tipo()
-    {
-        return $this->belongsTo(Tipo::class, 'legacy_tipo_id', 'tipo_id');
-    }
 }
