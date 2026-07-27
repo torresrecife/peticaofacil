@@ -21,10 +21,7 @@ class PeticaoFlowTest extends TestCase
 
         $this->actingAs($user)
             ->get('/peticoes/' . $modeloId)
-            ->assertStatus(200)
-            ->assertSee('Montagem de peticao')
-            ->assertSee('Cliente')
-            ->assertSee('/peticoes/modelos/' . $modeloId, false);
+            ->assertRedirect('/peticoes/modelos/' . $modeloId);
 
         $previewResponse = $this->actingAs($user)->post('/peticoes/' . $modeloId, [
             'action_type' => 'preview',

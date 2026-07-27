@@ -97,10 +97,7 @@ class PeticaoAssemblyController extends Controller
 
     public function show($modelo, PeticaoModeloResolverService $modeloResolver)
     {
-        $mirror = $modeloResolver->findLoadedNormalizedByLegacyTipoId(
-            (int) $modelo,
-            ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
-        );
+        $mirror = $modeloResolver->findNormalizedByLegacyTipoId((int) $modelo);
 
         if (!$mirror) {
             return redirect()
@@ -108,9 +105,7 @@ class PeticaoAssemblyController extends Controller
                 ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
         }
 
-        $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromNormalized($mirror);
-
-        return $this->renderAssemble($modelo, $modeloFonte);
+        return redirect()->route('peticoes.normalized.show', $mirror);
     }
 
     public function composeNormalized(Request $request, PeticaoModelo $modeloNormalizado, PeticaoComposerService $composer, SqlServerLookupService $lookup)

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Peca;
 use App\PeticaoModelo;
 use App\PeticaoNormalizada;
 use App\Services\PeticaoExportService;
@@ -42,9 +41,9 @@ class PeticaoEditorController extends Controller
         ]);
     }
 
-    public function edit(Peca $peca)
+    public function edit($peca)
     {
-        $mirror = PeticaoNormalizada::where('legacy_peca_id', $peca->id_pecas)->first();
+        $mirror = PeticaoNormalizada::where('legacy_peca_id', (int) $peca)->first();
 
         if ($mirror) {
             return redirect()->route('peticoes.saved.edit', $mirror);
@@ -75,48 +74,21 @@ class PeticaoEditorController extends Controller
         $data = $request->validate([
             'nome_cli' => 'required|string|max:500',
             'cod_pecas' => 'required|string',
-            'peca_id' => 'nullable|integer',
         ]);
 
-        $peticao = null;
-        if (!empty($data['peca_id'])) {
-            $legacyPeca = Peca::findOrFail($data['peca_id']);
-            $peticao = PeticaoNormalizada::firstOrNew(['legacy_peca_id' => $legacyPeca->id_pecas]);
-
-            if (!$peticao->exists) {
-                $peticao->fill([
-                    'modelo_id' => $modelo->id,
-                    'user_id' => auth()->id(),
-                    'legacy_usuario_id' => $legacyPeca->id_usu,
-                    'codigo_externo' => $legacyPeca->cod_sav,
-                    'nome_arquivo' => $legacyPeca->nome_pecas ?: $modelo->nome,
-                    'cliente_referencia' => $legacyPeca->nome_cli,
-                    'conteudo_html' => $legacyPeca->cod_pecas,
-                    'campos_resolvidos' => [
-                        'legacy_tipo_id' => $modelo->legacy_tipo_id,
-                        'legacy_cod_sav' => $legacyPeca->cod_sav,
-                    ],
-                    'gerado_em' => $legacyPeca->data_cad ?: now(),
-                    'salvo_em' => now(),
-                ]);
-            }
-        }
-
-        if (!$peticao) {
-            $peticao = new PeticaoNormalizada([
-                'modelo_id' => $modelo->id,
-                'user_id' => auth()->id(),
-                'codigo_externo' => null,
-                'nome_arquivo' => $modelo->nome,
-                'cliente_referencia' => $data['nome_cli'],
-                'conteudo_html' => $data['cod_pecas'],
-                'campos_resolvidos' => [
-                    'legacy_tipo_id' => $modelo->legacy_tipo_id,
-                ],
-                'gerado_em' => now(),
-                'salvo_em' => now(),
-            ]);
-        }
+        $peticao = new PeticaoNormalizada([
+            'modelo_id' => $modelo->id,
+            'user_id' => auth()->id(),
+            'codigo_externo' => null,
+            'nome_arquivo' => $modelo->nome,
+            'cliente_referencia' => $data['nome_cli'],
+            'conteudo_html' => $data['cod_pecas'],
+            'campos_resolvidos' => [
+                'legacy_tipo_id' => $modelo->legacy_tipo_id,
+            ],
+            'gerado_em' => now(),
+            'salvo_em' => now(),
+        ]);
 
         $peticao = $storage->save($peticao, $data);
 

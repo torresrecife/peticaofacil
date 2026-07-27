@@ -147,6 +147,7 @@ class PeticaoIndexSourceTest extends TestCase
         ]);
 
         DB::table('user_model_favorites')->insert([
+            'user_id' => $user->id,
             'legacy_usuario_id' => 321,
             'source' => 'normalized',
             'modelo_id' => 12,

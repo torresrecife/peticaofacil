@@ -151,7 +151,6 @@ So depois de backup e janela formal:
 
 - `Peca`
   - compatibilidade explicita em `/pecas/{peca}/editar`
-  - reaproveitamento de `peca_id` em save normalizado quando a origem ainda e uma peca antiga
   - sync/backfill em `peticao:sync-pecas`
 - `SqlServerConfig`
   - compatibilidade explicita em `/admin/servidores/{id}/edit`
@@ -177,6 +176,8 @@ So depois de backup e janela formal:
 - `legacy.peticoes.modelos.editor.export.word`
 
 Essas rotas ja nao carregam `Tipo` diretamente no runtime web. Elas resolvem o modelo normalizado por `legacy_tipo_id` e delegam para a trilha `peticoes.normalized.*`.
+
+`legacy.peticoes.modelos.show` ja pode ser tratado como redirect explicito para `peticoes.normalized.show`.
 
 ## Sync manual necessario antes do corte final de servidores SQL
 

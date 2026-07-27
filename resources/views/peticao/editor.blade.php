@@ -35,7 +35,6 @@
 
         <form method="post" action="{{ $saveRoute }}" id="editor-save-form">
             @csrf
-            <input type="hidden" name="peca_id" value="{{ $peca ? $peca->id_pecas : '' }}">
             <div class="form-grid">
                 <div class="form-group full">
                     <label>Nome do arquivo / cliente</label>
@@ -70,9 +69,6 @@
                 <textarea name="cod_pecas" style="display:none;">{{ old('cod_pecas', $content) }}</textarea>
                 <button type="submit">Exportar PDF</button>
             </form>
-            @if($peca)
-                <a class="button secondary link" href="{{ route('legacy.peticoes.editor.edit', $peca) }}">Abrir compatibilidade legado</a>
-            @endif
         </div>
     </div>
 </div>
