@@ -77,7 +77,6 @@ class PecasNormalizedListTest extends TestCase
             ->assertStatus(200)
             ->assertSee('Cliente X')
             ->assertSee('Modelo Normalizado')
-            ->assertSee('Normalizada')
             ->assertSee(route('peticoes.saved.edit', 1001), false);
     }
 }

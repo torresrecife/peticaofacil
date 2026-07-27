@@ -101,7 +101,6 @@ class DashboardController extends Controller
                 'cliente' => $peticao->cliente_referencia,
                 'modelo' => optional($peticao->modelo)->nome ?: $peticao->nome_arquivo,
                 'usuario' => optional($peticao->user)->nome_usu,
-                'origem' => 'Normalizada',
                 'link' => route('peticoes.saved.edit', $peticao),
             ]);
         }

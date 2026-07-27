@@ -40,7 +40,6 @@
                 <th>Cliente / arquivo</th>
                 <th>Data</th>
                 <th>Usuario</th>
-                <th>Origem</th>
                 <th></th>
             </tr>
         </thead>
@@ -52,14 +51,13 @@
                     <td>{{ $peca->cliente_referencia }}</td>
                     <td>{{ optional($peca->gerado_em)->format('d/m/Y H:i') ?: optional($peca->created_at)->format('d/m/Y H:i') }}</td>
                     <td>{{ optional($peca->user)->login_usu ?: '-' }}</td>
-                    <td><span class="editor-note">Normalizada</span></td>
                     <td>
                         <a href="{{ route('peticoes.saved.edit', $peca) }}">Editar</a>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7">Nenhuma peca normalizada encontrada.</td>
+                    <td colspan="6">Nenhuma peca encontrada.</td>
                 </tr>
             @endforelse
         </tbody>

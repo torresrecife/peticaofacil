@@ -33,16 +33,16 @@
                 <strong>{{ $peticao->id }}</strong>
             </div>
             <div class="stat">
-                <span>ID legado</span>
-                <strong>{{ $peticao->legacy_peca_id ?: '-' }}</strong>
-            </div>
-            <div class="stat">
                 <span>Codigo</span>
                 <strong style="font-size:18px;">{{ $peticao->codigo_externo ?: '-' }}</strong>
             </div>
             <div class="stat">
                 <span>Ultimo salvamento</span>
                 <strong style="font-size:18px;">{{ optional($peticao->salvo_em)->format('d/m/Y H:i') ?: '-' }}</strong>
+            </div>
+            <div class="stat">
+                <span>Modelo</span>
+                <strong style="font-size:18px;">{{ optional($peticao->modelo)->nome ?: '-' }}</strong>
             </div>
         </div>
 
@@ -134,7 +134,6 @@
                         <th>Cliente</th>
                         <th>Usuario</th>
                         <th>Data</th>
-                        <th>Legado</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -146,7 +145,6 @@
                             <td>{{ $versao->cliente_referencia_snapshot }}</td>
                             <td>{{ optional($versao->user)->login_usu ?: '-' }}</td>
                             <td>{{ optional($versao->criado_em)->format('d/m/Y H:i') ?: optional($versao->created_at)->format('d/m/Y H:i') }}</td>
-                            <td>{{ $versao->legacy_peca_id_snapshot ?: '-' }}</td>
                             <td>
                                 <div class="actions">
                                     <a href="{{ route('peticoes.saved.versions.compare', [$peticao, $versao]) }}">Comparar com atual</a>
@@ -170,7 +168,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7">Sem versoes registradas.</td>
+                            <td colspan="6">Sem versoes registradas.</td>
                         </tr>
                     @endforelse
                 </tbody>

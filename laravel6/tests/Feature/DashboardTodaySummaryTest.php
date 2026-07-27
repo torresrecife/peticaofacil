@@ -193,7 +193,6 @@ class DashboardTodaySummaryTest extends TestCase
             ->assertSee('Maria')
             ->assertSee('Modelo Civel')
             ->assertSee('Modelo Trabalhista')
-            ->assertSee('2')
-            ->assertSee('Normalizada');
+            ->assertSee('2');
     }
 }

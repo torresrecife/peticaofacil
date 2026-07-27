@@ -45,7 +45,6 @@ class PecaController extends Controller
             $query->where(function ($builder) use ($search) {
                 $builder->where('cliente_referencia', 'like', '%' . $search . '%')
                     ->orWhere('nome_arquivo', 'like', '%' . $search . '%')
-                    ->orWhere('legacy_peca_id', 'like', '%' . $search . '%')
                     ->orWhere('codigo_externo', 'like', '%' . $search . '%');
             });
         }

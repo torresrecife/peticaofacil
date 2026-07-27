@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class LegacyPecaSyncService
 {
+    // Historical backfill only. Runtime writes should go through PeticaoNormalizedStorageService.
     public function countForYear($year = null)
     {
         $query = Peca::query();

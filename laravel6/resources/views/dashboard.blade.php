@@ -147,7 +147,6 @@
                             <th>Horario</th>
                             <th>Cliente</th>
                             <th>Modelo</th>
-                            <th>Origem</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -156,7 +155,6 @@
                             <td>{{ optional($peticao->momento)->format('H:i') }}</td>
                             <td><a href="{{ $peticao->link }}">{{ $peticao->cliente }}</a></td>
                             <td>{{ $peticao->modelo }}</td>
-                            <td>{{ $peticao->origem }}</td>
                         </tr>
                     @endforeach
                     </tbody>

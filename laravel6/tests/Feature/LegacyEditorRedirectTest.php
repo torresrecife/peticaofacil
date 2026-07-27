@@ -76,7 +76,7 @@ class LegacyEditorRedirectTest extends TestCase
             ->assertRedirect('/peticoes-salvas/6501/editar');
     }
 
-    public function test_legacy_editor_route_creates_mirror_on_demand_when_model_is_normalized()
+    public function test_legacy_editor_route_returns_to_normalized_list_when_piece_has_no_mirror()
     {
         $user = factory(User::class)->create([
             'id_usu' => 56,
@@ -125,9 +125,7 @@ class LegacyEditorRedirectTest extends TestCase
 
         $response = $this->actingAs($user)->get('/pecas/5601/editar');
 
-        $peticaoEspelho = DB::table('peticoes')->where('legacy_peca_id', 5601)->first();
-
-        $this->assertNotNull($peticaoEspelho);
-        $response->assertRedirect('/peticoes-salvas/' . $peticaoEspelho->id . '/editar');
+        $this->assertNull(DB::table('peticoes')->where('legacy_peca_id', 5601)->first());
+        $response->assertRedirect('/pecas');
     }
 }
