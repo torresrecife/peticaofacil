@@ -16,22 +16,10 @@ class PeticaoSavedController extends Controller
 {
     public function storeFromPreview(Request $request, \App\Tipo $modelo, PeticaoNormalizedDraftService $draftService, PeticaoModeloResolverService $modeloResolver)
     {
-        $data = $request->validate([
-            'nome_cli' => 'required|string|max:500',
-            'content' => 'required|string',
-            'resolved_fields' => 'nullable|string',
-        ]);
-
         $mirrorModelo = $modeloResolver->findNormalizedForLegacyTipo($modelo);
         abort_unless($mirrorModelo, 404);
 
-        $peticao = $draftService->createFromPreview($mirrorModelo, [
-            'nome_cli' => $data['nome_cli'],
-            'content' => $data['content'],
-            'resolved_fields' => $data['resolved_fields'] ? json_decode($data['resolved_fields'], true) : null,
-        ]);
-
-        return redirect()->route('peticoes.saved.edit', $peticao);
+        return $this->storeFromNormalizedPreview($request, $mirrorModelo, $draftService);
     }
 
     public function storeFromNormalizedPreview(Request $request, PeticaoModelo $modeloNormalizado, PeticaoNormalizedDraftService $draftService)

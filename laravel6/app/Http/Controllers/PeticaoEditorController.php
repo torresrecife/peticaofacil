@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Peca;
 use App\PeticaoModelo;
 use App\PeticaoNormalizada;
-use App\Services\PecaStorageService;
 use App\Services\PeticaoExportService;
 use App\Services\PeticaoModeloResolverService;
 use App\Services\PeticaoNormalizedStorageService;
@@ -17,13 +16,11 @@ class PeticaoEditorController extends Controller
     public function create(Request $request, Tipo $modelo)
     {
         $modeloNormalizado = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
-        if (!$modeloNormalizado) {
-            return redirect()
-                ->route('peticoes.index')
-                ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
+        if ($modeloNormalizado) {
+            return $this->createNormalized($request, $modeloNormalizado);
         }
 
-        return $this->renderCreateEditor($request, $modeloNormalizado);
+        return $this->redirectLegacyModelWithoutMirror();
     }
 
     public function createNormalized(Request $request, PeticaoModelo $modeloNormalizado)
@@ -59,44 +56,19 @@ class PeticaoEditorController extends Controller
             ->with('status', 'Peca legada sem espelho normalizado. Use a sincronizacao historica antes de editar.');
     }
 
-    public function save(Request $request, Tipo $modelo, PecaStorageService $storage, PeticaoNormalizedStorageService $normalizedStorage, PeticaoModeloResolverService $modeloResolver)
+    public function save(Request $request, Tipo $modelo, PeticaoNormalizedStorageService $normalizedStorage, PeticaoModeloResolverService $modeloResolver)
     {
         $modeloNormalizado = $modeloResolver->findNormalizedForLegacyTipo($modelo);
-        if (!$modeloNormalizado) {
-            return redirect()
-                ->route('peticoes.index')
-                ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
+        if ($modeloNormalizado) {
+            return $this->saveNormalized($request, $modeloNormalizado, $normalizedStorage);
         }
 
-        return $this->handleSaveNormalized($request, $modeloNormalizado, $normalizedStorage);
+        return $this->redirectLegacyModelWithoutMirror();
     }
 
     public function saveNormalized(Request $request, PeticaoModelo $modeloNormalizado, PeticaoNormalizedStorageService $storage)
     {
         return $this->handleSaveNormalized($request, $modeloNormalizado, $storage);
-    }
-
-    protected function handleSave(Request $request, $modelo, PecaStorageService $storage)
-    {
-        $data = $request->validate([
-            'nome_cli' => 'required|string|max:500',
-            'cod_pecas' => 'required|string',
-            'peca_id' => 'nullable|integer',
-        ]);
-
-        $peca = null;
-        if (!empty($data['peca_id'])) {
-            $peca = Peca::findOrFail($data['peca_id']);
-        }
-
-        $peca = $storage->save($modelo, $data, $peca);
-        $mirror = PeticaoNormalizada::where('legacy_peca_id', $peca->id_pecas)->first();
-
-        if ($mirror) {
-            return redirect()->route('peticoes.saved.edit', $mirror)->with('status', 'Peca salva.');
-        }
-
-        return redirect()->route('legacy.peticoes.editor.edit', $peca)->with('status', 'Peca salva.');
     }
 
     protected function handleSaveNormalized(Request $request, PeticaoModelo $modelo, PeticaoNormalizedStorageService $storage)
@@ -155,13 +127,12 @@ class PeticaoEditorController extends Controller
 
     public function exportWord(Request $request, Tipo $modelo, PeticaoExportService $exportService)
     {
-        if (!app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo)) {
-            return redirect()
-                ->route('peticoes.index')
-                ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
+        $modeloNormalizado = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
+        if ($modeloNormalizado) {
+            return $this->exportNormalizedWord($request, $modeloNormalizado, $exportService);
         }
 
-        return $this->handleExportWord($request, $exportService);
+        return $this->redirectLegacyModelWithoutMirror();
     }
 
     public function exportNormalizedWord(Request $request, PeticaoModelo $modeloNormalizado, PeticaoExportService $exportService)
@@ -181,13 +152,12 @@ class PeticaoEditorController extends Controller
 
     public function exportPdf(Request $request, Tipo $modelo, PeticaoExportService $exportService)
     {
-        if (!app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo)) {
-            return redirect()
-                ->route('peticoes.index')
-                ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
+        $modeloNormalizado = app(PeticaoModeloResolverService::class)->findNormalizedForLegacyTipo($modelo);
+        if ($modeloNormalizado) {
+            return $this->exportNormalizedPdf($request, $modeloNormalizado, $exportService);
         }
 
-        return $this->handleExportPdf($request, $exportService);
+        return $this->redirectLegacyModelWithoutMirror();
     }
 
     public function exportNormalizedPdf(Request $request, PeticaoModelo $modeloNormalizado, PeticaoExportService $exportService)
@@ -203,5 +173,12 @@ class PeticaoEditorController extends Controller
         ]);
 
         return $exportService->exportPdf($request, $data['nome_cli'], $data['cod_pecas']);
+    }
+
+    protected function redirectLegacyModelWithoutMirror()
+    {
+        return redirect()
+            ->route('peticoes.index')
+            ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
     }
 }
