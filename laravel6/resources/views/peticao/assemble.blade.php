@@ -20,13 +20,10 @@
         @endif
 
         @php
-            $usesNormalizedSource = (bool) ($modeloFonte->is_normalized ?? false);
-            $composeRoute = $usesNormalizedSource
-                ? route('peticoes.normalized.compose', $modeloFonte->source)
-                : route('peticoes.compose', $modelo);
-            $normalizedStoreRoute = $usesNormalizedSource
-                ? route('peticoes.normalized.saved.store', $modeloFonte->source)
-                : route('peticoes.saved.store', $modelo);
+            $normalizedModel = $modeloFonte->source;
+            $composeRoute = route('peticoes.normalized.compose', $normalizedModel);
+            $normalizedStoreRoute = route('peticoes.normalized.saved.store', $normalizedModel);
+            $legacyEditorRoute = route('peticoes.normalized.editor.create', $normalizedModel);
             $lookupKey = '';
             if (!empty($lookupConfig)) {
                 $lookupKey = $lookupConfig->lookup_key ?? $lookupConfig->chave_db ?? '';
@@ -107,12 +104,7 @@
                 <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>
                 <button type="submit">Abrir peticao normalizada</button>
             </form>
-            @if(!$usesNormalizedSource || $modeloFonte->legacy_tipo_id)
-                @php
-                    $legacyEditorRoute = $usesNormalizedSource
-                        ? route('peticoes.normalized.editor.create', $modeloFonte->source)
-                        : route('peticoes.editor.create', $modelo);
-                @endphp
+            @if($modeloFonte->legacy_tipo_id)
                 <form method="post" action="{{ $legacyEditorRoute }}" style="margin-top:12px;">
                     @csrf
                     <input type="hidden" name="nome_cli" value="{{ $preview['suggested_filename'] }}">
