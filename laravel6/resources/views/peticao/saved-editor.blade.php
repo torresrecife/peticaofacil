@@ -83,9 +83,6 @@
                 <textarea name="cod_pecas" style="display:none;">{{ old('cod_pecas', $peticao->conteudo_html) }}</textarea>
                 <button type="submit">Exportar PDF</button>
             </form>
-            @if($peticao->legacyPeca)
-                <a class="button secondary link" href="{{ route('legacy.peticoes.editor.edit', $peticao->legacyPeca) }}">Abrir compatibilidade legado</a>
-            @endif
         </div>
         <div class="panel-muted" style="margin-top:16px;">
             <div><strong>Gerada em:</strong> {{ optional($peticao->gerado_em)->format('d/m/Y H:i') ?: '-' }}</div>

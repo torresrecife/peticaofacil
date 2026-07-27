@@ -56,7 +56,7 @@ class PeticaoSavedController extends Controller
         $dateFrom = request()->query('date_from');
         $dateTo = request()->query('date_to');
 
-        $peticao->load(['modelo', 'legacyPeca.tipo', 'user']);
+        $peticao->load(['modelo', 'user']);
 
         $versionsQuery = $peticao->versoes()->with('user');
         if ($origin) {

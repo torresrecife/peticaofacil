@@ -10,6 +10,8 @@ class PeticaoSavedEditorTest extends TestCase
 {
     public function test_saved_peticao_editor_updates_normalized_and_legacy_records_and_exports()
     {
+        config()->set('legacy.mirror_legacy_pecas', true);
+
         $user = factory(User::class)->create([
             'id_usu' => 30,
             'nivel_usu' => 'ADM',

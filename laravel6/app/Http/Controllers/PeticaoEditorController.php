@@ -51,14 +51,9 @@ class PeticaoEditorController extends Controller
             return redirect()->route('peticoes.saved.edit', $mirror);
         }
 
-        $peca->loadMissing('tipo');
-
-        return view('peticao.editor', [
-            'modelo' => $peca->tipo,
-            'peca' => $peca,
-            'content' => $peca->cod_pecas,
-            'nomeCli' => $peca->nome_cli,
-        ]);
+        return redirect()
+            ->route('pecas.index')
+            ->with('status', 'Peca legada sem espelho normalizado. Use a sincronizacao historica antes de editar.');
     }
 
     public function save(Request $request, Tipo $modelo, PecaStorageService $storage, PeticaoNormalizedStorageService $normalizedStorage)
