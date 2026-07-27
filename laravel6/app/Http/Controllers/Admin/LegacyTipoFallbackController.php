@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Cliente;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Admin\NormalizedTipoController;
 use App\Setor;
 use App\SqlServerProfile;
 use App\SqlServerConfig;
 use App\Support\LegacyEditorContent;
 use App\Services\LegacyModeloSyncService;
+use App\Services\NormalizedModeloLegacySyncService;
 use App\Tipo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -18,24 +20,17 @@ class LegacyTipoFallbackController extends Controller
 {
     public function edit(Tipo $modelo)
     {
-        $modelo->load(['paragrafos', 'campos.dados', 'setor', 'cliente', 'servidor']);
-        $modelo = $this->prepareForEditor($modelo);
+        $mirror = app(LegacyModeloSyncService::class)->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
-        return view('admin.tipos.form', [
-            'modelo' => $modelo,
-            'mirror' => null,
-            'setores' => Setor::orderBy('nome_setor')->get(),
-            'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
-            'servidores' => $this->availableServidores(),
-        ]);
+        return redirect()->route('admin.modelos-normalizados.edit', $mirror)
+            ->with('status', 'Modelo legado sincronizado para a trilha normalizada.');
     }
 
-    public function update(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService)
+    public function update(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService, NormalizedModeloLegacySyncService $normalizedSyncService)
     {
-        $modelo->fill($this->validateData($request))->save();
         $mirror = $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
-        return redirect()->route('admin.modelos-normalizados.edit', $mirror)->with('status', 'Modelo atualizado.');
+        return app(NormalizedTipoController::class)->update($request, $mirror, $normalizedSyncService);
     }
 
     protected function validateData(Request $request)

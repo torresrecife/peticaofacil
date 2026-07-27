@@ -18,7 +18,12 @@ class InputCampoController extends Controller
             return app(NormalizedInputCampoController::class)->store($request, $mirror, $normalizedSyncService);
         }
 
-        return app(LegacyInputCampoFallbackController::class)->store($request, $modelo, app(\App\Services\LegacyModeloSyncService::class));
+        return app(LegacyInputCampoFallbackController::class)->store(
+            $request,
+            $modelo,
+            app(\App\Services\LegacyModeloSyncService::class),
+            $normalizedSyncService
+        );
     }
 
     public function update(Request $request, Tipo $modelo, InputCampo $campo, NormalizedModeloLegacySyncService $normalizedSyncService)
@@ -31,6 +36,12 @@ class InputCampoController extends Controller
             return app(NormalizedInputCampoController::class)->update($request, $mirror, $normalizedCampo, $normalizedSyncService);
         }
 
-        return app(LegacyInputCampoFallbackController::class)->update($request, $modelo, $campo, app(\App\Services\LegacyModeloSyncService::class));
+        return app(LegacyInputCampoFallbackController::class)->update(
+            $request,
+            $modelo,
+            $campo,
+            app(\App\Services\LegacyModeloSyncService::class),
+            $normalizedSyncService
+        );
     }
 }

@@ -3,53 +3,29 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Admin\NormalizedParagrafoController;
 use App\Paragrafo;
 use App\Services\LegacyModeloSyncService;
+use App\Services\NormalizedModeloLegacySyncService;
 use App\Support\LegacyEditorContent;
 use App\Tipo;
 use Illuminate\Http\Request;
 
 class LegacyParagrafoFallbackController extends Controller
 {
-    public function store(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService)
+    public function store(Request $request, Tipo $modelo, LegacyModeloSyncService $syncService, NormalizedModeloLegacySyncService $normalizedSyncService)
     {
-        $data = $request->validate([
-            'fund_titulo' => 'required|string|max:200',
-            'fund_text' => 'nullable|string',
-        ]);
-
-        $titulo = mb_strtoupper($data['fund_titulo'], 'UTF-8');
-        $texto = $data['fund_text'] ?: '<div class="titulos">' . e($titulo) . '</div><p>&nbsp;</p><p align="left"></p>';
-        $texto = LegacyEditorContent::denormalize($texto);
-
-        Paragrafo::create([
-            'tipo_id' => $modelo->tipo_id,
-            'fund_titulo' => $titulo,
-            'fund_text' => $texto,
-            'fund_order' => ((int) Paragrafo::where('tipo_id', $modelo->tipo_id)->max('fund_order')) + 1,
-            'fund_data' => now()->format('Y-m-d'),
-            'fund_visi' => 'Y',
-            'fund_stt' => 'Y',
-        ]);
-
         $mirror = $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
 
-        return redirect()->route('admin.modelos-normalizados.edit', $mirror)->with('status', 'Paragrafo criado.');
+        return app(NormalizedParagrafoController::class)->store($request, $mirror, $normalizedSyncService);
     }
 
-    public function update(Request $request, Tipo $modelo, Paragrafo $paragrafo, LegacyModeloSyncService $syncService)
+    public function update(Request $request, Tipo $modelo, Paragrafo $paragrafo, LegacyModeloSyncService $syncService, NormalizedModeloLegacySyncService $normalizedSyncService)
     {
-        $data = $request->validate([
-            'fund_titulo' => 'required|string|max:200',
-            'fund_text' => 'nullable|string',
-            'fund_order' => 'nullable|integer|min:1',
-        ]);
-
-        $data['fund_text'] = LegacyEditorContent::denormalize($data['fund_text'] ?? null);
-
-        $paragrafo->fill($data)->save();
         $mirror = $syncService->syncTipo($modelo->fresh(['paragrafos', 'campos.dados']));
+        $normalizedParagrafo = $mirror->paragrafos()->where('legacy_fund_id', $paragrafo->fund_id)->first();
+        abort_unless($normalizedParagrafo, 404);
 
-        return redirect()->route('admin.modelos-normalizados.edit', $mirror)->with('status', 'Paragrafo atualizado.');
+        return app(NormalizedParagrafoController::class)->update($request, $mirror, $normalizedParagrafo, $normalizedSyncService);
     }
 }

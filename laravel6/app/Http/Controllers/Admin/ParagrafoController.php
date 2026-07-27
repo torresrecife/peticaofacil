@@ -18,7 +18,12 @@ class ParagrafoController extends Controller
             return app(NormalizedParagrafoController::class)->store($request, $mirror, $normalizedSyncService);
         }
 
-        return app(LegacyParagrafoFallbackController::class)->store($request, $modelo, app(\App\Services\LegacyModeloSyncService::class));
+        return app(LegacyParagrafoFallbackController::class)->store(
+            $request,
+            $modelo,
+            app(\App\Services\LegacyModeloSyncService::class),
+            $normalizedSyncService
+        );
     }
 
     public function update(Request $request, Tipo $modelo, Paragrafo $paragrafo, NormalizedModeloLegacySyncService $normalizedSyncService)
@@ -31,6 +36,12 @@ class ParagrafoController extends Controller
             return app(NormalizedParagrafoController::class)->update($request, $mirror, $normalizedParagrafo, $normalizedSyncService);
         }
 
-        return app(LegacyParagrafoFallbackController::class)->update($request, $modelo, $paragrafo, app(\App\Services\LegacyModeloSyncService::class));
+        return app(LegacyParagrafoFallbackController::class)->update(
+            $request,
+            $modelo,
+            $paragrafo,
+            app(\App\Services\LegacyModeloSyncService::class),
+            $normalizedSyncService
+        );
     }
 }

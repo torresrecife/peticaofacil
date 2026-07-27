@@ -17,24 +17,15 @@
     <h2 style="margin:0;">{{ $modelo->exists ? 'Editar modelo' : 'Novo modelo' }}</h2>
     <div class="actions">
         @php
-            $isNormalizedAdmin = $modelo instanceof \App\PeticaoModelo;
             $montagemRoute = null;
             $saveRoute = null;
             $storeParagrafoRoute = null;
             $storeCampoRoute = null;
             if ($modelo->exists) {
-                $montagemRoute = $isNormalizedAdmin
-                    ? route('peticoes.normalized.show', $modelo)
-                    : route('peticoes.show', $modelo);
-                $saveRoute = $isNormalizedAdmin
-                    ? route('admin.modelos-normalizados.update', $modelo)
-                    : route('admin.modelos.update', $modelo);
-                $storeParagrafoRoute = $isNormalizedAdmin
-                    ? route('admin.modelos-normalizados.paragrafos.store', $modelo)
-                    : route('admin.modelos.paragrafos.store', $modelo);
-                $storeCampoRoute = $isNormalizedAdmin
-                    ? route('admin.modelos-normalizados.campos.store', $modelo)
-                    : route('admin.modelos.campos.store', $modelo);
+                $montagemRoute = route('peticoes.normalized.show', $modelo);
+                $saveRoute = route('admin.modelos-normalizados.update', $modelo);
+                $storeParagrafoRoute = route('admin.modelos-normalizados.paragrafos.store', $modelo);
+                $storeCampoRoute = route('admin.modelos-normalizados.campos.store', $modelo);
             }
         @endphp
         @if($modelo->exists)
@@ -124,7 +115,7 @@
         <div class="panel">
             <div class="section-title">
                 <h3>Leitura normalizada</h3>
-                <div class="editor-note">{{ $isNormalizedAdmin ? 'Fonte principal atual da edicao.' : 'Snapshot atual do mirror paralelo.' }}</div>
+                <div class="editor-note">Fonte principal atual da edicao.</div>
             </div>
             <div class="grid">
                 <div class="stat">
@@ -179,9 +170,7 @@
                         <summary>{{ $paragrafo->fund_order }}. {{ $paragrafo->fund_titulo }}</summary>
                         <div class="accordion-body">
                             @php
-                                $updateParagrafoRoute = $isNormalizedAdmin
-                                    ? route('admin.modelos-normalizados.paragrafos.update', [$modelo, $paragrafo])
-                                    : route('admin.modelos.paragrafos.update', [$modelo, $paragrafo]);
+                                $updateParagrafoRoute = route('admin.modelos-normalizados.paragrafos.update', [$modelo, $paragrafo]);
                             @endphp
                             <form method="post" action="{{ $updateParagrafoRoute }}">
                                 @csrf
@@ -305,9 +294,7 @@
                                 @endif
                             </div>
                             @php
-                                $updateCampoRoute = $isNormalizedAdmin
-                                    ? route('admin.modelos-normalizados.campos.update', [$modelo, $campo])
-                                    : route('admin.modelos.campos.update', [$modelo, $campo]);
+                                $updateCampoRoute = route('admin.modelos-normalizados.campos.update', [$modelo, $campo]);
                             @endphp
                             <form method="post" action="{{ $updateCampoRoute }}">
                                 @csrf

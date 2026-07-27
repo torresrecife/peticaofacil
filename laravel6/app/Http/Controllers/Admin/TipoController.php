@@ -29,6 +29,11 @@ class TipoController extends Controller
             return app(NormalizedTipoController::class)->update($request, $mirror, $normalizedSyncService);
         }
 
-        return app(LegacyTipoFallbackController::class)->update($request, $modelo, app(\App\Services\LegacyModeloSyncService::class));
+        return app(LegacyTipoFallbackController::class)->update(
+            $request,
+            $modelo,
+            app(\App\Services\LegacyModeloSyncService::class),
+            $normalizedSyncService
+        );
     }
 }

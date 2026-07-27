@@ -20,12 +20,12 @@
         @endif
 
         @php
-            $usesNormalizedSource = $modeloFonte instanceof \App\PeticaoModelo;
+            $usesNormalizedSource = (bool) ($modeloFonte->is_normalized ?? false);
             $composeRoute = $usesNormalizedSource
-                ? route('peticoes.normalized.compose', $modeloFonte)
+                ? route('peticoes.normalized.compose', $modeloFonte->source)
                 : route('peticoes.compose', $modelo);
             $normalizedStoreRoute = $usesNormalizedSource
-                ? route('peticoes.normalized.saved.store', $modeloFonte)
+                ? route('peticoes.normalized.saved.store', $modeloFonte->source)
                 : route('peticoes.saved.store', $modelo);
             $lookupKey = '';
             if (!empty($lookupConfig)) {
@@ -110,7 +110,7 @@
             @if(!$usesNormalizedSource || $modeloFonte->legacy_tipo_id)
                 @php
                     $legacyEditorRoute = $usesNormalizedSource
-                        ? route('peticoes.normalized.editor.create', $modeloFonte)
+                        ? route('peticoes.normalized.editor.create', $modeloFonte->source)
                         : route('peticoes.editor.create', $modelo);
                 @endphp
                 <form method="post" action="{{ $legacyEditorRoute }}" style="margin-top:12px;">

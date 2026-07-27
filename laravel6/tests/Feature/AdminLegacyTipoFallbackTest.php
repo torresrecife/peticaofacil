@@ -34,9 +34,7 @@ class AdminLegacyTipoFallbackTest extends TestCase
 
         $this->actingAs($admin)
             ->get('/admin/modelos/210/edit')
-            ->assertStatus(200)
-            ->assertSee('Modelo So Legado')
-            ->assertDontSee('Fonte principal atual da edicao.');
+            ->assertRedirect('/admin/modelos-normalizados/1/edit');
 
         $this->actingAs($admin)
             ->put('/admin/modelos/210', [

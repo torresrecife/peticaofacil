@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\PeticaoModelo;
+use App\Services\PeticaoModeloRuntimeFactory;
 use App\Services\SqlServerLookupService;
 use App\Services\PeticaoComposerService;
-use App\Services\PeticaoModeloResolverService;
 use App\Tipo;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -124,30 +124,28 @@ class PeticaoAssemblyController extends Controller
 
     public function showNormalized(PeticaoModelo $modeloNormalizado)
     {
-        $modeloNormalizado->load(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']);
+        $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromNormalized($modeloNormalizado);
 
-        return $this->renderAssemble($modeloNormalizado, $modeloNormalizado);
+        return $this->renderAssemble($modeloNormalizado, $modeloFonte);
     }
 
     public function show(Tipo $modelo)
     {
-        $modelo->load(['campos.dados', 'paragrafos', 'setor', 'cliente', 'servidor']);
-        $modeloFonte = $this->resolvePreferredModelo($modelo);
+        $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromPreferred($modelo);
 
         return $this->renderAssemble($modelo, $modeloFonte);
     }
 
     public function composeNormalized(Request $request, PeticaoModelo $modeloNormalizado, PeticaoComposerService $composer, SqlServerLookupService $lookup)
     {
-        $modeloNormalizado->load(['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']);
+        $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromNormalized($modeloNormalizado);
 
-        return $this->renderComposedAssemble($request, $modeloNormalizado, $modeloNormalizado, $composer, $lookup);
+        return $this->renderComposedAssemble($request, $modeloNormalizado, $modeloFonte, $composer, $lookup);
     }
 
     public function compose(Request $request, Tipo $modelo, PeticaoComposerService $composer, SqlServerLookupService $lookup)
     {
-        $modelo->load(['campos.dados', 'paragrafos', 'setor', 'cliente', 'servidor']);
-        $modeloFonte = $this->resolvePreferredModelo($modelo);
+        $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromPreferred($modelo);
 
         return $this->renderComposedAssemble($request, $modelo, $modeloFonte, $composer, $lookup);
     }
@@ -230,19 +228,9 @@ class PeticaoAssemblyController extends Controller
         return $value;
     }
 
-    protected function resolvePreferredModelo(Tipo $modelo)
-    {
-        $mirror = app(PeticaoModeloResolverService::class)->findLoadedMirrorForTipo(
-            $modelo,
-            ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
-        );
-
-        return $mirror ?: $modelo;
-    }
-
     protected function resolveLookupConfig($modeloFonte)
     {
-        if ($modeloFonte instanceof PeticaoModelo) {
+        if ($modeloFonte->is_normalized) {
             return $modeloFonte->servidor ?: $modeloFonte->servidorLegacy;
         }
 
