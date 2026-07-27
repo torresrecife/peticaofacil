@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class AdminNormalizedSqlServerConfigTest extends TestCase
 {
-    public function test_admin_can_create_sql_server_profile_in_normalized_schema_and_reflect_to_legacy()
+    public function test_admin_can_create_sql_server_profile_in_normalized_schema_without_legacy_mirror_by_default()
     {
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
@@ -36,13 +36,10 @@ class AdminNormalizedSqlServerConfigTest extends TestCase
 
         $profile = DB::table('sql_server_profiles')->where('nome', 'Consulta Processos')->first();
         $this->assertNotNull($profile);
-        $this->assertNotNull($profile->legacy_config_id);
+        $this->assertNull($profile->legacy_config_id);
 
-        $legacy = DB::table('tp_config_db')->where('id_db', $profile->legacy_config_id)->first();
-        $this->assertNotNull($legacy);
-        $this->assertSame('Consulta Processos', $legacy->nome_db);
-        $this->assertSame('10.0.0.15', $legacy->ip_db);
-        $this->assertSame('juridico', $legacy->data_db);
+        $legacy = DB::table('tp_config_db')->where('nome_db', 'Consulta Processos')->first();
+        $this->assertNull($legacy);
 
         $response->assertRedirect('/admin/servidores-normalizados/' . $profile->id . '/edit');
     }

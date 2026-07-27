@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Services\NormalizedSqlServerConfigSyncService;
+use App\Services\LegacySqlServerProfileMirrorService;
 use App\SqlServerProfile;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -37,10 +37,10 @@ class NormalizedSqlServerConfigController extends Controller
         ]);
     }
 
-    public function store(Request $request, NormalizedSqlServerConfigSyncService $syncService)
+    public function store(Request $request, LegacySqlServerProfileMirrorService $mirrorService)
     {
         $profile = SqlServerProfile::create($this->validateData($request));
-        $syncService->sync($profile);
+        $mirrorService->syncIfEnabled($profile);
 
         return redirect()->route('admin.servidores-normalizados.edit', $profile)->with('status', 'Servidor SQL criado.');
     }
@@ -53,10 +53,10 @@ class NormalizedSqlServerConfigController extends Controller
         ]);
     }
 
-    public function update(Request $request, SqlServerProfile $servidorNormalizado, NormalizedSqlServerConfigSyncService $syncService)
+    public function update(Request $request, SqlServerProfile $servidorNormalizado, LegacySqlServerProfileMirrorService $mirrorService)
     {
         $servidorNormalizado->fill($this->validateData($request))->save();
-        $syncService->sync($servidorNormalizado);
+        $mirrorService->syncIfEnabled($servidorNormalizado);
 
         return redirect()->route('admin.servidores-normalizados.edit', $servidorNormalizado)->with('status', 'Servidor SQL atualizado.');
     }

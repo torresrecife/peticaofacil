@@ -121,10 +121,14 @@ class AdminListaPersistenceTest extends TestCase
             'id_setor' => 7,
         ])->assertRedirect('/admin/listas/1/edit');
 
-        $item = DB::table('tp_lista_tb')->where('id_lista', 10)->first();
+        $item = DB::table('lista_itens')->where('id_lista', 10)->first();
         $this->assertSame('Item A Atualizado', $item->nome_lista);
         $this->assertSame('A2', $item->return_1);
         $this->assertSame('2026-01-10 10:00:00', $item->data_cad);
+
+        $legacyItem = DB::table('tp_lista_tb')->where('id_lista', 10)->first();
+        $this->assertSame('Item A', $legacyItem->nome_lista);
+        $this->assertSame('A1', $legacyItem->return_1);
     }
 
     public function test_edit_page_filters_items_by_search_term()
