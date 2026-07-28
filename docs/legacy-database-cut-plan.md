@@ -68,6 +68,7 @@ LEGACY_PUBLIC_MODEL_ROUTE_COMPAT=false
 LEGACY_PUBLIC_PIECE_EDITOR_COMPAT=false
 LEGACY_ADMIN_SQL_ROUTE_COMPAT=false
 LEGACY_ADMIN_MODEL_ROUTE_COMPAT=false
+LEGACY_ROUTE_AUDIT=true
 ```
 
 ## Ordem recomendada do corte final
@@ -265,6 +266,69 @@ Remocao fisica do codigo dessas rotas:
 
 - recomendada apenas depois de uma janela curta sem trafego relevante
 - e depois de homologacao/producao confirmarem que nenhum consumidor externo depende delas
+
+## Aplicacao em homologacao e producao
+
+### 1. Configuracao alvo
+
+```env
+LEGACY_PECAS_MIRROR=false
+LEGACY_MODELOS_MIRROR=false
+LEGACY_LISTAS_MIRROR=false
+LEGACY_SQL_CONFIGS_MIRROR=false
+LEGACY_USERS_MIRROR=false
+LEGACY_USERS_AUTH_FALLBACK=false
+LEGACY_PUBLIC_MODEL_ROUTE_COMPAT=false
+LEGACY_PUBLIC_PIECE_EDITOR_COMPAT=false
+LEGACY_ADMIN_SQL_ROUTE_COMPAT=false
+LEGACY_ADMIN_MODEL_ROUTE_COMPAT=false
+LEGACY_ROUTE_AUDIT=true
+```
+
+### 2. Aplicacao
+
+```powershell
+& "C:\\laragon\\bin\\php\\php-7.2.34-nts-Win32-VC15-x64\\php.exe" artisan config:clear
+& "C:\\laragon\\bin\\php\\php-7.2.34-nts-Win32-VC15-x64\\php.exe" artisan cache:clear
+& "C:\\laragon\\bin\\php\\php-7.2.34-nts-Win32-VC15-x64\\php.exe" artisan legacy:cut-readiness
+```
+
+### 3. Janela de observacao antes de remover codigo
+
+Manter `LEGACY_ROUTE_AUDIT=true` por pelo menos 7 dias corridos em homologacao/producao.
+
+Consultar em `storage/logs/laravel.log` eventos com:
+
+- `legacy_route_hit`
+
+Se nao houver hit relevante nas rotas abaixo durante a janela, o codigo pode ser removido:
+
+- `legacy.peticoes.modelos.show`
+- `legacy.peticoes.modelos.compose`
+- `legacy.peticoes.modelos.editor.create`
+- `legacy.peticoes.modelos.saved.store`
+- `legacy.peticoes.modelos.editor.save`
+- `legacy.peticoes.modelos.editor.export.pdf`
+- `legacy.peticoes.modelos.editor.export.word`
+- `legacy.peticoes.editor.edit`
+- `admin.servidores.edit`
+- `admin.servidores.update`
+- `admin.modelos.edit`
+- `admin.modelos.sync`
+- `admin.modelos.update`
+- `admin.modelos.paragrafos.store`
+- `admin.modelos.paragrafos.update`
+- `admin.modelos.campos.store`
+- `admin.modelos.campos.update`
+
+### 4. Remocao do codigo
+
+So remover as rotas residuais depois de:
+
+- toggles desligados
+- zero hits relevantes em `legacy_route_hit`
+- homologacao validada
+- confirmacao de que nao ha consumidor externo residual
 
 ## Sync manual necessario antes do corte final de servidores SQL
 

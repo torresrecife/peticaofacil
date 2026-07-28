@@ -14,4 +14,5 @@ return [
     'compat_public_piece_editor_route' => env('LEGACY_PUBLIC_PIECE_EDITOR_COMPAT', true),
     'compat_admin_sql_routes' => env('LEGACY_ADMIN_SQL_ROUTE_COMPAT', true),
     'compat_admin_model_routes' => env('LEGACY_ADMIN_MODEL_ROUTE_COMPAT', true),
+    'audit_legacy_routes' => env('LEGACY_ROUTE_AUDIT', true),
 ];

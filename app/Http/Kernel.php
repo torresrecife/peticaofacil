@@ -63,6 +63,7 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'legacy.role' => \App\Http\Middleware\EnsureLegacyRole::class,
         'legacy.password.change' => \App\Http\Middleware\EnsureLegacyPasswordChange::class,
+        'legacy.audit' => \App\Http\Middleware\AuditLegacyCompatRoute::class,
     ];
 
     /**

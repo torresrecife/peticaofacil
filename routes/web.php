@@ -17,8 +17,8 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
-Route::redirect('/login.php', '/login')->name('legacy.login.file');
-Route::get('/sair.php', 'Auth\LoginController@logoutBridge')->name('legacy.logout.file');
+Route::redirect('/login.php', '/login')->middleware('legacy.audit')->name('legacy.login.file');
+Route::get('/sair.php', 'Auth\LoginController@logoutBridge')->middleware('legacy.audit')->name('legacy.logout.file');
 Route::view('/status', 'status')->name('status');
 
 Route::middleware('guest')->group(function () {
@@ -40,14 +40,14 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::post('/peticoes/modelos/{modeloNormalizado}/salvar', 'PeticaoEditorController@saveNormalized')->name('peticoes.normalized.editor.save');
     Route::post('/peticoes/modelos/{modeloNormalizado}/exportar/pdf', 'PeticaoEditorController@exportNormalizedPdf')->name('peticoes.normalized.editor.export.pdf');
     Route::post('/peticoes/modelos/{modeloNormalizado}/exportar/word', 'PeticaoEditorController@exportNormalizedWord')->name('peticoes.normalized.editor.export.word');
-    Route::get('/peticoes/{modelo}', 'PeticaoAssemblyController@show')->name('legacy.peticoes.modelos.show');
-    Route::post('/peticoes/{modelo}', 'LegacyPeticaoModeloCompatController@compose')->name('legacy.peticoes.modelos.compose');
-    Route::post('/peticoes/{modelo}/editor', 'LegacyPeticaoModeloCompatController@createEditor')->name('legacy.peticoes.modelos.editor.create');
+    Route::get('/peticoes/{modelo}', 'PeticaoAssemblyController@show')->middleware('legacy.audit')->name('legacy.peticoes.modelos.show');
+    Route::post('/peticoes/{modelo}', 'LegacyPeticaoModeloCompatController@compose')->middleware('legacy.audit')->name('legacy.peticoes.modelos.compose');
+    Route::post('/peticoes/{modelo}/editor', 'LegacyPeticaoModeloCompatController@createEditor')->middleware('legacy.audit')->name('legacy.peticoes.modelos.editor.create');
     Route::post('/peticoes/modelos/{modeloNormalizado}/peticao-normalizada', 'PeticaoSavedController@storeFromNormalizedPreview')->name('peticoes.normalized.saved.store');
-    Route::post('/peticoes/{modelo}/peticao-normalizada', 'LegacyPeticaoModeloCompatController@storePreview')->name('legacy.peticoes.modelos.saved.store');
-    Route::post('/peticoes/{modelo}/salvar', 'LegacyPeticaoModeloCompatController@save')->name('legacy.peticoes.modelos.editor.save');
-    Route::post('/peticoes/{modelo}/exportar/pdf', 'LegacyPeticaoModeloCompatController@exportPdf')->name('legacy.peticoes.modelos.editor.export.pdf');
-    Route::post('/peticoes/{modelo}/exportar/word', 'LegacyPeticaoModeloCompatController@exportWord')->name('legacy.peticoes.modelos.editor.export.word');
+    Route::post('/peticoes/{modelo}/peticao-normalizada', 'LegacyPeticaoModeloCompatController@storePreview')->middleware('legacy.audit')->name('legacy.peticoes.modelos.saved.store');
+    Route::post('/peticoes/{modelo}/salvar', 'LegacyPeticaoModeloCompatController@save')->middleware('legacy.audit')->name('legacy.peticoes.modelos.editor.save');
+    Route::post('/peticoes/{modelo}/exportar/pdf', 'LegacyPeticaoModeloCompatController@exportPdf')->middleware('legacy.audit')->name('legacy.peticoes.modelos.editor.export.pdf');
+    Route::post('/peticoes/{modelo}/exportar/word', 'LegacyPeticaoModeloCompatController@exportWord')->middleware('legacy.audit')->name('legacy.peticoes.modelos.editor.export.word');
     Route::get('/peticoes-salvas/{peticao}/editar', 'PeticaoSavedController@edit')->name('peticoes.saved.edit');
     Route::put('/peticoes-salvas/{peticao}', 'PeticaoSavedController@update')->name('peticoes.saved.update');
     Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/restaurar', 'PeticaoSavedController@restoreVersion')->name('peticoes.saved.versions.restore');
@@ -56,7 +56,7 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/exportar/pdf', 'PeticaoSavedController@exportVersionPdf')->name('peticoes.saved.versions.export.pdf');
     Route::post('/peticoes-salvas/{peticao}/exportar/pdf', 'PeticaoSavedController@exportPdf')->name('peticoes.saved.export.pdf');
     Route::post('/peticoes-salvas/{peticao}/exportar/word', 'PeticaoSavedController@exportWord')->name('peticoes.saved.export.word');
-    Route::get('/pecas/{peca}/editar', 'PeticaoEditorController@edit')->name('legacy.peticoes.editor.edit');
+    Route::get('/pecas/{peca}/editar', 'PeticaoEditorController@edit')->middleware('legacy.audit')->name('legacy.peticoes.editor.edit');
     Route::get('/pecas', 'PecaController@index')->name('pecas.index');
 
     Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function () {
@@ -70,17 +70,17 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
             'clientes' => 'cliente',
         ]);
         Route::redirect('servidores', 'admin/servidores-normalizados')->name('servidores.index');
-        Route::get('servidores/{servidore}/edit', 'Admin\SqlServerConfigController@edit')->name('servidores.edit');
-        Route::match(['put', 'patch'], 'servidores/{servidore}', 'Admin\SqlServerConfigController@update')->name('servidores.update');
+        Route::get('servidores/{servidore}/edit', 'Admin\SqlServerConfigController@edit')->middleware('legacy.audit')->name('servidores.edit');
+        Route::match(['put', 'patch'], 'servidores/{servidore}', 'Admin\SqlServerConfigController@update')->middleware('legacy.audit')->name('servidores.update');
         Route::get('servidores-normalizados', 'Admin\NormalizedSqlServerConfigController@index')->name('servidores-normalizados.index');
         Route::get('servidores-normalizados/create', 'Admin\NormalizedSqlServerConfigController@create')->name('servidores-normalizados.create');
         Route::post('servidores-normalizados', 'Admin\NormalizedSqlServerConfigController@store')->name('servidores-normalizados.store');
         Route::get('servidores-normalizados/{servidorNormalizado}/edit', 'Admin\NormalizedSqlServerConfigController@edit')->name('servidores-normalizados.edit');
         Route::put('servidores-normalizados/{servidorNormalizado}', 'Admin\NormalizedSqlServerConfigController@update')->name('servidores-normalizados.update');
         Route::redirect('modelos', 'admin/modelos-normalizados')->name('modelos.index');
-        Route::get('modelos/{modelo}/edit', 'Admin\TipoController@edit')->name('modelos.edit');
-        Route::post('modelos/{modelo}/sincronizar', 'Admin\TipoController@syncLegacy')->name('modelos.sync');
-        Route::match(['put', 'patch'], 'modelos/{modelo}', 'Admin\TipoController@update')->name('modelos.update');
+        Route::get('modelos/{modelo}/edit', 'Admin\TipoController@edit')->middleware('legacy.audit')->name('modelos.edit');
+        Route::post('modelos/{modelo}/sincronizar', 'Admin\TipoController@syncLegacy')->middleware('legacy.audit')->name('modelos.sync');
+        Route::match(['put', 'patch'], 'modelos/{modelo}', 'Admin\TipoController@update')->middleware('legacy.audit')->name('modelos.update');
         Route::get('modelos-normalizados', 'Admin\NormalizedTipoController@index')->name('modelos-normalizados.index');
         Route::get('modelos-normalizados/create', 'Admin\NormalizedTipoController@create')->name('modelos-normalizados.create');
         Route::post('modelos-normalizados', 'Admin\NormalizedTipoController@store')->name('modelos-normalizados.store');
@@ -98,9 +98,9 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
         Route::get('listas/{lista}/itens/{item}/edit', 'Admin\ListaItemController@edit')->name('listas.itens.edit');
         Route::put('listas/{lista}/itens/{item}', 'Admin\ListaItemController@update')->name('listas.itens.update');
         Route::delete('listas/{lista}/itens/{item}', 'Admin\ListaItemController@destroy')->name('listas.itens.destroy');
-        Route::post('modelos/{modelo}/paragrafos', 'Admin\ParagrafoController@store')->name('modelos.paragrafos.store');
-        Route::put('modelos/{modelo}/paragrafos/{paragrafo}', 'Admin\ParagrafoController@update')->name('modelos.paragrafos.update');
-        Route::post('modelos/{modelo}/campos', 'Admin\InputCampoController@store')->name('modelos.campos.store');
-        Route::put('modelos/{modelo}/campos/{campo}', 'Admin\InputCampoController@update')->name('modelos.campos.update');
+        Route::post('modelos/{modelo}/paragrafos', 'Admin\ParagrafoController@store')->middleware('legacy.audit')->name('modelos.paragrafos.store');
+        Route::put('modelos/{modelo}/paragrafos/{paragrafo}', 'Admin\ParagrafoController@update')->middleware('legacy.audit')->name('modelos.paragrafos.update');
+        Route::post('modelos/{modelo}/campos', 'Admin\InputCampoController@store')->middleware('legacy.audit')->name('modelos.campos.store');
+        Route::put('modelos/{modelo}/campos/{campo}', 'Admin\InputCampoController@update')->middleware('legacy.audit')->name('modelos.campos.update');
     });
 });
