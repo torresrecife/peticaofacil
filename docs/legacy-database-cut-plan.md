@@ -301,6 +301,12 @@ Consultar em `storage/logs/laravel.log` eventos com:
 
 - `legacy_route_hit`
 
+Comando de resumo:
+
+```powershell
+& "C:\\laragon\\bin\\php\\php-7.2.34-nts-Win32-VC15-x64\\php.exe" artisan legacy:route-audit-report --days=7
+```
+
 Se nao houver hit relevante nas rotas abaixo durante a janela, o codigo pode ser removido:
 
 - `legacy.peticoes.modelos.show`

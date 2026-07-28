@@ -21,6 +21,7 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\SyncLegacySqlServerConfigs::class,
         \App\Console\Commands\LegacyCutReadiness::class,
         \App\Console\Commands\ArchiveLegacyOperationalTables::class,
+        \App\Console\Commands\LegacyRouteAuditReport::class,
     ];
 
     /**
