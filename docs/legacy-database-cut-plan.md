@@ -25,19 +25,19 @@ As tabelas legadas remanescentes ficaram reduzidas a:
 
 ## Tabelas legadas por situacao
 
-### 1. Prontas para sair do runtime normal
+### 1. Ja arquivadas na base local
 
-- `tp_pecas_tb`
-- `tp_tipo_tb`
-- `tp_funda_tb`
-- `tp_inputs_tb`
-- `tp_dados_tb`
-- `tp_grupo_tb`
-- `tp_lista_tb`
-- `tp_config_db`
-- `tp_usu_tb`
+- `tp_grupo_tb` -> `tp_grupo_tb_archive_20260727`
+- `tp_lista_tb` -> `tp_lista_tb_archive_20260727`
+- `tp_config_db` -> `tp_config_db_archive_20260727`
+- `tp_funda_tb` -> `tp_funda_tb_archive_20260727`
+- `tp_inputs_tb` -> `tp_inputs_tb_archive_20260727`
+- `tp_dados_tb` -> `tp_dados_tb_archive_20260727`
+- `tp_tipo_tb` -> `tp_tipo_tb_archive_20260727`
+- `tp_pecas_tb` -> `tp_pecas_tb_archive_20260727`
+- `tp_usu_tb` -> `tp_usu_tb_archive_20260727`
 
-Elas ainda existem no banco, mas o fluxo normalizado ja e o principal.
+Na base local, elas ja sairam do banco operacional por rename controlado.
 
 ### 2. Ainda usadas para sync/manual
 
@@ -64,17 +64,10 @@ LEGACY_LISTAS_MIRROR=false
 LEGACY_SQL_CONFIGS_MIRROR=false
 LEGACY_USERS_MIRROR=false
 LEGACY_USERS_AUTH_FALLBACK=false
-LEGACY_PUBLIC_MODEL_ROUTE_COMPAT=true
-LEGACY_PUBLIC_PIECE_EDITOR_COMPAT=true
-LEGACY_ADMIN_SQL_ROUTE_COMPAT=true
-```
-
-Quando a compatibilidade terminal puder sair:
-
-```env
 LEGACY_PUBLIC_MODEL_ROUTE_COMPAT=false
 LEGACY_PUBLIC_PIECE_EDITOR_COMPAT=false
 LEGACY_ADMIN_SQL_ROUTE_COMPAT=false
+LEGACY_ADMIN_MODEL_ROUTE_COMPAT=false
 ```
 
 ## Ordem recomendada do corte final
@@ -182,38 +175,23 @@ Sem leitura/escrita do runtime web principal.
 3. opcionalmente mover as tabelas para schema de arquivo
 4. remover as tabelas do banco operacional
 
-## Ordem recomendada de drop
+## Ordem executada na base local
 
-1. `tp_grupo_tb`
-2. `tp_lista_tb`
-3. `tp_config_db`
-4. `tp_funda_tb`
-5. `tp_inputs_tb`
-6. `tp_dados_tb`
-7. `tp_tipo_tb`
-8. `tp_pecas_tb`
-9. `tp_usu_tb`
-
-Racional:
-
-- listas e SQL ja sairam do runtime principal
-- modelos dependem entre si e devem sair juntos
-- `tp_pecas_tb` e `tp_usu_tb` ficam por ultimo por causa do historico
+1. `tp_grupo_tb` / `tp_lista_tb`
+2. `tp_config_db`
+3. `tp_funda_tb` / `tp_inputs_tb` / `tp_dados_tb` / `tp_tipo_tb`
+4. `tp_pecas_tb`
+5. `tp_usu_tb`
 
 ## Checklist operacional antes do drop
 
-- [ ] todos os toggles legados desligados
+- [x] todos os toggles legados desligados na base local
 - [ ] zero leitura legada no runtime web
 - [ ] zero escrita legada no runtime web
 - [ ] comandos de sync testados e opcionais
 - [ ] backup das tabelas legado confirmado
 - [ ] homologacao validada
 - [ ] janela de corte aprovada
-
-## Proximo passo tecnico recomendado
-
-1. revisar `LegacyUser`, `LegacyListaGrupo`, `LegacyListaItem`, `SqlServerConfig`, `Tipo`, `Paragrafo`, `InputCampo` e `Peca` para garantir que ficaram fora do runtime web;
-2. depois preparar a remocao controlada das rotas residuais `legacy.*` que ainda sobraram.
 
 ## Auditoria das classes legadas remanescentes
 
@@ -267,6 +245,27 @@ Essas rotas ja nao carregam `Tipo` diretamente no runtime web. Elas resolvem o m
 
 `legacy.peticoes.modelos.show` ja pode ser tratado como redirect explicito para `peticoes.normalized.show`.
 
+## Decisao operacional para as rotas `legacy.*`
+
+Estado decidido em 27 de julho de 2026:
+
+- manter as rotas `legacy.*` por um periodo curto como compatibilidade controlada
+- com os toggles de compatibilidade desligados por padrao
+- comportamento esperado:
+  - `410 Gone` quando a compatibilidade estiver desligada
+  - redirect/delegacao apenas quando o toggle for reativado conscientemente
+
+Racional:
+
+- evita remoção prematura de superfície externa ainda referenciada
+- mantém rollback simples
+- deixa o runtime principal protegido por padrão
+
+Remocao fisica do codigo dessas rotas:
+
+- recomendada apenas depois de uma janela curta sem trafego relevante
+- e depois de homologacao/producao confirmarem que nenhum consumidor externo depende delas
+
 ## Sync manual necessario antes do corte final de servidores SQL
 
 Para tirar `SqlServerConfig` do admin normalizado, a trilha nova precisa estar preenchida:
@@ -279,12 +278,24 @@ Para tirar `SqlServerConfig` do admin normalizado, a trilha nova precisa estar p
 
 Base local atual:
 
-- `tp_grupo_tb = 6`
+- `tp_grupo_tb = arquivada`
 - `lista_grupos = 6`
-- `tp_lista_tb = 162`
+- `tp_lista_tb = arquivada`
 - `lista_itens = 162`
-- `tp_config_db = 1`
+- `tp_config_db = arquivada`
 - `sql_server_profiles = 1`
+- `tp_tipo_tb = arquivada`
+- `peticao_modelos = 223`
+- `tp_funda_tb = arquivada`
+- `peticao_modelo_paragrafos = 731`
+- `tp_inputs_tb = arquivada`
+- `peticao_modelo_campos = 2747`
+- `tp_dados_tb = arquivada`
+- `peticao_modelo_campo_opcoes = 264`
+- `tp_pecas_tb = arquivada`
+- `peticoes = 34825`
+- `tp_usu_tb = arquivada`
+- `users = 243`
 
 Comando de auditoria:
 

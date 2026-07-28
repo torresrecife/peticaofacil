@@ -261,8 +261,9 @@ Promocao fisica executada:
   - `ckfinder/`
   - `img/`
 - `public/css`, `public/js` e `public/inc` antigos ficaram fora da promocao
+- a base local ja opera com tabelas legadas arquivadas por rename controlado
 
 Pendencia restante:
 
-1. remover a pasta `laravel6/` duplicada quando o processo externo liberar o lock
-2. seguir no corte final da compatibilidade residual e das tabelas legadas
+1. seguir no corte final da compatibilidade residual por rotas `legacy.*`
+2. validar a mesma politica de arquivo/remocao em homologacao e producao

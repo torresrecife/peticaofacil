@@ -100,15 +100,19 @@ Condicao para remocao:
 
 - as URLs antigas equivalentes estarem cobertas por rota Laravel ou redirect de servidor
 
-## Tabelas legadas que ainda existem, mas ja perderam o papel principal
+## Tabelas legadas arquivadas localmente
 
-### Ja fora do runtime normal
+### Ja arquivadas em 27 de julho de 2026
 
-- `tp_pecas_tb`
-- `tp_tipo_tb`
-- `tp_funda_tb`
-- `tp_inputs_tb`
-- `tp_dados_tb`
+- `tp_grupo_tb_archive_20260727`
+- `tp_lista_tb_archive_20260727`
+- `tp_config_db_archive_20260727`
+- `tp_funda_tb_archive_20260727`
+- `tp_inputs_tb_archive_20260727`
+- `tp_dados_tb_archive_20260727`
+- `tp_tipo_tb_archive_20260727`
+- `tp_pecas_tb_archive_20260727`
+- `tp_usu_tb_archive_20260727`
 
 Papel atual:
 
@@ -118,14 +122,7 @@ Papel atual:
 - rollback controlado
 - compatibilidade administrativa residual
 
-### Ainda com dependencia residual relevante
-
-- `tp_usu_tb`
-- `tp_grupo_tb`
-- `tp_lista_tb`
-- `tp_config_db`
-
-Essas ainda exigem corte completo para o estado final.
+No ambiente local, elas ja sairam do banco operacional por rename controlado.
 
 ## Plano de consolidacao fisica
 
