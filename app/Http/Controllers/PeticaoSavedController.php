@@ -6,7 +6,6 @@ use App\PeticaoNormalizada;
 use App\PeticaoModelo;
 use App\PeticaoVersao;
 use App\Services\PeticaoExportService;
-use App\Services\PeticaoModeloResolverService;
 use App\Services\PeticaoNormalizedDraftService;
 use App\Services\PeticaoNormalizedStorageService;
 use App\Services\PeticaoVersionAuditService;
@@ -14,14 +13,6 @@ use Illuminate\Http\Request;
 
 class PeticaoSavedController extends Controller
 {
-    public function storeFromPreview(Request $request, $modelo, PeticaoNormalizedDraftService $draftService, PeticaoModeloResolverService $modeloResolver)
-    {
-        $mirrorModelo = $modeloResolver->findNormalizedByLegacyTipoId((int) $modelo);
-        abort_unless($mirrorModelo, 404);
-
-        return $this->storeFromNormalizedPreview($request, $mirrorModelo, $draftService);
-    }
-
     public function storeFromNormalizedPreview(Request $request, PeticaoModelo $modeloNormalizado, PeticaoNormalizedDraftService $draftService)
     {
         $data = $request->validate([

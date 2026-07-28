@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\PeticaoModelo;
-use App\Services\PeticaoModeloResolverService;
 use App\Services\PeticaoModeloRuntimeFactory;
 use App\Services\SqlServerLookupService;
 use App\Services\PeticaoComposerService;
@@ -95,42 +94,11 @@ class PeticaoAssemblyController extends Controller
         return $this->renderAssemble($modeloNormalizado, $modeloFonte);
     }
 
-    public function show($modelo, PeticaoModeloResolverService $modeloResolver)
-    {
-        abort_unless((bool) config('legacy.compat_public_model_routes', true), 410);
-
-        $mirror = $modeloResolver->findNormalizedByLegacyTipoId((int) $modelo);
-
-        if (!$mirror) {
-            return redirect()
-                ->route('peticoes.index')
-                ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
-        }
-
-        return redirect()->route('peticoes.normalized.show', $mirror);
-    }
-
     public function composeNormalized(Request $request, PeticaoModelo $modeloNormalizado, PeticaoComposerService $composer, SqlServerLookupService $lookup)
     {
         $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromNormalized($modeloNormalizado);
 
         return $this->renderComposedAssemble($request, $modeloNormalizado, $modeloFonte, $composer, $lookup);
-    }
-
-    public function compose(Request $request, $modelo, PeticaoModeloResolverService $modeloResolver, PeticaoComposerService $composer, SqlServerLookupService $lookup)
-    {
-        $mirror = $modeloResolver->findLoadedNormalizedByLegacyTipoId(
-            (int) $modelo,
-            ['campos.opcoes', 'paragrafos', 'setor', 'cliente', 'servidor', 'servidorLegacy']
-        );
-
-        if (!$mirror) {
-            return redirect()
-                ->route('peticoes.index')
-                ->with('status', 'Modelo legado sem mirror normalizado. Use a sincronizacao administrativa antes da montagem.');
-        }
-
-        return $this->composeNormalized($request, $mirror, $composer, $lookup);
     }
 
     protected function renderComposedAssemble(Request $request, $modelo, $modeloFonte, PeticaoComposerService $composer, SqlServerLookupService $lookup)

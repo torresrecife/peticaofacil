@@ -73,7 +73,6 @@
             justify-content: center;
         }
         .sidebar-link__icon svg,
-        .sidebar-brand__icon svg,
         .app-icon {
             width: 18px;
             height: 18px;
@@ -100,6 +99,12 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+        }
+        .sidebar-brand__icon img {
+            width: 24px;
+            height: 24px;
+            display: block;
+            object-fit: contain;
         }
         .shell.is-collapsed .sidebar-link__label,
         .shell.is-collapsed .sidebar-brand__label {
@@ -380,7 +385,7 @@
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <span class="sidebar-brand__icon" aria-hidden="true">
-                    <i data-lucide="file-text"></i>
+                    <img src="{{ asset('img/app-brand-icon.png') }}" alt="">
                 </span>
                 <strong class="sidebar-brand__label">Peticao Facil</strong>
             </div>

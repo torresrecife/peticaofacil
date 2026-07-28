@@ -71,7 +71,6 @@ class LegacyCutReadiness extends Command
         $legacyConfigs = Schema::hasTable('tp_config_db') ? DB::table('tp_config_db')->count() : 'arquivada';
         $normalizedProfiles = Schema::hasTable('sql_server_profiles') ? DB::table('sql_server_profiles')->count() : 'ausente';
         $mirrorEnabled = (bool) config('legacy.mirror_legacy_sql_configs', false);
-        $compatRoutesEnabled = (bool) config('legacy.compat_admin_sql_routes', true);
 
         $this->line('Servidores SQL');
         $this->table(
@@ -79,7 +78,7 @@ class LegacyCutReadiness extends Command
             [
                 ['Perfis', $legacyConfigs, $normalizedProfiles, $this->statusForPair($legacyConfigs, $normalizedProfiles)],
                 ['Mirror legado', $mirrorEnabled ? 'ligado' : 'desligado', '-', $mirrorEnabled ? 'PENDENTE' : 'OK'],
-                ['Rotas admin legacy', $compatRoutesEnabled ? 'ligadas' : 'desligadas', '-', $compatRoutesEnabled ? 'PENDENTE' : 'OK'],
+                ['Superficie admin legacy', 'removida', '-', 'OK'],
             ]
         );
     }
@@ -94,7 +93,6 @@ class LegacyCutReadiness extends Command
         $normalizedParagrafos = Schema::hasTable('peticao_modelo_paragrafos') ? DB::table('peticao_modelo_paragrafos')->count() : 'ausente';
         $normalizedCampos = Schema::hasTable('peticao_modelo_campos') ? DB::table('peticao_modelo_campos')->count() : 'ausente';
         $normalizedDados = Schema::hasTable('peticao_modelo_campo_opcoes') ? DB::table('peticao_modelo_campo_opcoes')->count() : 'ausente';
-        $compatRoutesEnabled = (bool) config('legacy.compat_admin_model_routes', true);
 
         $this->line('Modelos');
         $this->table(
@@ -104,7 +102,7 @@ class LegacyCutReadiness extends Command
                 ['Paragrafos', $legacyParagrafos, $normalizedParagrafos, $this->statusForPair($legacyParagrafos, $normalizedParagrafos)],
                 ['Campos', $legacyCampos, $normalizedCampos, $this->statusForPair($legacyCampos, $normalizedCampos)],
                 ['Opcoes', $legacyDados, $normalizedDados, $this->statusForPair($legacyDados, $normalizedDados)],
-                ['Rotas admin legacy', $compatRoutesEnabled ? 'ligadas' : 'desligadas', '-', $compatRoutesEnabled ? 'PENDENTE' : 'OK'],
+                ['Superficie admin legacy', 'removida', '-', 'OK'],
             ]
         );
     }
@@ -114,7 +112,6 @@ class LegacyCutReadiness extends Command
         $legacyPecas = Schema::hasTable('tp_pecas_tb') ? DB::table('tp_pecas_tb')->count() : 'arquivada';
         $normalizedPecas = Schema::hasTable('peticoes') ? DB::table('peticoes')->count() : 'ausente';
         $mirrorEnabled = (bool) config('legacy.mirror_legacy_pecas', false);
-        $compatRouteEnabled = (bool) config('legacy.compat_public_piece_editor_route', true);
 
         $this->line('Pecas');
         $this->table(
@@ -122,7 +119,7 @@ class LegacyCutReadiness extends Command
             [
                 ['Historico', $legacyPecas, $normalizedPecas, $this->statusForPair($legacyPecas, $normalizedPecas)],
                 ['Mirror legado', $mirrorEnabled ? 'ligado' : 'desligado', '-', $mirrorEnabled ? 'PENDENTE' : 'OK'],
-                ['Rota editor legacy', $compatRouteEnabled ? 'ligada' : 'desligada', '-', $compatRouteEnabled ? 'PENDENTE' : 'OK'],
+                ['Superficie web legacy', 'removida', '-', 'OK'],
             ]
         );
     }

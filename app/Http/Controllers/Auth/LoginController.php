@@ -14,7 +14,6 @@ class LoginController extends Controller
     {
         $this->middleware('guest')->except([
             'logout',
-            'logoutBridge',
             'showForcePasswordForm',
             'updateForcedPassword',
         ]);
@@ -85,11 +84,6 @@ class LoginController extends Controller
     }
 
     public function logout(Request $request)
-    {
-        return $this->performLogout($request);
-    }
-
-    public function logoutBridge(Request $request)
     {
         return $this->performLogout($request);
     }
