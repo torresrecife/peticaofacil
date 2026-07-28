@@ -3,126 +3,19 @@
 namespace Tests\Feature;
 
 use App\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class LegacyEditorRedirectTest extends TestCase
 {
-    public function test_legacy_editor_route_redirects_to_normalized_editor_when_mirror_exists_without_loading_legacy_piece()
+    public function test_legacy_piece_editor_route_is_not_available_anymore()
     {
-        config()->set('legacy.compat_public_piece_editor_route', true);
-
         $user = factory(User::class)->create([
-            'id_usu' => 55,
             'nivel_usu' => 'ADM',
             'acesso_usu' => now(),
-        ]);
-
-        DB::table('tp_setor_tb')->insert([
-            'id_setor' => 55,
-            'nome_setor' => 'Execucao',
-            'cod_setor' => 'EXE',
-            'data_cad' => now(),
-        ]);
-
-        DB::table('tp_tipo_tb')->insert([
-            'tipo_id' => 55,
-            'tipo_nome' => 'Modelo Redirecionado',
-            'id_setor' => 55,
-            'tipo_data' => now(),
-            'tipo_stt' => 'Y',
-            'tipo_arq' => 'pdf',
-        ]);
-
-        DB::table('peticao_modelos')->insert([
-            'id' => 55,
-            'legacy_tipo_id' => 55,
-            'legacy_setor_id' => 55,
-            'nome' => 'Modelo Redirecionado',
-            'slug' => 'modelo-redirecionado-55',
-            'status' => 'ativo',
-            'arquivo_padrao' => 'pdf',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('peticoes')->insert([
-            'id' => 6501,
-            'legacy_peca_id' => 5501,
-            'modelo_id' => 55,
-            'legacy_usuario_id' => 55,
-            'codigo_externo' => 'RED55',
-            'nome_arquivo' => 'Modelo Redirecionado',
-            'cliente_referencia' => 'Cliente Redirect',
-            'conteudo_html' => '<p>Conteudo</p>',
-            'campos_resolvidos' => null,
-            'gerado_em' => now(),
-            'salvo_em' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         $this->actingAs($user)
             ->get('/pecas/5501/editar')
-            ->assertRedirect('/peticoes-salvas/6501/editar');
-    }
-
-    public function test_legacy_editor_route_returns_to_historic_list_when_piece_has_no_normalized_mirror_even_without_legacy_piece_record()
-    {
-        config()->set('legacy.compat_public_piece_editor_route', true);
-
-        $user = factory(User::class)->create([
-            'id_usu' => 56,
-            'nivel_usu' => 'ADM',
-            'acesso_usu' => now(),
-        ]);
-
-        DB::table('tp_setor_tb')->insert([
-            'id_setor' => 56,
-            'nome_setor' => 'Execucao',
-            'cod_setor' => 'EXE',
-            'data_cad' => now(),
-        ]);
-
-        DB::table('tp_tipo_tb')->insert([
-            'tipo_id' => 56,
-            'tipo_nome' => 'Modelo Espelhavel',
-            'id_setor' => 56,
-            'tipo_data' => now(),
-            'tipo_stt' => 'Y',
-            'tipo_arq' => 'pdf',
-        ]);
-
-        DB::table('peticao_modelos')->insert([
-            'id' => 56,
-            'legacy_tipo_id' => 56,
-            'legacy_setor_id' => 56,
-            'nome' => 'Modelo Espelhavel',
-            'slug' => 'modelo-espelhavel-56',
-            'status' => 'ativo',
-            'arquivo_padrao' => 'pdf',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $response = $this->actingAs($user)->get('/pecas/5601/editar');
-
-        $this->assertNull(DB::table('peticoes')->where('legacy_peca_id', 5601)->first());
-        $response->assertRedirect('/pecas');
-    }
-
-    public function test_legacy_editor_route_returns_gone_when_piece_compat_is_disabled()
-    {
-        config()->set('legacy.compat_public_piece_editor_route', false);
-
-        $user = factory(User::class)->create([
-            'id_usu' => 57,
-            'nivel_usu' => 'ADM',
-            'acesso_usu' => now(),
-        ]);
-
-        $this->actingAs($user)
-            ->get('/pecas/5701/editar')
-            ->assertStatus(410);
+            ->assertStatus(404);
     }
 }

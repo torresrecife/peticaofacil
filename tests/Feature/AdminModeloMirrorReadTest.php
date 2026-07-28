@@ -10,8 +10,6 @@ class AdminModeloMirrorReadTest extends TestCase
 {
     public function test_modelos_index_and_edit_show_normalized_read_data()
     {
-        config()->set('legacy.compat_admin_model_routes', true);
-
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
             'acesso_usu' => now(),
@@ -82,13 +80,13 @@ class AdminModeloMirrorReadTest extends TestCase
             ->assertSee('1 paragrafos, 1 campos');
 
         $this->actingAs($admin)
-            ->get('/admin/modelos/77/edit')
-            ->assertRedirect('/admin/modelos-normalizados/77/edit');
-
-        $this->actingAs($admin)
             ->get('/admin/modelos-normalizados/77/edit')
             ->assertStatus(200)
             ->assertSee('Leitura normalizada')
             ->assertSee('modelo-lido-do-mirror-77');
+
+        $this->actingAs($admin)
+            ->get('/admin/modelos/77/edit')
+            ->assertStatus(404);
     }
 }

@@ -11,7 +11,6 @@ class PeticaoFlowTest extends TestCase
     public function test_user_can_compose_preview_open_editor_save_and_export_peticao()
     {
         config()->set('legacy.mirror_legacy_pecas', false);
-        config()->set('legacy.compat_public_model_routes', true);
 
         $user = factory(User::class)->create([
             'nivel_usu' => 'USU',
@@ -21,10 +20,10 @@ class PeticaoFlowTest extends TestCase
         $modeloId = $this->seedModeloCompleto();
 
         $this->actingAs($user)
-            ->get('/peticoes/' . $modeloId)
-            ->assertRedirect('/peticoes/modelos/' . $modeloId);
+            ->get('/peticoes/modelos/' . $modeloId)
+            ->assertStatus(200);
 
-        $previewResponse = $this->actingAs($user)->post('/peticoes/' . $modeloId, [
+        $previewResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId, [
             'action_type' => 'preview',
             'campo_1' => 'Fulano da Silva',
             'campo_2' => 'Urgente',
@@ -49,7 +48,7 @@ class PeticaoFlowTest extends TestCase
         $this->assertStringNotContainsString('@campo2@', $previewHtml);
         $this->assertStringNotContainsString('@Campo3@', $previewHtml);
 
-        $editorResponse = $this->actingAs($user)->post('/peticoes/' . $modeloId . '/editor', [
+        $editorResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId . '/editor', [
             'nome_cli' => 'Fulano da Silva',
             'content' => $previewHtml,
         ]);
@@ -58,7 +57,7 @@ class PeticaoFlowTest extends TestCase
             ->assertSee('Editor final da peca')
             ->assertSee('Salvar peca');
 
-        $saveResponse = $this->actingAs($user)->post('/peticoes/' . $modeloId . '/salvar', [
+        $saveResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId . '/salvar', [
             'nome_cli' => 'Fulano da Silva',
             'cod_pecas' => $previewHtml,
         ]);
@@ -75,7 +74,7 @@ class PeticaoFlowTest extends TestCase
         $this->assertStringContainsString('deferimento imediato', $peticaoEspelho->conteudo_html);
         $saveResponse->assertRedirect('/peticoes-salvas/' . $peticaoEspelho->id . '/editar');
 
-        $wordResponse = $this->actingAs($user)->post('/peticoes/' . $modeloId . '/exportar/word', [
+        $wordResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId . '/exportar/word', [
             'nome_cli' => 'Fulano da Silva',
             'cod_pecas' => $previewHtml,
         ]);
@@ -84,7 +83,7 @@ class PeticaoFlowTest extends TestCase
         $wordResponse->assertHeader('content-type', 'application/msword; charset=UTF-8');
         $this->assertStringContainsString('deferimento imediato', $wordResponse->getContent());
 
-        $pdfResponse = $this->actingAs($user)->post('/peticoes/' . $modeloId . '/exportar/pdf', [
+        $pdfResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId . '/exportar/pdf', [
             'nome_cli' => 'Fulano da Silva',
             'cod_pecas' => '<p>Conteudo simples para PDF</p>',
         ]);
@@ -97,7 +96,6 @@ class PeticaoFlowTest extends TestCase
     public function test_legacy_editor_residual_flow_accepts_normalized_model_routes()
     {
         config()->set('legacy.mirror_legacy_pecas', false);
-        config()->set('legacy.compat_public_model_routes', true);
 
         $user = factory(User::class)->create([
             'id_usu' => 88,

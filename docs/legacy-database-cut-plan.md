@@ -2,6 +2,20 @@
 
 Data de referencia: 2026-07-27
 
+## Atualizacao de estado em Tuesday, July 28, 2026
+
+Depois de:
+
+- `legacy:cut-readiness` coerente
+- `legacy:route-audit-report --days=7` sem hits relevantes
+- validacao funcional do runtime normalizado
+
+as rotas residuais `legacy.*` e as rotas admin antigas de modelos/servidores foram removidas fisicamente do `routes/web.php`.
+
+Estado final dessas URLs no runtime web:
+
+- `404 Not Found`
+
 ## Estado atual
 
 O runtime principal do sistema ja nao depende mais das tabelas legadas para:

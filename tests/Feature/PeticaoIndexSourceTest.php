@@ -170,40 +170,8 @@ class PeticaoIndexSourceTest extends TestCase
         );
     }
 
-    public function test_legacy_peticao_route_redirects_back_when_model_has_no_normalized_mirror()
+    public function test_legacy_peticao_route_is_not_available_anymore()
     {
-        config()->set('legacy.compat_public_model_routes', true);
-
-        $user = factory(User::class)->create([
-            'nivel_usu' => 'USU',
-            'acesso_usu' => now(),
-        ]);
-
-        DB::table('tp_setor_tb')->insert([
-            'id_setor' => 9,
-            'nome_setor' => 'C',
-            'cod_setor' => 'C',
-            'data_cad' => now(),
-        ]);
-
-        DB::table('tp_tipo_tb')->insert([
-            'tipo_id' => 909,
-            'tipo_nome' => 'Modelo Apenas Legado',
-            'id_setor' => 9,
-            'tipo_data' => now(),
-            'tipo_stt' => 'Y',
-            'tipo_arq' => 'pdf',
-        ]);
-
-        $this->actingAs($user)
-            ->get('/peticoes/909')
-            ->assertRedirect('/peticoes');
-    }
-
-    public function test_legacy_peticao_route_returns_gone_when_public_compat_is_disabled()
-    {
-        config()->set('legacy.compat_public_model_routes', false);
-
         $user = factory(User::class)->create([
             'nivel_usu' => 'USU',
             'acesso_usu' => now(),
@@ -211,6 +179,6 @@ class PeticaoIndexSourceTest extends TestCase
 
         $this->actingAs($user)
             ->get('/peticoes/909')
-            ->assertStatus(410);
+            ->assertStatus(404);
     }
 }
