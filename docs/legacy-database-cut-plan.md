@@ -99,11 +99,30 @@ Leitura esperada:
 - `Peca`
 - `LegacyUser`
 
+### Services tecnicos que permanecem de forma intencional
+
+- `LegacyModeloSyncService`
+- `NormalizedModeloLegacySyncService`
+- `LegacyModeloMirrorService`
+- `LegacyPecaSyncService`
+- `LegacyPecaMirrorService`
+- `ListaSyncService`
+- `LegacyListaMirrorService`
+- `NormalizedSqlServerConfigSyncService`
+- `LegacySqlServerProfileMirrorService`
+- `UserSyncService`
+
 Elas ja nao fazem parte do runtime web normal. Servem para:
 
 - sync/manual
 - rollback controlado
 - historico tecnico
+
+### Codigo morto ja removido
+
+- `PecaStorageService`
+- camada residual de compatibilidade web (`legacy.*`)
+- controllers residuais do admin legado
 
 ## Proximo corte tecnico natural
 
