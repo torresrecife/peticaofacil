@@ -8,6 +8,34 @@
     <a class="button link" href="{{ route('admin.modelos-normalizados.create') }}">Novo modelo</a>
 </div>
 
+<div class="panel" style="margin-bottom:16px;">
+    <form method="get" action="{{ route('admin.modelos-normalizados.index') }}">
+        <div class="form-grid" style="grid-template-columns:minmax(0, 1fr) auto;">
+            <div class="form-group">
+                <label>Buscar modelo</label>
+                <input
+                    name="search"
+                    value="{{ $search ?? '' }}"
+                    list="admin-modelo-suggestions"
+                    placeholder="Digite o nome, slug ou ID do modelo">
+                <datalist id="admin-modelo-suggestions">
+                    @foreach($suggestions as $suggestion)
+                        <option value="{{ $suggestion }}"></option>
+                    @endforeach
+                </datalist>
+                <div class="editor-note">Busca por nome, slug ou ID. O autocomplete sugere modelos normalizados cadastrados.</div>
+            </div>
+            <div class="form-group" style="justify-content:end;">
+                <label>&nbsp;</label>
+                <div class="actions">
+                    <button type="submit">Buscar</button>
+                    <a class="button secondary link" href="{{ route('admin.modelos-normalizados.index') }}">Limpar</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
 <div class="panel" style="padding:0;">
     <div class="panel-muted" style="margin:16px;">
         <strong>Modelos normalizados</strong>
@@ -29,7 +57,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($modelos as $modelo)
+            @forelse($modelos as $modelo)
                 <tr>
                     <td>{{ $modelo->legacy_tipo_id ?: $modelo->id }}</td>
                     <td>{{ $modelo->nome }}</td>
@@ -45,7 +73,11 @@
                     </td>
                     <td><a href="{{ route('admin.modelos-normalizados.edit', $modelo) }}">Editar</a></td>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="10" class="panel-muted">Nenhum modelo normalizado encontrado para este filtro.</td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
 </div>

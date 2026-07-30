@@ -16,13 +16,35 @@ use Illuminate\Support\Facades\Schema;
 
 class NormalizedTipoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = trim((string) $request->query('search', ''));
+
         $modelos = PeticaoModelo::with(['setor', 'cliente', 'servidor'])
             ->withCount(['paragrafos', 'campos'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($builder) use ($search) {
+                    $builder->where('nome', 'like', '%' . $search . '%')
+                        ->orWhere('slug', 'like', '%' . $search . '%')
+                        ->orWhere('id', 'like', '%' . $search . '%')
+                        ->orWhere('legacy_tipo_id', 'like', '%' . $search . '%');
+                });
+            })
             ->orderBy('legacy_setor_id')
             ->orderBy('nome')
-            ->paginate(20);
+            ->paginate(20)
+            ->appends($request->except('page'));
+
+        $suggestions = PeticaoModelo::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where('nome', 'like', '%' . $search . '%');
+            })
+            ->orderBy('nome')
+            ->limit(30)
+            ->pluck('nome')
+            ->filter()
+            ->unique()
+            ->values();
 
         $legacyFallbacks = collect();
 
@@ -34,7 +56,7 @@ class NormalizedTipoController extends Controller
                 ->get();
         }
 
-        return view('admin.tipos.index', compact('modelos', 'legacyFallbacks'));
+        return view('admin.tipos.index', compact('modelos', 'legacyFallbacks', 'search', 'suggestions'));
     }
 
     public function create()
