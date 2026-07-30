@@ -112,8 +112,9 @@ class PeticaoAssemblyController extends Controller
         $lookupStatus = null;
 
         $lookupConfig = $this->resolveLookupConfig($modeloFonte);
+        $lookupConnectionStatus = $lookupConfig ? $lookup->connectionStatus($lookupConfig) : null;
 
-        if ($codigoProcesso !== '' && $lookupConfig) {
+        if ($codigoProcesso !== '' && $lookupConfig && ($lookupConnectionStatus['available'] ?? false)) {
             $externalData = $lookup->fetchByCode($lookupConfig, $codigoProcesso);
 
             if (is_array($externalData)) {
@@ -135,6 +136,8 @@ class PeticaoAssemblyController extends Controller
             } else {
                 $lookupStatus = 'Nao foi possivel localizar dados externos para o processo informado.';
             }
+        } elseif ($codigoProcesso !== '' && $lookupConfig && !($lookupConnectionStatus['available'] ?? false)) {
+            $lookupStatus = $lookupConnectionStatus['message'] ?? 'A conexao com o banco de dados externo falhou.';
         }
 
         $preview = null;
@@ -142,12 +145,15 @@ class PeticaoAssemblyController extends Controller
             $preview = $composer->compose($modeloFonte, $values);
         }
 
-        return $this->renderAssemble($modelo, $modeloFonte, $preview, $values, $codigoProcesso, $lookupStatus);
+        return $this->renderAssemble($modelo, $modeloFonte, $preview, $values, $codigoProcesso, $lookupStatus, $lookupConnectionStatus);
     }
 
-    protected function renderAssemble($modelo, $modeloFonte, $preview = null, array $values = [], $codigoProcesso = '', $lookupStatus = null)
+    protected function renderAssemble($modelo, $modeloFonte, $preview = null, array $values = [], $codigoProcesso = '', $lookupStatus = null, $lookupConnectionStatus = null)
     {
         $lookupConfig = $this->resolveLookupConfig($modeloFonte);
+        if ($lookupConfig && $lookupConnectionStatus === null) {
+            $lookupConnectionStatus = app(SqlServerLookupService::class)->connectionStatus($lookupConfig);
+        }
 
         return view('peticao.assemble', [
             'modelo' => $modelo,
@@ -157,6 +163,7 @@ class PeticaoAssemblyController extends Controller
             'codigoProcesso' => $codigoProcesso,
             'lookupStatus' => $lookupStatus,
             'lookupConfig' => $lookupConfig,
+            'lookupConnectionStatus' => $lookupConnectionStatus,
         ]);
     }
 

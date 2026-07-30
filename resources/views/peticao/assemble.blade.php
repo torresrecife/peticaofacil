@@ -8,6 +8,39 @@
     <a class="button secondary link" href="{{ route('peticoes.index') }}">Voltar</a>
 </div>
 
+@push('head')
+<style>
+    .lookup-box {
+        display: grid;
+        gap: 10px;
+        max-width: 560px;
+        align-items: start;
+    }
+    .lookup-inline {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: start;
+    }
+    .lookup-inline .form-group {
+        margin: 0;
+    }
+    .lookup-inline .actions {
+        justify-content: flex-start;
+        padding-top: 24px;
+    }
+    .lookup-error {
+        background: #fdecea;
+        color: #8a1f17;
+        border: 1px solid #f5c6cb;
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+</style>
+@endpush
+
 <div class="stack">
     <div class="panel">
         <div class="section-title">
@@ -25,6 +58,8 @@
             $normalizedStoreRoute = route('peticoes.normalized.saved.store', $normalizedModel);
             $legacyEditorRoute = route('peticoes.normalized.editor.create', $normalizedModel);
             $lookupKey = '';
+            $lookupAvailable = (bool) ($lookupConnectionStatus['available'] ?? false);
+            $lookupErrorMessage = $lookupConnectionStatus['message'] ?? null;
             if (!empty($lookupConfig)) {
                 $lookupKey = $lookupConfig->lookup_key ?? $lookupConfig->chave_db ?? '';
             }
@@ -34,16 +69,24 @@
             @csrf
             @if(!empty($lookupConfig))
                 <div class="panel-muted" style="margin-bottom:20px;">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Pesquisa por processo</label>
-                            <input name="codigo_processo" value="{{ $codigoProcesso ?? '' }}" placeholder="{{ $lookupKey ?: 'Codigo do processo' }}">
-                            <div class="editor-note">Busca no SQL Server configurado para este modelo e preenche automaticamente os campos mapeados.</div>
+                    <div class="lookup-box">
+                        <div class="lookup-inline">
+                            <div class="form-group">
+                                <label>Pesquisa por processo</label>
+                                <input
+                                    name="codigo_processo"
+                                    value="{{ $codigoProcesso ?? '' }}"
+                                    placeholder="{{ $lookupKey ?: 'Codigo do processo' }}"
+                                    @if(!$lookupAvailable) disabled @endif>
+                                <div class="editor-note">Busca no SQL Server configurado para este modelo e preenche automaticamente os campos mapeados.</div>
+                            </div>
+                            <div class="actions">
+                                <button type="submit" name="action_type" value="lookup" @if(!$lookupAvailable) disabled @endif>Buscar e preencher</button>
+                            </div>
                         </div>
-                        <div class="form-group" style="justify-content:end;">
-                            <label>&nbsp;</label>
-                            <button type="submit" name="action_type" value="lookup">Buscar e preencher</button>
-                        </div>
+                        @if(!$lookupAvailable && $lookupErrorMessage)
+                            <div class="lookup-error">{{ $lookupErrorMessage }}</div>
+                        @endif
                     </div>
                 </div>
             @endif
