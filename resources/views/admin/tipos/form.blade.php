@@ -235,10 +235,38 @@
                         <div class="form-group">
                             <label>Base externa</label>
                             <input name="input_db">
+                            <div class="editor-note">Use para mapeamento externo customizado. Para listas preexistentes, use o bloco abaixo.</div>
                         </div>
                         <div class="form-group">
                             <label>Coluna/valor</label>
                             <input name="input_val">
+                        </div>
+                        <div class="form-group">
+                            <label>Associar com Base existente</label>
+                            <select name="input_list_group_id">
+                                <option value="">Nenhuma</option>
+                                @foreach($listaGrupos as $grupo)
+                                    <option value="{{ $grupo->id_grupo }}">{{ $grupo->nome_grupo }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Retorno da lista</label>
+                            <select name="input_list_return_column">
+                                <option value="">Nenhum</option>
+                                @foreach(['return_1', 'return_2', 'return_3', 'return_4', 'return_5', 'return_6'] as $returnColumn)
+                                    <option value="{{ $returnColumn }}">{{ strtoupper($returnColumn) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Campo alvo do retorno</label>
+                            <select name="input_list_target_field">
+                                <option value="">Nenhum</option>
+                                @foreach($modelo->campos as $campoExistente)
+                                    <option value="{{ $campoExistente->id_input }}">{{ $campoExistente->input_title }} (#{{ $campoExistente->id_input }})</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>Colunas</label>
@@ -267,6 +295,18 @@
                             <input name="add_class">
                         </div>
                         <div class="form-group full">
+                            <label>Ao Entrar</label>
+                            <textarea name="input_focu"></textarea>
+                        </div>
+                        <div class="form-group full">
+                            <label>Ao Carregar</label>
+                            <textarea name="input_load"></textarea>
+                        </div>
+                        <div class="form-group full">
+                            <label>Ao Sair</label>
+                            <textarea name="input_blur"></textarea>
+                        </div>
+                        <div class="form-group full">
                             <label>Texto padrao</label>
                             <textarea name="texto_padrao"></textarea>
                         </div>
@@ -292,9 +332,14 @@
                                 @if($campo->input_tipo === 'SELECT')
                                     <div class="editor-note" style="margin-top:6px;">As opcoes seguem o formato `Rotulo|Retorno`.</div>
                                 @endif
+                                @if($campo->associated_list_config)
+                                    <div class="editor-note" style="margin-top:6px;">Lista associada: {{ optional($listaGrupos->firstWhere('id_grupo', $campo->associated_list_config['group_id']))->nome_grupo ?: ('Grupo #' . $campo->associated_list_config['group_id']) }}.</div>
+                                @endif
                             </div>
                             @php
                                 $updateCampoRoute = route('admin.modelos-normalizados.campos.update', [$modelo, $campo]);
+                                $listConfig = $campo->associated_list_config;
+                                $dependentConfig = $campo->dependent_fill_config;
                             @endphp
                             <form method="post" action="{{ $updateCampoRoute }}">
                                 @csrf
@@ -323,10 +368,40 @@
                                     <div class="form-group">
                                         <label>Base externa</label>
                                         <input name="input_db" value="{{ $campo->input_db }}">
+                                        <div class="editor-note">Use para mapeamento externo customizado. Para listas preexistentes, use o bloco abaixo.</div>
                                     </div>
                                     <div class="form-group">
                                         <label>Coluna/valor</label>
                                         <input name="input_val" value="{{ $campo->input_val }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Associar com Base existente</label>
+                                        <select name="input_list_group_id">
+                                            <option value="">Nenhuma</option>
+                                            @foreach($listaGrupos as $grupo)
+                                                <option value="{{ $grupo->id_grupo }}" @if((int) ($listConfig['group_id'] ?? 0) === (int) $grupo->id_grupo) selected @endif>{{ $grupo->nome_grupo }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Retorno da lista</label>
+                                        <select name="input_list_return_column">
+                                            <option value="">Nenhum</option>
+                                            @foreach(['return_1', 'return_2', 'return_3', 'return_4', 'return_5', 'return_6'] as $returnColumn)
+                                                <option value="{{ $returnColumn }}" @if(($listConfig['return_column'] ?? '') === $returnColumn) selected @endif>{{ strtoupper($returnColumn) }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Campo alvo do retorno</label>
+                                        <select name="input_list_target_field">
+                                            <option value="">Nenhum</option>
+                                            @foreach($modelo->campos as $campoExistente)
+                                                @if((int) $campoExistente->id_input !== (int) $campo->id_input)
+                                                    <option value="{{ $campoExistente->id_input }}" @if((int) ($dependentConfig['target_field_id'] ?? 0) === (int) $campoExistente->id_input) selected @endif>{{ $campoExistente->input_title }} (#{{ $campoExistente->id_input }})</option>
+                                                @endif
+                                            @endforeach
+                                        </select>
                                     </div>
                                     <div class="form-group">
                                         <label>Colunas</label>
@@ -353,6 +428,18 @@
                                     <div class="form-group">
                                         <label>Ordem</label>
                                         <input name="input_order" type="number" min="1" value="{{ $campo->input_order }}">
+                                    </div>
+                                    <div class="form-group full">
+                                        <label>Ao Entrar</label>
+                                        <textarea name="input_focu">{{ $campo->input_focu }}</textarea>
+                                    </div>
+                                    <div class="form-group full">
+                                        <label>Ao Carregar</label>
+                                        <textarea name="input_load">{{ $campo->input_load }}</textarea>
+                                    </div>
+                                    <div class="form-group full">
+                                        <label>Ao Sair</label>
+                                        <textarea name="input_blur">{{ $campo->input_blur }}</textarea>
                                     </div>
                                     <div class="form-group full">
                                         <label>Texto padrao</label>

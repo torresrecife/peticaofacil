@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Cliente;
 use App\Http\Controllers\Controller;
+use App\ListaGrupo;
 use App\PeticaoModelo;
 use App\Setor;
 use App\SqlServerProfile;
@@ -73,6 +74,7 @@ class NormalizedTipoController extends Controller
             'setores' => Setor::orderBy('nome_setor')->get(),
             'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
             'servidores' => $this->availableServidores(),
+            'listaGrupos' => ListaGrupo::orderBy('nome_grupo')->get(),
         ]);
     }
 
@@ -113,6 +115,7 @@ class NormalizedTipoController extends Controller
             'setores' => Setor::orderBy('nome_setor')->get(),
             'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
             'servidores' => $this->availableServidores(),
+            'listaGrupos' => ListaGrupo::orderBy('nome_grupo')->get(),
         ]);
     }
 

@@ -57,15 +57,34 @@
                     @elseif($campo->input_tipo === 'HIDDEN')
                         <input type="hidden" name="campo_{{ $campo->id_input }}" value="{{ $values['campo_'.$campo->id_input] ?? '' }}">
                     @elseif($campo->input_tipo === 'SELECT')
+                        @php($dependentConfig = $campo->dependent_fill_config)
                         <div class="form-group @if((int) $campo->input_cols >= 2) full @endif">
                             <label>{{ $campo->input_title }}</label>
-                            <select name="campo_{{ $campo->id_input }}">
+                            <select
+                                name="campo_{{ $campo->id_input }}"
+                                @if($dependentConfig)
+                                    class="js-dependent-select"
+                                    data-target-field="{{ $dependentConfig['target_field_id'] }}"
+                                    data-return-column="{{ $dependentConfig['return_column'] }}"
+                                @endif>
                                 <option value=""></option>
                                 @foreach($campo->select_options as $option)
-                                    <option value="{{ $option['label'] }}" @if(($values['campo_'.$campo->id_input] ?? '') === $option['label']) selected @endif>{{ $option['label'] }}</option>
+                                    <option
+                                        value="{{ $option['value'] ?? $option['label'] }}"
+                                        @foreach(($option['extras'] ?? []) as $extraKey => $extraValue)
+                                            data-{{ str_replace('_', '-', $extraKey) }}="{{ $extraValue }}"
+                                        @endforeach
+                                        @if(($values['campo_'.$campo->id_input] ?? '') === ($option['value'] ?? $option['label'])) selected @endif>{{ $option['label'] }}</option>
                                 @endforeach
                             </select>
-                            <div class="editor-note">Token {{ $campo->placeholder }}. O retorno usa a segunda coluna cadastrada em cada opcao.</div>
+                            <div class="editor-note">
+                                Token {{ $campo->placeholder }}.
+                                @if($campo->hasAssociatedListSource())
+                                    Select abastecido pela lista associada.
+                                @else
+                                    O retorno usa a segunda coluna cadastrada em cada opcao.
+                                @endif
+                            </div>
                         </div>
                     @elseif($campo->input_tipo === 'TEXTAREA')
                         <div class="form-group full">
@@ -116,3 +135,39 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function applyDependentSelect(select) {
+        var targetFieldId = select.getAttribute('data-target-field');
+        var returnColumn = select.getAttribute('data-return-column');
+        if (!targetFieldId || !returnColumn) {
+            return;
+        }
+
+        var target = document.querySelector('[name=\"campo_' + targetFieldId + '\"]');
+        if (!target) {
+            return;
+        }
+
+        var selectedOption = select.options[select.selectedIndex];
+        if (!selectedOption || !selectedOption.value) {
+            target.value = '';
+            return;
+        }
+
+        var datasetKey = returnColumn.replace('_', '-');
+        var returnValue = selectedOption.getAttribute('data-' + datasetKey) || '';
+        target.value = returnValue;
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll('.js-dependent-select'), function (select) {
+        applyDependentSelect(select);
+        select.addEventListener('change', function () {
+            applyDependentSelect(select);
+        });
+    });
+});
+</script>
+@endpush

@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class PeticaoModeloCampo extends Model
 {
@@ -149,10 +150,22 @@ class PeticaoModeloCampo extends Model
 
     public function getSelectOptionsAttribute()
     {
+        if ($this->hasAssociatedListSource()) {
+            return $this->buildListSelectOptions();
+        }
+
         return $this->opcoes->map(function ($item) {
             return [
+                'id' => $item->id_dados,
                 'label' => $item->rotulo,
+                'value' => $item->rotulo,
                 'return' => $item->valor_retorno ?: $item->rotulo,
+                'extras' => array_filter(array_merge(
+                    ['return_1' => $item->valor_retorno ?: $item->rotulo],
+                    $item->valores_extras ?: []
+                ), function ($value) {
+                    return $value !== null && $value !== '';
+                }),
             ];
         })->values()->all();
     }
@@ -160,5 +173,101 @@ class PeticaoModeloCampo extends Model
     public function getDadosAttribute()
     {
         return $this->opcoes;
+    }
+
+    public function hasAssociatedListSource()
+    {
+        return !empty($this->getAssociatedListConfigAttribute());
+    }
+
+    public function getAssociatedListConfigAttribute()
+    {
+        $raw = trim((string) $this->input_db);
+        if ($raw === '' || !Str::startsWith($raw, 'tp_lista_tb_|_')) {
+            return null;
+        }
+
+        $parts = explode('_|_', $raw);
+        $labelColumn = $parts[1] ?? 'nome_lista';
+        $returnColumn = $parts[2] ?? 'return_1';
+        $filter = $parts[3] ?? '';
+        $layout = $parts[4] ?? null;
+
+        $groupId = null;
+        if (preg_match('/id_grupo=(\d+)/i', $filter, $matches)) {
+            $groupId = (int) $matches[1];
+        }
+
+        if (!$groupId) {
+            return null;
+        }
+
+        return [
+            'source_table' => 'tp_lista_tb',
+            'group_id' => $groupId,
+            'label_column' => $labelColumn ?: 'nome_lista',
+            'return_column' => $returnColumn ?: 'return_1',
+            'filter' => $filter,
+            'layout' => $layout,
+        ];
+    }
+
+    public function getDependentFillConfigAttribute()
+    {
+        foreach (['focus', 'load', 'blur'] as $eventName) {
+            $script = trim((string) ($this->eventos_frontend[$eventName] ?? ''));
+            if ($script === '') {
+                continue;
+            }
+
+            if (preg_match('/fc_ajax_comp\("([^"]+)","([^"]+)","campo(\d+)","[^"]+","([^"]+)",this,1\)/i', $script, $matches)) {
+                return [
+                    'source_table' => $matches[1],
+                    'return_column' => $matches[2],
+                    'target_field_id' => (int) $matches[3],
+                    'lookup_key' => $matches[4],
+                    'event' => $eventName,
+                    'raw' => $script,
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    protected function buildListSelectOptions()
+    {
+        $config = $this->associated_list_config;
+        if (!$config) {
+            return [];
+        }
+
+        return ListaItem::query()
+            ->where('id_grupo', $config['group_id'])
+            ->orderBy('nome_lista')
+            ->get()
+            ->map(function ($item) use ($config) {
+                $extras = [];
+                foreach (['return_1', 'return_2', 'return_3', 'return_4', 'return_5', 'return_6'] as $column) {
+                    $value = $item->{$column};
+                    if ($value !== null && $value !== '') {
+                        $extras[$column] = $value;
+                    }
+                }
+
+                $labelColumn = $config['label_column'];
+                $label = (string) ($item->{$labelColumn} ?? $item->nome_lista);
+                $returnColumn = $config['return_column'];
+
+                return [
+                    'id' => $item->legacy_lista_id ?: $item->id_lista,
+                    'label' => $label,
+                    'value' => $label,
+                    'return' => (string) ($item->{$returnColumn} ?? $label),
+                    'extras' => $extras,
+                ];
+            })
+            ->values()
+            ->all();
     }
 }

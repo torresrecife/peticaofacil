@@ -52,8 +52,13 @@ class PeticaoComposerService
     protected function resolveCampoValue($campo, $rawValue)
     {
         if ($campo->input_tipo === 'SELECT') {
+            if ($campo->hasAssociatedListSource()) {
+                return e((string) $rawValue);
+            }
+
             foreach ($campo->select_options as $option) {
-                if ((string) $option['label'] === (string) $rawValue) {
+                $value = $option['value'] ?? $option['label'];
+                if ((string) $value === (string) $rawValue) {
                     return e($option['return']);
                 }
             }

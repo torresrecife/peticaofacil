@@ -34,16 +34,15 @@ class NormalizedInputCampoController extends Controller
             'obrigatorio' => (int) ($data['input_req'] ?? 0) === 1,
             'visivel' => ($data['hide'] ?? 'true') !== 'none',
             'gera_nome_arquivo' => ($data['nomepet'] ?? 'N') === 'Y',
-            'eventos_frontend' => array_filter([
-                'focus' => $data['input_focu'] ?? null,
-                'load' => $data['input_load'] ?? null,
-                'blur' => $data['input_blur'] ?? null,
-            ]),
+            'eventos_frontend' => [],
         ]);
+
+        $campo->origem_alias = $this->resolveOrigemAlias($campo, $data);
+        $campo->eventos_frontend = $this->buildFrontendEvents($campo, $data);
         $campo->token = $campo->placeholder;
         $campo->save();
 
-        $this->syncOpcoes($campo, $data['opcoes'] ?? '');
+        $this->syncOpcoes($campo, $data['opcoes'] ?? '', $data);
         $mirrorService->syncIfEnabled($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
 
         return redirect()->route('admin.modelos-normalizados.edit', $modeloNormalizado)->with('status', 'Campo criado.');
@@ -71,14 +70,14 @@ class NormalizedInputCampoController extends Controller
             'obrigatorio' => (int) ($data['input_req'] ?? 0) === 1,
             'visivel' => ($data['hide'] ?? 'true') !== 'none',
             'gera_nome_arquivo' => ($data['nomepet'] ?? 'N') === 'Y',
-            'eventos_frontend' => array_filter([
-                'focus' => $data['input_focu'] ?? null,
-                'load' => $data['input_load'] ?? null,
-                'blur' => $data['input_blur'] ?? null,
-            ]),
+            'eventos_frontend' => [],
         ])->save();
 
-        $this->syncOpcoes($campo, $data['opcoes'] ?? '');
+        $campo->origem_alias = $this->resolveOrigemAlias($campo, $data);
+        $campo->eventos_frontend = $this->buildFrontendEvents($campo, $data);
+        $campo->save();
+
+        $this->syncOpcoes($campo, $data['opcoes'] ?? '', $data);
         $mirrorService->syncIfEnabled($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
 
         return redirect()->route('admin.modelos-normalizados.edit', $modeloNormalizado)->with('status', 'Campo atualizado.');
@@ -107,14 +106,17 @@ class NormalizedInputCampoController extends Controller
             'texto_padrao' => 'nullable|string',
             'add_class' => 'nullable|string|max:500',
             'opcoes' => 'nullable|string',
+            'input_list_group_id' => 'nullable|integer|min:1',
+            'input_list_return_column' => 'nullable|in:return_1,return_2,return_3,return_4,return_5,return_6',
+            'input_list_target_field' => 'nullable|integer|min:1',
         ]);
     }
 
-    protected function syncOpcoes(PeticaoModeloCampo $campo, $opcoes)
+    protected function syncOpcoes(PeticaoModeloCampo $campo, $opcoes, array $data = [])
     {
         PeticaoModeloCampoOpcao::where('campo_id', $campo->id)->delete();
 
-        if ($campo->input_tipo !== 'SELECT') {
+        if ($campo->input_tipo !== 'SELECT' || !empty($data['input_list_group_id'])) {
             return;
         }
 
@@ -149,5 +151,60 @@ class NormalizedInputCampoController extends Controller
         }
 
         return 265;
+    }
+
+    protected function resolveOrigemAlias(PeticaoModeloCampo $campo, array $data)
+    {
+        if (
+            $campo->input_tipo === 'SELECT'
+            && !empty($data['input_list_group_id'])
+            && !empty($data['input_list_return_column'])
+        ) {
+            return sprintf(
+                'tp_lista_tb_|_nome_lista_|_%s_|_id_grupo=%d_|_vert',
+                $data['input_list_return_column'],
+                (int) $data['input_list_group_id']
+            );
+        }
+
+        return $data['input_db'] ?? null;
+    }
+
+    protected function buildFrontendEvents(PeticaoModeloCampo $campo, array $data)
+    {
+        $focus = trim((string) ($data['input_focu'] ?? ''));
+        $load = trim((string) ($data['input_load'] ?? ''));
+        $blur = trim((string) ($data['input_blur'] ?? ''));
+
+        if (
+            $campo->input_tipo === 'SELECT'
+            && !empty($data['input_list_target_field'])
+            && !empty($data['input_list_return_column'])
+        ) {
+            $generated = sprintf(
+                'fc_ajax_comp("tp_lista_tb","%s","campo%d","unir","id_lista",this,1); mcampo("campo%d_|_campo%d"); $("#campo%d").focus();',
+                $data['input_list_return_column'],
+                (int) $data['input_list_target_field'],
+                (int) $campo->id_input,
+                (int) $data['input_list_target_field'],
+                (int) $data['input_list_target_field']
+            );
+
+            if ($focus === '') {
+                $focus = $generated;
+            }
+            if ($load === '') {
+                $load = $generated;
+            }
+            if ($blur === '') {
+                $blur = $generated;
+            }
+        }
+
+        return array_filter([
+            'focus' => $focus !== '' ? $focus : null,
+            'load' => $load !== '' ? $load : null,
+            'blur' => $blur !== '' ? $blur : null,
+        ]);
     }
 }
