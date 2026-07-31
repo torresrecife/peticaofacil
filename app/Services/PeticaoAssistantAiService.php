@@ -32,7 +32,7 @@ class PeticaoAssistantAiService
 
         $response = $this->client->createStructuredResponse($messages, $this->schema(), 'peticao_assistant_turn');
         if (!$response['ok']) {
-            return $this->fallback($state, $response['error']);
+            return $this->fallback($state, $response['error'], $response['error_code'] ?? null);
         }
 
         $data = $response['data'];
@@ -48,7 +48,7 @@ class PeticaoAssistantAiService
         ];
     }
 
-    protected function fallback(array $state, $error = null)
+    protected function fallback(array $state, $error = null, $errorCode = null)
     {
         $questions = [];
         $missingFields = $state['missing_fields'] ?? [];
@@ -85,6 +85,7 @@ class PeticaoAssistantAiService
                 ? 'Modelo escolhido manualmente pelo usuario dentro das sugestoes disponiveis.'
                 : '',
             'warnings' => $error ? [$error] : [],
+            'warning_code' => $errorCode,
         ];
     }
 

@@ -12,6 +12,8 @@ class PeticaoAssistantFlowTest extends TestCase
 {
     public function test_assistant_loads_process_and_suggests_models()
     {
+        config()->set('openai.api_key', null);
+
         $user = factory(User::class)->create([
             'login_usu' => 'assistente',
             'password' => bcrypt('secret'),
