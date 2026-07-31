@@ -45,7 +45,7 @@ class PeticaoNormalizedDraftTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)
-            ->post('/peticoes/11/peticao-normalizada', [
+            ->post('/peticoes/modelos/11/peticao-normalizada', [
                 'nome_cli' => 'Cliente Draft',
                 'content' => '<p>Conteudo draft</p>',
                 'resolved_fields' => json_encode(['campo_1' => 'valor']),

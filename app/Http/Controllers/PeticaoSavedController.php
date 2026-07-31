@@ -19,12 +19,14 @@ class PeticaoSavedController extends Controller
             'nome_cli' => 'required|string|max:500',
             'content' => 'required|string',
             'resolved_fields' => 'nullable|string',
+            'codigo_processo' => 'nullable|string|max:255',
         ]);
 
         $peticao = $draftService->createFromPreview($modeloNormalizado, [
             'nome_cli' => $data['nome_cli'],
             'content' => $data['content'],
-            'resolved_fields' => $data['resolved_fields'] ? json_decode($data['resolved_fields'], true) : null,
+            'resolved_fields' => !empty($data['resolved_fields']) ? json_decode($data['resolved_fields'], true) : null,
+            'codigo_processo' => $data['codigo_processo'] ?? null,
         ]);
 
         return redirect()->route('peticoes.saved.edit', $peticao);

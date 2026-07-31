@@ -432,11 +432,17 @@
                     </span>
                     <span class="sidebar-link__label">Listas</span>
                 </a>
-                <a class="sidebar-link {{ $isActiveMenu(['peticoes.*']) ? 'is-active' : '' }}" href="{{ route('peticoes.index') }}" @if($isActiveMenu(['peticoes.*'])) aria-current="page" @endif>
+                <a class="sidebar-link {{ $isActiveMenu(['peticoes.index', 'peticoes.normalized.*']) ? 'is-active' : '' }}" href="{{ route('peticoes.index') }}" @if($isActiveMenu(['peticoes.index', 'peticoes.normalized.*'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">
                         <i data-lucide="notebook-pen"></i>
                     </span>
                     <span class="sidebar-link__label">Montagem</span>
+                </a>
+                <a class="sidebar-link {{ $isActiveMenu(['peticoes.assistente.*']) ? 'is-active' : '' }}" href="{{ route('peticoes.assistente.index') }}" @if($isActiveMenu(['peticoes.assistente.*'])) aria-current="page" @endif>
+                    <span class="sidebar-link__icon" aria-hidden="true">
+                        <i data-lucide="bot"></i>
+                    </span>
+                    <span class="sidebar-link__label">Assistente IA</span>
                 </a>
                 <a class="sidebar-link {{ $isActiveMenu(['pecas.*', 'peticoes.saved.*', 'peticoes.editor.edit']) ? 'is-active' : '' }}" href="{{ route('pecas.index') }}" @if($isActiveMenu(['pecas.*', 'peticoes.saved.*', 'peticoes.editor.edit'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">

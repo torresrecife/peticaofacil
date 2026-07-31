@@ -20,6 +20,7 @@ class PeticaoEditorController extends Controller
         $data = $request->validate([
             'content' => 'required|string',
             'nome_cli' => 'required|string|max:500',
+            'codigo_processo' => 'nullable|string|max:255',
         ]);
 
         return view('peticao.editor', [
@@ -27,6 +28,7 @@ class PeticaoEditorController extends Controller
             'peca' => null,
             'content' => $data['content'],
             'nomeCli' => $data['nome_cli'],
+            'codigoProcesso' => $data['codigo_processo'] ?? null,
         ]);
     }
 
@@ -40,12 +42,13 @@ class PeticaoEditorController extends Controller
         $data = $request->validate([
             'nome_cli' => 'required|string|max:500',
             'cod_pecas' => 'required|string',
+            'codigo_processo' => 'nullable|string|max:255',
         ]);
 
         $peticao = new PeticaoNormalizada([
             'modelo_id' => $modelo->id,
             'user_id' => auth()->id(),
-            'codigo_externo' => null,
+            'codigo_externo' => $data['codigo_processo'] ?? null,
             'nome_arquivo' => $modelo->nome,
             'cliente_referencia' => $data['nome_cli'],
             'conteudo_html' => $data['cod_pecas'],

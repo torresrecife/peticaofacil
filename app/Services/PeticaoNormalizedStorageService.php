@@ -25,6 +25,9 @@ class PeticaoNormalizedStorageService
 
             $peticao->cliente_referencia = $payload['nome_cli'];
             $peticao->conteudo_html = $payload['cod_pecas'];
+            if (!empty($payload['codigo_processo'])) {
+                $peticao->codigo_externo = $payload['codigo_processo'];
+            }
             $peticao->gerado_em = $peticao->gerado_em ?: now();
             $peticao->salvo_em = now();
             $peticao->save();

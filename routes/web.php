@@ -30,6 +30,10 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::post('/primeiro-acesso', 'Auth\LoginController@updateForcedPassword')->name('password.force.update');
     Route::get('/painel', 'DashboardController')->name('dashboard');
     Route::get('/peticoes', 'PeticaoAssemblyController@index')->name('peticoes.index');
+    Route::get('/assistente-peticoes', 'PeticaoAssistantController@index')->name('peticoes.assistente.index');
+    Route::post('/assistente-peticoes/mensagem', 'PeticaoAssistantController@message')->name('peticoes.assistente.message');
+    Route::post('/assistente-peticoes/reiniciar', 'PeticaoAssistantController@reset')->name('peticoes.assistente.reset');
+    Route::post('/assistente-peticoes/modelos/{modeloNormalizado}', 'PeticaoAssistantController@selectModel')->name('peticoes.assistente.select-model');
     Route::post('/peticoes/modelos/{modeloNormalizado}/favorito', 'FavoriteModeloController@storeNormalized')->name('peticoes.normalized.favorite.store');
     Route::delete('/peticoes/modelos/{modeloNormalizado}/favorito', 'FavoriteModeloController@destroyNormalized')->name('peticoes.normalized.favorite.destroy');
     Route::get('/peticoes/modelos/{modeloNormalizado}', 'PeticaoAssemblyController@showNormalized')->name('peticoes.normalized.show');

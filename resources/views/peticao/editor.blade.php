@@ -35,6 +35,7 @@
 
         <form method="post" action="{{ $saveRoute }}" id="editor-save-form">
             @csrf
+            <input type="hidden" name="codigo_processo" value="{{ old('codigo_processo', $codigoProcesso ?? '') }}">
             <div class="form-grid">
                 <div class="form-group full">
                     <label>Nome do arquivo / cliente</label>
