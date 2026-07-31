@@ -100,6 +100,15 @@
                 </div>
             </div>
 
+            <div class="panel-muted" style="margin-bottom:16px;">
+                <strong>Modo atual:</strong>
+                @if($openAiEnabled)
+                    IA conectada via OpenAI
+                @else
+                    orientacao local do sistema
+                @endif
+            </div>
+
             <div class="assistant-chat">
                 @foreach($assistantState['messages'] as $message)
                     <div class="assistant-message assistant-message--{{ $message['role'] }}">
@@ -168,6 +177,58 @@
             @endif
         </div>
 
+        @if(!empty($assistantState['model_rationale']))
+            <div class="panel">
+                <div class="section-title">
+                    <h3>Justificativa do modelo</h3>
+                    <div class="editor-note">Apoio da IA</div>
+                </div>
+                <div class="panel-muted">{{ $assistantState['model_rationale'] }}</div>
+            </div>
+        @endif
+
+        @if(!empty($assistantState['missing_fields']) || !empty($assistantState['consistency_checks']) || !empty($assistantState['assistant_warnings']))
+            <div class="panel">
+                <div class="section-title">
+                    <h3>Analise interna</h3>
+                    <div class="editor-note">Faltantes e alertas</div>
+                </div>
+
+                @if(!empty($assistantState['missing_fields']))
+                    <div class="panel-muted" style="margin-bottom:12px;">
+                        <strong>Campos faltantes</strong>
+                        <ul style="margin:8px 0 0 18px; padding:0;">
+                            @foreach($assistantState['missing_fields'] as $field)
+                                <li>{{ $field }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if(!empty($assistantState['consistency_checks']))
+                    <div class="panel-muted" style="margin-bottom:12px;">
+                        <strong>Verificacoes</strong>
+                        <ul style="margin:8px 0 0 18px; padding:0;">
+                            @foreach($assistantState['consistency_checks'] as $check)
+                                <li>{{ $check }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if(!empty($assistantState['assistant_warnings']))
+                    <div class="assistant-warning">
+                        <strong>Aviso tecnico</strong>
+                        <ul style="margin:8px 0 0 18px; padding:0;">
+                            @foreach($assistantState['assistant_warnings'] as $warning)
+                                <li>{{ $warning }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+            </div>
+        @endif
+
         @if(!empty($assistantState['duplicate_petitions']))
             <div class="panel">
                 <div class="section-title">
@@ -185,6 +246,7 @@
                         <th>ID</th>
                         <th>Modelo</th>
                         <th>Cliente</th>
+                        <th>Motivo</th>
                         <th>Salva em</th>
                     </tr>
                     </thead>
@@ -194,6 +256,7 @@
                             <td>{{ $duplicate['id'] }}</td>
                             <td>{{ $duplicate['modelo'] ?: '-' }}</td>
                             <td>{{ $duplicate['cliente'] ?: '-' }}</td>
+                            <td>{{ !empty($duplicate['reasons']) ? implode(', ', $duplicate['reasons']) : '-' }}</td>
                             <td>{{ $duplicate['salvo_em'] ?: '-' }}</td>
                         </tr>
                     @endforeach

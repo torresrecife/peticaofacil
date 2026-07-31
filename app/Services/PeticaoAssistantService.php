@@ -11,11 +11,16 @@ class PeticaoAssistantService
 {
     protected $lookup;
     protected $state;
+    protected $assistantAi;
 
-    public function __construct(SqlServerLookupService $lookup, PeticaoAssistantStateService $state)
-    {
+    public function __construct(
+        SqlServerLookupService $lookup,
+        PeticaoAssistantStateService $state,
+        PeticaoAssistantAiService $assistantAi
+    ) {
         $this->lookup = $lookup;
         $this->state = $state;
+        $this->assistantAi = $assistantAi;
     }
 
     public function processMessage(array $state, $message)
@@ -24,11 +29,15 @@ class PeticaoAssistantService
         $state = $this->state->appendMessage($state, 'user', $message);
 
         if (!$state['process_code']) {
-            return $this->handleProcessLookup($state, $message);
+            $state = $this->handleProcessLookup($state, $message);
+
+            return $this->applyAiAnalysis($state, $message);
         }
 
         if (!$state['selected_model_id']) {
-            return $this->handleModelSelection($state, $message);
+            $state = $this->handleModelSelection($state, $message);
+
+            return $this->applyAiAnalysis($state, $message);
         }
 
         $state = $this->state->appendMessage(
@@ -37,7 +46,9 @@ class PeticaoAssistantService
             'Processo e modelo ja estao definidos. Use o botao de abertura da montagem assistida para continuar no formulario.'
         );
 
-        return $state;
+        $state = $this->refreshSelectedModelAnalysis($state);
+
+        return $this->applyAiAnalysis($state, $message);
     }
 
     public function selectModel(array $state, PeticaoModelo $modelo)
@@ -49,7 +60,9 @@ class PeticaoAssistantService
         $reply = 'Modelo selecionado: ' . $modelo->nome . '. ';
         $reply .= 'Agora voce pode abrir a montagem assistida para carregar o processo e continuar no formulario normal.';
 
-        return $this->state->appendMessage($state, 'assistant', $reply);
+        $state = $this->state->appendMessage($state, 'assistant', $reply);
+
+        return $this->refreshSelectedModelAnalysis($state);
     }
 
     protected function handleProcessLookup(array $state, $message)
@@ -149,19 +162,42 @@ class PeticaoAssistantService
         ];
     }
 
-    protected function detectDuplicates($code)
+    protected function detectDuplicates($code, $selectedModelId = null, array $processData = [])
     {
         return PeticaoNormalizada::with('modelo')
-            ->where('codigo_externo', $code)
+            ->where(function ($builder) use ($code, $selectedModelId, $processData) {
+                $builder->where('codigo_externo', $code);
+
+                $mainName = $this->extractMainPartyName($processData);
+                if ($mainName !== '') {
+                    $builder->orWhere('cliente_referencia', 'like', '%' . $mainName . '%');
+                }
+
+                if ($selectedModelId) {
+                    $builder->orWhere(function ($inner) use ($code, $selectedModelId) {
+                        $inner->where('modelo_id', $selectedModelId)
+                            ->where('codigo_externo', $code);
+                    });
+                }
+            })
             ->orderByDesc('salvo_em')
-            ->limit(5)
+            ->limit(8)
             ->get()
-            ->map(function ($peticao) {
+            ->map(function ($peticao) use ($code, $selectedModelId) {
+                $reasons = [];
+                if ((string) $peticao->codigo_externo === (string) $code) {
+                    $reasons[] = 'Mesmo codigo de processo';
+                }
+                if ($selectedModelId && (int) $peticao->modelo_id === (int) $selectedModelId) {
+                    $reasons[] = 'Mesmo modelo';
+                }
+
                 return [
                     'id' => $peticao->id,
                     'cliente' => $peticao->cliente_referencia,
                     'modelo' => optional($peticao->modelo)->nome,
                     'salvo_em' => optional($peticao->salvo_em)->format('d/m/Y H:i'),
+                    'reasons' => $reasons,
                 ];
             })
             ->values()
@@ -273,6 +309,135 @@ class PeticaoAssistantService
     {
         if (preg_match('/([A-Za-z0-9\\.\\-\\/]{4,})/', $message, $matches)) {
             return trim($matches[1]);
+        }
+
+        return '';
+    }
+
+    protected function refreshSelectedModelAnalysis(array $state)
+    {
+        if (empty($state['selected_model_id'])) {
+            $state['missing_fields'] = [];
+            $state['consistency_checks'] = [];
+            $state['model_rationale'] = null;
+
+            return $state;
+        }
+
+        $modelo = PeticaoModelo::with('campos')->find($state['selected_model_id']);
+        if (!$modelo) {
+            return $state;
+        }
+
+        $requiredCampos = $modelo->campos->where('obrigatorio', true);
+        $missingFields = [];
+
+        foreach ($requiredCampos as $campo) {
+            $column = trim((string) $campo->origem_coluna);
+            $label = $campo->rotulo;
+
+            if ($column === '') {
+                $missingFields[] = $label;
+                continue;
+            }
+
+            $matched = false;
+            foreach ($state['process_data'] as $key => $value) {
+                if (strcasecmp((string) $key, $column) === 0 && trim((string) $value) !== '') {
+                    $matched = true;
+                    break;
+                }
+            }
+
+            if (!$matched) {
+                $missingFields[] = $label;
+            }
+        }
+
+        $checks = [];
+        if (!empty($state['duplicate_petitions'])) {
+            $checks[] = 'Encontradas peticoes anteriores potencialmente duplicadas para este processo.';
+        }
+        if (!empty($missingFields)) {
+            $checks[] = 'Existem campos obrigatorios do modelo que nao vieram preenchidos pelo processo.';
+        }
+
+        $state['missing_fields'] = array_values(array_unique($missingFields));
+        $state['consistency_checks'] = array_values(array_unique($checks));
+        $state['duplicate_petitions'] = $this->detectDuplicates(
+            $state['process_code'],
+            $state['selected_model_id'],
+            $state['process_data']
+        );
+        $state['model_rationale'] = 'Modelo selecionado para o processo atual. Revise os campos obrigatorios antes de abrir a montagem.';
+
+        return $state;
+    }
+
+    protected function applyAiAnalysis(array $state, $lastUserMessage)
+    {
+        if (empty($state['process_code'])) {
+            return $state;
+        }
+
+        $analysis = $this->assistantAi->enrich($state, $lastUserMessage);
+
+        $state['assistant_mode'] = $analysis['mode'];
+        $state['assistant_warnings'] = $analysis['warnings'];
+        $state['missing_fields'] = array_values(array_unique(array_merge(
+            $state['missing_fields'] ?? [],
+            $analysis['missing_fields']
+        )));
+        $state['consistency_checks'] = array_values(array_unique(array_merge(
+            $state['consistency_checks'] ?? [],
+            $analysis['consistency_checks']
+        )));
+        $state['model_rationale'] = $analysis['model_rationale'] ?: ($state['model_rationale'] ?? null);
+
+        if ($analysis['assistant_message'] !== '') {
+            $state = $this->replaceLastAssistantMessage($state, $analysis['assistant_message']);
+        }
+
+        if (!empty($analysis['questions'])) {
+            $state = $this->state->appendMessage(
+                $state,
+                'assistant',
+                'Perguntas objetivas: ' . implode(' | ', $analysis['questions'])
+            );
+        }
+
+        return $state;
+    }
+
+    protected function replaceLastAssistantMessage(array $state, $content)
+    {
+        for ($index = count($state['messages']) - 1; $index >= 0; $index--) {
+            if (($state['messages'][$index]['role'] ?? null) !== 'assistant') {
+                continue;
+            }
+
+            $state['messages'][$index]['content'] = trim((string) $content);
+
+            return $state;
+        }
+
+        return $this->state->appendMessage($state, 'assistant', $content);
+    }
+
+    protected function extractMainPartyName(array $processData)
+    {
+        foreach ($processData as $key => $value) {
+            if (!is_scalar($value)) {
+                continue;
+            }
+
+            $key = (string) $key;
+            if (stripos($key, 'AUTOR') !== false || stripos($key, 'CLIENTE') !== false || stripos($key, 'NOME') !== false) {
+                $value = trim((string) $value);
+                if ($value !== '') {
+                    return $value;
+                }
+            }
         }
 
         return '';

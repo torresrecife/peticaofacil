@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\PeticaoModelo;
+use App\Services\OpenAIResponsesClient;
 use App\Services\PeticaoAssistantService;
 use App\Services\PeticaoAssistantStateService;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ class PeticaoAssistantController extends Controller
     {
         return view('peticao.assistant', [
             'assistantState' => $stateService->current(),
+            'openAiEnabled' => app(OpenAIResponsesClient::class)->isEnabled(),
         ]);
     }
 

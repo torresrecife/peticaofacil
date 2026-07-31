@@ -51,6 +51,11 @@ class PeticaoAssistantStateService
             'selected_model_name' => null,
             'model_suggestions' => [],
             'duplicate_petitions' => [],
+            'missing_fields' => [],
+            'consistency_checks' => [],
+            'model_rationale' => null,
+            'assistant_mode' => 'local',
+            'assistant_warnings' => [],
         ];
     }
 }

@@ -57,7 +57,7 @@ class PeticaoAssistantFlowTest extends TestCase
         $page = $this->actingAs($user)->get(route('peticoes.assistente.index'));
         $page->assertSee('Cliente Teste');
         $page->assertSee('SUBSTABELECIMENTO');
-        $page->assertSee('qual peticao voce quer elaborar', false);
+        $page->assertSee('Qual peticao voce quer elaborar');
         $page->assertDontSee('Abrir montagem assistida');
 
         $select = $this->actingAs($user)->post(route('peticoes.assistente.select-model', $modelo));
