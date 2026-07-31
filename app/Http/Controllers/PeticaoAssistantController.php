@@ -33,10 +33,15 @@ class PeticaoAssistantController extends Controller
     public function answerCurrentField(Request $request, PeticaoAssistantService $assistant, PeticaoAssistantStateService $stateService)
     {
         $data = $request->validate([
-            'field_value' => 'required|string|max:4000',
+            'field_value' => 'nullable|string|max:4000',
+            'field_query' => 'nullable|string|max:4000',
         ]);
 
-        $state = $assistant->answerCurrentField($stateService->current(), $data['field_value']);
+        $value = trim((string) ($data['field_query'] ?? '')) !== ''
+            ? $data['field_query']
+            : $data['field_value'];
+
+        $state = $assistant->answerCurrentField($stateService->current(), $value);
         $stateService->store($state);
 
         return redirect()->route('peticoes.assistente.index');

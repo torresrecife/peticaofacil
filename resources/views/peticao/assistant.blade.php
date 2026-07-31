@@ -253,6 +253,9 @@
                 <div class="panel-muted">
                     <div><strong>Campo:</strong> {{ $assistantState['current_pending_field']['label'] }}</div>
                     <div><strong>Tipo:</strong> {{ $assistantState['current_pending_field']['type'] }}</div>
+                    @if(!empty($assistantState['current_pending_field']['group_label']))
+                        <div><strong>Bloco:</strong> {{ $assistantState['current_pending_field']['group_label'] }}</div>
+                    @endif
                     @if(!empty($assistantState['current_pending_field']['dependent_target']))
                         <div style="margin-top:8px;"><strong>Retorno automatico:</strong> ao escolher este valor, o campo {{ $assistantState['current_pending_field']['dependent_target']['label'] }} sera preenchido automaticamente.</div>
                     @endif
@@ -276,7 +279,19 @@
                     <div class="form-group">
                         <label>Responder {{ $assistantState['current_pending_field']['label'] }}</label>
                         @if(($assistantState['current_pending_field']['type'] ?? '') === 'SELECT' && !empty($assistantState['current_pending_field']['options']))
-                            <select name="field_value">
+                            @if(!empty($assistantState['current_pending_field']['is_searchable']))
+                                <input
+                                    type="search"
+                                    name="field_query"
+                                    class="js-assistant-option-search"
+                                    data-target-select="assistant-current-field-select"
+                                    placeholder="Digite para filtrar ou selecionar automaticamente">
+                                <div class="editor-note" style="margin-top:6px;">A lista e longa. Digite parte do texto ou do retorno para filtrar.</div>
+                            @endif
+                            <select
+                                name="field_value"
+                                id="assistant-current-field-select"
+                                data-options='@json($assistantState['current_pending_field']['options'])'>
                                 <option value=""></option>
                                 @foreach($assistantState['current_pending_field']['options'] as $option)
                                     <option value="{{ $option['index'] }}">{{ $option['index'] }}. {{ $option['label'] }}@if(!empty($option['helper'])) - {{ $option['helper'] }}@endif</option>
@@ -409,3 +424,54 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('.js-assistant-option-search'), function (input) {
+        var selectId = input.getAttribute('data-target-select');
+        var select = document.getElementById(selectId);
+        if (!select) {
+            return;
+        }
+
+        var originalOptions = [];
+        try {
+            originalOptions = JSON.parse(select.getAttribute('data-options') || '[]');
+        } catch (error) {
+            originalOptions = [];
+        }
+
+        function renderOptions(filterValue) {
+            var filter = (filterValue || '').toLowerCase();
+            var options = originalOptions.filter(function (option) {
+                if (filter === '') {
+                    return true;
+                }
+
+                var haystack = [
+                    option.label || '',
+                    option.helper || '',
+                    option.value || ''
+                ].join(' ').toLowerCase();
+
+                return haystack.indexOf(filter) !== -1;
+            });
+
+            select.innerHTML = '<option value=""></option>';
+
+            options.forEach(function (option) {
+                var element = document.createElement('option');
+                element.value = option.index;
+                element.textContent = option.index + '. ' + option.label + (option.helper ? ' - ' + option.helper : '');
+                select.appendChild(element);
+            });
+        }
+
+        input.addEventListener('input', function () {
+            renderOptions(input.value);
+        });
+    });
+});
+</script>
+@endpush

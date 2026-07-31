@@ -210,10 +210,8 @@ class PeticaoAssistantAiService
         }
 
         if ($stage === 'data_completion') {
-            $currentPendingField = $state['current_pending_field'] ?? null;
-
             return !empty($missingFields)
-                ? $this->buildFieldQuestion($currentPendingField)
+                ? 'Feche o campo pendente atual antes de seguir para a montagem.'
                 : 'Os dados principais ja foram fechados. Revise e siga para a montagem.';
         }
 
@@ -226,14 +224,18 @@ class PeticaoAssistantAiService
             return 'Antes do handoff, preciso fechar os campos obrigatorios que ainda estao pendentes.';
         }
 
+        $prefix = !empty($field['group_label'])
+            ? 'No bloco `' . $field['group_label'] . '`, '
+            : '';
+
         if (($field['type'] ?? '') !== 'SELECT' || empty($field['options'])) {
-            return 'Informe o valor do campo `' . $field['label'] . '`.';
+            return $prefix . 'informe o valor do campo `' . $field['label'] . '`.';
         }
 
         $options = collect($field['options'])->map(function ($option) {
-            return $option['index'] . '. ' . $option['label'];
+            return $option['index'] . '. ' . $option['label'] . (!empty($option['helper']) ? ' - ' . $option['helper'] : '');
         })->implode(' | ');
 
-        return 'Escolha uma opcao para `' . $field['label'] . '`: ' . $options . '.';
+        return $prefix . 'escolha uma opcao para `' . $field['label'] . '`: ' . $options . '. Voce tambem pode digitar parte do texto para eu tentar selecionar automaticamente.';
     }
 }

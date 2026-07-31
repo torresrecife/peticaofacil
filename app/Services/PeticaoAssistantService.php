@@ -85,6 +85,10 @@ class PeticaoAssistantService
     public function answerCurrentField(array $state, $value)
     {
         $value = trim((string) $value);
+        if ($value === '') {
+            return $this->state->appendMessage($state, 'assistant', 'Envie um valor para o campo em coleta.');
+        }
+
         $state = $this->state->appendMessage($state, 'user', $value);
 
         if (empty($state['current_pending_field'])) {
@@ -367,34 +371,39 @@ class PeticaoAssistantService
             return $state;
         }
 
-        $requiredCampos = $modelo->campos->where('obrigatorio', true);
+        $orderedCampos = $modelo->campos->sortBy(function ($campo) {
+            return [(int) $campo->input_order, (int) $campo->id_input];
+        })->values();
+
+        $fieldContexts = $this->buildFieldContexts($orderedCampos);
+        $assistantAnswers = $this->applyDeterministicFieldValues(
+            $modelo,
+            $orderedCampos,
+            $fieldContexts,
+            $state['assistant_field_answers'] ?? [],
+            $state['process_data'] ?? []
+        );
+        $requiredCampos = $orderedCampos->where('obrigatorio', true)->filter(function ($campo) {
+            return strtoupper((string) $campo->input_tipo) !== 'TITLE';
+        });
         $missingFields = [];
         $pendingFields = [];
-        $assistantAnswers = $state['assistant_field_answers'] ?? [];
 
         foreach ($requiredCampos as $campo) {
-            $column = trim((string) $campo->origem_coluna);
             $label = $campo->rotulo;
-            $fieldKey = 'campo_' . $campo->id_input;
-            $assistantValue = trim((string) ($assistantAnswers[$fieldKey]['value'] ?? ''));
-
-            $matched = false;
-            if ($assistantValue !== '') {
-                $matched = true;
-            } elseif ($column !== '') {
-                foreach ($state['process_data'] as $key => $value) {
-                    if (strcasecmp((string) $key, $column) === 0 && trim((string) $value) !== '') {
-                        $matched = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!$matched) {
+            if (!$this->campoHasResolvedValue($campo, $assistantAnswers, $state['process_data'] ?? [])) {
                 $missingFields[] = $label;
-                $pendingFields[] = $this->buildPendingFieldDescriptor($campo, $modelo);
+                $pendingFields[] = $this->buildPendingFieldDescriptor($campo, $modelo, $fieldContexts);
             }
         }
+
+        $pendingFields = collect($pendingFields)->sortBy(function ($field) {
+            return [
+                (int) ($field['group_order'] ?? 9999),
+                (int) ($field['field_order'] ?? 9999),
+                (int) ($field['field_id'] ?? 999999),
+            ];
+        })->values()->all();
 
         $checks = [];
         if (!empty($state['duplicate_petitions'])) {
@@ -407,6 +416,7 @@ class PeticaoAssistantService
         $state['missing_fields'] = array_values(array_unique($missingFields));
         $state['pending_fields'] = $pendingFields;
         $state['current_pending_field'] = $pendingFields[0] ?? null;
+        $state['assistant_field_answers'] = $assistantAnswers;
         $state['consistency_checks'] = array_values(array_unique($checks));
         $state['duplicate_petitions'] = $this->detectDuplicates(
             $state['process_code'],
@@ -542,10 +552,16 @@ class PeticaoAssistantService
         return $this->refreshSelectedModelAnalysis($state);
     }
 
-    protected function buildPendingFieldDescriptor($campo, $modelo)
+    protected function buildPendingFieldDescriptor($campo, $modelo, array $fieldContexts)
     {
+        $options = $this->buildPendingFieldOptions($campo);
         $dependentFill = $campo->dependent_fill_config;
         $dependentTarget = null;
+        $context = $fieldContexts[$campo->id_input] ?? [
+            'group_label' => null,
+            'group_order' => 9999,
+            'field_order' => 9999,
+        ];
 
         if ($dependentFill && !empty($dependentFill['target_field_id'])) {
             $targetCampo = $modelo->campos->first(function ($item) use ($dependentFill) {
@@ -568,7 +584,11 @@ class PeticaoAssistantService
             'field_key' => 'campo_' . $campo->id_input,
             'label' => $campo->input_title,
             'type' => strtoupper((string) $campo->input_tipo),
-            'options' => $this->buildPendingFieldOptions($campo),
+            'group_label' => $context['group_label'],
+            'group_order' => $context['group_order'],
+            'field_order' => $context['field_order'],
+            'options' => $options,
+            'is_searchable' => strtoupper((string) $campo->input_tipo) === 'SELECT' && count($options) > 6,
             'dependent_target' => $dependentTarget,
         ];
     }
@@ -619,40 +639,226 @@ class PeticaoAssistantService
             ];
         }
 
-        foreach ($field['options'] as $option) {
-            if ((string) $option['index'] === $message || mb_strtolower($option['label']) === mb_strtolower($message)) {
-                $dependentFill = null;
-                if (!empty($field['dependent_target'])) {
-                    $returnColumn = $field['dependent_target']['return_column'] ?? null;
-                    $returnValue = $returnColumn ? ($option['extras'][$returnColumn] ?? null) : null;
+        $directMatch = $this->matchPendingSelectOption($field, $message);
+        if ($directMatch) {
+            return $directMatch;
+        }
 
-                    if ($returnValue !== null && $returnValue !== '') {
-                        $dependentFill = [
-                            'field_id' => $field['dependent_target']['field_id'],
-                            'field_key' => $field['dependent_target']['field_key'],
-                            'label' => $field['dependent_target']['label'],
-                            'type' => $field['dependent_target']['type'],
-                            'value' => (string) $returnValue,
-                        ];
-                    }
-                }
+        $normalizedMessage = mb_strtolower($message);
+        $candidates = collect($field['options'])->filter(function ($option) use ($normalizedMessage) {
+            $haystack = mb_strtolower(trim(implode(' ', array_filter([
+                $option['label'] ?? '',
+                $option['helper'] ?? '',
+                $option['value'] ?? '',
+            ]))));
 
-                return [
-                    'ok' => true,
-                    'value' => $option['value'],
-                    'dependent_fill' => $dependentFill,
-                ];
-            }
+            return $haystack !== '' && mb_strpos($haystack, $normalizedMessage) !== false;
+        })->values();
+
+        if ($candidates->count() === 1) {
+            return $this->buildPendingSelectSuccess($field, $candidates->first());
+        }
+
+        if ($candidates->count() > 1) {
+            $optionsText = $candidates->take(5)->map(function ($option) {
+                return $option['index'] . '. ' . $option['label'] . (!empty($option['helper']) ? ' - ' . $option['helper'] : '');
+            })->implode(' | ');
+
+            return [
+                'ok' => false,
+                'message' => 'Encontrei mais de uma opcao para `' . $field['label'] . '`. Seja mais especifico ou escolha uma destas: ' . $optionsText . '.',
+            ];
         }
 
         $optionsText = collect($field['options'])->map(function ($option) {
-            return $option['index'] . '. ' . $option['label'];
+            return $option['index'] . '. ' . $option['label'] . (!empty($option['helper']) ? ' - ' . $option['helper'] : '');
         })->implode(' | ');
 
         return [
             'ok' => false,
             'message' => 'Opcao invalida para `' . $field['label'] . '`. Use uma destas: ' . $optionsText . '.',
         ];
+    }
+
+    protected function matchPendingSelectOption(array $field, $message)
+    {
+        foreach ($field['options'] as $option) {
+            if ((string) $option['index'] === $message) {
+                return $this->buildPendingSelectSuccess($field, $option);
+            }
+
+            $variants = [
+                mb_strtolower((string) ($option['label'] ?? '')),
+                mb_strtolower((string) ($option['value'] ?? '')),
+                mb_strtolower((string) ($option['helper'] ?? '')),
+            ];
+
+            if (in_array(mb_strtolower($message), array_filter($variants), true)) {
+                return $this->buildPendingSelectSuccess($field, $option);
+            }
+        }
+
+        return null;
+    }
+
+    protected function buildPendingSelectSuccess(array $field, array $option)
+    {
+        $dependentFill = null;
+        if (!empty($field['dependent_target'])) {
+            $returnColumn = $field['dependent_target']['return_column'] ?? null;
+            $returnValue = $returnColumn ? ($option['extras'][$returnColumn] ?? null) : null;
+
+            if ($returnValue !== null && $returnValue !== '') {
+                $dependentFill = [
+                    'field_id' => $field['dependent_target']['field_id'],
+                    'field_key' => $field['dependent_target']['field_key'],
+                    'label' => $field['dependent_target']['label'],
+                    'type' => $field['dependent_target']['type'],
+                    'value' => (string) $returnValue,
+                ];
+            }
+        }
+
+        return [
+            'ok' => true,
+            'value' => $option['value'],
+            'dependent_fill' => $dependentFill,
+        ];
+    }
+
+    protected function buildFieldContexts($orderedCampos)
+    {
+        $contexts = [];
+        $currentGroupLabel = null;
+        $currentGroupOrder = 0;
+        $hasExplicitGroups = false;
+
+        foreach ($orderedCampos->values() as $index => $campo) {
+            if (strtoupper((string) $campo->input_tipo) === 'TITLE') {
+                $hasExplicitGroups = true;
+                $currentGroupOrder++;
+                $currentGroupLabel = trim((string) $campo->input_title) ?: ('Bloco ' . $currentGroupOrder);
+                continue;
+            }
+
+            $contexts[$campo->id_input] = [
+                'group_label' => $currentGroupLabel,
+                'group_order' => $currentGroupLabel !== null ? $currentGroupOrder : 0,
+                'field_order' => $index,
+            ];
+        }
+
+        if ($hasExplicitGroups) {
+            $fallbackOrder = $currentGroupOrder + 1;
+            foreach ($contexts as $fieldId => $context) {
+                if ((int) $context['group_order'] !== 0) {
+                    continue;
+                }
+
+                $contexts[$fieldId]['group_order'] = $fallbackOrder;
+            }
+        }
+
+        return $contexts;
+    }
+
+    protected function applyDeterministicFieldValues($modelo, $orderedCampos, array $fieldContexts, array $assistantAnswers, array $processData)
+    {
+        $updated = true;
+
+        while ($updated) {
+            $updated = false;
+
+            foreach ($orderedCampos as $campo) {
+                if (strtoupper((string) $campo->input_tipo) === 'TITLE') {
+                    continue;
+                }
+
+                if ($this->campoHasResolvedValue($campo, $assistantAnswers, $processData)) {
+                    continue;
+                }
+
+                $derived = $this->deriveDeterministicFieldAnswer($campo, $modelo, $fieldContexts);
+                if (!$derived) {
+                    continue;
+                }
+
+                $fieldKey = 'campo_' . $campo->id_input;
+                $assistantAnswers[$fieldKey] = [
+                    'field_id' => $campo->id_input,
+                    'label' => $campo->input_title,
+                    'type' => strtoupper((string) $campo->input_tipo),
+                    'value' => $derived['value'],
+                    'source' => 'derived',
+                ];
+
+                if (!empty($derived['dependent_fill'])) {
+                    $dependent = $derived['dependent_fill'];
+                    if (trim((string) ($assistantAnswers[$dependent['field_key']]['value'] ?? '')) === '') {
+                        $assistantAnswers[$dependent['field_key']] = [
+                            'field_id' => $dependent['field_id'],
+                            'label' => $dependent['label'],
+                            'type' => $dependent['type'],
+                            'value' => $dependent['value'],
+                            'source' => 'derived',
+                        ];
+                    }
+                }
+
+                $updated = true;
+            }
+        }
+
+        return $assistantAnswers;
+    }
+
+    protected function deriveDeterministicFieldAnswer($campo, $modelo, array $fieldContexts)
+    {
+        $defaultValue = trim((string) $campo->texto_padrao);
+        if ($defaultValue !== '') {
+            return [
+                'value' => $defaultValue,
+                'dependent_fill' => null,
+            ];
+        }
+
+        if (strtoupper((string) $campo->input_tipo) !== 'SELECT') {
+            return null;
+        }
+
+        $descriptor = $this->buildPendingFieldDescriptor($campo, $modelo, $fieldContexts);
+        if (count($descriptor['options']) !== 1) {
+            return null;
+        }
+
+        return $this->buildPendingSelectSuccess($descriptor, $descriptor['options'][0]);
+    }
+
+    protected function campoHasResolvedValue($campo, array $assistantAnswers, array $processData)
+    {
+        $fieldKey = 'campo_' . $campo->id_input;
+        $assistantValue = trim((string) ($assistantAnswers[$fieldKey]['value'] ?? ''));
+        if ($assistantValue !== '') {
+            return true;
+        }
+
+        return $this->campoHasProcessValue($campo, $processData);
+    }
+
+    protected function campoHasProcessValue($campo, array $processData)
+    {
+        $column = trim((string) $campo->origem_coluna);
+        if ($column === '') {
+            return false;
+        }
+
+        foreach ($processData as $key => $value) {
+            if (strcasecmp((string) $key, $column) === 0 && trim((string) $value) !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function setConversationStage(array $state, $stage)
