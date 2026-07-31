@@ -229,6 +229,34 @@
             </div>
         @endif
 
+        @if(!empty($assistantState['jurisprudencia_suggestions']))
+            <div class="panel">
+                <div class="section-title">
+                    <h3>Jurisprudencia sugerida</h3>
+                    <div class="editor-note">Fonte oficial citada</div>
+                </div>
+
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Fonte</th>
+                        <th>Termos sugeridos</th>
+                        <th>Observacao</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($assistantState['jurisprudencia_suggestions'] as $item)
+                        <tr>
+                            <td><a href="{{ $item['url'] }}" target="_blank" rel="noopener">{{ $item['fonte'] }}</a></td>
+                            <td>{{ $item['termos'] }}</td>
+                            <td>{{ $item['observacao'] }}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
         @if(!empty($assistantState['duplicate_petitions']))
             <div class="panel">
                 <div class="section-title">

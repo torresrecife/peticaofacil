@@ -56,6 +56,8 @@ class PeticaoAssistantStateService
             'model_rationale' => null,
             'assistant_mode' => 'local',
             'assistant_warnings' => [],
+            'jurisprudencia_suggestions' => [],
+            'conflict_alerts' => [],
         ];
     }
 }

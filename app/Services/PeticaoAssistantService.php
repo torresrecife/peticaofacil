@@ -12,15 +12,21 @@ class PeticaoAssistantService
     protected $lookup;
     protected $state;
     protected $assistantAi;
+    protected $jurisprudencia;
+    protected $conflicts;
 
     public function __construct(
         SqlServerLookupService $lookup,
         PeticaoAssistantStateService $state,
-        PeticaoAssistantAiService $assistantAi
+        PeticaoAssistantAiService $assistantAi,
+        JurisprudenciaSuggestionService $jurisprudencia,
+        PeticaoAssistantConflictService $conflicts
     ) {
         $this->lookup = $lookup;
         $this->state = $state;
         $this->assistantAi = $assistantAi;
+        $this->jurisprudencia = $jurisprudencia;
+        $this->conflicts = $conflicts;
     }
 
     public function processMessage(array $state, $message)
@@ -61,8 +67,9 @@ class PeticaoAssistantService
         $reply .= 'Agora voce pode abrir a montagem assistida para carregar o processo e continuar no formulario normal.';
 
         $state = $this->state->appendMessage($state, 'assistant', $reply);
+        $state = $this->refreshSelectedModelAnalysis($state);
 
-        return $this->refreshSelectedModelAnalysis($state);
+        return $this->applyAiAnalysis($state, $modelo->nome);
     }
 
     protected function handleProcessLookup(array $state, $message)
@@ -320,6 +327,8 @@ class PeticaoAssistantService
             $state['missing_fields'] = [];
             $state['consistency_checks'] = [];
             $state['model_rationale'] = null;
+            $state['jurisprudencia_suggestions'] = [];
+            $state['conflict_alerts'] = $this->conflicts->analyze($state);
 
             return $state;
         }
@@ -370,6 +379,8 @@ class PeticaoAssistantService
             $state['process_data']
         );
         $state['model_rationale'] = 'Modelo selecionado para o processo atual. Revise os campos obrigatorios antes de abrir a montagem.';
+        $state['jurisprudencia_suggestions'] = $this->jurisprudencia->suggest($state);
+        $state['conflict_alerts'] = $this->conflicts->analyze($state);
 
         return $state;
     }
@@ -390,7 +401,8 @@ class PeticaoAssistantService
         )));
         $state['consistency_checks'] = array_values(array_unique(array_merge(
             $state['consistency_checks'] ?? [],
-            $analysis['consistency_checks']
+            $analysis['consistency_checks'],
+            $state['conflict_alerts'] ?? []
         )));
         $state['model_rationale'] = $analysis['model_rationale'] ?: ($state['model_rationale'] ?? null);
 
