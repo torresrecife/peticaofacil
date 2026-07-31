@@ -109,6 +109,20 @@
                 @endif
             </div>
 
+            <div class="panel-muted" style="margin-bottom:16px;">
+                <strong>Etapa atual:</strong> {{ $assistantState['conversation_stage_label'] ?? 'Consulta do processo' }}
+                @if(!empty($assistantState['assistant_stage_guidance']))
+                    <div style="margin-top:8px;">{{ $assistantState['assistant_stage_guidance'] }}</div>
+                @endif
+                @if(!empty($assistantState['assistant_questions']))
+                    <ul style="margin:8px 0 0 18px; padding:0;">
+                        @foreach($assistantState['assistant_questions'] as $question)
+                            <li>{{ $question }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+
             <div class="assistant-chat">
                 @foreach($assistantState['messages'] as $message)
                     <div class="assistant-message assistant-message--{{ $message['role'] }}">

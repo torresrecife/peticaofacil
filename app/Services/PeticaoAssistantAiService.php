@@ -45,6 +45,7 @@ class PeticaoAssistantAiService
             'consistency_checks' => array_values(array_filter($data['consistency_checks'] ?? [])),
             'model_rationale' => trim((string) ($data['model_rationale'] ?? '')),
             'warnings' => array_values(array_filter($data['warnings'] ?? [])),
+            'stage_guidance' => trim((string) ($data['stage_guidance'] ?? '')),
         ];
     }
 
@@ -58,10 +59,14 @@ class PeticaoAssistantAiService
             $checks[] = 'Ja existe peticao salva com o mesmo codigo de processo. Revise antes de gerar nova minuta.';
         }
 
-        if (!empty($state['selected_model_id']) && !empty($missingFields)) {
-            $questions[] = 'Antes de seguir, preciso confirmar os campos faltantes do modelo selecionado.';
-        } elseif (!empty($state['process_code']) && empty($state['selected_model_id'])) {
+        $stage = $state['conversation_stage'] ?? 'process_lookup';
+
+        if ($stage === 'process_lookup') {
+            $questions[] = 'Informe o codigo exato do processo.';
+        } elseif ($stage === 'model_selection') {
             $questions[] = 'Qual peticao voce quer elaborar para esse processo?';
+        } elseif ($stage === 'data_completion' && !empty($missingFields)) {
+            $questions[] = 'Antes de abrir a montagem, preciso fechar os dados obrigatorios que ainda faltam.';
         }
 
         $message = 'Analise preliminar pronta.';
@@ -86,6 +91,7 @@ class PeticaoAssistantAiService
                 : '',
             'warnings' => $error ? [$error] : [],
             'warning_code' => $errorCode,
+            'stage_guidance' => $this->fallbackStageGuidance($stage, $missingFields),
         ];
     }
 
@@ -97,7 +103,10 @@ class PeticaoAssistantAiService
             'Nao invente fatos e nao use informacao fora do contexto recebido.',
             'Se houver risco de duplicidade ou inconsistencias, destaque isso explicitamente.',
             'Nao gere a peticao final aqui. Apenas conduza a coleta de dados e a escolha do modelo.',
+            'Conduza a conversa por etapa: consulta do processo, escolha do modelo, confirmacao dos dados faltantes e handoff para a montagem.',
             'Quando o modelo ja estiver escolhido, faca perguntas curtas e objetivas sobre os dados faltantes.',
+            'Evite perguntar mais de duas coisas por vez.',
+            'Se a etapa atual for so escolher o modelo, nao antecipe perguntas detalhadas de preenchimento.',
         ]);
     }
 
@@ -108,6 +117,8 @@ class PeticaoAssistantAiService
             'process_code' => $state['process_code'],
             'selected_model_id' => $state['selected_model_id'],
             'selected_model_name' => $state['selected_model_name'],
+            'conversation_stage' => $state['conversation_stage'] ?? 'process_lookup',
+            'conversation_stage_label' => $state['conversation_stage_label'] ?? 'Consulta do processo',
             'process_data' => $state['process_data'],
             'model_suggestions' => $state['model_suggestions'],
             'duplicate_petitions' => $state['duplicate_petitions'],
@@ -165,6 +176,7 @@ class PeticaoAssistantAiService
                     'items' => ['type' => 'string'],
                 ],
                 'model_rationale' => ['type' => 'string'],
+                'stage_guidance' => ['type' => 'string'],
                 'warnings' => [
                     'type' => 'array',
                     'items' => ['type' => 'string'],
@@ -176,8 +188,28 @@ class PeticaoAssistantAiService
                 'missing_fields',
                 'consistency_checks',
                 'model_rationale',
+                'stage_guidance',
                 'warnings',
             ],
         ];
+    }
+
+    protected function fallbackStageGuidance($stage, array $missingFields)
+    {
+        if ($stage === 'process_lookup') {
+            return 'Primeiro confirme o numero do processo para eu consultar os dados do caso.';
+        }
+
+        if ($stage === 'model_selection') {
+            return 'Agora escolha ou descreva a peticao que voce quer elaborar.';
+        }
+
+        if ($stage === 'data_completion') {
+            return !empty($missingFields)
+                ? 'Antes do handoff, feche os campos obrigatorios que ainda estao pendentes.'
+                : 'Os dados principais ja foram fechados. Revise e siga para a montagem.';
+        }
+
+        return 'O processo e o modelo ja estao prontos para seguir para a montagem assistida.';
     }
 }

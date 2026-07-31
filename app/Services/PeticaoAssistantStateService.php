@@ -44,6 +44,8 @@ class PeticaoAssistantStateService
                 'content' => 'Informe o codigo do processo para eu consultar os dados e sugerir a peticao adequada.',
                 'at' => now()->format('d/m/Y H:i'),
             ]],
+            'conversation_stage' => 'process_lookup',
+            'conversation_stage_label' => 'Consulta do processo',
             'process_code' => null,
             'sql_profile_id' => null,
             'process_data' => [],
@@ -56,6 +58,8 @@ class PeticaoAssistantStateService
             'model_rationale' => null,
             'assistant_mode' => 'local',
             'assistant_warnings' => [],
+            'assistant_questions' => [],
+            'assistant_stage_guidance' => null,
             'jurisprudencia_suggestions' => [],
             'conflict_alerts' => [],
         ];

@@ -60,6 +60,8 @@ class PeticaoAssistantFlowTest extends TestCase
         $page->assertSee('Cliente Teste');
         $page->assertSee('SUBSTABELECIMENTO');
         $page->assertSee('Qual peticao voce quer elaborar');
+        $page->assertSee('Etapa atual:');
+        $page->assertSee('Escolha do modelo');
         $page->assertDontSee('Abrir montagem assistida');
 
         $select = $this->actingAs($user)->post(route('peticoes.assistente.select-model', $modelo));
@@ -68,5 +70,6 @@ class PeticaoAssistantFlowTest extends TestCase
         $pageAfterSelect = $this->actingAs($user)->get(route('peticoes.assistente.index'));
         $pageAfterSelect->assertSee('Abrir montagem assistida');
         $pageAfterSelect->assertSee('5001234-55.2026.8.26.0100');
+        $pageAfterSelect->assertSee('Pronto para abrir a montagem');
     }
 }

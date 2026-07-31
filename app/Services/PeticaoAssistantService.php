@@ -35,17 +35,20 @@ class PeticaoAssistantService
         $state = $this->state->appendMessage($state, 'user', $message);
 
         if (!$state['process_code']) {
+            $state = $this->setConversationStage($state, 'process_lookup');
             $state = $this->handleProcessLookup($state, $message);
 
             return $this->applyAiAnalysis($state, $message);
         }
 
         if (!$state['selected_model_id']) {
+            $state = $this->setConversationStage($state, 'model_selection');
             $state = $this->handleModelSelection($state, $message);
 
             return $this->applyAiAnalysis($state, $message);
         }
 
+        $state = $this->setConversationStage($state, 'data_completion');
         $state = $this->state->appendMessage(
             $state,
             'assistant',
@@ -59,6 +62,7 @@ class PeticaoAssistantService
 
     public function selectModel(array $state, PeticaoModelo $modelo)
     {
+        $state = $this->setConversationStage($state, 'data_completion');
         $state['selected_model_id'] = $modelo->id;
         $state['selected_model_name'] = $modelo->nome;
         $state['model_suggestions'] = $this->serializeModelSuggestions(collect([$modelo]));
@@ -94,6 +98,7 @@ class PeticaoAssistantService
         $state['sql_profile_id'] = $match['profile']->id;
         $state['process_data'] = $match['data'];
         $state['duplicate_petitions'] = $this->detectDuplicates($code);
+        $state = $this->setConversationStage($state, 'model_selection');
 
         $suggestions = $this->suggestModels();
         $state['model_suggestions'] = $this->serializeModelSuggestions($suggestions);
@@ -329,6 +334,7 @@ class PeticaoAssistantService
             $state['model_rationale'] = null;
             $state['jurisprudencia_suggestions'] = [];
             $state['conflict_alerts'] = $this->conflicts->analyze($state);
+            $state = $this->setConversationStage($state, !empty($state['process_code']) ? 'model_selection' : 'process_lookup');
 
             return $state;
         }
@@ -381,6 +387,7 @@ class PeticaoAssistantService
         $state['model_rationale'] = 'Modelo selecionado para o processo atual. Revise os campos obrigatorios antes de abrir a montagem.';
         $state['jurisprudencia_suggestions'] = $this->jurisprudencia->suggest($state);
         $state['conflict_alerts'] = $this->conflicts->analyze($state);
+        $state = $this->setConversationStage($state, !empty($state['missing_fields']) ? 'data_completion' : 'ready_for_handoff');
 
         return $state;
     }
@@ -395,6 +402,8 @@ class PeticaoAssistantService
 
         $state['assistant_mode'] = $analysis['mode'];
         $state['assistant_warnings'] = $analysis['warnings'];
+        $state['assistant_questions'] = $analysis['questions'];
+        $state['assistant_stage_guidance'] = $analysis['stage_guidance'] ?? null;
         $state['missing_fields'] = array_values(array_unique(array_merge(
             $state['missing_fields'] ?? [],
             $analysis['missing_fields']
@@ -417,6 +426,8 @@ class PeticaoAssistantService
                 'Perguntas objetivas: ' . implode(' | ', $analysis['questions'])
             );
         }
+
+        $state = $this->setConversationStageFromState($state);
 
         return $state;
     }
@@ -453,5 +464,45 @@ class PeticaoAssistantService
         }
 
         return '';
+    }
+
+    protected function setConversationStage(array $state, $stage)
+    {
+        $state['conversation_stage'] = $stage;
+        $state['conversation_stage_label'] = $this->conversationStageLabel($stage);
+
+        return $state;
+    }
+
+    protected function setConversationStageFromState(array $state)
+    {
+        if (empty($state['process_code'])) {
+            return $this->setConversationStage($state, 'process_lookup');
+        }
+
+        if (empty($state['selected_model_id'])) {
+            return $this->setConversationStage($state, 'model_selection');
+        }
+
+        if (!empty($state['missing_fields'])) {
+            return $this->setConversationStage($state, 'data_completion');
+        }
+
+        return $this->setConversationStage($state, 'ready_for_handoff');
+    }
+
+    protected function conversationStageLabel($stage)
+    {
+        switch ($stage) {
+            case 'model_selection':
+                return 'Escolha do modelo';
+            case 'data_completion':
+                return 'Confirmacao dos dados faltantes';
+            case 'ready_for_handoff':
+                return 'Pronto para abrir a montagem';
+            case 'process_lookup':
+            default:
+                return 'Consulta do processo';
+        }
     }
 }
