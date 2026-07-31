@@ -5,26 +5,23 @@ For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
 
 body
 {
-	/* Font */
-	/* Emoji fonts are added to visualise them nicely in Internet Explorer. */
-	font-family: sans-serif, Arial, Verdana, "Trebuchet MS", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-	font-size: 12px;
-
-	/* Text color */
-	color: #333;
-
-	/* Remove the background color to make it transparent. */
-	background-color: #fff;
-
-	margin: 20px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12pt;
+	line-height: 1.6;
+	color: #1f2933;
+	background: #ffffff;
+	max-width: 794px;
+	min-height: 1123px;
+	margin: 24px auto;
+	padding: 72px 64px;
+	box-sizing: border-box;
+	box-shadow: 0 8px 32px rgba(15, 23, 42, 0.12);
 }
 
 .cke_editable
 {
-	font-size: 13px;
+	font-size: 12pt;
 	line-height: 1.6;
-
-	/* Fix for missing scrollbars with RTL texts. (#10488) */
 	word-wrap: break-word;
 }
 
@@ -67,8 +64,95 @@ ol,ul,dl
 
 h1,h2,h3,h4,h5,h6
 {
-	font-weight: normal;
-	line-height: 1.2;
+	font-weight: bold;
+	line-height: 1.35;
+	margin: 0 0 12px;
+}
+
+p
+{
+	margin: 0 0 12px;
+	text-align: justify;
+}
+
+.peticao-titulo-principal
+{
+	text-align: center;
+	text-transform: uppercase;
+	font-size: 15pt;
+	font-weight: bold;
+	letter-spacing: 0;
+	margin: 0 0 24px;
+}
+
+.peticao-subtitulo
+{
+	text-align: left;
+	text-transform: uppercase;
+	font-size: 12pt;
+	font-weight: bold;
+	margin: 24px 0 12px;
+}
+
+.peticao-corpo,
+.peticao-fundamentacao,
+.peticao-pedido
+{
+	text-align: justify;
+	text-indent: 2cm;
+}
+
+.peticao-fundamentacao
+{
+	margin-top: 10px;
+}
+
+.peticao-pedido
+{
+	font-weight: bold;
+}
+
+.peticao-assinatura
+{
+	margin-top: 36px;
+	text-align: center;
+	text-indent: 0;
+}
+
+.peticao-observacao
+{
+	margin: 12px 0;
+	padding: 10px 12px;
+	border-left: 4px solid #d9b95b;
+	background: #fff7d6;
+	color: #694f00;
+	text-indent: 0;
+}
+
+.peticao-destaque
+{
+	background: #fff3bf;
+	padding: 0 2px;
+}
+
+.peticao-tabela-compacta
+{
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 11pt;
+}
+
+.peticao-tabela-compacta th,
+.peticao-tabela-compacta td
+{
+	border: 1px solid #cbd2d9;
+	padding: 6px 8px;
+	vertical-align: top;
+}
+
+.peticao-lista
+{
+	padding-left: 24px;
 }
 
 hr

@@ -10,6 +10,17 @@
     <script src="{{ $legacyAppUrl }}/ckeditor/ckeditor.js"></script>
     <script src="{{ $legacyAppUrl }}/ckfinder/ckfinder.js"></script>
 @endif
+<style>
+    .field-behavior-note {
+        margin-top: 6px;
+        font-size: 12px;
+        color: #7b8794;
+    }
+    .field-behavior-note.is-active {
+        color: #8d5c00;
+        font-weight: 600;
+    }
+</style>
 @endpush
 
 @section('content')
@@ -216,7 +227,7 @@
                         </div>
                         <div class="form-group">
                             <label>Tipo</label>
-                            <select name="input_tipo">
+                            <select name="input_tipo" class="js-field-type-select">
                                 <option value="TEXT">Texto</option>
                                 <option value="TEXTAREA">Textarea</option>
                                 <option value="SELECT">Select</option>
@@ -277,6 +288,14 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label>Comportamento do campo</label>
+                            <select name="input_behavior" class="js-field-behavior-select">
+                                <option value="">Nenhum</option>
+                                <option value="date">Data</option>
+                            </select>
+                            <div class="field-behavior-note js-date-behavior-note" style="display:none;">Os presets de data ficam disponiveis para campos Texto e Textarea.</div>
+                        </div>
+                        <div class="form-group">
                             <label>Obrigatorio</label>
                             <select name="input_req">
                                 <option value="1">Sim</option>
@@ -294,13 +313,40 @@
                             <label>Classe CSS</label>
                             <input name="add_class">
                         </div>
+                        <div class="form-group full js-date-preset-row" data-preset-row="focus" style="display:none;">
+                            <label>Preset Ao Entrar</label>
+                            <select name="input_focu_preset">
+                                <option value="">Nenhum</option>
+                                <option value="data_extenso_out">Data por extenso</option>
+                                <option value="data_atual">Data atual</option>
+                                <option value="dia_semana">Dia da semana</option>
+                            </select>
+                        </div>
                         <div class="form-group full">
                             <label>Ao Entrar</label>
                             <textarea name="input_focu"></textarea>
                         </div>
+                        <div class="form-group full js-date-preset-row" data-preset-row="load" style="display:none;">
+                            <label>Preset Ao Carregar</label>
+                            <select name="input_load_preset">
+                                <option value="">Nenhum</option>
+                                <option value="data_extenso_out">Data por extenso</option>
+                                <option value="data_atual">Data atual</option>
+                                <option value="dia_semana">Dia da semana</option>
+                            </select>
+                        </div>
                         <div class="form-group full">
                             <label>Ao Carregar</label>
                             <textarea name="input_load"></textarea>
+                        </div>
+                        <div class="form-group full js-date-preset-row" data-preset-row="blur" style="display:none;">
+                            <label>Preset Ao Sair</label>
+                            <select name="input_blur_preset">
+                                <option value="">Nenhum</option>
+                                <option value="data_extenso_out">Data por extenso</option>
+                                <option value="data_atual">Data atual</option>
+                                <option value="dia_semana">Dia da semana</option>
+                            </select>
                         </div>
                         <div class="form-group full">
                             <label>Ao Sair</label>
@@ -351,7 +397,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Tipo</label>
-                                        <select name="input_tipo">
+                                        <select name="input_tipo" class="js-field-type-select">
                                             @foreach(['TEXT', 'TEXTAREA', 'SELECT', 'HIDDEN', 'TITLE'] as $tipoCampo)
                                                 <option value="{{ $tipoCampo }}" @if($campo->input_tipo === $tipoCampo) selected @endif>{{ $tipoCampo }}</option>
                                             @endforeach
@@ -412,6 +458,14 @@
                                         </select>
                                     </div>
                                     <div class="form-group">
+                                        <label>Comportamento do campo</label>
+                                        <select name="input_behavior" class="js-field-behavior-select">
+                                            <option value="" @if($campo->input_behavior === '') selected @endif>Nenhum</option>
+                                            <option value="date" @if($campo->input_behavior === 'date') selected @endif>Data</option>
+                                        </select>
+                                        <div class="field-behavior-note js-date-behavior-note" style="display:none;">Os presets de data ficam disponiveis para campos Texto e Textarea.</div>
+                                    </div>
+                                    <div class="form-group">
                                         <label>Obrigatorio</label>
                                         <select name="input_req">
                                             <option value="1" @if((int) $campo->input_req === 1) selected @endif>Sim</option>
@@ -429,13 +483,40 @@
                                         <label>Ordem</label>
                                         <input name="input_order" type="number" min="1" value="{{ $campo->input_order }}">
                                     </div>
+                                    <div class="form-group full js-date-preset-row" data-preset-row="focus" style="display:none;">
+                                        <label>Preset Ao Entrar</label>
+                                        <select name="input_focu_preset">
+                                            <option value="" @if($campo->input_focu_preset === '') selected @endif>Nenhum</option>
+                                            <option value="data_extenso_out" @if($campo->input_focu_preset === 'data_extenso_out') selected @endif>Data por extenso</option>
+                                            <option value="data_atual" @if($campo->input_focu_preset === 'data_atual') selected @endif>Data atual</option>
+                                            <option value="dia_semana" @if($campo->input_focu_preset === 'dia_semana') selected @endif>Dia da semana</option>
+                                        </select>
+                                    </div>
                                     <div class="form-group full">
                                         <label>Ao Entrar</label>
                                         <textarea name="input_focu">{{ $campo->input_focu }}</textarea>
                                     </div>
+                                    <div class="form-group full js-date-preset-row" data-preset-row="load" style="display:none;">
+                                        <label>Preset Ao Carregar</label>
+                                        <select name="input_load_preset">
+                                            <option value="" @if($campo->input_load_preset === '') selected @endif>Nenhum</option>
+                                            <option value="data_extenso_out" @if($campo->input_load_preset === 'data_extenso_out') selected @endif>Data por extenso</option>
+                                            <option value="data_atual" @if($campo->input_load_preset === 'data_atual') selected @endif>Data atual</option>
+                                            <option value="dia_semana" @if($campo->input_load_preset === 'dia_semana') selected @endif>Dia da semana</option>
+                                        </select>
+                                    </div>
                                     <div class="form-group full">
                                         <label>Ao Carregar</label>
                                         <textarea name="input_load">{{ $campo->input_load }}</textarea>
+                                    </div>
+                                    <div class="form-group full js-date-preset-row" data-preset-row="blur" style="display:none;">
+                                        <label>Preset Ao Sair</label>
+                                        <select name="input_blur_preset">
+                                            <option value="" @if($campo->input_blur_preset === '') selected @endif>Nenhum</option>
+                                            <option value="data_extenso_out" @if($campo->input_blur_preset === 'data_extenso_out') selected @endif>Data por extenso</option>
+                                            <option value="data_atual" @if($campo->input_blur_preset === 'data_atual') selected @endif>Data atual</option>
+                                            <option value="dia_semana" @if($campo->input_blur_preset === 'dia_semana') selected @endif>Dia da semana</option>
+                                        </select>
                                     </div>
                                     <div class="form-group full">
                                         <label>Ao Sair</label>
@@ -491,6 +572,58 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (window.CKFinder && ckfinderBaseUrl) {
             CKFinder.setupCKEditor(instance, ckfinderBaseUrl);
+        }
+    });
+
+    function syncFieldBehavior(form) {
+        var typeSelect = form.querySelector('.js-field-type-select');
+        var behaviorSelect = form.querySelector('.js-field-behavior-select');
+        var note = form.querySelector('.js-date-behavior-note');
+        var presetRows = form.querySelectorAll('.js-date-preset-row');
+        if (!typeSelect || !behaviorSelect || !presetRows.length) {
+            return;
+        }
+
+        var type = String(typeSelect.value || '').toUpperCase();
+        var behavior = String(behaviorSelect.value || '');
+        var canUseDateBehavior = type === 'TEXT' || type === 'TEXTAREA';
+        var showDatePresets = canUseDateBehavior && behavior === 'date';
+
+        Array.prototype.forEach.call(presetRows, function (row) {
+            row.style.display = showDatePresets ? '' : 'none';
+            Array.prototype.forEach.call(row.querySelectorAll('select'), function (select) {
+                select.disabled = !showDatePresets;
+            });
+        });
+
+        if (note) {
+            note.style.display = canUseDateBehavior ? '' : 'none';
+            note.classList.toggle('is-active', showDatePresets);
+        }
+
+        if (!canUseDateBehavior && behavior !== '') {
+            behaviorSelect.value = '';
+        }
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll('form'), function (form) {
+        if (!form.querySelector('.js-field-type-select')) {
+            return;
+        }
+
+        syncFieldBehavior(form);
+
+        var typeSelect = form.querySelector('.js-field-type-select');
+        var behaviorSelect = form.querySelector('.js-field-behavior-select');
+
+        typeSelect.addEventListener('change', function () {
+            syncFieldBehavior(form);
+        });
+
+        if (behaviorSelect) {
+            behaviorSelect.addEventListener('change', function () {
+                syncFieldBehavior(form);
+            });
         }
     });
 });

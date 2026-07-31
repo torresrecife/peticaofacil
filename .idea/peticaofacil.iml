@@ -15,6 +15,11 @@
       <sourceFolder url="file://$MODULE_DIR$/_legacy_backup/pre-root-promotion-20260727-095601/laravel6/tests/Unit" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/staging/root-promotion/tests/Feature" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/staging/root-promotion/tests/Unit" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/_legacy_backup/pre-root-promotion-20260727-095601/laravel6/app" isTestSource="false" packagePrefix="App\" />
+      <sourceFolder url="file://$MODULE_DIR$/_legacy_backup/pre-root-promotion-20260727-095601/laravel6/tests" isTestSource="true" packagePrefix="Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/_legacy_backup/pre-root-promotion-20260727-095601/src" isTestSource="false" packagePrefix="App\" />
+      <sourceFolder url="file://$MODULE_DIR$/staging/root-promotion/app" isTestSource="false" packagePrefix="App\" />
+      <sourceFolder url="file://$MODULE_DIR$/staging/root-promotion/tests" isTestSource="true" packagePrefix="Tests\" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/composer" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/graham-campbell/result-type" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/phpoption/phpoption" />

@@ -27,10 +27,10 @@ class NormalizedInputCampoController extends Controller
             'sufixo' => $data['input_pos'] ?? null,
             'valor_padrao' => $data['texto_padrao'] ?? null,
             'classe_css' => $data['add_class'] ?? null,
-            'largura' => $data['input_width'] ?: $this->resolveWidth((int) $data['input_cols']),
-            'colunas_layout' => $data['input_cols'] ?: 1,
+            'largura' => ($data['input_width'] ?? null) ?: $this->resolveWidth((int) $data['input_cols']),
+            'colunas_layout' => ($data['input_cols'] ?? null) ?: 1,
             'linhas_layout' => $data['input_rols'] ?? 0,
-            'ordem' => $data['input_order'] ?: (((int) PeticaoModeloCampo::where('modelo_id', $modeloNormalizado->id)->max('ordem')) + 1),
+            'ordem' => ($data['input_order'] ?? null) ?: (((int) PeticaoModeloCampo::where('modelo_id', $modeloNormalizado->id)->max('ordem')) + 1),
             'obrigatorio' => (int) ($data['input_req'] ?? 0) === 1,
             'visivel' => ($data['hide'] ?? 'true') !== 'none',
             'gera_nome_arquivo' => ($data['nomepet'] ?? 'N') === 'Y',
@@ -63,10 +63,10 @@ class NormalizedInputCampoController extends Controller
             'sufixo' => $data['input_pos'] ?? null,
             'valor_padrao' => $data['texto_padrao'] ?? null,
             'classe_css' => $data['add_class'] ?? null,
-            'largura' => $data['input_width'] ?: $this->resolveWidth((int) $data['input_cols']),
-            'colunas_layout' => $data['input_cols'] ?: 1,
+            'largura' => ($data['input_width'] ?? null) ?: $this->resolveWidth((int) $data['input_cols']),
+            'colunas_layout' => ($data['input_cols'] ?? null) ?: 1,
             'linhas_layout' => $data['input_rols'] ?? 0,
-            'ordem' => $data['input_order'] ?: $campo->ordem,
+            'ordem' => ($data['input_order'] ?? null) ?: $campo->ordem,
             'obrigatorio' => (int) ($data['input_req'] ?? 0) === 1,
             'visivel' => ($data['hide'] ?? 'true') !== 'none',
             'gera_nome_arquivo' => ($data['nomepet'] ?? 'N') === 'Y',
@@ -88,6 +88,7 @@ class NormalizedInputCampoController extends Controller
         return $request->validate([
             'input_title' => 'required|string|max:500',
             'input_tipo' => 'required|in:TEXT,SELECT,TEXTAREA,HIDDEN,TITLE',
+            'input_behavior' => 'nullable|in:,date',
             'input_pre' => 'nullable|string',
             'input_pos' => 'nullable|string',
             'input_db' => 'nullable|string|max:100',
@@ -98,6 +99,9 @@ class NormalizedInputCampoController extends Controller
             'input_focu' => 'nullable|string|max:2000',
             'input_load' => 'nullable|string|max:2000',
             'input_blur' => 'nullable|string|max:2000',
+            'input_focu_preset' => 'nullable|in:,data_extenso_out,data_atual,dia_semana',
+            'input_load_preset' => 'nullable|in:,data_extenso_out,data_atual,dia_semana',
+            'input_blur_preset' => 'nullable|in:,data_extenso_out,data_atual,dia_semana',
             'input_width' => 'nullable|integer|min:10|max:5000',
             'input_req' => 'nullable|integer|min:0|max:1',
             'input_order' => 'nullable|integer|min:1',
@@ -172,9 +176,9 @@ class NormalizedInputCampoController extends Controller
 
     protected function buildFrontendEvents(PeticaoModeloCampo $campo, array $data)
     {
-        $focus = trim((string) ($data['input_focu'] ?? ''));
-        $load = trim((string) ($data['input_load'] ?? ''));
-        $blur = trim((string) ($data['input_blur'] ?? ''));
+        $focus = $this->resolveEventScript($data, 'input_focu', 'input_focu_preset');
+        $load = $this->resolveEventScript($data, 'input_load', 'input_load_preset');
+        $blur = $this->resolveEventScript($data, 'input_blur', 'input_blur_preset');
 
         if (
             $campo->input_tipo === 'SELECT'
@@ -206,5 +210,29 @@ class NormalizedInputCampoController extends Controller
             'load' => $load !== '' ? $load : null,
             'blur' => $blur !== '' ? $blur : null,
         ]);
+    }
+
+    protected function resolveEventScript(array $data, $inputKey, $presetKey)
+    {
+        $preset = trim((string) ($data[$presetKey] ?? ''));
+        if ($preset !== '') {
+            return $this->presetScript($preset);
+        }
+
+        return trim((string) ($data[$inputKey] ?? ''));
+    }
+
+    protected function presetScript($preset)
+    {
+        switch ($preset) {
+            case 'data_extenso_out':
+                return 'data_extenso_out(this);';
+            case 'data_atual':
+                return 'data_atual(this);';
+            case 'dia_semana':
+                return 'dia_semana(this);';
+            default:
+                return '';
+        }
     }
 }

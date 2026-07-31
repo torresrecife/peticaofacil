@@ -132,13 +132,29 @@
                     @elseif($campo->input_tipo === 'TEXTAREA')
                         <div class="form-group full">
                             <label>{{ $campo->input_title }}</label>
-                            <textarea name="campo_{{ $campo->id_input }}">{{ $values['campo_'.$campo->id_input] ?? '' }}</textarea>
+                            <textarea
+                                name="campo_{{ $campo->id_input }}"
+                                @if($campo->input_focu || $campo->input_load || $campo->input_blur)
+                                    class="js-frontend-event-field"
+                                    data-event-focus="{{ e($campo->input_focu) }}"
+                                    data-event-load="{{ e($campo->input_load) }}"
+                                    data-event-blur="{{ e($campo->input_blur) }}"
+                                @endif
+                            >{{ $values['campo_'.$campo->id_input] ?? '' }}</textarea>
                             <div class="editor-note">Token {{ $campo->placeholder }}</div>
                         </div>
                     @else
                         <div class="form-group @if((int) $campo->input_cols >= 2) full @endif">
                             <label>{{ $campo->input_title }}</label>
-                            <input name="campo_{{ $campo->id_input }}" value="{{ $values['campo_'.$campo->id_input] ?? '' }}">
+                            <input
+                                name="campo_{{ $campo->id_input }}"
+                                value="{{ $values['campo_'.$campo->id_input] ?? '' }}"
+                                @if($campo->input_focu || $campo->input_load || $campo->input_blur)
+                                    class="js-frontend-event-field"
+                                    data-event-focus="{{ e($campo->input_focu) }}"
+                                    data-event-load="{{ e($campo->input_load) }}"
+                                    data-event-blur="{{ e($campo->input_blur) }}"
+                                @endif>
                             <div class="editor-note">Token {{ $campo->placeholder }}</div>
                         </div>
                     @endif
@@ -184,6 +200,72 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    function pad(value) {
+        return value < 10 ? '0' + value : String(value);
+    }
+
+    function parseDateValue(rawValue) {
+        var value = (rawValue || '').trim();
+        if (!value) {
+            return new Date();
+        }
+
+        var slash = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (slash) {
+            return new Date(parseInt(slash[3], 10), parseInt(slash[2], 10) - 1, parseInt(slash[1], 10));
+        }
+
+        var iso = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (iso) {
+            return new Date(parseInt(iso[1], 10), parseInt(iso[2], 10) - 1, parseInt(iso[3], 10));
+        }
+
+        var fallback = new Date(value);
+        return isNaN(fallback.getTime()) ? new Date() : fallback;
+    }
+
+    function formatDateExtenso(date) {
+        var months = ['janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+        return date.getDate() + ' de ' + months[date.getMonth()] + ' de ' + date.getFullYear();
+    }
+
+    function formatWeekday(date) {
+        var days = ['domingo', 'segunda-feira', 'terca-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sabado'];
+        return days[date.getDay()];
+    }
+
+    function data_atual(field) {
+        var date = new Date();
+        field.value = pad(date.getDate()) + '/' + pad(date.getMonth() + 1) + '/' + date.getFullYear();
+    }
+
+    function data_extenso_out(field) {
+        var date = parseDateValue(field.value);
+        field.value = formatDateExtenso(date);
+    }
+
+    function dia_semana(field) {
+        var date = parseDateValue(field.value);
+        field.value = formatWeekday(date);
+    }
+
+    function executeSupportedEvents(script, field) {
+        var raw = (script || '').trim();
+        if (!raw) {
+            return;
+        }
+
+        if (raw.indexOf('data_atual(this)') !== -1) {
+            data_atual(field);
+        }
+        if (raw.indexOf('data_extenso_out(this)') !== -1) {
+            data_extenso_out(field);
+        }
+        if (raw.indexOf('dia_semana(this)') !== -1) {
+            dia_semana(field);
+        }
+    }
+
     function applyDependentSelect(select) {
         var targetFieldId = select.getAttribute('data-target-field');
         var returnColumn = select.getAttribute('data-return-column');
@@ -211,6 +293,16 @@ document.addEventListener('DOMContentLoaded', function () {
         applyDependentSelect(select);
         select.addEventListener('change', function () {
             applyDependentSelect(select);
+        });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('.js-frontend-event-field'), function (field) {
+        executeSupportedEvents(field.getAttribute('data-event-load'), field);
+        field.addEventListener('focus', function () {
+            executeSupportedEvents(field.getAttribute('data-event-focus'), field);
+        });
+        field.addEventListener('blur', function () {
+            executeSupportedEvents(field.getAttribute('data-event-blur'), field);
         });
     });
 });

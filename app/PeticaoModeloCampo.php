@@ -143,6 +143,32 @@ class PeticaoModeloCampo extends Model
         return $this->eventos_frontend['blur'] ?? null;
     }
 
+    public function getInputBehaviorAttribute()
+    {
+        foreach (['focus', 'load', 'blur'] as $eventName) {
+            if ($this->detectEventPreset($this->eventos_frontend[$eventName] ?? null)) {
+                return 'date';
+            }
+        }
+
+        return '';
+    }
+
+    public function getInputFocuPresetAttribute()
+    {
+        return $this->detectEventPreset($this->input_focu);
+    }
+
+    public function getInputLoadPresetAttribute()
+    {
+        return $this->detectEventPreset($this->input_load);
+    }
+
+    public function getInputBlurPresetAttribute()
+    {
+        return $this->detectEventPreset($this->input_blur);
+    }
+
     public function getPlaceholderAttribute()
     {
         return '@campo' . $this->id_input . '@';
@@ -233,6 +259,28 @@ class PeticaoModeloCampo extends Model
         }
 
         return null;
+    }
+
+    protected function detectEventPreset($script)
+    {
+        $script = trim((string) $script);
+        if ($script === '') {
+            return '';
+        }
+
+        if (stripos($script, 'data_extenso_out(this)') !== false) {
+            return 'data_extenso_out';
+        }
+
+        if (stripos($script, 'data_atual(this)') !== false) {
+            return 'data_atual';
+        }
+
+        if (stripos($script, 'dia_semana(this)') !== false) {
+            return 'dia_semana';
+        }
+
+        return '';
     }
 
     protected function buildListSelectOptions()

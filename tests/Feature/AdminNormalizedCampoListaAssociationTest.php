@@ -101,4 +101,70 @@ class AdminNormalizedCampoListaAssociationTest extends TestCase
         $this->assertStringContainsString('fc_ajax_comp("tp_lista_tb","return_1","campo1997"', $eventos['focus']);
         $this->assertStringContainsString('campo' . $campo->id . '_|_campo1997', $eventos['focus']);
     }
+
+    public function test_admin_can_store_text_field_with_date_preset_events()
+    {
+        $admin = factory(User::class)->create([
+            'nivel_usu' => 'ADM',
+            'acesso_usu' => now(),
+        ]);
+
+        DB::table('tp_setor_tb')->insert([
+            'id_setor' => 1,
+            'nome_setor' => 'Juridico',
+            'cod_setor' => 'JUR',
+            'data_cad' => now(),
+        ]);
+
+        DB::table('peticao_modelos')->insert([
+            'id' => 58,
+            'legacy_tipo_id' => 58,
+            'legacy_setor_id' => 1,
+            'nome' => 'MODELO DATA',
+            'slug' => 'modelo-data-58',
+            'status' => 'ativo',
+            'arquivo_padrao' => 'pdf',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/admin/modelos-normalizados/58/campos', [
+                'input_title' => 'DATA DO DOCUMENTO',
+                'input_tipo' => 'TEXT',
+                'input_behavior' => 'date',
+                'input_pre' => '',
+                'input_pos' => '',
+                'input_db' => '',
+                'input_val' => '',
+                'input_alt' => '',
+                'input_cols' => 1,
+                'input_rols' => 0,
+                'input_focu' => '',
+                'input_load' => '',
+                'input_blur' => '',
+                'input_focu_preset' => '',
+                'input_load_preset' => 'data_atual',
+                'input_blur_preset' => 'data_extenso_out',
+                'input_width' => 265,
+                'input_req' => 1,
+                'input_order' => 1,
+                'nomepet' => 'N',
+                'hide' => 'true',
+                'texto_padrao' => '',
+                'add_class' => '',
+                'opcoes' => '',
+            ])
+            ->assertRedirect('/admin/modelos-normalizados/58/edit');
+
+        $campo = DB::table('peticao_modelo_campos')
+            ->where('modelo_id', 58)
+            ->where('rotulo', 'DATA DO DOCUMENTO')
+            ->first();
+
+        $this->assertNotNull($campo);
+        $eventos = json_decode($campo->eventos_frontend, true);
+        $this->assertSame('data_atual(this);', $eventos['load']);
+        $this->assertSame('data_extenso_out(this);', $eventos['blur']);
+    }
 }
