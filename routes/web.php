@@ -32,6 +32,7 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::get('/peticoes', 'PeticaoAssemblyController@index')->name('peticoes.index');
     Route::get('/assistente-peticoes', 'PeticaoAssistantController@index')->name('peticoes.assistente.index');
     Route::post('/assistente-peticoes/mensagem', 'PeticaoAssistantController@message')->name('peticoes.assistente.message');
+    Route::post('/assistente-peticoes/campo-atual', 'PeticaoAssistantController@answerCurrentField')->name('peticoes.assistente.answer-current-field');
     Route::post('/assistente-peticoes/reiniciar', 'PeticaoAssistantController@reset')->name('peticoes.assistente.reset');
     Route::post('/assistente-peticoes/modelos/{modeloNormalizado}', 'PeticaoAssistantController@selectModel')->name('peticoes.assistente.select-model');
     Route::post('/peticoes/modelos/{modeloNormalizado}/favorito', 'FavoriteModeloController@storeNormalized')->name('peticoes.normalized.favorite.store');

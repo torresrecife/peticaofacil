@@ -108,6 +108,15 @@ class PeticaoAssemblyController extends Controller
             $values['campo_' . $campo->id_input] = $request->input('campo_' . $campo->id_input);
         }
 
+        $assistantResolvedFields = $this->decodeAssistantResolvedFields($request->input('assistant_resolved_fields'));
+        foreach ($assistantResolvedFields as $fieldKey => $fieldValue) {
+            if (!array_key_exists($fieldKey, $values) || ($values[$fieldKey] ?? '') !== '') {
+                continue;
+            }
+
+            $values[$fieldKey] = $fieldValue;
+        }
+
         $codigoProcesso = trim((string) $request->input('codigo_processo', ''));
         $lookupStatus = null;
 
@@ -193,5 +202,20 @@ class PeticaoAssemblyController extends Controller
         }
 
         return $modeloFonte->servidor ?: null;
+    }
+
+    protected function decodeAssistantResolvedFields($raw)
+    {
+        if (empty($raw)) {
+            return [];
+        }
+
+        if (is_array($raw)) {
+            return $raw;
+        }
+
+        $decoded = json_decode((string) $raw, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 }

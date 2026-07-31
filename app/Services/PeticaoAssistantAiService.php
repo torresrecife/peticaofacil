@@ -54,6 +54,7 @@ class PeticaoAssistantAiService
         $questions = [];
         $missingFields = $state['missing_fields'] ?? [];
         $checks = $state['consistency_checks'] ?? [];
+        $currentPendingField = $state['current_pending_field'] ?? null;
 
         if (!empty($state['duplicate_petitions'])) {
             $checks[] = 'Ja existe peticao salva com o mesmo codigo de processo. Revise antes de gerar nova minuta.';
@@ -66,7 +67,7 @@ class PeticaoAssistantAiService
         } elseif ($stage === 'model_selection') {
             $questions[] = 'Qual peticao voce quer elaborar para esse processo?';
         } elseif ($stage === 'data_completion' && !empty($missingFields)) {
-            $questions[] = 'Antes de abrir a montagem, preciso fechar os dados obrigatorios que ainda faltam.';
+            $questions[] = $this->buildFieldQuestion($currentPendingField);
         }
 
         $message = 'Analise preliminar pronta.';
@@ -107,6 +108,8 @@ class PeticaoAssistantAiService
             'Quando o modelo ja estiver escolhido, faca perguntas curtas e objetivas sobre os dados faltantes.',
             'Evite perguntar mais de duas coisas por vez.',
             'Se a etapa atual for so escolher o modelo, nao antecipe perguntas detalhadas de preenchimento.',
+            'Se houver current_pending_field, pergunte apenas por esse campo.',
+            'Se o current_pending_field for SELECT e houver opcoes, apresente as opcoes numeradas de forma curta.',
         ]);
     }
 
@@ -119,6 +122,8 @@ class PeticaoAssistantAiService
             'selected_model_name' => $state['selected_model_name'],
             'conversation_stage' => $state['conversation_stage'] ?? 'process_lookup',
             'conversation_stage_label' => $state['conversation_stage_label'] ?? 'Consulta do processo',
+            'current_pending_field' => $state['current_pending_field'] ?? null,
+            'assistant_field_answers' => $state['assistant_field_answers'] ?? [],
             'process_data' => $state['process_data'],
             'model_suggestions' => $state['model_suggestions'],
             'duplicate_petitions' => $state['duplicate_petitions'],
@@ -205,11 +210,30 @@ class PeticaoAssistantAiService
         }
 
         if ($stage === 'data_completion') {
+            $currentPendingField = $state['current_pending_field'] ?? null;
+
             return !empty($missingFields)
-                ? 'Antes do handoff, feche os campos obrigatorios que ainda estao pendentes.'
+                ? $this->buildFieldQuestion($currentPendingField)
                 : 'Os dados principais ja foram fechados. Revise e siga para a montagem.';
         }
 
         return 'O processo e o modelo ja estao prontos para seguir para a montagem assistida.';
+    }
+
+    protected function buildFieldQuestion($field)
+    {
+        if (empty($field) || empty($field['label'])) {
+            return 'Antes do handoff, preciso fechar os campos obrigatorios que ainda estao pendentes.';
+        }
+
+        if (($field['type'] ?? '') !== 'SELECT' || empty($field['options'])) {
+            return 'Informe o valor do campo `' . $field['label'] . '`.';
+        }
+
+        $options = collect($field['options'])->map(function ($option) {
+            return $option['index'] . '. ' . $option['label'];
+        })->implode(' | ');
+
+        return 'Escolha uma opcao para `' . $field['label'] . '`: ' . $options . '.';
     }
 }

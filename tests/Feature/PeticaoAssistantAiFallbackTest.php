@@ -92,8 +92,10 @@ class PeticaoAssistantAiFallbackTest extends TestCase
         $response = $this->actingAs($user)->get(route('peticoes.assistente.index'));
         $response->assertSee('Campos faltantes');
         $response->assertSee('CPF DO AUTOR');
+        $response->assertSee('Campo em coleta');
         $response->assertSee('Possivel duplicidade');
         $response->assertSee('Mesmo codigo de processo');
         $response->assertSee('orientacao local do sistema');
+        $response->assertDontSee('Abrir montagem assistida');
     }
 }

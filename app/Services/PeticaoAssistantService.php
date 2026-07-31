@@ -48,6 +48,12 @@ class PeticaoAssistantService
             return $this->applyAiAnalysis($state, $message);
         }
 
+        if (($state['conversation_stage'] ?? null) === 'data_completion' && !empty($state['current_pending_field'])) {
+            $state = $this->capturePendingFieldAnswer($state, $message);
+
+            return $this->applyAiAnalysis($state, $message);
+        }
+
         $state = $this->setConversationStage($state, 'data_completion');
         $state = $this->state->appendMessage(
             $state,
@@ -74,6 +80,20 @@ class PeticaoAssistantService
         $state = $this->refreshSelectedModelAnalysis($state);
 
         return $this->applyAiAnalysis($state, $modelo->nome);
+    }
+
+    public function answerCurrentField(array $state, $value)
+    {
+        $value = trim((string) $value);
+        $state = $this->state->appendMessage($state, 'user', $value);
+
+        if (empty($state['current_pending_field'])) {
+            return $this->applyAiAnalysis($state, $value);
+        }
+
+        $state = $this->capturePendingFieldAnswer($state, $value);
+
+        return $this->applyAiAnalysis($state, $value);
     }
 
     protected function handleProcessLookup(array $state, $message)
@@ -329,6 +349,9 @@ class PeticaoAssistantService
     protected function refreshSelectedModelAnalysis(array $state)
     {
         if (empty($state['selected_model_id'])) {
+            $state['assistant_field_answers'] = [];
+            $state['pending_fields'] = [];
+            $state['current_pending_field'] = null;
             $state['missing_fields'] = [];
             $state['consistency_checks'] = [];
             $state['model_rationale'] = null;
@@ -346,26 +369,30 @@ class PeticaoAssistantService
 
         $requiredCampos = $modelo->campos->where('obrigatorio', true);
         $missingFields = [];
+        $pendingFields = [];
+        $assistantAnswers = $state['assistant_field_answers'] ?? [];
 
         foreach ($requiredCampos as $campo) {
             $column = trim((string) $campo->origem_coluna);
             $label = $campo->rotulo;
-
-            if ($column === '') {
-                $missingFields[] = $label;
-                continue;
-            }
+            $fieldKey = 'campo_' . $campo->id_input;
+            $assistantValue = trim((string) ($assistantAnswers[$fieldKey]['value'] ?? ''));
 
             $matched = false;
-            foreach ($state['process_data'] as $key => $value) {
-                if (strcasecmp((string) $key, $column) === 0 && trim((string) $value) !== '') {
-                    $matched = true;
-                    break;
+            if ($assistantValue !== '') {
+                $matched = true;
+            } elseif ($column !== '') {
+                foreach ($state['process_data'] as $key => $value) {
+                    if (strcasecmp((string) $key, $column) === 0 && trim((string) $value) !== '') {
+                        $matched = true;
+                        break;
+                    }
                 }
             }
 
             if (!$matched) {
                 $missingFields[] = $label;
+                $pendingFields[] = $this->buildPendingFieldDescriptor($campo, $modelo);
             }
         }
 
@@ -378,6 +405,8 @@ class PeticaoAssistantService
         }
 
         $state['missing_fields'] = array_values(array_unique($missingFields));
+        $state['pending_fields'] = $pendingFields;
+        $state['current_pending_field'] = $pendingFields[0] ?? null;
         $state['consistency_checks'] = array_values(array_unique($checks));
         $state['duplicate_petitions'] = $this->detectDuplicates(
             $state['process_code'],
@@ -464,6 +493,166 @@ class PeticaoAssistantService
         }
 
         return '';
+    }
+
+    protected function capturePendingFieldAnswer(array $state, $message)
+    {
+        $currentField = $state['current_pending_field'] ?? null;
+        if (!$currentField) {
+            return $state;
+        }
+
+        $normalized = $this->normalizePendingFieldAnswer($currentField, $message);
+        if (!$normalized['ok']) {
+            return $this->state->appendMessage($state, 'assistant', $normalized['message']);
+        }
+
+        $state['assistant_field_answers'][$currentField['field_key']] = [
+            'field_id' => $currentField['field_id'],
+            'label' => $currentField['label'],
+            'type' => $currentField['type'],
+            'value' => $normalized['value'],
+        ];
+
+        if (!empty($normalized['dependent_fill'])) {
+            $dependent = $normalized['dependent_fill'];
+            $state['assistant_field_answers'][$dependent['field_key']] = [
+                'field_id' => $dependent['field_id'],
+                'label' => $dependent['label'],
+                'type' => $dependent['type'],
+                'value' => $dependent['value'],
+            ];
+        }
+
+        $state = $this->state->appendMessage(
+            $state,
+            'assistant',
+            'Campo confirmado: ' . $currentField['label'] . ' = ' . $normalized['value'] . '.'
+        );
+
+        if (!empty($normalized['dependent_fill'])) {
+            $dependent = $normalized['dependent_fill'];
+            $state = $this->state->appendMessage(
+                $state,
+                'assistant',
+                'Preenchimento automatico aplicado: ' . $dependent['label'] . ' = ' . $dependent['value'] . '.'
+            );
+        }
+
+        return $this->refreshSelectedModelAnalysis($state);
+    }
+
+    protected function buildPendingFieldDescriptor($campo, $modelo)
+    {
+        $dependentFill = $campo->dependent_fill_config;
+        $dependentTarget = null;
+
+        if ($dependentFill && !empty($dependentFill['target_field_id'])) {
+            $targetCampo = $modelo->campos->first(function ($item) use ($dependentFill) {
+                return (int) $item->id_input === (int) $dependentFill['target_field_id'];
+            });
+
+            if ($targetCampo) {
+                $dependentTarget = [
+                    'field_id' => $targetCampo->id_input,
+                    'field_key' => 'campo_' . $targetCampo->id_input,
+                    'label' => $targetCampo->input_title,
+                    'type' => strtoupper((string) $targetCampo->input_tipo),
+                    'return_column' => $dependentFill['return_column'],
+                ];
+            }
+        }
+
+        return [
+            'field_id' => $campo->id_input,
+            'field_key' => 'campo_' . $campo->id_input,
+            'label' => $campo->input_title,
+            'type' => strtoupper((string) $campo->input_tipo),
+            'options' => $this->buildPendingFieldOptions($campo),
+            'dependent_target' => $dependentTarget,
+        ];
+    }
+
+    protected function buildPendingFieldOptions($campo)
+    {
+        if (strtoupper((string) $campo->input_tipo) !== 'SELECT') {
+            return [];
+        }
+
+        return collect($campo->select_options)
+            ->map(function ($option, $index) {
+                $extras = $option['extras'] ?? [];
+                $helper = '';
+                if (!empty($extras['return_1']) && (string) $extras['return_1'] !== (string) ($option['label'] ?? '')) {
+                    $helper = (string) $extras['return_1'];
+                }
+
+                return [
+                    'index' => $index + 1,
+                    'label' => (string) ($option['label'] ?? ''),
+                    'value' => (string) ($option['value'] ?? $option['label'] ?? ''),
+                    'helper' => $helper,
+                    'extras' => $extras,
+                ];
+            })
+            ->filter(function ($option) {
+                return $option['label'] !== '';
+            })
+            ->values()
+            ->all();
+    }
+
+    protected function normalizePendingFieldAnswer(array $field, $message)
+    {
+        $message = trim((string) $message);
+        if ($message === '') {
+            return [
+                'ok' => false,
+                'message' => 'Envie um valor para o campo `' . $field['label'] . '`.',
+            ];
+        }
+
+        if ($field['type'] !== 'SELECT') {
+            return [
+                'ok' => true,
+                'value' => $message,
+            ];
+        }
+
+        foreach ($field['options'] as $option) {
+            if ((string) $option['index'] === $message || mb_strtolower($option['label']) === mb_strtolower($message)) {
+                $dependentFill = null;
+                if (!empty($field['dependent_target'])) {
+                    $returnColumn = $field['dependent_target']['return_column'] ?? null;
+                    $returnValue = $returnColumn ? ($option['extras'][$returnColumn] ?? null) : null;
+
+                    if ($returnValue !== null && $returnValue !== '') {
+                        $dependentFill = [
+                            'field_id' => $field['dependent_target']['field_id'],
+                            'field_key' => $field['dependent_target']['field_key'],
+                            'label' => $field['dependent_target']['label'],
+                            'type' => $field['dependent_target']['type'],
+                            'value' => (string) $returnValue,
+                        ];
+                    }
+                }
+
+                return [
+                    'ok' => true,
+                    'value' => $option['value'],
+                    'dependent_fill' => $dependentFill,
+                ];
+            }
+        }
+
+        $optionsText = collect($field['options'])->map(function ($option) {
+            return $option['index'] . '. ' . $option['label'];
+        })->implode(' | ');
+
+        return [
+            'ok' => false,
+            'message' => 'Opcao invalida para `' . $field['label'] . '`. Use uma destas: ' . $optionsText . '.',
+        ];
     }
 
     protected function setConversationStage(array $state, $stage)

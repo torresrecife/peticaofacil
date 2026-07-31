@@ -243,6 +243,84 @@
             </div>
         @endif
 
+        @if(!empty($assistantState['current_pending_field']))
+            <div class="panel">
+                <div class="section-title">
+                    <h3>Campo em coleta</h3>
+                    <div class="editor-note">Resposta atual do chat</div>
+                </div>
+
+                <div class="panel-muted">
+                    <div><strong>Campo:</strong> {{ $assistantState['current_pending_field']['label'] }}</div>
+                    <div><strong>Tipo:</strong> {{ $assistantState['current_pending_field']['type'] }}</div>
+                    @if(!empty($assistantState['current_pending_field']['dependent_target']))
+                        <div style="margin-top:8px;"><strong>Retorno automatico:</strong> ao escolher este valor, o campo {{ $assistantState['current_pending_field']['dependent_target']['label'] }} sera preenchido automaticamente.</div>
+                    @endif
+                    @if(($assistantState['current_pending_field']['type'] ?? '') === 'SELECT' && !empty($assistantState['current_pending_field']['options']))
+                        <div style="margin-top:8px;"><strong>Opcoes:</strong></div>
+                        <ul style="margin:8px 0 0 18px; padding:0;">
+                            @foreach($assistantState['current_pending_field']['options'] as $option)
+                                <li>
+                                    {{ $option['index'] }}. {{ $option['label'] }}
+                                    @if(!empty($option['helper']))
+                                        <span class="editor-note"> - retorno: {{ $option['helper'] }}</span>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
+
+                <form method="post" action="{{ route('peticoes.assistente.answer-current-field') }}" style="margin-top:12px;">
+                    @csrf
+                    <div class="form-group">
+                        <label>Responder {{ $assistantState['current_pending_field']['label'] }}</label>
+                        @if(($assistantState['current_pending_field']['type'] ?? '') === 'SELECT' && !empty($assistantState['current_pending_field']['options']))
+                            <select name="field_value">
+                                <option value=""></option>
+                                @foreach($assistantState['current_pending_field']['options'] as $option)
+                                    <option value="{{ $option['index'] }}">{{ $option['index'] }}. {{ $option['label'] }}@if(!empty($option['helper'])) - {{ $option['helper'] }}@endif</option>
+                                @endforeach
+                            </select>
+                        @elseif(($assistantState['current_pending_field']['type'] ?? '') === 'TEXTAREA')
+                            <textarea name="field_value" style="min-height:120px;"></textarea>
+                        @else
+                            <input name="field_value">
+                        @endif
+                    </div>
+                    <div class="actions" style="margin-top:12px;">
+                        <button type="submit">Confirmar campo</button>
+                    </div>
+                </form>
+            </div>
+        @endif
+
+        @if(!empty($assistantState['assistant_field_answers']))
+            <div class="panel">
+                <div class="section-title">
+                    <h3>Respostas ja confirmadas</h3>
+                    <div class="editor-note">Serao levadas para a montagem</div>
+                </div>
+
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Campo</th>
+                        <th>Valor</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($assistantState['assistant_field_answers'] as $answer)
+                        <tr>
+                            <td>{{ $answer['label'] }}</td>
+                            <td>{{ $answer['value'] }}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
         @if(!empty($assistantState['jurisprudencia_suggestions']))
             <div class="panel">
                 <div class="section-title">
@@ -307,7 +385,7 @@
             </div>
         @endif
 
-        @if(!empty($assistantState['process_code']) && !empty($assistantState['selected_model_id']))
+        @if(!empty($assistantState['process_code']) && !empty($assistantState['selected_model_id']) && ($assistantState['conversation_stage'] ?? null) === 'ready_for_handoff')
             <div class="panel">
                 <div class="section-title">
                     <h3>Proximo passo</h3>
@@ -322,7 +400,8 @@
                 <form method="post" action="{{ route('peticoes.normalized.compose', $assistantState['selected_model_id']) }}">
                     @csrf
                     <input type="hidden" name="codigo_processo" value="{{ $assistantState['process_code'] }}">
-                    <input type="hidden" name="action_type" value="lookup">
+                    <input type="hidden" name="action_type" value="preview">
+                    <input type="hidden" name="assistant_resolved_fields" value="{{ e(json_encode(collect($assistantState['assistant_field_answers'] ?? [])->mapWithKeys(function ($answer, $fieldKey) { return [$fieldKey => $answer['value']]; })->all())) }}">
                     <button type="submit">Abrir montagem assistida</button>
                 </form>
             </div>
