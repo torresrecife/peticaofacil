@@ -13,7 +13,7 @@
 <style>
     .editor-shell {
         display: grid;
-        gap: 16px;
+        gap: 18px;
     }
     .editor-command-bar {
         position: sticky;
@@ -28,6 +28,18 @@
         border-radius: 8px;
         background: #ffffff;
         box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+    .editor-command-bar__title {
+        display: grid;
+        gap: 4px;
+    }
+    .editor-command-bar__title strong {
+        font-size: 16px;
+        color: #102a43;
+    }
+    .editor-command-bar__title span {
+        font-size: 12px;
+        color: #627d98;
     }
     .editor-command-bar__meta {
         display: flex;
@@ -95,6 +107,72 @@
     .editor-shell .cke_toolgroup {
         border-radius: 6px;
     }
+    .editor-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 18px;
+        align-items: start;
+    }
+    .editor-document-panel {
+        min-width: 0;
+    }
+    .editor-side-panel {
+        display: grid;
+        gap: 16px;
+        position: sticky;
+        top: 92px;
+    }
+    .editor-side-card {
+        background: #fff;
+        border: 1px solid #d9e2ec;
+        border-radius: 8px;
+        padding: 16px;
+        display: grid;
+        gap: 14px;
+    }
+    .editor-side-card h4 {
+        margin: 0;
+        font-size: 14px;
+        color: #102a43;
+    }
+    .editor-side-grid {
+        display: grid;
+        gap: 12px;
+    }
+    .editor-side-item {
+        display: grid;
+        gap: 4px;
+    }
+    .editor-side-item span {
+        font-size: 12px;
+        color: #7b8794;
+    }
+    .editor-side-item strong {
+        font-size: 14px;
+        color: #243b53;
+        font-weight: 600;
+        word-break: break-word;
+    }
+    .editor-side-actions {
+        display: grid;
+        gap: 10px;
+    }
+    .editor-side-actions .button,
+    .editor-side-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+    .editor-side-note {
+        font-size: 12px;
+        color: #627d98;
+        line-height: 1.5;
+    }
+    .editor-name-field input {
+        background: #fff;
+    }
+    .editor-export-form {
+        margin: 0;
+    }
     @media (max-width: 960px) {
         .editor-command-bar {
             position: static;
@@ -108,6 +186,12 @@
         }
         .editor-surface {
             padding: 12px;
+        }
+        .editor-layout {
+            grid-template-columns: 1fr;
+        }
+        .editor-side-panel {
+            position: static;
         }
     }
 </style>
@@ -129,65 +213,90 @@
 
 <div class="stack">
     <div class="panel">
-        <div class="section-title">
-            <h3>{{ $modelo->tipo_nome }}</h3>
-            <div class="editor-note">Edicao final, salvamento e exportacao no fluxo novo.</div>
-        </div>
-
         <form method="post" action="{{ $saveRoute }}" id="editor-save-form">
             @csrf
             <input type="hidden" name="codigo_processo" value="{{ old('codigo_processo', $codigoProcesso ?? '') }}">
             <div class="editor-shell">
                 <div class="editor-command-bar">
                     <div class="editor-command-bar__meta">
+                        <div class="editor-command-bar__title">
+                            <strong>{{ $modelo->tipo_nome }}</strong>
+                            <span>Revise, ajuste e salve a peticao antes da exportacao.</span>
+                        </div>
                         <span id="editor-save-status" class="editor-status-badge">Sem alteracoes pendentes</span>
                         <span>Atalho: <strong>Ctrl+S</strong></span>
-                        <span>Layout visual: <strong>A4</strong></span>
+                        <span>Documento: <strong>A4</strong></span>
                     </div>
                     <div class="actions">
+                        <a class="button secondary link" href="{{ $backRoute }}">Voltar para montagem</a>
                         <button type="submit" id="editor-save-button">Salvar peca</button>
                     </div>
                 </div>
 
-                <div class="form-grid">
-                <div class="form-group full">
-                    <label>Nome do arquivo / cliente</label>
-                    <input name="nome_cli" value="{{ old('nome_cli', $nomeCli) }}" required>
-                </div>
-                <div class="form-group full">
-                    <label>Conteudo da peca</label>
-                    <div class="editor-surface">
-                        <div id="editor-toolbar-host" class="editor-toolbar-host"></div>
-                        <div class="editor-workspace">
-                            <textarea id="editor_content" name="cod_pecas" class="js-rich-editor" style="min-height:480px;">{{ old('cod_pecas', $content) }}</textarea>
+                <div class="editor-layout">
+                    <div class="editor-document-panel">
+                        <div class="editor-surface">
+                            <div id="editor-toolbar-host" class="editor-toolbar-host"></div>
+                            <div class="editor-workspace">
+                                <textarea id="editor_content" name="cod_pecas" class="js-rich-editor" style="min-height:480px;">{{ old('cod_pecas', $content) }}</textarea>
+                            </div>
                         </div>
+                        <div class="editor-page-note">A edicao acontece em uma pagina visual centralizada, com estilos juridicos e barra de ferramentas fixa.</div>
                     </div>
-                    <div class="editor-page-note">O editor usa estilos juridicos e uma pagina visual centralizada para aproximar a experiencia de um documento Word.</div>
-                </div>
+
+                    <aside class="editor-side-panel">
+                        <div class="editor-side-card">
+                            <h4>Dados da peticao</h4>
+                            <div class="editor-side-grid">
+                                <div class="editor-side-item">
+                                    <span>Modelo</span>
+                                    <strong>{{ $modelo->tipo_nome }}</strong>
+                                </div>
+                                <div class="editor-side-item">
+                                    <span>Processo</span>
+                                    <strong>{{ old('codigo_processo', $codigoProcesso ?? 'Nao informado') }}</strong>
+                                </div>
+                                <div class="editor-side-item editor-name-field">
+                                    <label for="editor_nome_cli">Nome do arquivo / cliente</label>
+                                    <input id="editor_nome_cli" name="nome_cli" value="{{ old('nome_cli', $nomeCli) }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="editor-side-card">
+                            <h4>Acoes</h4>
+                            <div class="editor-side-actions">
+                                <button type="submit">Salvar peca</button>
+
+                                <form method="post" action="{{ $wordRoute }}" class="js-export-form editor-export-form">
+                                    @csrf
+                                    <input type="hidden" name="nome_cli" value="{{ old('nome_cli', $nomeCli) }}">
+                                    <textarea name="cod_pecas" style="display:none;">{{ old('cod_pecas', $content) }}</textarea>
+                                    <button type="submit" class="button secondary">Exportar Word</button>
+                                </form>
+
+                                <form method="post" action="{{ $pdfRoute }}" class="js-export-form editor-export-form">
+                                    @csrf
+                                    <input type="hidden" name="nome_cli" value="{{ old('nome_cli', $nomeCli) }}">
+                                    <textarea name="cod_pecas" style="display:none;">{{ old('cod_pecas', $content) }}</textarea>
+                                    <button type="submit" class="button secondary">Exportar PDF</button>
+                                </form>
+                            </div>
+                            <div class="editor-side-note">
+                                Exporte sempre a versao atual do documento. O sistema sincroniza o conteudo do editor antes do envio.
+                            </div>
+                        </div>
+
+                        <div class="editor-side-card">
+                            <h4>Orientacao</h4>
+                            <div class="editor-side-note">
+                                Faça os ajustes finais diretamente no documento. Use a barra superior para formatacao, o status para acompanhar alteracoes pendentes e salve antes de sair da tela.
+                            </div>
+                        </div>
+                    </aside>
                 </div>
             </div>
         </form>
-    </div>
-
-    <div class="panel">
-        <div class="section-title">
-            <h3>Exportacao</h3>
-            <div class="editor-note">Usa o conteudo atual do editor.</div>
-        </div>
-        <div class="actions">
-            <form method="post" action="{{ $wordRoute }}" class="js-export-form">
-                @csrf
-                <input type="hidden" name="nome_cli" value="{{ old('nome_cli', $nomeCli) }}">
-                <textarea name="cod_pecas" style="display:none;">{{ old('cod_pecas', $content) }}</textarea>
-                <button type="submit">Exportar Word</button>
-            </form>
-            <form method="post" action="{{ $pdfRoute }}" class="js-export-form">
-                @csrf
-                <input type="hidden" name="nome_cli" value="{{ old('nome_cli', $nomeCli) }}">
-                <textarea name="cod_pecas" style="display:none;">{{ old('cod_pecas', $content) }}</textarea>
-                <button type="submit">Exportar PDF</button>
-            </form>
-        </div>
     </div>
 </div>
 @endsection
@@ -308,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function () {
             syncEditor();
             var html = textarea.value;
             form.querySelector('textarea[name="cod_pecas"]').value = html;
-            form.querySelector('input[name="nome_cli"]').value = document.querySelector('#editor-save-form input[name="nome_cli"]').value;
+            form.querySelector('input[name="nome_cli"]').value = document.getElementById('editor_nome_cli').value;
         });
     });
 
