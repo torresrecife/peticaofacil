@@ -163,8 +163,139 @@ class AdminNormalizedCampoListaAssociationTest extends TestCase
             ->first();
 
         $this->assertNotNull($campo);
+        $this->assertSame('date', $campo->comportamento);
         $eventos = json_decode($campo->eventos_frontend, true);
         $this->assertSame('data_atual(this);', $eventos['load']);
         $this->assertSame('data_extenso_out(this);', $eventos['blur']);
+    }
+
+    public function test_admin_can_store_text_field_with_cpf_behavior()
+    {
+        $admin = factory(User::class)->create([
+            'nivel_usu' => 'ADM',
+            'acesso_usu' => now(),
+        ]);
+
+        DB::table('tp_setor_tb')->insert([
+            'id_setor' => 1,
+            'nome_setor' => 'Juridico',
+            'cod_setor' => 'JUR',
+            'data_cad' => now(),
+        ]);
+
+        DB::table('peticao_modelos')->insert([
+            'id' => 59,
+            'legacy_tipo_id' => 59,
+            'legacy_setor_id' => 1,
+            'nome' => 'MODELO CPF',
+            'slug' => 'modelo-cpf-59',
+            'status' => 'ativo',
+            'arquivo_padrao' => 'pdf',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/admin/modelos-normalizados/59/campos', [
+                'input_title' => 'CPF DO AUTOR',
+                'input_tipo' => 'TEXT',
+                'input_behavior' => 'cpf',
+                'input_cols' => 1,
+                'input_rols' => 0,
+                'input_req' => 1,
+                'input_order' => 1,
+                'nomepet' => 'N',
+                'hide' => 'true',
+            ])
+            ->assertRedirect('/admin/modelos-normalizados/59/edit');
+
+        $campo = DB::table('peticao_modelo_campos')
+            ->where('modelo_id', 59)
+            ->where('rotulo', 'CPF DO AUTOR')
+            ->first();
+
+        $this->assertNotNull($campo);
+        $this->assertSame('cpf', $campo->comportamento);
+    }
+
+    public function test_admin_update_from_date_to_decimal_clears_date_events()
+    {
+        $admin = factory(User::class)->create([
+            'nivel_usu' => 'ADM',
+            'acesso_usu' => now(),
+        ]);
+
+        DB::table('tp_setor_tb')->insert([
+            'id_setor' => 1,
+            'nome_setor' => 'Juridico',
+            'cod_setor' => 'JUR',
+            'data_cad' => now(),
+        ]);
+
+        DB::table('peticao_modelos')->insert([
+            'id' => 60,
+            'legacy_tipo_id' => 60,
+            'legacy_setor_id' => 1,
+            'nome' => 'MODELO VALOR',
+            'slug' => 'modelo-valor-60',
+            'status' => 'ativo',
+            'arquivo_padrao' => 'pdf',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('peticao_modelo_campos')->insert([
+            'id' => 6001,
+            'modelo_id' => 60,
+            'legacy_input_id' => 6001,
+            'rotulo' => 'CAMPO TESTE',
+            'token' => '@campo6001@',
+            'tipo' => 'TEXT',
+            'comportamento' => 'date',
+            'ordem' => 1,
+            'colunas_layout' => 1,
+            'linhas_layout' => 0,
+            'visivel' => 1,
+            'obrigatorio' => 1,
+            'gera_nome_arquivo' => 0,
+            'eventos_frontend' => json_encode([
+                'load' => 'data_atual(this);',
+                'blur' => 'data_extenso_out(this);',
+            ]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->put('/admin/modelos-normalizados/60/campos/6001', [
+                'input_title' => 'CAMPO TESTE',
+                'input_tipo' => 'TEXT',
+                'input_behavior' => 'decimal',
+                'input_pre' => '',
+                'input_pos' => '',
+                'input_db' => '',
+                'input_val' => '',
+                'input_cols' => 1,
+                'input_rols' => 0,
+                'input_focu' => '',
+                'input_load' => 'data_atual(this);',
+                'input_blur' => 'data_extenso_out(this);',
+                'input_focu_preset' => '',
+                'input_load_preset' => '',
+                'input_blur_preset' => '',
+                'input_req' => 1,
+                'input_order' => 1,
+                'nomepet' => 'N',
+                'hide' => 'true',
+                'texto_padrao' => '',
+                'add_class' => '',
+                'opcoes' => '',
+            ])
+            ->assertRedirect('/admin/modelos-normalizados/60/edit');
+
+        $campo = DB::table('peticao_modelo_campos')->where('id', 6001)->first();
+
+        $this->assertSame('decimal', $campo->comportamento);
+        $this->assertSame([], json_decode($campo->eventos_frontend, true) ?: []);
     }
 }

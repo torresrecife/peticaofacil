@@ -41,6 +41,7 @@ class PeticaoDateFieldBehaviorTest extends TestCase
             'rotulo' => 'DATA DO DOCUMENTO',
             'token' => '@campo7001@',
             'tipo' => 'TEXT',
+            'comportamento' => 'date',
             'ordem' => 1,
             'colunas_layout' => 1,
             'linhas_layout' => 0,
@@ -60,6 +61,7 @@ class PeticaoDateFieldBehaviorTest extends TestCase
         $response->assertStatus(200)
             ->assertSee('class="js-frontend-event-field"', false)
             ->assertSee('data-event-load="data_atual(this);"', false)
-            ->assertSee('data-event-blur="data_extenso_out(this);"', false);
+            ->assertSee('data-event-blur="data_extenso_out(this);"', false)
+            ->assertSee('data-input-behavior="date"', false);
     }
 }

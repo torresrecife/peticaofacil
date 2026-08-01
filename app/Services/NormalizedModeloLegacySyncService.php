@@ -103,6 +103,7 @@ class NormalizedModeloLegacySyncService
             $legacyCampo->input_tipo = $campo->input_tipo;
             $legacyCampo->input_db = $campo->input_db;
             $legacyCampo->input_val = $campo->input_val;
+            $legacyCampo->input_alt = $this->denormalizeBehavior($campo->input_behavior);
             $legacyCampo->input_cols = $campo->input_cols ?: 1;
             $legacyCampo->input_rols = $campo->input_rols ?: 0;
             $legacyCampo->input_focu = $campo->input_focu;
@@ -175,5 +176,14 @@ class NormalizedModeloLegacySyncService
         }
 
         return 265;
+    }
+
+    protected function denormalizeBehavior($behavior)
+    {
+        $behavior = strtolower(trim((string) $behavior));
+
+        $allowed = ['date', 'decimal', 'cpf', 'cnpj', 'fone', 'cep', 'integer'];
+
+        return in_array($behavior, $allowed, true) ? $behavior : '';
     }
 }

@@ -140,6 +140,9 @@
                                     data-event-load="{{ e($campo->input_load) }}"
                                     data-event-blur="{{ e($campo->input_blur) }}"
                                 @endif
+                                @if($campo->input_behavior)
+                                    data-input-behavior="{{ $campo->input_behavior }}"
+                                @endif
                             >{{ $values['campo_'.$campo->id_input] ?? '' }}</textarea>
                             <div class="editor-note">Token {{ $campo->placeholder }}</div>
                         </div>
@@ -154,7 +157,16 @@
                                     data-event-focus="{{ e($campo->input_focu) }}"
                                     data-event-load="{{ e($campo->input_load) }}"
                                     data-event-blur="{{ e($campo->input_blur) }}"
-                                @endif>
+                                @endif
+                                @if($campo->input_behavior)
+                                    data-input-behavior="{{ $campo->input_behavior }}"
+                                @endif
+                                @if(in_array($campo->input_behavior, ['cpf', 'cnpj', 'cep', 'integer', 'fone']))
+                                    inputmode="numeric"
+                                @elseif($campo->input_behavior === 'decimal')
+                                    inputmode="decimal"
+                                @endif
+                            >
                             <div class="editor-note">Token {{ $campo->placeholder }}</div>
                         </div>
                     @endif
@@ -255,6 +267,11 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        var behavior = (field.getAttribute('data-input-behavior') || '').toLowerCase();
+        if (behavior !== 'date') {
+            return;
+        }
+
         if (raw.indexOf('data_atual(this)') !== -1) {
             data_atual(field);
         }
@@ -263,6 +280,101 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (raw.indexOf('dia_semana(this)') !== -1) {
             dia_semana(field);
+        }
+    }
+
+    function onlyDigits(value) {
+        return String(value || '').replace(/\D+/g, '');
+    }
+
+    function formatCpf(value) {
+        var digits = onlyDigits(value).slice(0, 11);
+        if (digits.length <= 3) return digits;
+        if (digits.length <= 6) return digits.slice(0, 3) + '.' + digits.slice(3);
+        if (digits.length <= 9) return digits.slice(0, 3) + '.' + digits.slice(3, 6) + '.' + digits.slice(6);
+        return digits.slice(0, 3) + '.' + digits.slice(3, 6) + '.' + digits.slice(6, 9) + '-' + digits.slice(9);
+    }
+
+    function formatCnpj(value) {
+        var digits = onlyDigits(value).slice(0, 14);
+        if (digits.length <= 2) return digits;
+        if (digits.length <= 5) return digits.slice(0, 2) + '.' + digits.slice(2);
+        if (digits.length <= 8) return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5);
+        if (digits.length <= 12) return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '/' + digits.slice(8);
+        return digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '/' + digits.slice(8, 12) + '-' + digits.slice(12);
+    }
+
+    function formatCep(value) {
+        var digits = onlyDigits(value).slice(0, 8);
+        if (digits.length <= 5) return digits;
+        return digits.slice(0, 5) + '-' + digits.slice(5);
+    }
+
+    function formatPhone(value) {
+        var digits = onlyDigits(value).slice(0, 11);
+        if (digits.length <= 2) return digits;
+        if (digits.length <= 6) return '(' + digits.slice(0, 2) + ') ' + digits.slice(2);
+        if (digits.length <= 10) return '(' + digits.slice(0, 2) + ') ' + digits.slice(2, 6) + '-' + digits.slice(6);
+        return '(' + digits.slice(0, 2) + ') ' + digits.slice(2, 7) + '-' + digits.slice(7);
+    }
+
+    function formatInteger(value) {
+        return onlyDigits(value);
+    }
+
+    function formatDecimal(value) {
+        var raw = String(value || '').trim();
+        if (!raw) {
+            return '';
+        }
+
+        raw = raw.replace(/[^\d,.-]/g, '');
+        raw = raw.replace(/\.(?=.*\.)/g, '');
+        raw = raw.replace(/,(?=.*,)/g, '');
+
+        var normalized = raw;
+        if (normalized.indexOf(',') !== -1 && normalized.indexOf('.') !== -1) {
+            normalized = normalized.replace(/\./g, '').replace(',', '.');
+        } else if (normalized.indexOf(',') !== -1) {
+            normalized = normalized.replace(',', '.');
+        }
+
+        var number = parseFloat(normalized);
+        if (isNaN(number)) {
+            return raw;
+        }
+
+        return number.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function applyFieldBehavior(field) {
+        var behavior = (field.getAttribute('data-input-behavior') || '').toLowerCase();
+        if (!behavior) {
+            return;
+        }
+
+        if (behavior === 'cpf') {
+            field.value = formatCpf(field.value);
+            return;
+        }
+        if (behavior === 'cnpj') {
+            field.value = formatCnpj(field.value);
+            return;
+        }
+        if (behavior === 'cep') {
+            field.value = formatCep(field.value);
+            return;
+        }
+        if (behavior === 'fone') {
+            field.value = formatPhone(field.value);
+            return;
+        }
+        if (behavior === 'integer') {
+            field.value = formatInteger(field.value);
+            return;
+        }
+        if (behavior === 'decimal') {
+            field.value = formatDecimal(field.value);
         }
     }
 
@@ -298,11 +410,36 @@ document.addEventListener('DOMContentLoaded', function () {
 
     Array.prototype.forEach.call(document.querySelectorAll('.js-frontend-event-field'), function (field) {
         executeSupportedEvents(field.getAttribute('data-event-load'), field);
+        applyFieldBehavior(field);
         field.addEventListener('focus', function () {
             executeSupportedEvents(field.getAttribute('data-event-focus'), field);
         });
         field.addEventListener('blur', function () {
             executeSupportedEvents(field.getAttribute('data-event-blur'), field);
+            applyFieldBehavior(field);
+        });
+        field.addEventListener('input', function () {
+            var behavior = (field.getAttribute('data-input-behavior') || '').toLowerCase();
+            if (['cpf', 'cnpj', 'cep', 'fone', 'integer'].indexOf(behavior) !== -1) {
+                applyFieldBehavior(field);
+            }
+        });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-input-behavior]'), function (field) {
+        if (field.classList.contains('js-frontend-event-field')) {
+            return;
+        }
+
+        applyFieldBehavior(field);
+        field.addEventListener('blur', function () {
+            applyFieldBehavior(field);
+        });
+        field.addEventListener('input', function () {
+            var behavior = (field.getAttribute('data-input-behavior') || '').toLowerCase();
+            if (['cpf', 'cnpj', 'cep', 'fone', 'integer'].indexOf(behavior) !== -1) {
+                applyFieldBehavior(field);
+            }
         });
     });
 });

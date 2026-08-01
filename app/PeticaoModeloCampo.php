@@ -15,6 +15,7 @@ class PeticaoModeloCampo extends Model
         'rotulo',
         'token',
         'tipo',
+        'comportamento',
         'origem_coluna',
         'origem_alias',
         'prefixo',
@@ -145,6 +146,10 @@ class PeticaoModeloCampo extends Model
 
     public function getInputBehaviorAttribute()
     {
+        if (!empty($this->attributes['comportamento'])) {
+            return $this->normalizeBehaviorValue($this->attributes['comportamento']);
+        }
+
         foreach (['focus', 'load', 'blur'] as $eventName) {
             if ($this->detectEventPreset($this->eventos_frontend[$eventName] ?? null)) {
                 return 'date';
@@ -152,6 +157,11 @@ class PeticaoModeloCampo extends Model
         }
 
         return '';
+    }
+
+    public function getInputAltAttribute()
+    {
+        return $this->input_behavior;
     }
 
     public function getInputFocuPresetAttribute()
@@ -281,6 +291,31 @@ class PeticaoModeloCampo extends Model
         }
 
         return '';
+    }
+
+    protected function normalizeBehaviorValue($value)
+    {
+        $value = strtolower(trim((string) $value));
+
+        $map = [
+            '' => '',
+            'padrao' => '',
+            'default' => '',
+            'date' => 'date',
+            'data' => 'date',
+            'decimal' => 'decimal',
+            'valor' => 'decimal',
+            'cpf' => 'cpf',
+            'cnpj' => 'cnpj',
+            'fone' => 'fone',
+            'phone' => 'fone',
+            'cep' => 'cep',
+            'integer' => 'integer',
+            'numero' => 'integer',
+            'número' => 'integer',
+        ];
+
+        return $map[$value] ?? '';
     }
 
     protected function buildListSelectOptions()

@@ -21,6 +21,7 @@ class LegacyModeloSyncTest extends TestCase
         $this->assertCount(2, $modelo->paragrafos);
         $this->assertCount(2, $modelo->campos);
         $this->assertSame('@campo502@', $modelo->campos->firstWhere('legacy_input_id', 502)->token);
+        $this->assertSame('cpf', $modelo->campos->firstWhere('legacy_input_id', 501)->comportamento);
         $this->assertSame('retorno-1', $modelo->campos->firstWhere('legacy_input_id', 502)->opcoes->first()->valor_retorno);
     }
 
@@ -99,6 +100,7 @@ class LegacyModeloSyncTest extends TestCase
                 'input_order' => 1,
                 'input_val' => 'NOME',
                 'input_db' => 'autor',
+                'input_alt' => 'cpf',
                 'input_focu' => null,
                 'input_blur' => null,
                 'input_load' => null,
@@ -115,6 +117,7 @@ class LegacyModeloSyncTest extends TestCase
                 'input_order' => 2,
                 'input_val' => 'RESULTADO',
                 'input_db' => 'processo',
+                'input_alt' => null,
                 'input_focu' => 'focusFn()',
                 'input_blur' => 'blurFn()',
                 'input_load' => 'loadFn()',

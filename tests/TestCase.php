@@ -316,6 +316,7 @@ abstract class TestCase extends BaseTestCase
             $table->string('rotulo', 255)->nullable();
             $table->string('token', 255)->unique();
             $table->string('tipo', 50);
+            $table->string('comportamento', 50)->nullable();
             $table->string('origem_coluna', 255)->nullable();
             $table->string('origem_alias', 255)->nullable();
             $table->text('prefixo')->nullable();

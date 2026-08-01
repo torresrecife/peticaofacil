@@ -101,6 +101,7 @@ class LegacyModeloSyncService
                     'rotulo' => $campo->input_title,
                     'token' => $campo->placeholder,
                     'tipo' => $campo->input_tipo,
+                    'comportamento' => $this->normalizeLegacyBehavior($campo->input_alt),
                     'origem_coluna' => $campo->input_val,
                     'origem_alias' => $campo->input_db,
                     'prefixo' => $campo->input_pre,
@@ -182,5 +183,24 @@ class LegacyModeloSyncService
             'load' => $campo->input_load ?: null,
             'blur' => $campo->input_blur ?: null,
         ]);
+    }
+
+    protected function normalizeLegacyBehavior($value)
+    {
+        $value = strtolower(trim((string) $value));
+
+        $map = [
+            'date' => 'date',
+            'decimal' => 'decimal',
+            'cpf' => 'cpf',
+            'cnpj' => 'cnpj',
+            'fone' => 'fone',
+            'cep' => 'cep',
+            'integer' => 'integer',
+            'numero' => 'integer',
+            'número' => 'integer',
+        ];
+
+        return $map[$value] ?? '';
     }
 }

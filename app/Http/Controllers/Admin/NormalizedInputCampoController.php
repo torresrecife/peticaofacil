@@ -21,6 +21,7 @@ class NormalizedInputCampoController extends Controller
             'rotulo' => $data['input_title'],
             'token' => '@campo_novo@',
             'tipo' => $data['input_tipo'],
+            'comportamento' => $this->normalizeBehaviorValue($data['input_behavior'] ?? ''),
             'origem_coluna' => $data['input_val'] ?? null,
             'origem_alias' => $data['input_db'] ?? null,
             'prefixo' => $data['input_pre'] ?? null,
@@ -57,6 +58,7 @@ class NormalizedInputCampoController extends Controller
         $campo->fill([
             'rotulo' => $data['input_title'],
             'tipo' => $data['input_tipo'],
+            'comportamento' => $this->normalizeBehaviorValue($data['input_behavior'] ?? ''),
             'origem_coluna' => $data['input_val'] ?? null,
             'origem_alias' => $data['input_db'] ?? null,
             'prefixo' => $data['input_pre'] ?? null,
@@ -88,7 +90,7 @@ class NormalizedInputCampoController extends Controller
         return $request->validate([
             'input_title' => 'required|string|max:500',
             'input_tipo' => 'required|in:TEXT,SELECT,TEXTAREA,HIDDEN,TITLE',
-            'input_behavior' => 'nullable|in:,date',
+            'input_behavior' => 'nullable|in:,date,decimal,cpf,cnpj,fone,cep,integer',
             'input_pre' => 'nullable|string',
             'input_pos' => 'nullable|string',
             'input_db' => 'nullable|string|max:100',
@@ -176,9 +178,19 @@ class NormalizedInputCampoController extends Controller
 
     protected function buildFrontendEvents(PeticaoModeloCampo $campo, array $data)
     {
-        $focus = $this->resolveEventScript($data, 'input_focu', 'input_focu_preset');
-        $load = $this->resolveEventScript($data, 'input_load', 'input_load_preset');
-        $blur = $this->resolveEventScript($data, 'input_blur', 'input_blur_preset');
+        $behavior = $this->normalizeBehaviorValue($data['input_behavior'] ?? '');
+        $focus = $this->sanitizeEventScriptForBehavior(
+            $this->resolveEventScript($data, 'input_focu', 'input_focu_preset'),
+            $behavior
+        );
+        $load = $this->sanitizeEventScriptForBehavior(
+            $this->resolveEventScript($data, 'input_load', 'input_load_preset'),
+            $behavior
+        );
+        $blur = $this->sanitizeEventScriptForBehavior(
+            $this->resolveEventScript($data, 'input_blur', 'input_blur_preset'),
+            $behavior
+        );
 
         if (
             $campo->input_tipo === 'SELECT'
@@ -234,5 +246,40 @@ class NormalizedInputCampoController extends Controller
             default:
                 return '';
         }
+    }
+
+    protected function sanitizeEventScriptForBehavior($script, $behavior)
+    {
+        $script = trim((string) $script);
+        if ($script === '') {
+            return '';
+        }
+
+        if ($behavior === 'date') {
+            return $script;
+        }
+
+        return $this->isSupportedDateOnlyScript($script) ? '' : $script;
+    }
+
+    protected function isSupportedDateOnlyScript($script)
+    {
+        $normalized = strtolower(trim((string) $script));
+        $normalized = preg_replace('/\s+/', '', $normalized);
+
+        return in_array($normalized, [
+            'data_atual(this);',
+            'data_extenso_out(this);',
+            'dia_semana(this);',
+        ], true);
+    }
+
+    protected function normalizeBehaviorValue($behavior)
+    {
+        $behavior = strtolower(trim((string) $behavior));
+
+        $allowed = ['date', 'decimal', 'cpf', 'cnpj', 'fone', 'cep', 'integer'];
+
+        return in_array($behavior, $allowed, true) ? $behavior : '';
     }
 }

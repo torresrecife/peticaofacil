@@ -288,12 +288,18 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Comportamento do campo</label>
+                            <label>Padrao</label>
                             <select name="input_behavior" class="js-field-behavior-select">
-                                <option value="">Nenhum</option>
+                                <option value="">Padrão</option>
                                 <option value="date">Data</option>
+                                <option value="decimal">Valor</option>
+                                <option value="cpf">Cpf</option>
+                                <option value="cnpj">Cnpj</option>
+                                <option value="fone">Fone</option>
+                                <option value="cep">CEP</option>
+                                <option value="integer">Número</option>
                             </select>
-                            <div class="field-behavior-note js-date-behavior-note" style="display:none;">Os presets de data ficam disponiveis para campos Texto e Textarea.</div>
+                            <div class="field-behavior-note js-date-behavior-note" style="display:none;">Os presets de data ficam disponiveis apenas para campos Texto e Textarea quando o padrao Data estiver ativo.</div>
                         </div>
                         <div class="form-group">
                             <label>Obrigatorio</label>
@@ -458,12 +464,18 @@
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label>Comportamento do campo</label>
+                                        <label>Padrao</label>
                                         <select name="input_behavior" class="js-field-behavior-select">
-                                            <option value="" @if($campo->input_behavior === '') selected @endif>Nenhum</option>
+                                            <option value="" @if($campo->input_behavior === '') selected @endif>Padrão</option>
                                             <option value="date" @if($campo->input_behavior === 'date') selected @endif>Data</option>
+                                            <option value="decimal" @if($campo->input_behavior === 'decimal') selected @endif>Valor</option>
+                                            <option value="cpf" @if($campo->input_behavior === 'cpf') selected @endif>Cpf</option>
+                                            <option value="cnpj" @if($campo->input_behavior === 'cnpj') selected @endif>Cnpj</option>
+                                            <option value="fone" @if($campo->input_behavior === 'fone') selected @endif>Fone</option>
+                                            <option value="cep" @if($campo->input_behavior === 'cep') selected @endif>CEP</option>
+                                            <option value="integer" @if($campo->input_behavior === 'integer') selected @endif>Número</option>
                                         </select>
-                                        <div class="field-behavior-note js-date-behavior-note" style="display:none;">Os presets de data ficam disponiveis para campos Texto e Textarea.</div>
+                                        <div class="field-behavior-note js-date-behavior-note" style="display:none;">Os presets de data ficam disponiveis apenas para campos Texto e Textarea quando o padrao Data estiver ativo.</div>
                                     </div>
                                     <div class="form-group">
                                         <label>Obrigatorio</label>
@@ -586,8 +598,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var type = String(typeSelect.value || '').toUpperCase();
         var behavior = String(behaviorSelect.value || '');
-        var canUseDateBehavior = type === 'TEXT' || type === 'TEXTAREA';
-        var showDatePresets = canUseDateBehavior && behavior === 'date';
+        var canUseBehavior = type === 'TEXT' || type === 'TEXTAREA';
+        var showDatePresets = canUseBehavior && behavior === 'date';
+        var focusPreset = form.querySelector('[name="input_focu_preset"]');
+        var loadPreset = form.querySelector('[name="input_load_preset"]');
+        var blurPreset = form.querySelector('[name="input_blur_preset"]');
+        var focusTextarea = form.querySelector('[name="input_focu"]');
+        var loadTextarea = form.querySelector('[name="input_load"]');
+        var blurTextarea = form.querySelector('[name="input_blur"]');
+
+        function isSupportedDateScript(value) {
+            var normalized = String(value || '').replace(/\s+/g, '').toLowerCase();
+            return ['data_atual(this);', 'data_extenso_out(this);', 'dia_semana(this);'].indexOf(normalized) !== -1;
+        }
 
         Array.prototype.forEach.call(presetRows, function (row) {
             row.style.display = showDatePresets ? '' : 'none';
@@ -597,11 +620,27 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         if (note) {
-            note.style.display = canUseDateBehavior ? '' : 'none';
+            note.style.display = canUseBehavior ? '' : 'none';
             note.classList.toggle('is-active', showDatePresets);
         }
 
-        if (!canUseDateBehavior && behavior !== '') {
+        if (!showDatePresets) {
+            Array.prototype.forEach.call([focusPreset, loadPreset, blurPreset], function (select) {
+                if (select) {
+                    select.value = '';
+                }
+            });
+        }
+
+        if (behavior !== 'date') {
+            Array.prototype.forEach.call([focusTextarea, loadTextarea, blurTextarea], function (textarea) {
+                if (textarea && isSupportedDateScript(textarea.value)) {
+                    textarea.value = '';
+                }
+            });
+        }
+
+        if (!canUseBehavior && behavior !== '') {
             behaviorSelect.value = '';
         }
     }
