@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\PeticaoNormalizada;
-use App\PeticaoModelo;
+use App\Services\PeticaoAvulsaTemplateService;
 use App\Services\PeticaoNormalizedStorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +15,7 @@ class PeticaoAvulsaController extends Controller
         return view('peticao.avulsa-create');
     }
 
-    public function store(Request $request, PeticaoNormalizedStorageService $storage)
+    public function store(Request $request, PeticaoNormalizedStorageService $storage, PeticaoAvulsaTemplateService $templateService)
     {
         $data = $request->validate([
             'tipo_peticao' => 'required|string|max:255',
@@ -23,14 +23,7 @@ class PeticaoAvulsaController extends Controller
             'codigo_processo' => 'nullable|string|max:255',
         ]);
 
-        $modeloAvulso = PeticaoModelo::firstOrCreate(
-            ['slug' => '__peticao-avulsa__'],
-            [
-                'nome' => 'Peticao avulsa',
-                'status' => 'ativo',
-                'arquivo_padrao' => 'doc',
-            ]
-        );
+        $modeloAvulso = $templateService->resolveSystemModel();
 
         $peticao = PeticaoNormalizada::create([
             'modelo_id' => $modeloAvulso->id,
@@ -38,7 +31,7 @@ class PeticaoAvulsaController extends Controller
             'codigo_externo' => $data['codigo_processo'] ?: null,
             'nome_arquivo' => $data['tipo_peticao'],
             'cliente_referencia' => $data['parte_contraria'],
-            'conteudo_html' => '<p></p>',
+            'conteudo_html' => $templateService->composeInitialHtml($data),
             'campos_resolvidos' => [
                 'origem' => 'avulsa',
                 'tipo_peticao' => $data['tipo_peticao'],

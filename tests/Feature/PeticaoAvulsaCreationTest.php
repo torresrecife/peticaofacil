@@ -23,6 +23,19 @@ class PeticaoAvulsaCreationTest extends TestCase
             ->assertSee('Nome da parte contraria')
             ->assertSee('Codigo do processo (opcional)');
 
+        DB::table('peticao_modelos')->insert([
+            'id' => 999,
+            'nome' => 'Peticao avulsa',
+            'slug' => '__peticao-avulsa__',
+            'status' => 'ativo',
+            'arquivo_padrao' => 'doc',
+            'cabecalho_html' => '<p><strong>@TIPO_PETICAO@</strong></p><p>@CODIGO_PROCESSO@</p>',
+            'rodape_html' => '<p>@PARTE_CONTRARIA@</p><p>@DATA_ATUAL@</p>',
+            'metadata' => json_encode(['system' => 'avulsa']),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $response = $this->actingAs($user)
             ->post('/peticoes-avulsas', [
                 'tipo_peticao' => 'Manifestacao avulsa',
@@ -37,7 +50,9 @@ class PeticaoAvulsaCreationTest extends TestCase
 
         $this->assertNotNull($peticao);
         $this->assertNotNull($peticao->modelo_id);
-        $this->assertStringContainsString('<p></p>', $peticao->conteudo_html);
+        $this->assertStringContainsString('Manifestacao avulsa', $peticao->conteudo_html);
+        $this->assertStringContainsString('0030623-76.2021.8.17.2810', $peticao->conteudo_html);
+        $this->assertStringContainsString('Empresa XPTO Ltda', $peticao->conteudo_html);
         $this->assertSame('0030623-76.2021.8.17.2810', $peticao->codigo_externo);
 
         $modeloAvulso = DB::table('peticao_modelos')->where('id', $peticao->modelo_id)->first();

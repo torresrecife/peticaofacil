@@ -6,6 +6,9 @@
 <div class="topbar" style="margin-bottom:16px;">
     <h2 style="margin:0;">Criar peticao avulsa</h2>
     <div class="actions">
+        @can('access-admin')
+            <a class="button secondary link" href="{{ route('admin.peticoes-avulsas.config.edit') }}">Configurar cabecalho/rodape</a>
+        @endcan
         <a class="button secondary link" href="{{ route('pecas.index') }}">Voltar para pecas salvas</a>
     </div>
 </div>
