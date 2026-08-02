@@ -152,8 +152,12 @@
     }
     .saved-editor-actions .button,
     .saved-editor-actions button {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
         width: 100%;
         justify-content: center;
+        box-sizing: border-box;
     }
     .saved-editor-surface {
         background: #f5f7fa;
@@ -320,25 +324,29 @@
                             <div class="saved-editor-actions">
                                 <button type="submit">Salvar peticao</button>
 
-                                <form method="post" action="{{ route('peticoes.saved.export.word', $peticao) }}" class="js-saved-export-form">
-                                    @csrf
-                                    <input type="hidden" name="nome_cli" value="{{ old('nome_cli', $peticao->cliente_referencia) }}">
-                                    <textarea name="cod_pecas" style="display:none;">{{ old('cod_pecas', $peticao->conteudo_html) }}</textarea>
-                                    <button type="submit" class="button secondary">Exportar Word</button>
-                                </form>
+                                <a href="{{ route('peticoes.saved.print', $peticao) }}" class="button secondary" target="_blank" rel="noopener">Visualizar impressao</a>
 
-                                <form method="post" action="{{ route('peticoes.saved.export.pdf', $peticao) }}" class="js-saved-export-form">
-                                    @csrf
-                                    <input type="hidden" name="nome_cli" value="{{ old('nome_cli', $peticao->cliente_referencia) }}">
-                                    <textarea name="cod_pecas" style="display:none;">{{ old('cod_pecas', $peticao->conteudo_html) }}</textarea>
-                                    <button type="submit" class="button secondary">Exportar PDF</button>
-                                </form>
+                                <button type="submit" class="button secondary" form="saved-export-word-form">Exportar Word</button>
+
+                                <button type="submit" class="button secondary" form="saved-export-pdf-form">Exportar PDF</button>
                             </div>
                             <div class="editor-note">A exportacao usa o texto atual do editor. O sistema sincroniza o conteudo antes do envio.</div>
                         </div>
                     </aside>
                 </div>
             </div>
+        </form>
+
+        <form method="post" action="{{ route('peticoes.saved.export.word', $peticao) }}" id="saved-export-word-form" class="js-saved-export-form" style="display:none;">
+            @csrf
+            <input type="hidden" name="nome_cli" value="{{ old('nome_cli', $peticao->cliente_referencia) }}">
+            <textarea name="cod_pecas">{{ old('cod_pecas', $peticao->conteudo_html) }}</textarea>
+        </form>
+
+        <form method="post" action="{{ route('peticoes.saved.export.pdf', $peticao) }}" id="saved-export-pdf-form" class="js-saved-export-form" style="display:none;">
+            @csrf
+            <input type="hidden" name="nome_cli" value="{{ old('nome_cli', $peticao->cliente_referencia) }}">
+            <textarea name="cod_pecas">{{ old('cod_pecas', $peticao->conteudo_html) }}</textarea>
         </form>
     </div>
 

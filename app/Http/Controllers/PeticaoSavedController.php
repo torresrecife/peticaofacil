@@ -137,6 +137,20 @@ class PeticaoSavedController extends Controller
         return $exportService->exportPdf($request, $data['nome_cli'], $data['cod_pecas']);
     }
 
+    public function print(PeticaoNormalizada $peticao, PeticaoExportService $exportService)
+    {
+        $peticao->load('modelo');
+
+        return $exportService->renderPrintView(
+            $peticao->cliente_referencia ?: ('peticao_' . $peticao->id),
+            $peticao->conteudo_html,
+            [
+                'modelo' => optional($peticao->modelo)->nome,
+                'codigo' => $peticao->codigo_externo,
+            ]
+        );
+    }
+
     public function exportVersionWord(PeticaoNormalizada $peticao, PeticaoVersao $versao, PeticaoExportService $exportService)
     {
         abort_unless((int) $versao->peticao_id === (int) $peticao->id, 404);
@@ -155,6 +169,22 @@ class PeticaoSavedController extends Controller
             $request,
             $versao->cliente_referencia_snapshot ?: ('peticao_versao_' . $versao->versao_numero),
             $versao->conteudo_html_snapshot
+        );
+    }
+
+    public function printVersion(PeticaoNormalizada $peticao, PeticaoVersao $versao, PeticaoExportService $exportService)
+    {
+        abort_unless((int) $versao->peticao_id === (int) $peticao->id, 404);
+
+        $peticao->load('modelo');
+
+        return $exportService->renderPrintView(
+            $versao->cliente_referencia_snapshot ?: ('peticao_versao_' . $versao->versao_numero),
+            $versao->conteudo_html_snapshot,
+            [
+                'modelo' => optional($peticao->modelo)->nome,
+                'codigo' => $versao->codigo_externo_snapshot,
+            ]
         );
     }
 }

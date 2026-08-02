@@ -78,7 +78,7 @@ class PeticaoSavedEditorTest extends TestCase
             ->get('/peticoes-salvas/4001/editar')
             ->assertStatus(200)
             ->assertSee('Editor de peticao salva')
-            ->assertSee('Edicao, exportacao e historico no fluxo principal.')
+            ->assertSee('Revise a minuta, ajuste o texto final e salve antes de exportar.')
             ->assertSee('Filtrar historico');
 
         $this->actingAs($user)

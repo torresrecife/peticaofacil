@@ -3,20 +3,120 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
+use RuntimeException;
+use Throwable;
 
 class PeticaoExportService
 {
     public function exportWord($nomeArquivo, $conteudoHtml)
     {
         $filename = $this->sanitizeFileName($nomeArquivo) . '.doc';
+        $content = $this->renderWordDocument($nomeArquivo, $conteudoHtml);
 
-        return response($conteudoHtml, 200, [
+        return response($content, 200, [
             'Content-Type' => 'application/msword; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
     }
 
     public function exportPdf(Request $request, $nomeArquivo, $conteudoHtml)
+    {
+        if ($this->shouldUseBrowserPdf()) {
+            try {
+                return $this->exportBrowserPdf($nomeArquivo, $conteudoHtml);
+            } catch (Throwable $exception) {
+                report($exception);
+
+                if (!$this->shouldUseHtml2PdfFallback()) {
+                    throw $exception;
+                }
+            }
+        }
+
+        return $this->exportLegacyPdf($request, $nomeArquivo, $conteudoHtml);
+    }
+
+    public function renderPrintView($nomeArquivo, $conteudoHtml, array $meta = [], $assetMode = 'browser')
+    {
+        $editorCss = file_exists(public_path('ckeditor/contents.css'))
+            ? $this->scopeEditorPrintCss(file_get_contents(public_path('ckeditor/contents.css')))
+            : '';
+
+        return view('peticao.print', [
+            'documentTitle' => $nomeArquivo,
+            'documentHtml' => $this->preserveBlankEditorBlocks(
+                $this->normalizeAssetImageSrc($conteudoHtml, $assetMode)
+            ),
+            'meta' => $meta,
+            'editorCss' => $editorCss,
+            'printCss' => $this->buildBrowserPrintStyles(),
+        ]);
+    }
+
+    public function renderWordDocument($nomeArquivo, $conteudoHtml)
+    {
+        $editorCss = file_exists(public_path('ckeditor/contents.css'))
+            ? $this->scopeEditorPrintCss(file_get_contents(public_path('ckeditor/contents.css')))
+            : '';
+
+        return view('peticao.word', [
+            'documentTitle' => $nomeArquivo,
+            'documentHtml' => $this->preserveBlankEditorBlocks(
+                $this->normalizeWordMarkup(
+                    $this->normalizeAssetImageSrc($conteudoHtml, 'browser')
+                )
+            ),
+            'editorCss' => $editorCss,
+            'wordCss' => $this->buildWordStyles(),
+        ])->render();
+    }
+
+    public function sanitizeFileName($value)
+    {
+        $value = preg_replace('/[^\pL\pN_\-]+/u', '_', $value);
+        $value = trim($value, '_');
+
+        return $value !== '' ? $value : 'peticao';
+    }
+
+    protected function exportBrowserPdf($nomeArquivo, $conteudoHtml)
+    {
+        $browserBinary = $this->resolveBrowserBinary();
+        if ($browserBinary === null) {
+            throw new RuntimeException('Navegador compativel para exportacao PDF nao encontrado.');
+        }
+
+        $baseName = $this->sanitizeFileName($nomeArquivo);
+        $tempDir = storage_path('app/pdf-browser');
+        if (!is_dir($tempDir) && !@mkdir($tempDir, 0777, true) && !is_dir($tempDir)) {
+            throw new RuntimeException('Nao foi possivel preparar o diretorio temporario de PDF.');
+        }
+
+        $token = $baseName . '_' . str_replace('.', '', uniqid('', true));
+        $htmlPath = $tempDir . DIRECTORY_SEPARATOR . $token . '.html';
+        $pdfPath = $tempDir . DIRECTORY_SEPARATOR . $token . '.pdf';
+
+        try {
+            $html = $this->renderPrintView($nomeArquivo, $conteudoHtml, [], 'filesystem')->render();
+            file_put_contents($htmlPath, $html);
+
+            $this->runBrowserPrintCommand($browserBinary, $htmlPath, $pdfPath);
+
+            if (!file_exists($pdfPath) || filesize($pdfPath) === 0) {
+                throw new RuntimeException('O navegador nao gerou o arquivo PDF.');
+            }
+
+            return response(file_get_contents($pdfPath), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $baseName . '.pdf"',
+            ]);
+        } finally {
+            @unlink($htmlPath);
+            @unlink($pdfPath);
+        }
+    }
+
+    protected function exportLegacyPdf(Request $request, $nomeArquivo, $conteudoHtml)
     {
         $this->prepareLegacyPdfEnvironment($request);
 
@@ -27,9 +127,13 @@ class PeticaoExportService
 
         require_once $library;
 
+        $pageMargins = config('pdf.page');
         $content = '<style>' . $this->buildPdfStyles() . '</style>'
-            . '<page backtop="19mm" backbottom="15mm" backleft="17mm" backright="17mm">'
-            . $this->normalizePdfMarkup($this->normalizePdfImageSrc($conteudoHtml))
+            . '<page backtop="' . (int) ($pageMargins['top_mm'] ?? 19) . 'mm"'
+            . ' backbottom="' . (int) ($pageMargins['bottom_mm'] ?? 15) . 'mm"'
+            . ' backleft="' . (int) ($pageMargins['left_mm'] ?? 17) . 'mm"'
+            . ' backright="' . (int) ($pageMargins['right_mm'] ?? 17) . 'mm">'
+            . $this->normalizePdfMarkup($this->normalizeAssetImageSrc($conteudoHtml))
             . '</page>';
 
         if (ob_get_length()) {
@@ -46,12 +150,92 @@ class PeticaoExportService
         ]);
     }
 
-    public function sanitizeFileName($value)
+    protected function shouldUseBrowserPdf()
     {
-        $value = preg_replace('/[^\pL\pN_\-]+/u', '_', $value);
-        $value = trim($value, '_');
+        return strtolower((string) config('pdf.engine', 'browser')) === 'browser';
+    }
 
-        return $value !== '' ? $value : 'peticao';
+    protected function shouldUseHtml2PdfFallback()
+    {
+        return strtolower((string) config('pdf.fallback_engine', 'html2pdf')) === 'html2pdf';
+    }
+
+    protected function resolveBrowserBinary()
+    {
+        $configured = trim((string) config('pdf.browser_binary', ''));
+        if ($configured !== '' && file_exists($configured)) {
+            return $configured;
+        }
+
+        $candidates = [
+            'C:\Program Files\Google\Chrome\Application\chrome.exe',
+            'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+            'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
+            'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (file_exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    protected function runBrowserPrintCommand($browserBinary, $htmlPath, $pdfPath)
+    {
+        $timeoutSeconds = max(10, (int) config('pdf.browser_timeout', 60));
+        $virtualTimeBudget = max(1000, (int) config('pdf.browser_virtual_time_budget', 4000));
+
+        $commandParts = [
+            $this->quoteShellArgument($browserBinary),
+            '--headless',
+            '--disable-gpu',
+            '--hide-scrollbars',
+            '--no-first-run',
+            '--no-default-browser-check',
+            '--allow-file-access-from-files',
+            '--enable-local-file-accesses',
+            '--run-all-compositor-stages-before-draw',
+            '--virtual-time-budget=' . $virtualTimeBudget,
+            '--print-to-pdf-no-header',
+            '--no-pdf-header-footer',
+            '--print-to-pdf=' . $this->quoteShellArgument($pdfPath),
+            $this->quoteShellArgument($this->pathToFileUrl($htmlPath)),
+        ];
+
+        $command = implode(' ', $commandParts);
+
+        $output = [];
+        $exitCode = 0;
+        $start = microtime(true);
+        @exec($command . ' 2>&1', $output, $exitCode);
+        $duration = microtime(true) - $start;
+
+        if ($exitCode !== 0) {
+            throw new RuntimeException('Falha ao gerar PDF no navegador: ' . trim(implode("\n", $output)));
+        }
+
+        if ($duration > $timeoutSeconds) {
+            throw new RuntimeException('A geracao do PDF excedeu o tempo configurado.');
+        }
+    }
+
+    protected function quoteShellArgument($value)
+    {
+        return '"' . str_replace('"', '\"', $value) . '"';
+    }
+
+    protected function pathToFileUrl($path)
+    {
+        $normalized = str_replace('\\', '/', realpath($path) ?: $path);
+
+        if (preg_match('/^[A-Za-z]:\//', $normalized)) {
+            return 'file:///' . $normalized;
+        }
+
+        return 'file://' . $normalized;
     }
 
     protected function prepareLegacyPdfEnvironment(Request $request)
@@ -89,14 +273,15 @@ class PeticaoExportService
         return $candidates[0];
     }
 
-    protected function normalizePdfImageSrc($html)
+    protected function normalizeAssetImageSrc($html, $mode = 'filesystem')
     {
         $docRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/\\');
         $projectRoot = realpath(base_path());
         $publicRoot = realpath(public_path());
         $appPath = trim((string) parse_url((string) config('app.url', ''), PHP_URL_PATH), '/');
+        $appUrl = rtrim((string) config('app.url', ''), '/');
 
-        return preg_replace_callback('/\bsrc=(["\'])(.*?)\1/i', function ($matches) use ($docRoot, $projectRoot, $publicRoot, $appPath) {
+        return preg_replace_callback('/\bsrc=(["\'])(.*?)\1/i', function ($matches) use ($docRoot, $projectRoot, $publicRoot, $appPath, $appUrl, $mode) {
             $quote = $matches[1];
             $src = html_entity_decode(trim($matches[2]), ENT_QUOTES, 'UTF-8');
 
@@ -164,6 +349,15 @@ class PeticaoExportService
 
                 $real = str_replace('\\', '/', $real);
 
+                if ($mode === 'browser' && $publicRoot !== false) {
+                    $normalizedPublicRoot = str_replace('\\', '/', $publicRoot);
+                    if (stripos($real, $normalizedPublicRoot) === 0) {
+                        $relative = ltrim(substr($real, strlen($normalizedPublicRoot)), '/');
+                        $webPath = ($appPath !== '' ? '/' . $appPath : '') . '/' . $relative;
+                        return 'src=' . $quote . ($appUrl !== '' ? $appUrl . '/' . $relative : $webPath) . $quote;
+                    }
+                }
+
                 if (preg_match('/^[A-Za-z]:\//', $real)) {
                     return 'src=' . $quote . 'file:///' . $real . $quote;
                 }
@@ -173,6 +367,68 @@ class PeticaoExportService
 
             return 'src=' . $quote . $src . $quote;
         }, $html);
+    }
+
+    protected function buildBrowserPrintStyles()
+    {
+        return implode("\n", [
+            '@page { size: A4; margin: 0; }',
+            'html, body { margin: 0 !important; padding: 0 !important; max-width: none !important; background: #eef2f6; }',
+            'body { color: #1f2933; font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }',
+            '.peticao-print-shell { padding: 24px 0 40px; }',
+            '.peticao-print-sheet { width: 794px; min-height: 1123px; margin: 0 auto; box-sizing: border-box; background: #fff; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12); overflow: hidden; }',
+            '.peticao-print-sheet img { max-width: 100%; height: auto; display: inline-block; }',
+            '.peticao-print-sheet table { max-width: 100%; table-layout: auto; }',
+            '.peticao-print-sheet p, .peticao-print-sheet div, .peticao-print-sheet td, .peticao-print-sheet th, .peticao-print-sheet li, .peticao-print-sheet span, .peticao-print-sheet strong, .peticao-print-sheet u { line-height: 1.6; }',
+            '.peticao-print-sheet p { margin: 0 0 12px; }',
+            '.peticao-print-sheet .peticao-empty-line { min-height: 1.6em; display: block; }',
+            '@media print { html, body { background: #fff !important; } .peticao-print-shell { padding: 0; } .peticao-print-sheet { width: 794px; min-height: 1123px; margin: 0; box-shadow: none; } }',
+        ]);
+    }
+
+    protected function buildWordStyles()
+    {
+        return implode("\n", [
+            '@page { size: 21cm 29.7cm; margin: 1.9cm 1.7cm 1.5cm 1.7cm; mso-page-orientation: portrait; }',
+            'html, body { margin: 0; padding: 0; background: #ffffff; }',
+            'body { color: #1f2933; font-family: Arial, Helvetica, sans-serif; }',
+            '.peticao-word-sheet { width: auto; margin: 0; padding: 0; box-sizing: border-box; background: #fff; }',
+            '.peticao-word-sheet img { max-width: 100%; height: auto; display: inline-block; }',
+            '.peticao-word-sheet table { width: auto; max-width: 100%; table-layout: auto; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }',
+            '.peticao-word-sheet p, .peticao-word-sheet div, .peticao-word-sheet td, .peticao-word-sheet th, .peticao-word-sheet li, .peticao-word-sheet span, .peticao-word-sheet strong, .peticao-word-sheet u { line-height: 1.6; }',
+            '.peticao-word-sheet p { margin: 0 0 12pt; mso-margin-top-alt: 0pt; mso-margin-bottom-alt: 12pt; line-height: 160%; mso-line-height-rule: exactly; text-align: justify; }',
+            '.peticao-word-sheet td p { margin: 0; mso-margin-top-alt: 0pt; mso-margin-bottom-alt: 0pt; }',
+            '.peticao-word-sheet .word-header-table { width: 100%; table-layout: fixed; }',
+            '.peticao-word-sheet .word-header-table td { vertical-align: top; }',
+            '.peticao-word-sheet .word-header-table td:first-child { width: 34%; }',
+            '.peticao-word-sheet .word-header-table td:last-child { width: 66%; text-align: right; }',
+            '.peticao-word-sheet .word-header-contact { font-size: 9pt; line-height: 1.35; text-align: right; mso-line-height-rule: exactly; }',
+            '.peticao-word-sheet .word-header-contact span { white-space: normal !important; }',
+            '.peticao-word-sheet .peticao-empty-line { min-height: 1.6em; display: block; }',
+        ]);
+    }
+
+    protected function scopeEditorPrintCss($css)
+    {
+        if (!is_string($css) || trim($css) === '') {
+            return '';
+        }
+
+        $replacements = [
+            '/\bbody\b/' => '.peticao-print-sheet',
+            '/\.cke_editable\b/' => '.peticao-print-sheet',
+            '/\.cke_contents_ltr blockquote\b/' => '.peticao-print-sheet blockquote',
+            '/\.cke_contents_rtl blockquote\b/' => '.peticao-print-sheet blockquote',
+        ];
+
+        foreach ($replacements as $pattern => $replacement) {
+            $css = preg_replace($pattern, $replacement, $css);
+        }
+
+        $css = preg_replace('/box-shadow\s*:\s*[^;]+;?/i', '', $css);
+        $css = preg_replace('/margin\s*:\s*24px auto;?/i', 'margin: 0;', $css);
+
+        return $css;
     }
 
     protected function buildPdfStyles()
@@ -196,6 +452,7 @@ class PeticaoExportService
             '.peticao-observacao { margin: 12px 0; padding: 10px 12px; border-left: 4px solid #d9b95b; background: #fff7d6; color: #694f00; text-indent: 0; }',
             '.peticao-tabela-compacta { width: 100%; border-collapse: collapse; font-size: 11pt; }',
             '.peticao-tabela-compacta th, .peticao-tabela-compacta td { border: 1px solid #cbd2d9; padding: 6px 8px; vertical-align: top; }',
+            '.peticao-empty-line { min-height: 1.6em; display: block; }',
             'img { max-width: 100%; }',
         ]);
     }
@@ -224,5 +481,77 @@ class PeticaoExportService
         }, $html);
 
         return preg_replace('/<p([^>]*)>(&nbsp;|\s|<br\s*\/?>)*<\/p>/i', '<p$1>&nbsp;</p>', $html);
+    }
+
+    protected function preserveBlankEditorBlocks($html)
+    {
+        return preg_replace_callback('/<(p|div)([^>]*)>(.*?)<\/\1>/is', function ($matches) {
+            $tag = $matches[1];
+            $attributes = $matches[2];
+            $innerHtml = $matches[3];
+
+            if (!$this->isBlankEditorBlock($innerHtml)) {
+                return $matches[0];
+            }
+
+            if (stripos($attributes, 'class=') !== false) {
+                $attributes = preg_replace('/class=(["\'])(.*?)\1/i', 'class=$1$2 peticao-empty-line$1', $attributes, 1);
+            } else {
+                $attributes .= ' class="peticao-empty-line"';
+            }
+
+            return '<' . $tag . $attributes . '>&nbsp;</' . $tag . '>';
+        }, $html);
+    }
+
+    protected function isBlankEditorBlock($innerHtml)
+    {
+        if (stripos($innerHtml, '<img') !== false) {
+            return false;
+        }
+
+        $normalized = preg_replace('/<br\s*\/?>/i', '', $innerHtml);
+        $normalized = preg_replace('/&nbsp;|&#160;/i', '', $normalized);
+        $normalized = preg_replace('/<span\b[^>]*>\s*<\/span>/i', '', $normalized);
+        $normalized = trim(strip_tags($normalized));
+
+        return $normalized === '';
+    }
+
+    protected function normalizeWordMarkup($html)
+    {
+        $html = preg_replace('/(?:&nbsp;[\s]*){2,}/i', ' ', $html);
+        $html = preg_replace('/white-space\s*:\s*nowrap\s*;?/i', 'white-space:normal;', $html);
+
+        $html = preg_replace_callback('/<table\b[^>]*>.*?<img\b[^>]*src=.*?<\/table>/is', function ($matches) {
+            $table = $matches[0];
+            $table = preg_replace('/<table\b([^>]*)>/i', '<table$1 class="word-header-table">', $table, 1);
+
+            $table = preg_replace_callback('/<p\b([^>]*)style=(["\'])(.*?)\2([^>]*)>(.*?)<\/p>/is', function ($pMatches) {
+                $style = html_entity_decode($pMatches[3], ENT_QUOTES, 'UTF-8');
+                if (stripos($style, 'text-align: right') === false) {
+                    return $pMatches[0];
+                }
+
+                $content = preg_replace('/(?:&nbsp;|\s)+/i', ' ', $pMatches[5]);
+                return '<p class="word-header-contact">' . trim($content) . '</p>';
+            }, $table);
+
+            return $table;
+        }, $html);
+
+        $html = preg_replace_callback('/style=(["\'])(.*?)\1/i', function ($matches) {
+            $quote = $matches[1];
+            $style = html_entity_decode($matches[2], ENT_QUOTES, 'UTF-8');
+            $style = preg_replace('/mso-[^:]+:[^;]+;?/i', '', $style);
+            $style = preg_replace('/line-height\s*:\s*115%/i', 'line-height:160%', $style);
+            $style = preg_replace('/line-height\s*:\s*1\.15\b/i', 'line-height:1.6', $style);
+            $style = preg_replace('/font-size\s*:\s*11px/i', 'font-size:11pt', $style);
+            $style = preg_replace('/font-size\s*:\s*9px/i', 'font-size:9pt', $style);
+
+            return 'style=' . $quote . trim($style) . $quote;
+        }, $html);
+
+        return $html;
     }
 }
