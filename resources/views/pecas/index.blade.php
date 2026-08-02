@@ -5,7 +5,32 @@
 @section('content')
 <div class="topbar" style="margin-bottom:16px;">
     <h2 style="margin:0;">Historico de peticoes salvas</h2>
+    <div class="actions">
+        <a class="button" href="{{ route('peticoes.avulsas.create') }}">Nova peticao avulsa</a>
+    </div>
 </div>
+
+<style>
+    .pecas-origin-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1;
+    }
+    .pecas-origin-badge.is-avulsa {
+        background: #fff7d6;
+        color: #8d5c00;
+        border: 1px solid #f7c948;
+    }
+    .pecas-origin-badge.is-modelo {
+        background: #ebf5ff;
+        color: #1d4f91;
+        border: 1px solid #9fd0ff;
+    }
+</style>
 
 <div class="panel" style="margin-bottom:20px;">
     <div class="panel-muted" style="margin-bottom:16px;">
@@ -40,8 +65,10 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Modelo</th>
+                <th>Origem</th>
+                <th>Peticao</th>
                 <th>Cliente / arquivo</th>
+                <th>Codigo</th>
                 <th>Data</th>
                 <th>Usuario</th>
                 <th></th>
@@ -51,8 +78,14 @@
             @forelse($pecas as $peca)
                 <tr>
                     <td>{{ $peca->id }}</td>
-                    <td>{{ optional($peca->modelo)->nome }}</td>
-                    <td>{{ $peca->cliente_referencia }}</td>
+                    <td>
+                        <span class="pecas-origin-badge {{ $peca->origin_label === 'Avulsa' ? 'is-avulsa' : 'is-modelo' }}">
+                            {{ $peca->origin_label }}
+                        </span>
+                    </td>
+                    <td>{{ $peca->display_title }}</td>
+                    <td>{{ $peca->display_reference }}</td>
+                    <td>{{ $peca->codigo_externo ?: '-' }}</td>
                     <td>{{ optional($peca->gerado_em)->format('d/m/Y H:i') ?: optional($peca->created_at)->format('d/m/Y H:i') }}</td>
                     <td>{{ optional($peca->user)->login_usu ?: '-' }}</td>
                     <td>
@@ -61,7 +94,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6">Nenhuma peca encontrada.</td>
+                    <td colspan="8">Nenhuma peca encontrada.</td>
                 </tr>
             @endforelse
         </tbody>

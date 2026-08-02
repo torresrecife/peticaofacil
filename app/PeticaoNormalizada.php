@@ -28,6 +28,41 @@ class PeticaoNormalizada extends Model
         'salvo_em' => 'datetime',
     ];
 
+    public function getDisplayTitleAttribute()
+    {
+        if (data_get($this->campos_resolvidos, 'origem') === 'avulsa' && !empty($this->nome_arquivo)) {
+            return $this->nome_arquivo;
+        }
+
+        if ($this->relationLoaded('modelo') && $this->modelo) {
+            return $this->modelo->nome;
+        }
+
+        if ($this->modelo) {
+            return $this->modelo->nome;
+        }
+
+        return $this->nome_arquivo ?: 'Peticao avulsa';
+    }
+
+    public function getDisplayReferenceAttribute()
+    {
+        if (!empty($this->cliente_referencia)) {
+            return $this->cliente_referencia;
+        }
+
+        return data_get($this->campos_resolvidos, 'parte_contraria', '-');
+    }
+
+    public function getOriginLabelAttribute()
+    {
+        if (data_get($this->campos_resolvidos, 'origem') === 'avulsa') {
+            return 'Avulsa';
+        }
+
+        return 'Modelo';
+    }
+
     public function modelo()
     {
         return $this->belongsTo(PeticaoModelo::class, 'modelo_id');

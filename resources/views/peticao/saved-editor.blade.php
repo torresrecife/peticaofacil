@@ -253,7 +253,7 @@
                 <div class="saved-editor-bar">
                     <div class="saved-editor-bar__meta">
                         <div class="saved-editor-bar__title">
-                            <strong>{{ optional($peticao->modelo)->nome ?: 'Peticao normalizada' }}</strong>
+                            <strong>{{ $peticao->display_title }}</strong>
                             <span>Revise a minuta, ajuste o texto final e salve antes de exportar.</span>
                         </div>
                         <span id="saved-editor-status" class="saved-editor-status">Sem alteracoes pendentes</span>
@@ -282,7 +282,7 @@
                             </div>
                             <div class="saved-editor-summary-card">
                                 <span>Modelo</span>
-                                <strong style="font-size:18px;">{{ optional($peticao->modelo)->nome ?: '-' }}</strong>
+                                <strong style="font-size:18px;">{{ $peticao->display_title }}</strong>
                             </div>
                         </div>
 
@@ -302,7 +302,7 @@
                             <div class="saved-editor-meta">
                                 <div class="saved-editor-meta__item">
                                     <span>Nome do arquivo / cliente</span>
-                                    <input id="saved_editor_nome_cli" name="nome_cli" value="{{ old('nome_cli', $peticao->cliente_referencia) }}" required>
+                                    <input id="saved_editor_nome_cli" name="nome_cli" value="{{ old('nome_cli', $peticao->display_reference) }}" required>
                                 </div>
                                 <div class="saved-editor-meta__item">
                                     <span>Gerada em</span>

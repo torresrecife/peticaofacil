@@ -30,6 +30,8 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::post('/primeiro-acesso', 'Auth\LoginController@updateForcedPassword')->name('password.force.update');
     Route::get('/painel', 'DashboardController')->name('dashboard');
     Route::get('/peticoes', 'PeticaoAssemblyController@index')->name('peticoes.index');
+    Route::get('/peticoes-avulsas/criar', 'PeticaoAvulsaController@create')->name('peticoes.avulsas.create');
+    Route::post('/peticoes-avulsas', 'PeticaoAvulsaController@store')->name('peticoes.avulsas.store');
     Route::get('/assistente-peticoes', 'PeticaoAssistantController@index')->name('peticoes.assistente.index');
     Route::post('/assistente-peticoes/mensagem', 'PeticaoAssistantController@message')->name('peticoes.assistente.message');
     Route::post('/assistente-peticoes/campo-atual', 'PeticaoAssistantController@answerCurrentField')->name('peticoes.assistente.answer-current-field');
