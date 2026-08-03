@@ -200,11 +200,12 @@
             repeating-linear-gradient(
                 to bottom,
                 transparent 0,
-                transparent 1118px,
-                #cbd2d9 1118px,
-                #cbd2d9 1122px,
-                #eef2f6 1122px,
-                #eef2f6 1162px
+                transparent 1123px,
+                #d0d7de 1123px,
+                #c0c8d2 1125px,
+                #d0d7de 1127px,
+                #eef2f6 1127px,
+                #eef2f6 1171px
             ),
             linear-gradient(
                 to right,
@@ -214,7 +215,7 @@
                 transparent calc(50% + 397px)
             );
         background-repeat: repeat-y, no-repeat;
-        background-size: 100% 1162px, 100% 100%;
+        background-size: 100% 1171px, 100% 100%;
     }
     .saved-editor-shell .cke_wysiwyg_frame,
     .saved-editor-shell .cke_contents iframe {
