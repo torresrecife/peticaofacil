@@ -453,12 +453,14 @@
                     </span>
                     <span class="sidebar-link__label">Pecas salvas</span>
                 </a>
-                <a class="sidebar-link {{ $isActiveMenu(['status']) ? 'is-active' : '' }}" href="{{ route('status') }}" @if($isActiveMenu(['status'])) aria-current="page" @endif>
-                    <span class="sidebar-link__icon" aria-hidden="true">
-                        <i data-lucide="chart-column"></i>
-                    </span>
-                    <span class="sidebar-link__label">Status da migracao</span>
-                </a>
+                @if($canAccessAdmin)
+                    <a class="sidebar-link {{ $isActiveMenu(['status']) ? 'is-active' : '' }}" href="{{ route('status') }}" @if($isActiveMenu(['status'])) aria-current="page" @endif>
+                        <span class="sidebar-link__icon" aria-hidden="true">
+                            <i data-lucide="chart-column"></i>
+                        </span>
+                        <span class="sidebar-link__label">Status da migracao</span>
+                    </a>
+                @endif
             </nav>
         </aside>
         <main class="content">

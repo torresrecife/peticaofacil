@@ -83,7 +83,8 @@ class AuthAndAdminAccessTest extends TestCase
             ->assertDontSee('href="' . route('admin.clientes.index') . '"', false)
             ->assertDontSee('href="' . route('admin.servidores-normalizados.index') . '"', false)
             ->assertDontSee('href="' . route('admin.modelos-normalizados.index') . '"', false)
-            ->assertDontSee('href="' . route('admin.listas.index') . '"', false);
+            ->assertDontSee('href="' . route('admin.listas.index') . '"', false)
+            ->assertDontSee('href="' . route('status') . '"', false);
     }
 
     public function test_admin_user_can_access_admin_area()
@@ -112,6 +113,7 @@ class AuthAndAdminAccessTest extends TestCase
             ->assertSee('href="' . route('admin.clientes.index') . '"', false)
             ->assertSee('href="' . route('admin.servidores-normalizados.index') . '"', false)
             ->assertSee('href="' . route('admin.modelos-normalizados.index') . '"', false)
-            ->assertSee('href="' . route('admin.listas.index') . '"', false);
+            ->assertSee('href="' . route('admin.listas.index') . '"', false)
+            ->assertSee('href="' . route('status') . '"', false);
     }
 }
