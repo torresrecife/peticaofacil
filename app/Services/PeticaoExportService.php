@@ -172,11 +172,24 @@ class PeticaoExportService
             'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
             'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
             'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+            '/usr/bin/google-chrome',
+            '/usr/bin/google-chrome-stable',
+            '/usr/bin/chromium-browser',
+            '/usr/bin/chromium',
+            '/usr/bin/microsoft-edge',
+            '/snap/bin/chromium',
         ];
 
         foreach ($candidates as $candidate) {
             if (file_exists($candidate)) {
                 return $candidate;
+            }
+        }
+
+        foreach (['google-chrome', 'google-chrome-stable', 'chromium-browser', 'chromium', 'microsoft-edge'] as $binary) {
+            $resolved = trim((string) @shell_exec('command -v ' . escapeshellarg($binary) . ' 2>/dev/null'));
+            if ($resolved !== '' && file_exists($resolved)) {
+                return $resolved;
             }
         }
 
@@ -260,8 +273,8 @@ class PeticaoExportService
     protected function resolvePdfLibraryPath()
     {
         $candidates = [
-            base_path('html2pdf\\html2pdf.class.php'),
-            base_path('..\\html2pdf\\html2pdf.class.php'),
+            base_path('html2pdf/html2pdf.class.php'),
+            dirname(base_path()) . '/html2pdf/html2pdf.class.php',
         ];
 
         foreach ($candidates as $candidate) {
