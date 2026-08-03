@@ -397,6 +397,12 @@
                     </span>
                     <span class="sidebar-link__label">Painel</span>
                 </a>
+                <a class="sidebar-link {{ $isActiveMenu(['estatisticas']) ? 'is-active' : '' }}" href="{{ route('estatisticas') }}" @if($isActiveMenu(['estatisticas'])) aria-current="page" @endif>
+                    <span class="sidebar-link__icon" aria-hidden="true">
+                        <i data-lucide="chart-column"></i>
+                    </span>
+                    <span class="sidebar-link__label">Estatisticas</span>
+                </a>
                 @if($canAccessAdmin)
                     <a class="sidebar-link {{ $isActiveMenu(['admin.usuarios.*']) ? 'is-active' : '' }}" href="{{ route('admin.usuarios.index') }}" @if($isActiveMenu(['admin.usuarios.*'])) aria-current="page" @endif>
                         <span class="sidebar-link__icon" aria-hidden="true">
