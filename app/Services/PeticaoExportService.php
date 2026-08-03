@@ -353,8 +353,14 @@ class PeticaoExportService
                     $normalizedPublicRoot = str_replace('\\', '/', $publicRoot);
                     if (stripos($real, $normalizedPublicRoot) === 0) {
                         $relative = ltrim(substr($real, strlen($normalizedPublicRoot)), '/');
-                        $webPath = ($appPath !== '' ? '/' . $appPath : '') . '/' . $relative;
-                        return 'src=' . $quote . ($appUrl !== '' ? $appUrl . '/' . $relative : $webPath) . $quote;
+                        return 'src=' . $quote . $this->buildBrowserAssetUrl($relative, $appUrl, $appPath) . $quote;
+                    }
+                }
+
+                if ($mode === 'browser') {
+                    $relative = $this->extractRelativePathFromPublicRoot($real);
+                    if ($relative !== null) {
+                        return 'src=' . $quote . $this->buildBrowserAssetUrl($relative, $appUrl, $appPath) . $quote;
                     }
                 }
 
@@ -367,6 +373,30 @@ class PeticaoExportService
 
             return 'src=' . $quote . $src . $quote;
         }, $html);
+    }
+
+    protected function extractRelativePathFromPublicRoot($absolutePath)
+    {
+        $normalized = str_replace('\\', '/', $absolutePath);
+        $marker = '/public/';
+        $position = stripos($normalized, $marker);
+
+        if ($position === false) {
+            return null;
+        }
+
+        return ltrim(substr($normalized, $position + strlen($marker)), '/');
+    }
+
+    protected function buildBrowserAssetUrl($relativePath, $appUrl, $appPath)
+    {
+        $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
+
+        if ($appUrl !== '') {
+            return rtrim($appUrl, '/') . '/' . $relativePath;
+        }
+
+        return ($appPath !== '' ? '/' . trim($appPath, '/') : '') . '/' . $relativePath;
     }
 
     protected function buildBrowserPrintStyles()
