@@ -469,6 +469,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var saveStatus = document.getElementById('saved-editor-status');
     var saveButton = document.getElementById('saved-editor-save-button');
     var isDirty = false;
+    var isSubmitting = false;
 
     function updateSaveStatus(state, text) {
         if (!saveStatus) {
@@ -551,6 +552,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (saveForm) {
         saveForm.addEventListener('submit', function () {
+            isSubmitting = true;
+            isDirty = false;
             updateSaveStatus('saving', 'Salvando...');
             if (saveButton) {
                 saveButton.disabled = true;
@@ -561,6 +564,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     Array.prototype.forEach.call(document.querySelectorAll('.js-saved-export-form'), function (form) {
         form.addEventListener('submit', function () {
+            isSubmitting = true;
+            isDirty = false;
             syncEditor();
             form.querySelector('textarea[name="cod_pecas"]').value = textarea.value;
             form.querySelector('input[name="nome_cli"]').value = document.getElementById('saved_editor_nome_cli').value;
@@ -568,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     window.addEventListener('beforeunload', function (event) {
-        if (!isDirty) {
+        if (!isDirty || isSubmitting) {
             return;
         }
 

@@ -322,6 +322,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var saveStatus = document.getElementById('editor-save-status');
     var saveButton = document.getElementById('editor-save-button');
     var isDirty = false;
+    var isSubmitting = false;
 
     function updateSaveStatus(state, text) {
         if (!saveStatus) {
@@ -404,6 +405,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (saveForm) {
         saveForm.addEventListener('submit', function () {
+            isSubmitting = true;
+            isDirty = false;
             updateSaveStatus('saving', 'Salvando...');
             if (saveButton) {
                 saveButton.disabled = true;
@@ -414,6 +417,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     Array.prototype.forEach.call(document.querySelectorAll('.js-export-form'), function (form) {
         form.addEventListener('submit', function () {
+            isSubmitting = true;
+            isDirty = false;
             syncEditor();
             var html = textarea.value;
             form.querySelector('textarea[name="cod_pecas"]').value = html;
@@ -422,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     window.addEventListener('beforeunload', function (event) {
-        if (!isDirty) {
+        if (!isDirty || isSubmitting) {
             return;
         }
 
