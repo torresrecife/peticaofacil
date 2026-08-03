@@ -102,7 +102,30 @@
         box-shadow: none;
     }
     .editor-shell .cke_contents {
-        background: #eef2f6;
+        background-color: #eef2f6;
+        background-image:
+            repeating-linear-gradient(
+                to bottom,
+                transparent 0,
+                transparent 1118px,
+                #cbd2d9 1118px,
+                #cbd2d9 1122px,
+                #eef2f6 1122px,
+                #eef2f6 1162px
+            ),
+            linear-gradient(
+                to right,
+                transparent calc(50% - 397px),
+                #ffffff calc(50% - 397px),
+                #ffffff calc(50% + 397px),
+                transparent calc(50% + 397px)
+            );
+        background-repeat: repeat-y, no-repeat;
+        background-size: 100% 1162px, 100% 100%;
+    }
+    .editor-shell .cke_wysiwyg_frame,
+    .editor-shell .cke_contents iframe {
+        background: transparent;
     }
     .editor-shell .cke_toolgroup {
         border-radius: 6px;
@@ -387,6 +410,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+
     });
 
     editor.on('change', markDirty);
@@ -402,6 +426,7 @@ document.addEventListener('DOMContentLoaded', function () {
             CKEDITOR.instances[textarea.id].updateElement();
         }
     }
+
 
     if (saveForm) {
         saveForm.addEventListener('submit', function () {

@@ -416,16 +416,16 @@ class PeticaoExportService
     {
         return implode("\n", [
             '@page { size: A4; margin: 0; }',
-            'html, body { margin: 0 !important; padding: 0 !important; max-width: none !important; background: #eef2f6; }',
+            'html, body { margin: 0 !important; padding: 0 !important; max-width: none !important; background: #ffffff; }',
             'body { color: #1f2933; font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }',
-            '.peticao-print-shell { padding: 24px 0 40px; }',
-            '.peticao-print-sheet { width: 794px; min-height: 1123px; margin: 0 auto; box-sizing: border-box; background: #fff; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12); overflow: hidden; }',
+            '.peticao-print-shell { padding: 24px 0 40px; background: #eff2f6; }',
+            '.peticao-print-sheet { width: 794px; min-height: 1123px; margin: 0 auto; box-sizing: border-box; background-color: #ffffff; background-image: repeating-linear-gradient(to bottom, #ffffff 0, #ffffff 1118px, #cbd2d9 1118px, #cbd2d9 1122px, #ffffff 1122px, #ffffff 1162px); background-repeat: repeat-y; background-size: 100% 1162px; box-shadow: none; overflow: hidden; }',
             '.peticao-print-sheet img { max-width: 100%; height: auto; display: inline-block; }',
             '.peticao-print-sheet table { max-width: 100%; table-layout: auto; }',
             '.peticao-print-sheet p, .peticao-print-sheet div, .peticao-print-sheet td, .peticao-print-sheet th, .peticao-print-sheet li, .peticao-print-sheet span, .peticao-print-sheet strong, .peticao-print-sheet u { line-height: 1.6; }',
             '.peticao-print-sheet p { margin: 0 0 12px; }',
             '.peticao-print-sheet .peticao-empty-line { min-height: 1.6em; display: block; }',
-            '@media print { html, body { background: #fff !important; } .peticao-print-shell { padding: 0; } .peticao-print-sheet { width: 794px; min-height: 1123px; margin: 0; box-shadow: none; } }',
+            '@media print { html, body { background: #fff !important; } .peticao-print-shell { padding: 0; } .peticao-print-sheet { width: 794px; min-height: 1123px; margin: 0; box-shadow: none; background-image: none; } }',
         ]);
     }
 
@@ -469,7 +469,10 @@ class PeticaoExportService
         }
 
         $css = preg_replace('/box-shadow\s*:\s*[^;]+;?/i', '', $css);
+        $css = preg_replace('/background(?:-color|-image|-repeat|-size|-position)?\s*:\s*[^;]+;?/i', '', $css);
         $css = preg_replace('/margin\s*:\s*24px auto;?/i', 'margin: 0;', $css);
+        $css = preg_replace('/min-height\s*:\s*1123px;?/i', '', $css);
+        $css = preg_replace('/max-width\s*:\s*794px;?/i', 'max-width: none;', $css);
 
         return $css;
     }
