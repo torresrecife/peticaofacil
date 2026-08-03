@@ -12,9 +12,26 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('setor')->orderBy('id')->paginate(20);
+        $search = trim((string) $request->query('q', ''));
+
+        $users = User::with('setor')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('nome_usu', 'like', '%' . $search . '%')
+                        ->orWhere('login_usu', 'like', '%' . $search . '%')
+                        ->orWhere('email_usu', 'like', '%' . $search . '%');
+
+                    if (ctype_digit($search)) {
+                        $inner->orWhere('id', (int) $search);
+                    }
+                });
+            })
+            ->orderBy('id')
+            ->paginate(20)
+            ->appends($request->only('q'));
+
         $clientMap = Cliente::active()->orderBy('cliente_name')->get()->keyBy('cliente_id');
 
         foreach ($users as $user) {
@@ -27,7 +44,7 @@ class UserController extends Controller
             $user->client_labels = $names;
         }
 
-        return view('admin.users.index', compact('users'));
+        return view('admin.users.index', compact('users', 'search'));
     }
 
     public function create()
