@@ -17,7 +17,7 @@ class CreatePeticoesTable extends Migration
             $table->string('nome_arquivo', 500);
             $table->string('cliente_referencia', 500)->nullable();
             $table->longText('conteudo_html');
-            $table->json('campos_resolvidos')->nullable();
+            $table->longText('campos_resolvidos')->nullable();
             $table->timestamp('gerado_em')->nullable();
             $table->timestamp('salvo_em')->nullable();
             $table->timestamps();

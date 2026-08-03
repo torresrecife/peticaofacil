@@ -20,7 +20,7 @@ class CreatePeticaoModelosTable extends Migration
             $table->string('arquivo_padrao', 50)->nullable();
             $table->longText('cabecalho_html')->nullable();
             $table->longText('rodape_html')->nullable();
-            $table->json('metadata')->nullable();
+            $table->longText('metadata')->nullable();
             $table->timestamps();
         });
     }

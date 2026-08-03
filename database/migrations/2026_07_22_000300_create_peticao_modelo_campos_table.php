@@ -28,7 +28,7 @@ class CreatePeticaoModeloCamposTable extends Migration
             $table->boolean('obrigatorio')->default(false);
             $table->boolean('visivel')->default(true);
             $table->boolean('gera_nome_arquivo')->default(false);
-            $table->json('eventos_frontend')->nullable();
+            $table->longText('eventos_frontend')->nullable();
             $table->timestamps();
 
             $table->foreign('modelo_id')

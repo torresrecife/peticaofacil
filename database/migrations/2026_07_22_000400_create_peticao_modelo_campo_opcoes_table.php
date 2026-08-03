@@ -14,7 +14,7 @@ class CreatePeticaoModeloCampoOpcoesTable extends Migration
             $table->unsignedInteger('legacy_dado_id')->nullable()->unique();
             $table->string('rotulo', 255);
             $table->text('valor_retorno')->nullable();
-            $table->json('valores_extras')->nullable();
+            $table->longText('valores_extras')->nullable();
             $table->unsignedInteger('ordem')->default(0);
             $table->timestamps();
 
