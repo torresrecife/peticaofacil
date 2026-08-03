@@ -380,6 +380,7 @@
 
             return false;
         };
+        $canAccessAdmin = auth()->user()->can('access-admin');
     @endphp
     <div class="shell" id="app-shell">
         <aside class="sidebar">
@@ -396,42 +397,44 @@
                     </span>
                     <span class="sidebar-link__label">Painel</span>
                 </a>
-                <a class="sidebar-link {{ $isActiveMenu(['admin.usuarios.*']) ? 'is-active' : '' }}" href="{{ route('admin.usuarios.index') }}" @if($isActiveMenu(['admin.usuarios.*'])) aria-current="page" @endif>
-                    <span class="sidebar-link__icon" aria-hidden="true">
-                        <i data-lucide="users"></i>
-                    </span>
-                    <span class="sidebar-link__label">Usuarios</span>
-                </a>
-                <a class="sidebar-link {{ $isActiveMenu(['admin.setores.*']) ? 'is-active' : '' }}" href="{{ route('admin.setores.index') }}" @if($isActiveMenu(['admin.setores.*'])) aria-current="page" @endif>
-                    <span class="sidebar-link__icon" aria-hidden="true">
-                        <i data-lucide="building-2"></i>
-                    </span>
-                    <span class="sidebar-link__label">Setores</span>
-                </a>
-                <a class="sidebar-link {{ $isActiveMenu(['admin.clientes.*']) ? 'is-active' : '' }}" href="{{ route('admin.clientes.index') }}" @if($isActiveMenu(['admin.clientes.*'])) aria-current="page" @endif>
-                    <span class="sidebar-link__icon" aria-hidden="true">
-                        <i data-lucide="file-text"></i>
-                    </span>
-                    <span class="sidebar-link__label">Clientes</span>
-                </a>
-                <a class="sidebar-link {{ $isActiveMenu(['admin.servidores.*', 'admin.servidores-normalizados.*']) ? 'is-active' : '' }}" href="{{ route('admin.servidores-normalizados.index') }}" @if($isActiveMenu(['admin.servidores.*', 'admin.servidores-normalizados.*'])) aria-current="page" @endif>
-                    <span class="sidebar-link__icon" aria-hidden="true">
-                        <i data-lucide="database"></i>
-                    </span>
-                    <span class="sidebar-link__label">Servidores SQL</span>
-                </a>
-                <a class="sidebar-link {{ $isActiveMenu(['admin.modelos.*', 'admin.modelos-normalizados.*']) ? 'is-active' : '' }}" href="{{ route('admin.modelos-normalizados.index') }}" @if($isActiveMenu(['admin.modelos.*', 'admin.modelos-normalizados.*'])) aria-current="page" @endif>
-                    <span class="sidebar-link__icon" aria-hidden="true">
-                        <i data-lucide="file-text"></i>
-                    </span>
-                    <span class="sidebar-link__label">Modelos</span>
-                </a>
-                <a class="sidebar-link {{ $isActiveMenu(['admin.listas.*']) ? 'is-active' : '' }}" href="{{ route('admin.listas.index') }}" @if($isActiveMenu(['admin.listas.*'])) aria-current="page" @endif>
-                    <span class="sidebar-link__icon" aria-hidden="true">
-                        <i data-lucide="clipboard-list"></i>
-                    </span>
-                    <span class="sidebar-link__label">Listas</span>
-                </a>
+                @if($canAccessAdmin)
+                    <a class="sidebar-link {{ $isActiveMenu(['admin.usuarios.*']) ? 'is-active' : '' }}" href="{{ route('admin.usuarios.index') }}" @if($isActiveMenu(['admin.usuarios.*'])) aria-current="page" @endif>
+                        <span class="sidebar-link__icon" aria-hidden="true">
+                            <i data-lucide="users"></i>
+                        </span>
+                        <span class="sidebar-link__label">Usuarios</span>
+                    </a>
+                    <a class="sidebar-link {{ $isActiveMenu(['admin.setores.*']) ? 'is-active' : '' }}" href="{{ route('admin.setores.index') }}" @if($isActiveMenu(['admin.setores.*'])) aria-current="page" @endif>
+                        <span class="sidebar-link__icon" aria-hidden="true">
+                            <i data-lucide="building-2"></i>
+                        </span>
+                        <span class="sidebar-link__label">Setores</span>
+                    </a>
+                    <a class="sidebar-link {{ $isActiveMenu(['admin.clientes.*']) ? 'is-active' : '' }}" href="{{ route('admin.clientes.index') }}" @if($isActiveMenu(['admin.clientes.*'])) aria-current="page" @endif>
+                        <span class="sidebar-link__icon" aria-hidden="true">
+                            <i data-lucide="file-text"></i>
+                        </span>
+                        <span class="sidebar-link__label">Clientes</span>
+                    </a>
+                    <a class="sidebar-link {{ $isActiveMenu(['admin.servidores.*', 'admin.servidores-normalizados.*']) ? 'is-active' : '' }}" href="{{ route('admin.servidores-normalizados.index') }}" @if($isActiveMenu(['admin.servidores.*', 'admin.servidores-normalizados.*'])) aria-current="page" @endif>
+                        <span class="sidebar-link__icon" aria-hidden="true">
+                            <i data-lucide="database"></i>
+                        </span>
+                        <span class="sidebar-link__label">Servidores SQL</span>
+                    </a>
+                    <a class="sidebar-link {{ $isActiveMenu(['admin.modelos.*', 'admin.modelos-normalizados.*']) ? 'is-active' : '' }}" href="{{ route('admin.modelos-normalizados.index') }}" @if($isActiveMenu(['admin.modelos.*', 'admin.modelos-normalizados.*'])) aria-current="page" @endif>
+                        <span class="sidebar-link__icon" aria-hidden="true">
+                            <i data-lucide="file-text"></i>
+                        </span>
+                        <span class="sidebar-link__label">Modelos</span>
+                    </a>
+                    <a class="sidebar-link {{ $isActiveMenu(['admin.listas.*']) ? 'is-active' : '' }}" href="{{ route('admin.listas.index') }}" @if($isActiveMenu(['admin.listas.*'])) aria-current="page" @endif>
+                        <span class="sidebar-link__icon" aria-hidden="true">
+                            <i data-lucide="clipboard-list"></i>
+                        </span>
+                        <span class="sidebar-link__label">Listas</span>
+                    </a>
+                @endif
                 <a class="sidebar-link {{ $isActiveMenu(['peticoes.index', 'peticoes.normalized.*']) ? 'is-active' : '' }}" href="{{ route('peticoes.index') }}" @if($isActiveMenu(['peticoes.index', 'peticoes.normalized.*'])) aria-current="page" @endif>
                     <span class="sidebar-link__icon" aria-hidden="true">
                         <i data-lucide="notebook-pen"></i>

@@ -69,6 +69,23 @@ class AuthAndAdminAccessTest extends TestCase
             ->assertStatus(403);
     }
 
+    public function test_non_admin_user_does_not_see_admin_menu_links()
+    {
+        $user = factory(User::class)->create([
+            'nivel_usu' => 'USU',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/painel')
+            ->assertStatus(200)
+            ->assertDontSee('href="' . route('admin.usuarios.index') . '"', false)
+            ->assertDontSee('href="' . route('admin.setores.index') . '"', false)
+            ->assertDontSee('href="' . route('admin.clientes.index') . '"', false)
+            ->assertDontSee('href="' . route('admin.servidores-normalizados.index') . '"', false)
+            ->assertDontSee('href="' . route('admin.modelos-normalizados.index') . '"', false)
+            ->assertDontSee('href="' . route('admin.listas.index') . '"', false);
+    }
+
     public function test_admin_user_can_access_admin_area()
     {
         $user = factory(User::class)->create([
@@ -79,5 +96,22 @@ class AuthAndAdminAccessTest extends TestCase
             ->get('/admin/usuarios')
             ->assertStatus(200)
             ->assertSee('Usuarios');
+    }
+
+    public function test_admin_user_sees_admin_menu_links()
+    {
+        $user = factory(User::class)->create([
+            'nivel_usu' => 'ADM',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/painel')
+            ->assertStatus(200)
+            ->assertSee('href="' . route('admin.usuarios.index') . '"', false)
+            ->assertSee('href="' . route('admin.setores.index') . '"', false)
+            ->assertSee('href="' . route('admin.clientes.index') . '"', false)
+            ->assertSee('href="' . route('admin.servidores-normalizados.index') . '"', false)
+            ->assertSee('href="' . route('admin.modelos-normalizados.index') . '"', false)
+            ->assertSee('href="' . route('admin.listas.index') . '"', false);
     }
 }
