@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\PeticaoModelo;
 use App\PeticaoNormalizada;
+use App\Services\PeticaoDocumentLayoutService;
 use App\Services\PeticaoExportService;
 use App\Services\PeticaoNormalizedStorageService;
 use Illuminate\Http\Request;
@@ -64,33 +65,45 @@ class PeticaoEditorController extends Controller
         return redirect()->route('peticoes.saved.edit', $peticao)->with('status', 'Peca salva.');
     }
 
-    public function exportNormalizedWord(Request $request, PeticaoModelo $modeloNormalizado, PeticaoExportService $exportService)
+    public function exportNormalizedWord(Request $request, PeticaoModelo $modeloNormalizado, PeticaoExportService $exportService, PeticaoDocumentLayoutService $layoutService)
     {
-        return $this->handleExportWord($request, $exportService);
+        return $this->handleExportWord($request, $modeloNormalizado, $exportService, $layoutService);
     }
 
-    protected function handleExportWord(Request $request, PeticaoExportService $exportService)
+    protected function handleExportWord(Request $request, PeticaoModelo $modelo, PeticaoExportService $exportService, PeticaoDocumentLayoutService $layoutService)
     {
         $data = $request->validate([
             'nome_cli' => 'required|string|max:500',
             'cod_pecas' => 'required|string',
         ]);
 
-        return $exportService->exportWord($data['nome_cli'], $data['cod_pecas']);
+        $layout = $layoutService->fromEditorDraft($modelo, $data['nome_cli'], $data['cod_pecas'], [
+            'modelo' => $modelo->nome,
+            'modelo_id' => $modelo->id,
+            'legacy_tipo_id' => $modelo->legacy_tipo_id,
+        ]);
+
+        return $exportService->exportWordFromLayout($layout);
     }
 
-    public function exportNormalizedPdf(Request $request, PeticaoModelo $modeloNormalizado, PeticaoExportService $exportService)
+    public function exportNormalizedPdf(Request $request, PeticaoModelo $modeloNormalizado, PeticaoExportService $exportService, PeticaoDocumentLayoutService $layoutService)
     {
-        return $this->handleExportPdf($request, $exportService);
+        return $this->handleExportPdf($request, $modeloNormalizado, $exportService, $layoutService);
     }
 
-    protected function handleExportPdf(Request $request, PeticaoExportService $exportService)
+    protected function handleExportPdf(Request $request, PeticaoModelo $modelo, PeticaoExportService $exportService, PeticaoDocumentLayoutService $layoutService)
     {
         $data = $request->validate([
             'nome_cli' => 'required|string|max:500',
             'cod_pecas' => 'required|string',
         ]);
 
-        return $exportService->exportPdf($request, $data['nome_cli'], $data['cod_pecas']);
+        $layout = $layoutService->fromEditorDraft($modelo, $data['nome_cli'], $data['cod_pecas'], [
+            'modelo' => $modelo->nome,
+            'modelo_id' => $modelo->id,
+            'legacy_tipo_id' => $modelo->legacy_tipo_id,
+        ]);
+
+        return $exportService->exportPdfFromLayout($request, $layout);
     }
 }

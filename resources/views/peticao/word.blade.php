@@ -27,6 +27,18 @@
     @endif
 </head>
 <body>
+    @if(!empty($headerHtml))
+        <div style="mso-element:header" id="h1" class="WordSectionHeader">
+            {!! $headerHtml !!}
+        </div>
+    @endif
+
+    @if(!empty($footerHtml))
+        <div style="mso-element:footer" id="f1" class="WordSectionFooter">
+            {!! $footerHtml !!}
+        </div>
+    @endif
+
     <div class="Section1">
         <div class="peticao-word-sheet">
             {!! $documentHtml !!}

@@ -1,0 +1,12 @@
+{
+  "name": "peticaofacil-pdf-renderer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Renderer Playwright para exportacao PDF de peticoes",
+  "scripts": {
+    "render": "node render-peticao.js"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}

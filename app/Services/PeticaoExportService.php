@@ -8,10 +8,15 @@ use Throwable;
 
 class PeticaoExportService
 {
-    public function exportWord($nomeArquivo, $conteudoHtml)
+    public function exportWordFromLayout(array $layout)
     {
-        $filename = $this->sanitizeFileName($nomeArquivo) . '.doc';
-        $content = $this->renderWordDocument($nomeArquivo, $conteudoHtml);
+        $filename = $this->sanitizeFileName($layout['title'] ?? 'peticao') . '.doc';
+        $content = $this->renderWordDocument(
+            $layout['title'] ?? 'peticao',
+            $layout['body_html'] ?? '',
+            $layout['header_html'] ?? null,
+            $layout['footer_html'] ?? null
+        );
 
         return response($content, 200, [
             'Content-Type' => 'application/msword; charset=UTF-8',
@@ -19,11 +24,58 @@ class PeticaoExportService
         ]);
     }
 
-    public function exportPdf(Request $request, $nomeArquivo, $conteudoHtml)
+    public function exportWord($nomeArquivo, $conteudoHtml, $cabecalhoHtml = null, $rodapeHtml = null)
+    {
+        return $this->exportWordFromLayout([
+            'title' => $nomeArquivo,
+            'body_html' => $conteudoHtml,
+            'header_html' => $cabecalhoHtml,
+            'footer_html' => $rodapeHtml,
+        ]);
+    }
+
+    public function exportPdfFromLayout(Request $request, array $layout)
+    {
+        $engine = strtolower((string) config('pdf.engine', 'browser'));
+
+        if ($engine === 'playwright') {
+            $content = app(PeticaoPlaywrightRendererService::class)->renderPdf(
+                $this->preparePlaywrightLayout($layout)
+            );
+
+            return response($content, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $this->sanitizeFileName($layout['title'] ?? 'peticao') . '.pdf"',
+                'X-Peticao-Pdf-Engine' => 'playwright',
+            ]);
+        }
+
+        return $this->exportPdf(
+            $request,
+            $layout['title'] ?? 'peticao',
+            $layout['body_html'] ?? '',
+            $layout['header_html'] ?? null,
+            $layout['footer_html'] ?? null
+        );
+    }
+
+    public function renderPrintViewFromLayout(array $layout, $assetMode = 'browser')
+    {
+        return $this->renderPrintView(
+            $layout['title'] ?? 'peticao',
+            $layout['body_html'] ?? '',
+            $layout['meta'] ?? [],
+            $assetMode,
+            $layout['header_html'] ?? null,
+            $layout['footer_html'] ?? null
+        );
+    }
+
+    public function exportPdf(Request $request, $nomeArquivo, $conteudoHtml, $cabecalhoHtml = null, $rodapeHtml = null)
     {
         if ($this->shouldUseBrowserPdf()) {
             try {
-                return $this->exportBrowserPdf($nomeArquivo, $conteudoHtml);
+                return $this->exportBrowserPdf($nomeArquivo, $conteudoHtml, $cabecalhoHtml, $rodapeHtml);
             } catch (Throwable $exception) {
                 report($exception);
 
@@ -33,49 +85,60 @@ class PeticaoExportService
             }
         }
 
-        return $this->exportLegacyPdf($request, $nomeArquivo, $conteudoHtml);
+        return $this->exportLegacyPdf($request, $nomeArquivo, $conteudoHtml, $cabecalhoHtml, $rodapeHtml);
     }
 
-    public function renderPrintView($nomeArquivo, $conteudoHtml, array $meta = [], $assetMode = 'browser')
+    public function renderPrintView($nomeArquivo, $conteudoHtml, array $meta = [], $assetMode = 'browser', $cabecalhoHtml = null, $rodapeHtml = null)
     {
         $editorCss = file_exists(public_path('ckeditor/contents.css'))
             ? $this->scopeEditorPrintCss(file_get_contents(public_path('ckeditor/contents.css')))
             : '';
 
-        $documentHtml = $this->preserveBlankEditorBlocks(
+        $conteudoSemMoldura = $this->stripEmbeddedHeaderFooter($conteudoHtml, $cabecalhoHtml, $rodapeHtml);
+        $bodyHtml = $this->preserveBlankEditorBlocks(
             $this->normalizePrintMarkup(
                 $this->preserveAlignedSpacingMarkup(
-                    $this->normalizeAssetImageSrc($conteudoHtml, $assetMode)
+                    $this->normalizeAssetImageSrc($conteudoSemMoldura, $assetMode)
                 )
             )
         );
+        $headerHtml = $this->prepareExportFragment($cabecalhoHtml, $assetMode, 'print');
+        $footerHtml = $this->prepareExportFragment($rodapeHtml, $assetMode, 'print');
+        $documentHtml = $this->composePrintDocumentHtml($headerHtml, $bodyHtml, $footerHtml);
 
         return view('peticao.print', [
             'documentTitle' => $nomeArquivo,
             'documentHtml' => $documentHtml,
+            'headerHtml' => null,
+            'footerHtml' => null,
             'meta' => $meta,
             'editorCss' => $editorCss,
             'printCss' => $this->buildBrowserPrintStyles(),
         ]);
     }
 
-    public function renderWordDocument($nomeArquivo, $conteudoHtml)
+    public function renderWordDocument($nomeArquivo, $conteudoHtml, $cabecalhoHtml = null, $rodapeHtml = null)
     {
         $editorCss = file_exists(public_path('ckeditor/contents.css'))
             ? $this->scopeEditorPrintCss(file_get_contents(public_path('ckeditor/contents.css')))
             : '';
 
+        $conteudoSemMoldura = $this->stripEmbeddedHeaderFooter($conteudoHtml, $cabecalhoHtml, $rodapeHtml);
         $documentHtml = $this->preserveBlankEditorBlocks(
             $this->normalizeWordMarkup(
                 $this->preserveAlignedSpacingMarkup(
-                    $this->normalizeAssetImageSrc($conteudoHtml, 'browser')
+                    $this->normalizeAssetImageSrc($conteudoSemMoldura, 'browser')
                 )
             )
         );
+        $headerHtml = $this->prepareExportFragment($cabecalhoHtml, 'browser', 'word');
+        $footerHtml = $this->prepareExportFragment($rodapeHtml, 'browser', 'word');
 
         return view('peticao.word', [
             'documentTitle' => $nomeArquivo,
             'documentHtml' => $documentHtml,
+            'headerHtml' => $headerHtml,
+            'footerHtml' => $footerHtml,
             'editorCss' => $editorCss,
             'wordCss' => $this->buildWordStyles(),
         ])->render();
@@ -89,7 +152,7 @@ class PeticaoExportService
         return $value !== '' ? $value : 'peticao';
     }
 
-    protected function exportBrowserPdf($nomeArquivo, $conteudoHtml)
+    protected function exportBrowserPdf($nomeArquivo, $conteudoHtml, $cabecalhoHtml = null, $rodapeHtml = null)
     {
         $browserBinary = $this->resolveBrowserBinary();
         if ($browserBinary === null) {
@@ -107,7 +170,7 @@ class PeticaoExportService
         $pdfPath = $tempDir . DIRECTORY_SEPARATOR . $token . '.pdf';
 
         try {
-            $html = $this->renderPrintView($nomeArquivo, $conteudoHtml, [], 'filesystem')->render();
+            $html = $this->renderPrintView($nomeArquivo, $conteudoHtml, [], 'filesystem', $cabecalhoHtml, $rodapeHtml)->render();
             file_put_contents($htmlPath, $html);
 
             $this->runBrowserPrintCommand($browserBinary, $htmlPath, $pdfPath);
@@ -127,7 +190,7 @@ class PeticaoExportService
         }
     }
 
-    protected function exportLegacyPdf(Request $request, $nomeArquivo, $conteudoHtml)
+    protected function exportLegacyPdf(Request $request, $nomeArquivo, $conteudoHtml, $cabecalhoHtml = null, $rodapeHtml = null)
     {
         $this->prepareLegacyPdfEnvironment($request);
 
@@ -138,17 +201,21 @@ class PeticaoExportService
 
         require_once $library;
 
+        $conteudoSemMoldura = $this->stripEmbeddedHeaderFooter($conteudoHtml, $cabecalhoHtml, $rodapeHtml);
+
         $pageMargins = config('pdf.page');
         $content = '<style>' . $this->buildPdfStyles() . '</style>'
             . '<page backtop="' . (int) ($pageMargins['top_mm'] ?? 19) . 'mm"'
             . ' backbottom="' . (int) ($pageMargins['bottom_mm'] ?? 15) . 'mm"'
             . ' backleft="' . (int) ($pageMargins['left_mm'] ?? 17) . 'mm"'
             . ' backright="' . (int) ($pageMargins['right_mm'] ?? 17) . 'mm">'
+            . $this->prepareExportFragment($cabecalhoHtml, 'filesystem', 'pdf')
             . $this->normalizePdfMarkup(
                 $this->preserveAlignedSpacingMarkup(
-                    $this->normalizeAssetImageSrc($conteudoHtml)
+                    $this->normalizeAssetImageSrc($conteudoSemMoldura)
                 )
             )
+            . $this->prepareExportFragment($rodapeHtml, 'filesystem', 'pdf')
             . '</page>';
 
         if (ob_get_length()) {
@@ -393,6 +460,13 @@ class PeticaoExportService
                     }
                 }
 
+                if ($mode === 'inline') {
+                    $inline = $this->pathToInlineDataUrl($real);
+                    if ($inline !== null) {
+                        return 'src=' . $quote . $inline . $quote;
+                    }
+                }
+
                 if (preg_match('/^[A-Za-z]:\//', $real)) {
                     return 'src=' . $quote . 'file:///' . $real . $quote;
                 }
@@ -428,6 +502,34 @@ class PeticaoExportService
         return ($appPath !== '' ? '/' . trim($appPath, '/') : '') . '/' . $relativePath;
     }
 
+    protected function pathToInlineDataUrl($absolutePath)
+    {
+        if (!is_file($absolutePath) || !is_readable($absolutePath)) {
+            return null;
+        }
+
+        $content = @file_get_contents($absolutePath);
+        if ($content === false) {
+            return null;
+        }
+
+        $mime = function_exists('mime_content_type') ? @mime_content_type($absolutePath) : null;
+        if (!$mime) {
+            $extension = strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION));
+            $mimeMap = [
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+                'svg' => 'image/svg+xml',
+            ];
+            $mime = $mimeMap[$extension] ?? 'application/octet-stream';
+        }
+
+        return 'data:' . $mime . ';base64,' . base64_encode($content);
+    }
+
     protected function buildBrowserPrintStyles()
     {
         return implode("\n", [
@@ -437,6 +539,13 @@ class PeticaoExportService
             '.peticao-print-shell { padding: 24px 0 40px; background: #eff2f6; }',
             '.peticao-print-sheet { width: 794px; min-height: 1123px; margin: 0 auto; box-sizing: border-box; background-color: #ffffff; background-image: repeating-linear-gradient(to bottom, #ffffff 0, #ffffff 1118px, #cbd2d9 1118px, #cbd2d9 1122px, #ffffff 1122px, #ffffff 1162px); background-repeat: repeat-y; background-size: 100% 1162px; box-shadow: none; overflow: hidden; }',
             '.peticao-print-content { min-height: 1123px; padding: 64px !important; box-sizing: border-box; }',
+            '.peticao-print-header, .peticao-print-footer { width: 100%; }',
+            '.peticao-print-header { margin-bottom: 24px; }',
+            '.peticao-print-footer { margin-top: 24px; }',
+            '.peticao-print-header-inline { margin-bottom: 24px; }',
+            '.peticao-print-footer-inline { margin-top: 24px; }',
+            '.peticao-print-header img, .peticao-print-footer img { max-width: 100%; height: auto; }',
+            '.peticao-print-body { min-height: 0; }',
             '.peticao-print-sheet img { max-width: 100%; height: auto; display: inline-block; }',
             '.peticao-print-sheet table { max-width: 100%; table-layout: auto; }',
             '.peticao-print-sheet p, .peticao-print-sheet div, .peticao-print-sheet td, .peticao-print-sheet th, .peticao-print-sheet li, .peticao-print-sheet span, .peticao-print-sheet strong, .peticao-print-sheet u { line-height: 1.6; }',
@@ -448,17 +557,19 @@ class PeticaoExportService
             '.peticao-print-sheet .print-header-table img { display: block; max-width: 100%; height: auto; }',
             '.peticao-print-sheet .print-header-contact { width: 100%; margin: 0; font-size: 9pt; line-height: 1.2; text-align: right !important; white-space: normal; }',
             '.peticao-print-sheet .peticao-empty-line { min-height: 1.6em; display: block; }',
-            '@media print { @page { size: A4; margin: 16.9mm; } html, body { background: #fff !important; } .peticao-print-shell { padding: 0; background: #fff; } .peticao-print-sheet { width: auto; min-height: auto; margin: 0; box-shadow: none; background-image: none; overflow: visible; } .peticao-print-content { min-height: auto; padding: 0 !important; box-sizing: border-box; } }',
+            '@media print { @page { size: A4; margin: 16.9mm; } html, body { background: #fff !important; } .peticao-print-shell { padding: 0; background: #fff; } .peticao-print-sheet { width: auto; min-height: auto; margin: 0; box-shadow: none; background-image: none; overflow: visible; } .peticao-print-content { min-height: auto; padding: 0 !important; box-sizing: border-box; } .peticao-print-header, .peticao-print-footer { display: none !important; } .peticao-print-header-inline { margin-bottom: 24px; } .peticao-print-footer-inline { margin-top: 24px; } }',
         ]);
     }
 
     protected function buildWordStyles()
     {
         return implode("\n", [
-            '@page Section1 { size: 595.3pt 841.9pt; margin: 47.9pt 47.9pt 47.9pt 47.9pt; mso-header-margin: 18pt; mso-footer-margin: 18pt; mso-page-orientation: portrait; }',
+            '@page Section1 { size: 595.3pt 841.9pt; margin: 47.9pt 47.9pt 47.9pt 47.9pt; mso-header-margin: 18pt; mso-footer-margin: 18pt; mso-page-orientation: portrait; mso-header: h1; mso-footer: f1; }',
             'html, body { margin: 0; padding: 0; background: #ffffff; }',
             'body { color: #1f2933; font-family: Arial, Helvetica, sans-serif; }',
             'div.Section1 { page: Section1; }',
+            'div.WordSectionHeader, div.WordSectionFooter { width: 100%; }',
+            'div.WordSectionHeader p, div.WordSectionFooter p { margin: 0 0 9pt; }',
             '.peticao-word-sheet { width: auto; margin: 0; padding: 0; box-sizing: border-box; background: #fff; }',
             '.peticao-word-sheet img { max-width: 100%; height: auto; display: inline-block; }',
             '.peticao-word-sheet table { width: auto; max-width: 100%; table-layout: auto; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }',
@@ -647,6 +758,192 @@ class PeticaoExportService
 
             return $table;
         }, $html);
+    }
+
+    protected function composePrintDocumentHtml($headerHtml, $bodyHtml, $footerHtml)
+    {
+        $sections = array_filter([
+            trim((string) $headerHtml) !== '' ? '<div class="peticao-print-header-inline">' . $headerHtml . '</div>' : null,
+            $bodyHtml,
+            trim((string) $footerHtml) !== '' ? '<div class="peticao-print-footer-inline">' . $footerHtml . '</div>' : null,
+        ]);
+
+        return implode("\n", $sections);
+    }
+
+    protected function prepareExportFragment($html, $assetMode, $context)
+    {
+        $html = trim((string) $html);
+        if ($html === '') {
+            return null;
+        }
+
+        $html = $this->preserveBlankEditorBlocks(
+            $this->preserveAlignedSpacingMarkup(
+                $this->normalizeAssetImageSrc($html, $assetMode)
+            )
+        );
+
+        if ($context === 'print' || $context === 'pdf') {
+            return $this->normalizePrintMarkup($html);
+        }
+
+        if ($context === 'word') {
+            return $this->normalizeWordMarkup($html);
+        }
+
+        if ($context === 'playwright-template') {
+            return $this->normalizePlaywrightTemplateMarkup($html);
+        }
+
+        return $html;
+    }
+
+    protected function preparePlaywrightLayout(array $layout)
+    {
+        $bodyHtml = (string) ($layout['body_html'] ?? '');
+        $headerHtml = (string) ($layout['header_html'] ?? '');
+        $footerHtml = (string) ($layout['footer_html'] ?? '');
+
+        $bodyHtml = $this->stripEmbeddedHeaderFooter($bodyHtml, $headerHtml, $footerHtml);
+
+        return [
+            'title' => (string) ($layout['title'] ?? 'peticao'),
+            'body_html' => $this->preserveBlankEditorBlocks(
+                $this->normalizePrintMarkup(
+                    $this->preserveAlignedSpacingMarkup(
+                        $this->normalizeAssetImageSrc($bodyHtml, 'inline')
+                    )
+                )
+            ),
+            'header_html' => $this->prepareExportFragment($headerHtml, 'inline', 'playwright-template'),
+            'footer_html' => $this->prepareExportFragment($footerHtml, 'inline', 'playwright-template'),
+            'meta' => $layout['meta'] ?? [],
+        ];
+    }
+
+    protected function normalizePlaywrightTemplateMarkup($html)
+    {
+        $html = preg_replace_callback('/<table\b([^>]*)>/i', function ($matches) {
+            $attributes = $matches[1];
+
+            if (stripos($attributes, 'style=') !== false) {
+                $attributes = preg_replace_callback('/style=(["\'])(.*?)\1/i', function ($styleMatches) {
+                    $quote = $styleMatches[1];
+                    $style = rtrim(html_entity_decode($styleMatches[2], ENT_QUOTES, 'UTF-8'), ';');
+                    $style .= ';width:100%;border-collapse:collapse;border-spacing:0;table-layout:fixed;';
+
+                    return 'style=' . $quote . $style . $quote;
+                }, $attributes, 1);
+            } else {
+                $attributes .= ' style="width:100%;border-collapse:collapse;border-spacing:0;table-layout:fixed;"';
+            }
+
+            return '<table' . $attributes . '>';
+        }, $html, 1);
+
+        $cellIndex = 0;
+        $html = preg_replace_callback('/<td\b([^>]*)>/i', function ($matches) use (&$cellIndex) {
+            $attributes = $matches[1];
+            $cellIndex++;
+
+            $extraStyle = $cellIndex === 1
+                ? 'width:34%;vertical-align:top;text-align:left;padding:0;'
+                : 'width:66%;vertical-align:top;text-align:right;padding:0;';
+
+            if (stripos($attributes, 'style=') !== false) {
+                $attributes = preg_replace_callback('/style=(["\'])(.*?)\1/i', function ($styleMatches) use ($extraStyle) {
+                    $quote = $styleMatches[1];
+                    $style = rtrim(html_entity_decode($styleMatches[2], ENT_QUOTES, 'UTF-8'), ';');
+                    $style .= ';' . $extraStyle;
+
+                    return 'style=' . $quote . $style . $quote;
+                }, $attributes, 1);
+            } else {
+                $attributes .= ' style="' . $extraStyle . '"';
+            }
+
+            return '<td' . $attributes . '>';
+        }, $html);
+
+        $html = preg_replace('/<img\b([^>]*)>/i', '<img$1 style="max-width:100%;height:auto;display:block;" />', $html, 1);
+
+        $html = preg_replace_callback('/<p\b([^>]*)>(.*?)<\/p>/is', function ($matches) {
+            $attributes = $matches[1];
+            $content = $matches[2];
+            $style = 'margin:0;font-size:9pt;line-height:1.2;';
+
+            if ($this->isRightAlignedBlock($attributes)) {
+                $style .= 'text-align:right;width:100%;white-space:normal;';
+            }
+
+            if (stripos($attributes, 'style=') !== false) {
+                $attributes = preg_replace_callback('/style=(["\'])(.*?)\1/i', function ($styleMatches) use ($style) {
+                    $quote = $styleMatches[1];
+                    $current = rtrim(html_entity_decode($styleMatches[2], ENT_QUOTES, 'UTF-8'), ';');
+                    $current .= ';' . $style;
+
+                    return 'style=' . $quote . $current . $quote;
+                }, $attributes, 1);
+            } else {
+                $attributes .= ' style="' . $style . '"';
+            }
+
+            return '<p' . $attributes . '>' . $content . '</p>';
+        }, $html);
+
+        return $html;
+    }
+
+    protected function stripEmbeddedHeaderFooter($conteudoHtml, $cabecalhoHtml = null, $rodapeHtml = null)
+    {
+        $conteudoHtml = (string) $conteudoHtml;
+
+        if (trim((string) $cabecalhoHtml) !== '') {
+            $conteudoHtml = preg_replace('/^\s*' . preg_quote(trim((string) $cabecalhoHtml), '/') . '\s*/s', '', $conteudoHtml, 1);
+            $conteudoHtml = $this->stripLeadingImageHeaderBlock($conteudoHtml);
+        }
+
+        if (trim((string) $rodapeHtml) !== '') {
+            $conteudoHtml = preg_replace('/\s*' . preg_quote(trim((string) $rodapeHtml), '/') . '\s*$/s', '', $conteudoHtml, 1);
+            $conteudoHtml = $this->stripTrailingImageFooterBlock($conteudoHtml);
+        }
+
+        return $conteudoHtml;
+    }
+
+    protected function stripLeadingImageHeaderBlock($html)
+    {
+        $patterns = [
+            '/^\s*<div\b[^>]*>\s*(<table\b[^>]*>.*?<img\b[^>]*>.*?<\/table>)\s*<\/div>\s*/is',
+            '/^\s*(<table\b[^>]*>.*?<img\b[^>]*>.*?<\/table>)\s*/is',
+        ];
+
+        foreach ($patterns as $pattern) {
+            $updated = preg_replace($pattern, '', $html, 1, $count);
+            if ($count > 0) {
+                return $updated;
+            }
+        }
+
+        return $html;
+    }
+
+    protected function stripTrailingImageFooterBlock($html)
+    {
+        $patterns = [
+            '/\s*<div\b[^>]*>\s*(<table\b[^>]*>.*?<img\b[^>]*>.*?<\/table>)\s*<\/div>\s*$/is',
+            '/\s*(<table\b[^>]*>.*?<img\b[^>]*>.*?<\/table>)\s*$/is',
+        ];
+
+        foreach ($patterns as $pattern) {
+            $updated = preg_replace($pattern, '', $html, 1, $count);
+            if ($count > 0) {
+                return $updated;
+            }
+        }
+
+        return $html;
     }
 
     protected function preserveAlignedSpacingMarkup($html)

@@ -16,7 +16,21 @@
     <div class="peticao-print-shell">
         <main class="peticao-print-sheet">
             <div class="peticao-print-content">
-                {!! $documentHtml !!}
+                @if(!empty($headerHtml))
+                    <header class="peticao-print-header">
+                        {!! $headerHtml !!}
+                    </header>
+                @endif
+
+                <div class="peticao-print-body">
+                    {!! $documentHtml !!}
+                </div>
+
+                @if(!empty($footerHtml))
+                    <footer class="peticao-print-footer">
+                        {!! $footerHtml !!}
+                    </footer>
+                @endif
             </div>
         </main>
     </div>

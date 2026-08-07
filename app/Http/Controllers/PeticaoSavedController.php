@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\PeticaoNormalizada;
 use App\PeticaoModelo;
 use App\PeticaoVersao;
+use App\Services\PeticaoDocumentLayoutService;
 use App\Services\PeticaoExportService;
 use App\Services\PeticaoNormalizedDraftService;
 use App\Services\PeticaoNormalizedStorageService;
@@ -117,74 +118,59 @@ class PeticaoSavedController extends Controller
         ]);
     }
 
-    public function exportWord(Request $request, PeticaoNormalizada $peticao, PeticaoExportService $exportService)
+    public function exportWord(Request $request, PeticaoNormalizada $peticao, PeticaoExportService $exportService, PeticaoDocumentLayoutService $layoutService)
     {
         $data = $request->validate([
             'nome_cli' => 'required|string|max:500',
             'cod_pecas' => 'required|string',
         ]);
 
-        return $exportService->exportWord($data['nome_cli'], $data['cod_pecas']);
+        $peticao->load('modelo');
+        $layout = $layoutService->fromSavedPeticao($peticao);
+        $layout['title'] = $data['nome_cli'];
+        $layout['body_html'] = $data['cod_pecas'];
+
+        return $exportService->exportWordFromLayout($layout);
     }
 
-    public function exportPdf(Request $request, PeticaoNormalizada $peticao, PeticaoExportService $exportService)
+    public function exportPdf(Request $request, PeticaoNormalizada $peticao, PeticaoExportService $exportService, PeticaoDocumentLayoutService $layoutService)
     {
         $data = $request->validate([
             'nome_cli' => 'required|string|max:500',
             'cod_pecas' => 'required|string',
         ]);
 
-        return $exportService->exportPdf($request, $data['nome_cli'], $data['cod_pecas']);
-    }
-
-    public function print(PeticaoNormalizada $peticao, PeticaoExportService $exportService)
-    {
         $peticao->load('modelo');
+        $layout = $layoutService->fromSavedPeticao($peticao);
+        $layout['title'] = $data['nome_cli'];
+        $layout['body_html'] = $data['cod_pecas'];
 
-        return $exportService->renderPrintView(
-            $peticao->cliente_referencia ?: ('peticao_' . $peticao->id),
-            $peticao->conteudo_html,
-            [
-                'modelo' => optional($peticao->modelo)->nome,
-                'codigo' => $peticao->codigo_externo,
-            ]
-        );
+        return $exportService->exportPdfFromLayout($request, $layout);
     }
 
-    public function exportVersionWord(PeticaoNormalizada $peticao, PeticaoVersao $versao, PeticaoExportService $exportService)
+    public function print(PeticaoNormalizada $peticao, PeticaoExportService $exportService, PeticaoDocumentLayoutService $layoutService)
+    {
+        return $exportService->renderPrintViewFromLayout($layoutService->fromSavedPeticao($peticao));
+    }
+
+    public function exportVersionWord(PeticaoNormalizada $peticao, PeticaoVersao $versao, PeticaoExportService $exportService, PeticaoDocumentLayoutService $layoutService)
     {
         abort_unless((int) $versao->peticao_id === (int) $peticao->id, 404);
 
-        return $exportService->exportWord(
-            $versao->cliente_referencia_snapshot ?: ('peticao_versao_' . $versao->versao_numero),
-            $versao->conteudo_html_snapshot
-        );
+        return $exportService->exportWordFromLayout($layoutService->fromVersion($peticao, $versao));
     }
 
-    public function exportVersionPdf(Request $request, PeticaoNormalizada $peticao, PeticaoVersao $versao, PeticaoExportService $exportService)
+    public function exportVersionPdf(Request $request, PeticaoNormalizada $peticao, PeticaoVersao $versao, PeticaoExportService $exportService, PeticaoDocumentLayoutService $layoutService)
     {
         abort_unless((int) $versao->peticao_id === (int) $peticao->id, 404);
 
-        return $exportService->exportPdf(
-            $request,
-            $versao->cliente_referencia_snapshot ?: ('peticao_versao_' . $versao->versao_numero),
-            $versao->conteudo_html_snapshot
-        );
+        return $exportService->exportPdfFromLayout($request, $layoutService->fromVersion($peticao, $versao));
     }
 
-    public function printVersion(PeticaoNormalizada $peticao, PeticaoVersao $versao, PeticaoExportService $exportService)
+    public function printVersion(PeticaoNormalizada $peticao, PeticaoVersao $versao, PeticaoExportService $exportService, PeticaoDocumentLayoutService $layoutService)
     {
         abort_unless((int) $versao->peticao_id === (int) $peticao->id, 404);
 
-        $peticao->load('modelo');
-
-        return $exportService->renderPrintView(
-            $versao->cliente_referencia_snapshot ?: ('peticao_versao_' . $versao->versao_numero),
-            $versao->conteudo_html_snapshot,
-            [
-                'modelo' => optional($peticao->modelo)->nome,
-                'codigo' => $versao->codigo_externo_snapshot,
-            ]
-        );
+        return $exportService->renderPrintViewFromLayout($layoutService->fromVersion($peticao, $versao));
     }
 }
