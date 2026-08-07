@@ -42,11 +42,17 @@ class PeticaoExportService
             ? $this->scopeEditorPrintCss(file_get_contents(public_path('ckeditor/contents.css')))
             : '';
 
+        $documentHtml = $this->preserveBlankEditorBlocks(
+            $this->normalizePrintMarkup(
+                $this->preserveAlignedSpacingMarkup(
+                    $this->normalizeAssetImageSrc($conteudoHtml, $assetMode)
+                )
+            )
+        );
+
         return view('peticao.print', [
             'documentTitle' => $nomeArquivo,
-            'documentHtml' => $this->preserveBlankEditorBlocks(
-                $this->normalizeAssetImageSrc($conteudoHtml, $assetMode)
-            ),
+            'documentHtml' => $documentHtml,
             'meta' => $meta,
             'editorCss' => $editorCss,
             'printCss' => $this->buildBrowserPrintStyles(),
@@ -59,13 +65,17 @@ class PeticaoExportService
             ? $this->scopeEditorPrintCss(file_get_contents(public_path('ckeditor/contents.css')))
             : '';
 
-        return view('peticao.word', [
-            'documentTitle' => $nomeArquivo,
-            'documentHtml' => $this->preserveBlankEditorBlocks(
-                $this->normalizeWordMarkup(
+        $documentHtml = $this->preserveBlankEditorBlocks(
+            $this->normalizeWordMarkup(
+                $this->preserveAlignedSpacingMarkup(
                     $this->normalizeAssetImageSrc($conteudoHtml, 'browser')
                 )
-            ),
+            )
+        );
+
+        return view('peticao.word', [
+            'documentTitle' => $nomeArquivo,
+            'documentHtml' => $documentHtml,
             'editorCss' => $editorCss,
             'wordCss' => $this->buildWordStyles(),
         ])->render();
@@ -133,7 +143,11 @@ class PeticaoExportService
             . ' backbottom="' . (int) ($pageMargins['bottom_mm'] ?? 15) . 'mm"'
             . ' backleft="' . (int) ($pageMargins['left_mm'] ?? 17) . 'mm"'
             . ' backright="' . (int) ($pageMargins['right_mm'] ?? 17) . 'mm">'
-            . $this->normalizePdfMarkup($this->normalizeAssetImageSrc($conteudoHtml))
+            . $this->normalizePdfMarkup(
+                $this->preserveAlignedSpacingMarkup(
+                    $this->normalizeAssetImageSrc($conteudoHtml)
+                )
+            )
             . '</page>';
 
         if (ob_get_length()) {
@@ -420,33 +434,52 @@ class PeticaoExportService
             'body { color: #1f2933; font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }',
             '.peticao-print-shell { padding: 24px 0 40px; background: #eff2f6; }',
             '.peticao-print-sheet { width: 794px; min-height: 1123px; margin: 0 auto; box-sizing: border-box; background-color: #ffffff; background-image: repeating-linear-gradient(to bottom, #ffffff 0, #ffffff 1118px, #cbd2d9 1118px, #cbd2d9 1122px, #ffffff 1122px, #ffffff 1162px); background-repeat: repeat-y; background-size: 100% 1162px; box-shadow: none; overflow: hidden; }',
+            '.peticao-print-content { min-height: 1123px; padding: 64px !important; box-sizing: border-box; }',
             '.peticao-print-sheet img { max-width: 100%; height: auto; display: inline-block; }',
             '.peticao-print-sheet table { max-width: 100%; table-layout: auto; }',
             '.peticao-print-sheet p, .peticao-print-sheet div, .peticao-print-sheet td, .peticao-print-sheet th, .peticao-print-sheet li, .peticao-print-sheet span, .peticao-print-sheet strong, .peticao-print-sheet u { line-height: 1.6; }',
             '.peticao-print-sheet p { margin: 0 0 12px; }',
+            '.peticao-print-sheet .print-header-table { width: 100% !important; table-layout: fixed; border-collapse: collapse; }',
+            '.peticao-print-sheet .print-header-table td { vertical-align: top; }',
+            '.peticao-print-sheet .print-header-table td:first-child { width: 34%; text-align: left; }',
+            '.peticao-print-sheet .print-header-table td:last-child { width: 66%; text-align: right; }',
+            '.peticao-print-sheet .print-header-table img { display: block; max-width: 100%; height: auto; }',
+            '.peticao-print-sheet .print-header-contact { width: 100%; margin: 0; font-size: 9pt; line-height: 1.2; text-align: right !important; white-space: normal; }',
             '.peticao-print-sheet .peticao-empty-line { min-height: 1.6em; display: block; }',
-            '@media print { html, body { background: #fff !important; } .peticao-print-shell { padding: 0; } .peticao-print-sheet { width: 794px; min-height: 1123px; margin: 0; box-shadow: none; background-image: none; } }',
+            '@media print { @page { size: A4; margin: 16.9mm; } html, body { background: #fff !important; } .peticao-print-shell { padding: 0; background: #fff; } .peticao-print-sheet { width: auto; min-height: auto; margin: 0; box-shadow: none; background-image: none; overflow: visible; } .peticao-print-content { min-height: auto; padding: 0 !important; box-sizing: border-box; } }',
         ]);
     }
 
     protected function buildWordStyles()
     {
         return implode("\n", [
-            '@page { size: 21cm 29.7cm; margin: 1.9cm 1.7cm 1.5cm 1.7cm; mso-page-orientation: portrait; }',
+            '@page Section1 { size: 595.3pt 841.9pt; margin: 47.9pt 47.9pt 47.9pt 47.9pt; mso-header-margin: 18pt; mso-footer-margin: 18pt; mso-page-orientation: portrait; }',
             'html, body { margin: 0; padding: 0; background: #ffffff; }',
             'body { color: #1f2933; font-family: Arial, Helvetica, sans-serif; }',
+            'div.Section1 { page: Section1; }',
             '.peticao-word-sheet { width: auto; margin: 0; padding: 0; box-sizing: border-box; background: #fff; }',
             '.peticao-word-sheet img { max-width: 100%; height: auto; display: inline-block; }',
             '.peticao-word-sheet table { width: auto; max-width: 100%; table-layout: auto; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }',
             '.peticao-word-sheet p, .peticao-word-sheet div, .peticao-word-sheet td, .peticao-word-sheet th, .peticao-word-sheet li, .peticao-word-sheet span, .peticao-word-sheet strong, .peticao-word-sheet u { line-height: 1.6; }',
-            '.peticao-word-sheet p { margin: 0 0 12pt; mso-margin-top-alt: 0pt; mso-margin-bottom-alt: 12pt; line-height: 160%; mso-line-height-rule: exactly; text-align: justify; }',
+            '.peticao-word-sheet p { margin: 0 0 9pt; mso-margin-top-alt: 0pt; mso-margin-bottom-alt: 9pt; line-height: 160%; mso-line-height-rule: at-least; text-align: justify; }',
             '.peticao-word-sheet td p { margin: 0; mso-margin-top-alt: 0pt; mso-margin-bottom-alt: 0pt; }',
             '.peticao-word-sheet .word-header-table { width: 100%; table-layout: fixed; }',
             '.peticao-word-sheet .word-header-table td { vertical-align: top; }',
             '.peticao-word-sheet .word-header-table td:first-child { width: 34%; }',
             '.peticao-word-sheet .word-header-table td:last-child { width: 66%; text-align: right; }',
-            '.peticao-word-sheet .word-header-contact { font-size: 9pt; line-height: 1.35; text-align: right; mso-line-height-rule: exactly; }',
-            '.peticao-word-sheet .word-header-contact span { white-space: normal !important; }',
+            '.peticao-word-sheet .word-header-contact { font-size: 9pt; line-height: 1.3; text-align: right; white-space: normal; mso-line-height-rule: at-least; }',
+            '.peticao-word-sheet .word-header-contact span { white-space: inherit !important; }',
+            '.peticao-word-sheet h1, .peticao-word-sheet h2, .peticao-word-sheet h3, .peticao-word-sheet h4, .peticao-word-sheet h5, .peticao-word-sheet h6 { font-weight: bold; line-height: 1.35; margin: 0 0 9pt; mso-margin-top-alt: 0pt; mso-margin-bottom-alt: 9pt; }',
+            '.peticao-word-sheet .peticao-titulo-principal { text-align: center; text-transform: uppercase; font-size: 15pt; font-weight: bold; letter-spacing: 0; margin: 0 0 18pt; mso-margin-top-alt: 0pt; mso-margin-bottom-alt: 18pt; }',
+            '.peticao-word-sheet .peticao-subtitulo { text-align: left; text-transform: uppercase; font-size: 12pt; font-weight: bold; margin: 18pt 0 9pt; mso-margin-top-alt: 18pt; mso-margin-bottom-alt: 9pt; }',
+            '.peticao-word-sheet .peticao-corpo, .peticao-word-sheet .peticao-fundamentacao, .peticao-word-sheet .peticao-pedido { text-align: justify; text-indent: 2cm; }',
+            '.peticao-word-sheet .peticao-fundamentacao { margin-top: 7.5pt; mso-margin-top-alt: 7.5pt; }',
+            '.peticao-word-sheet .peticao-pedido { font-weight: bold; }',
+            '.peticao-word-sheet .peticao-assinatura { margin-top: 27pt; mso-margin-top-alt: 27pt; text-align: center; text-indent: 0; }',
+            '.peticao-word-sheet .peticao-observacao { margin: 9pt 0; padding: 7.5pt 9pt; border-left: 3pt solid #d9b95b; background: #fff7d6; color: #694f00; text-indent: 0; }',
+            '.peticao-word-sheet .peticao-tabela-compacta { width: 100%; border-collapse: collapse; font-size: 11pt; }',
+            '.peticao-word-sheet .peticao-tabela-compacta th, .peticao-word-sheet .peticao-tabela-compacta td { border: 1px solid #cbd2d9; padding: 4.5pt 6pt; vertical-align: top; }',
+            '.peticao-word-sheet .peticao-lista { padding-left: 18pt; }',
             '.peticao-word-sheet .peticao-empty-line { min-height: 1.6em; display: block; }',
         ]);
     }
@@ -458,10 +491,10 @@ class PeticaoExportService
         }
 
         $replacements = [
-            '/\bbody\b/' => '.peticao-print-sheet',
-            '/\.cke_editable\b/' => '.peticao-print-sheet',
-            '/\.cke_contents_ltr blockquote\b/' => '.peticao-print-sheet blockquote',
-            '/\.cke_contents_rtl blockquote\b/' => '.peticao-print-sheet blockquote',
+            '/\bbody\b/' => '.peticao-print-content',
+            '/\.cke_editable\b/' => '.peticao-print-content',
+            '/\.cke_contents_ltr blockquote\b/' => '.peticao-print-content blockquote',
+            '/\.cke_contents_rtl blockquote\b/' => '.peticao-print-content blockquote',
         ];
 
         foreach ($replacements as $pattern => $replacement) {
@@ -470,7 +503,8 @@ class PeticaoExportService
 
         $css = preg_replace('/box-shadow\s*:\s*[^;]+;?/i', '', $css);
         $css = preg_replace('/background(?:-color|-image|-repeat|-size|-position)?\s*:\s*[^;]+;?/i', '', $css);
-        $css = preg_replace('/margin\s*:\s*24px auto;?/i', 'margin: 0;', $css);
+        $css = preg_replace('/margin\s*:\s*24px\s+auto(?:\s+40px)?;?/i', 'margin: 0;', $css);
+        $css = preg_replace('/padding\s*:\s*64px;?/i', 'padding: 0;', $css);
         $css = preg_replace('/min-height\s*:\s*1123px;?/i', '', $css);
         $css = preg_replace('/max-width\s*:\s*794px;?/i', 'max-width: none;', $css);
 
@@ -505,8 +539,6 @@ class PeticaoExportService
 
     protected function normalizePdfMarkup($html)
     {
-        $html = preg_replace('/(?:&nbsp;[\s]*){2,}/i', ' ', $html);
-
         $html = preg_replace_callback('/style=(["\'])(.*?)\1/i', function ($matches) {
             $quote = $matches[1];
             $style = html_entity_decode($matches[2], ENT_QUOTES, 'UTF-8');
@@ -517,7 +549,6 @@ class PeticaoExportService
 
             $style = preg_replace('/line-height\s*:\s*115%/i', 'line-height:160%', $style);
             $style = preg_replace('/line-height\s*:\s*1\.15\b/i', 'line-height:1.6', $style);
-            $style = preg_replace('/white-space\s*:\s*nowrap\s*;?/i', 'white-space:normal;', $style);
 
             if (stripos($style, 'word-wrap:') === false) {
                 $style .= ';word-wrap:break-word;';
@@ -566,9 +597,6 @@ class PeticaoExportService
 
     protected function normalizeWordMarkup($html)
     {
-        $html = preg_replace('/(?:&nbsp;[\s]*){2,}/i', ' ', $html);
-        $html = preg_replace('/white-space\s*:\s*nowrap\s*;?/i', 'white-space:normal;', $html);
-
         $html = preg_replace_callback('/<table\b[^>]*>.*?<img\b[^>]*src=.*?<\/table>/is', function ($matches) {
             $table = $matches[0];
             $table = preg_replace('/<table\b([^>]*)>/i', '<table$1 class="word-header-table">', $table, 1);
@@ -579,8 +607,7 @@ class PeticaoExportService
                     return $pMatches[0];
                 }
 
-                $content = preg_replace('/(?:&nbsp;|\s)+/i', ' ', $pMatches[5]);
-                return '<p class="word-header-contact">' . trim($content) . '</p>';
+                return '<p class="word-header-contact">' . $pMatches[5] . '</p>';
             }, $table);
 
             return $table;
@@ -599,5 +626,86 @@ class PeticaoExportService
         }, $html);
 
         return $html;
+    }
+
+    protected function normalizePrintMarkup($html)
+    {
+        return preg_replace_callback('/<table\b[^>]*>.*?<img\b[^>]*src=.*?<\/table>/is', function ($matches) {
+            $table = $matches[0];
+            $table = preg_replace('/<table\b([^>]*)>/i', '<table$1 class="print-header-table">', $table, 1);
+
+            $table = preg_replace_callback('/<p\b([^>]*)style=(["\'])(.*?)\2([^>]*)>(.*?)<\/p>/is', function ($pMatches) {
+                $style = html_entity_decode($pMatches[3], ENT_QUOTES, 'UTF-8');
+                if (stripos($style, 'text-align: right') === false) {
+                    return $pMatches[0];
+                }
+
+                return '<p class="print-header-contact">' . $pMatches[5] . '</p>';
+            }, $table);
+
+            return $table;
+        }, $html);
+    }
+
+    protected function preserveAlignedSpacingMarkup($html)
+    {
+        foreach (['p', 'div', 'td'] as $tag) {
+            $pattern = '/<' . $tag . '\b([^>]*)>(.*?)<\/' . $tag . '>/is';
+
+            $html = preg_replace_callback($pattern, function ($matches) use ($tag) {
+                $attributes = $matches[1];
+                $innerHtml = $matches[2];
+
+                if (!$this->isRightAlignedBlock($attributes) || !$this->hasIntentionalSpacing($innerHtml)) {
+                    return $matches[0];
+                }
+
+                $attributes = $this->ensureWhiteSpaceMode($attributes, 'normal');
+                $innerHtml = $this->normalizeRightAlignedSpacing($innerHtml);
+
+                return '<' . $tag . $attributes . '>' . $innerHtml . '</' . $tag . '>';
+            }, $html);
+        }
+
+        return $html;
+    }
+
+    protected function isRightAlignedBlock($attributes)
+    {
+        return (bool) preg_match('/\balign\s*=\s*(["\'])?right\1?/i', $attributes)
+            || (bool) preg_match('/text-align\s*:\s*right/i', html_entity_decode($attributes, ENT_QUOTES, 'UTF-8'));
+    }
+
+    protected function hasIntentionalSpacing($innerHtml)
+    {
+        return preg_match('/ {2,}|&nbsp;|&#160;/i', $innerHtml) === 1;
+    }
+
+    protected function ensureWhiteSpaceMode($attributes, $mode)
+    {
+        if (preg_match('/style=(["\'])(.*?)\1/i', $attributes, $matches)) {
+            $quote = $matches[1];
+            $style = html_entity_decode($matches[2], ENT_QUOTES, 'UTF-8');
+
+            if (stripos($style, 'white-space:') === false) {
+                $style = rtrim(trim($style), ';') . ';white-space:' . $mode . ';';
+            } else {
+                $style = preg_replace('/white-space\s*:\s*[^;]+;?/i', 'white-space:' . $mode . ';', $style);
+            }
+
+            return preg_replace('/style=(["\'])(.*?)\1/i', 'style=' . $quote . $style . $quote, $attributes, 1);
+        }
+
+        return $attributes . ' style="white-space:' . $mode . ';"';
+    }
+
+    protected function normalizeRightAlignedSpacing($innerHtml)
+    {
+        $innerHtml = preg_replace('/\s*<br\s*\/?>\s*/i', '<br />', $innerHtml);
+        $innerHtml = preg_replace('/[\r\n\t]+/', '', $innerHtml);
+        $innerHtml = preg_replace('/(^|<br\s*\/?>|\r?\n)(?:\s|&nbsp;|&#160;)+/i', '$1', $innerHtml);
+        $innerHtml = preg_replace('/(?:\s|&nbsp;|&#160;)+(<br\s*\/?>|\r?\n|$)/i', '$1', $innerHtml);
+
+        return $innerHtml;
     }
 }

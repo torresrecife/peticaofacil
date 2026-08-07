@@ -15,7 +15,9 @@
 <body>
     <div class="peticao-print-shell">
         <main class="peticao-print-sheet">
-            {!! $documentHtml !!}
+            <div class="peticao-print-content">
+                {!! $documentHtml !!}
+            </div>
         </main>
     </div>
 </body>

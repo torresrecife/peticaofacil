@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Services\PeticaoExportService;
 use App\User;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -42,7 +43,26 @@ class PeticaoPrintViewTest extends TestCase
             ->get('/peticoes-salvas/34832/impressao')
             ->assertStatus(200)
             ->assertSee('peticao-print-sheet', false)
-            ->assertSee('Conteudo de impressao', false)
-            ->assertSee('SUBSTABELECIMENTO');
+            ->assertSee('peticao-print-content', false)
+            ->assertSee('padding: 64px', false)
+            ->assertSee('Conteudo de impressao', false);
+    }
+
+    public function test_export_rendering_preserves_intentional_spacing_in_right_aligned_header_blocks()
+    {
+        $service = app(PeticaoExportService::class);
+        $html = '<table><tr><td><img src="/img/teste.png"></td><td>'
+            . '<p style="text-align: right;">&nbsp;&nbsp;OAB  PE  21.678&nbsp;&nbsp;</p>'
+            . '</td></tr></table>';
+
+        $printView = $service->renderPrintView('teste', $html, [], 'browser')->render();
+        $wordView = $service->renderWordDocument('teste', $html);
+
+        $this->assertStringContainsString('white-space: normal;', $printView);
+        $this->assertStringContainsString('OAB  PE  21.678', $printView);
+        $this->assertStringNotContainsString('&nbsp;&nbsp;OAB', $printView);
+        $this->assertStringContainsString('class="print-header-contact"', $printView);
+        $this->assertStringContainsString('class="word-header-contact"', $wordView);
+        $this->assertStringContainsString('OAB  PE  21.678', $wordView);
     }
 }

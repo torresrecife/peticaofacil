@@ -9,15 +9,15 @@ html
 	background-image: repeating-linear-gradient(
 		to bottom,
 		#ffffff 0,
-		#ffffff 1123px,
-		#d0d7de 1123px,
-		#c0c8d2 1125px,
-		#d0d7de 1127px,
-		#ffffff 1127px,
-		#ffffff 1171px
+		#ffffff 1080px,
+		#d0d7de 1082px,
+		#c0c8d2 1080px,
+		#d0d7de 1083px,
+		#ffffff 1080px,
+		#ffffff 1080px
 	);
 	background-repeat: repeat-y;
-	background-size: 100% 1171px;
+	background-size: 100% 1123px;
 }
 
 body
@@ -30,7 +30,7 @@ body
 	max-width: 794px;
 	min-height: 1123px;
 	margin: 24px auto 40px;
-	padding: 72px 64px;
+	padding: 64px;
 	box-sizing: border-box;
 	box-shadow:
 		0 0 0 1px rgba(203, 210, 217, 0.9),

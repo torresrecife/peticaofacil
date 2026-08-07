@@ -27,8 +27,10 @@
     @endif
 </head>
 <body>
-    <div class="peticao-word-sheet">
-        {!! $documentHtml !!}
+    <div class="Section1">
+        <div class="peticao-word-sheet">
+            {!! $documentHtml !!}
+        </div>
     </div>
 </body>
 </html>
