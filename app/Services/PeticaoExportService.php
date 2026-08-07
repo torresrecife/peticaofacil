@@ -119,6 +119,7 @@ class PeticaoExportService
             return response(file_get_contents($pdfPath), 200, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'attachment; filename="' . $baseName . '.pdf"',
+                'X-Peticao-Pdf-Engine' => 'browser',
             ]);
         } finally {
             @unlink($htmlPath);
@@ -161,6 +162,7 @@ class PeticaoExportService
         return response($pdf->Output($this->sanitizeFileName($nomeArquivo) . '.pdf', 'S'), 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="' . $this->sanitizeFileName($nomeArquivo) . '.pdf"',
+            'X-Peticao-Pdf-Engine' => 'html2pdf',
         ]);
     }
 
