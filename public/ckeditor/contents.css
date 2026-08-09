@@ -30,7 +30,7 @@ body
 	max-width: 794px;
 	min-height: 1123px;
 	margin: 24px auto 40px;
-	padding: 64px;
+	padding: 20px 64px 64px 64px;
 	box-sizing: border-box;
 	box-shadow:
 		0 0 0 1px rgba(203, 210, 217, 0.9),

@@ -848,8 +848,8 @@ class PeticaoExportService
             $cellIndex++;
 
             $extraStyle = $cellIndex === 1
-                ? 'width:34%;vertical-align:top;text-align:left;padding:0;'
-                : 'width:66%;vertical-align:top;text-align:right;padding:0;';
+                ? 'width:34%;vertical-align:middle;text-align:left;padding:0;'
+                : 'width:66%;vertical-align:middle;text-align:right;padding:0;';
 
             if (stripos($attributes, 'style=') !== false) {
                 $attributes = preg_replace_callback('/style=(["\'])(.*?)\1/i', function ($styleMatches) use ($extraStyle) {

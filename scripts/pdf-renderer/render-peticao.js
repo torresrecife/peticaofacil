@@ -43,8 +43,8 @@ async function main() {
       bottom: '16.9mm',
       left: '16.9mm',
     };
-    const reservedHeaderSpace = '28mm';
-    const reservedFooterSpace = '18mm';
+    const reservedHeaderSpace = '30mm';
+    const reservedFooterSpace = '30mm';
 
     const documentHtml = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -129,7 +129,7 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight) {
       color: #1f2933;
       font-family: Arial, Helvetica, sans-serif;
       font-size: 9pt;
-      line-height: 1.2;
+      line-height: 1.3;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
       background: transparent;
@@ -150,7 +150,7 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight) {
     .template-shell span,
     .template-shell strong,
     .template-shell u {
-      line-height: 1.2;
+      line-height: 1.3;
     }
     .template-shell p {
       margin: 0;
@@ -168,7 +168,7 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight) {
     }
     .template-shell td,
     .template-shell th {
-      vertical-align: top;
+      vertical-align: middle;
       padding: 0;
     }
     .template-shell .print-header-table {
@@ -188,7 +188,7 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight) {
       width: 100%;
       margin: 0;
       font-size: 9pt;
-      line-height: 1.2;
+      line-height: 1.3;
       text-align: right !important;
       white-space: normal;
     }
