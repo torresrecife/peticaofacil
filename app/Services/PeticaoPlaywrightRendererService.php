@@ -30,6 +30,8 @@ class PeticaoPlaywrightRendererService
             'body_html' => (string) ($layout['body_html'] ?? ''),
             'header_html' => (string) ($layout['header_html'] ?? ''),
             'footer_html' => (string) ($layout['footer_html'] ?? ''),
+            'header_defaults' => (array) ($layout['header_defaults'] ?? []),
+            'footer_defaults' => (array) ($layout['footer_defaults'] ?? []),
             'options' => [
                 'format' => 'A4',
                 'margin' => [

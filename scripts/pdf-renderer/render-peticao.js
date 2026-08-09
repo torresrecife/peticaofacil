@@ -97,8 +97,20 @@ async function main() {
       format: payload.options && payload.options.format ? payload.options.format : 'A4',
       printBackground: true,
       displayHeaderFooter: true,
-      headerTemplate: buildTemplateHtml(payload.header_html || '', 'header', margin.left, margin.right),
-      footerTemplate: buildTemplateHtml(payload.footer_html || '', 'footer', margin.left, margin.right),
+      headerTemplate: buildTemplateHtml(
+        payload.header_html || '',
+        'header',
+        margin.left,
+        margin.right,
+        payload.header_defaults || {}
+      ),
+      footerTemplate: buildTemplateHtml(
+        payload.footer_html || '',
+        'footer',
+        margin.left,
+        margin.right,
+        payload.footer_defaults || {}
+      ),
       margin: {
         top: reservedHeaderSpace,
         right: margin.right,
@@ -111,11 +123,12 @@ async function main() {
   }
 }
 
-function buildTemplateHtml(content, kind, paddingLeft, paddingRight) {
+function buildTemplateHtml(content, kind, paddingLeft, paddingRight, defaults) {
   const safeContent = String(content || '');
   const shellClass = kind === 'footer' ? 'template-shell template-footer' : 'template-shell template-header';
   const safePaddingLeft = String(paddingLeft || '16.9mm');
   const safePaddingRight = String(paddingRight || '16.9mm');
+  const styleDefaults = normalizeTemplateDefaults(defaults);
 
   return `<!DOCTYPE html>
 <html>
@@ -126,10 +139,10 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight) {
       margin: 0;
       padding: 0;
       width: 100%;
-      color: #1f2933;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 9px;
-      line-height: 1.3;
+      color: ${styleDefaults.color};
+      font-family: ${styleDefaults.fontFamily};
+      font-size: ${styleDefaults.fontSize};
+      line-height: ${styleDefaults.lineHeight};
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
       background: transparent;
@@ -150,7 +163,9 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight) {
     .template-shell span,
     .template-shell strong,
     .template-shell u {
-      line-height: 1.3;
+      line-height: ${styleDefaults.lineHeight};
+      color: ${styleDefaults.color};
+      font-family: ${styleDefaults.fontFamily};
     }
     .template-shell p {
       margin: 0;
@@ -187,10 +202,15 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight) {
     .template-shell .print-header-contact {
       width: 100%;
       margin: 0;
-      font-size: 9px;
-      line-height: 1.3;
+      font-size: ${styleDefaults.fontSize};
+      line-height: ${styleDefaults.lineHeight};
       text-align: right !important;
       white-space: normal;
+      color: ${styleDefaults.color};
+      font-family: ${styleDefaults.fontFamily};
+      font-weight: ${styleDefaults.fontWeight};
+      letter-spacing: ${styleDefaults.letterSpacing};
+      text-transform: ${styleDefaults.textTransform};
     }
   </style>
 </head>
@@ -198,6 +218,20 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight) {
   <div class="${shellClass}">${safeContent}</div>
 </body>
 </html>`;
+}
+
+function normalizeTemplateDefaults(defaults) {
+  const input = defaults && typeof defaults === 'object' ? defaults : {};
+
+  return {
+    fontSize: String(input.fontSize || '9px'),
+    lineHeight: String(input.lineHeight || '1.3'),
+    color: String(input.color || '#1f2933'),
+    fontFamily: String(input.fontFamily || 'Arial, Helvetica, sans-serif'),
+    fontWeight: String(input.fontWeight || 'normal'),
+    letterSpacing: String(input.letterSpacing || 'normal'),
+    textTransform: String(input.textTransform || 'none'),
+  };
 }
 
 function escapeHtml(value) {

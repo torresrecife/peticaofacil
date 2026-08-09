@@ -806,6 +806,8 @@ class PeticaoExportService
         $footerHtml = (string) ($layout['footer_html'] ?? '');
 
         $bodyHtml = $this->stripEmbeddedHeaderFooter($bodyHtml, $headerHtml, $footerHtml);
+        $preparedHeaderHtml = $this->prepareExportFragment($headerHtml, 'inline', 'playwright-template');
+        $preparedFooterHtml = $this->prepareExportFragment($footerHtml, 'inline', 'playwright-template');
 
         return [
             'title' => (string) ($layout['title'] ?? 'peticao'),
@@ -816,8 +818,10 @@ class PeticaoExportService
                     )
                 )
             ),
-            'header_html' => $this->prepareExportFragment($headerHtml, 'inline', 'playwright-template'),
-            'footer_html' => $this->prepareExportFragment($footerHtml, 'inline', 'playwright-template'),
+            'header_html' => $preparedHeaderHtml,
+            'footer_html' => $preparedFooterHtml,
+            'header_defaults' => $this->extractPlaywrightTemplateDefaults($preparedHeaderHtml),
+            'footer_defaults' => $this->extractPlaywrightTemplateDefaults($preparedFooterHtml),
             'meta' => $layout['meta'] ?? [],
         ];
     }
@@ -871,7 +875,7 @@ class PeticaoExportService
         $html = preg_replace_callback('/<p\b([^>]*)>(.*?)<\/p>/is', function ($matches) {
             $attributes = $matches[1];
             $content = $matches[2];
-            $style = 'margin:0;font-size:9px;line-height:1.3;';
+            $style = 'margin:0;';
 
             if ($this->isRightAlignedBlock($attributes)) {
                 $style .= 'text-align:right;width:100%;white-space:normal;';
@@ -893,6 +897,45 @@ class PeticaoExportService
         }, $html);
 
         return $html;
+    }
+
+    protected function extractPlaywrightTemplateDefaults($html)
+    {
+        $html = (string) $html;
+        $defaults = [];
+
+        if (!preg_match_all('/style=(["\'])(.*?)\1/i', $html, $matches)) {
+            return $defaults;
+        }
+
+        $propertyMap = [
+            'font-size' => 'fontSize',
+            'line-height' => 'lineHeight',
+            'color' => 'color',
+            'font-family' => 'fontFamily',
+            'font-weight' => 'fontWeight',
+            'letter-spacing' => 'letterSpacing',
+            'text-transform' => 'textTransform',
+        ];
+
+        foreach ($matches[2] as $styleBlock) {
+            $styleBlock = html_entity_decode($styleBlock, ENT_QUOTES, 'UTF-8');
+            foreach (explode(';', $styleBlock) as $declaration) {
+                if (strpos($declaration, ':') === false) {
+                    continue;
+                }
+
+                [$property, $value] = array_map('trim', explode(':', $declaration, 2));
+                $property = strtolower($property);
+                if ($property === '' || $value === '' || !isset($propertyMap[$property])) {
+                    continue;
+                }
+
+                $defaults[$propertyMap[$property]] = $value;
+            }
+        }
+
+        return $defaults;
     }
 
     protected function stripEmbeddedHeaderFooter($conteudoHtml, $cabecalhoHtml = null, $rodapeHtml = null)
