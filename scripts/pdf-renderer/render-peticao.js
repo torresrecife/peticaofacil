@@ -128,7 +128,7 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight) {
       width: 100%;
       color: #1f2933;
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 9pt;
+      font-size: 9px;
       line-height: 1.3;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
@@ -187,7 +187,7 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight) {
     .template-shell .print-header-contact {
       width: 100%;
       margin: 0;
-      font-size: 9pt;
+      font-size: 9px;
       line-height: 1.3;
       text-align: right !important;
       white-space: normal;

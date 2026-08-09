@@ -871,7 +871,7 @@ class PeticaoExportService
         $html = preg_replace_callback('/<p\b([^>]*)>(.*?)<\/p>/is', function ($matches) {
             $attributes = $matches[1];
             $content = $matches[2];
-            $style = 'margin:0;font-size:9pt;line-height:1.2;';
+            $style = 'margin:0;font-size:9px;line-height:1.3;';
 
             if ($this->isRightAlignedBlock($attributes)) {
                 $style .= 'text-align:right;width:100%;white-space:normal;';
