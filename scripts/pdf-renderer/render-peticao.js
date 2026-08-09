@@ -38,9 +38,9 @@ async function main() {
     const bodyHtml = String(payload.body_html || '');
     const title = String(payload.title || 'peticao');
     const margin = (payload.options && payload.options.margin) || {
-      top: '16.9mm',
+      top: '30mm',
       right: '16.9mm',
-      bottom: '16.9mm',
+      bottom: '30mm',
       left: '16.9mm',
     };
     const reservedHeaderSpace = '30mm';
@@ -73,6 +73,10 @@ async function main() {
     p {
       margin: 0 0 12px;
       text-align: justify;
+    }
+    .peticao-empty-line {
+      min-height: 1.6em;
+      display: block;
     }
     img {
       max-width: 100%;
@@ -152,6 +156,9 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight, defaults) {
       box-sizing: border-box;
       margin: 0;
       padding: 0 ${safePaddingRight} 1mm ${safePaddingLeft};
+    }
+    .template-header {
+      padding: 0 ${safePaddingRight} 0 ${safePaddingLeft};
     }
     .template-footer {
       padding: 1mm ${safePaddingRight} 0 ${safePaddingLeft};
