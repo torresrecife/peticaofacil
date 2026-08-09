@@ -31,6 +31,7 @@ async function main() {
 
   const browser = await playwright.chromium.launch({
     headless: true,
+    executablePath: resolveBrowserExecutable(payload),
   });
 
   try {
@@ -239,6 +240,16 @@ function normalizeTemplateDefaults(defaults) {
     letterSpacing: String(input.letterSpacing || 'normal'),
     textTransform: String(input.textTransform || 'none'),
   };
+}
+
+function resolveBrowserExecutable(payload) {
+  const browserBinary = payload
+    && payload.options
+    && typeof payload.options.browser_binary === 'string'
+    ? payload.options.browser_binary.trim()
+    : '';
+
+  return browserBinary !== '' ? browserBinary : undefined;
 }
 
 function escapeHtml(value) {

@@ -8,6 +8,7 @@ return [
     'browser_virtual_time_budget' => (int) env('PDF_BROWSER_VIRTUAL_TIME_BUDGET', 4000),
     'playwright' => [
         'node_binary' => env('PDF_PLAYWRIGHT_NODE_BINARY', 'node'),
+        'browser_binary' => env('PDF_PLAYWRIGHT_BROWSER_BINARY', ''),
         'script' => env('PDF_PLAYWRIGHT_SCRIPT', base_path('scripts/pdf-renderer/render-peticao.js')),
         'timeout' => (int) env('PDF_PLAYWRIGHT_TIMEOUT', 90),
         'margin' => [

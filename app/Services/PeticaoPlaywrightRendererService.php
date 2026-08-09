@@ -34,6 +34,7 @@ class PeticaoPlaywrightRendererService
             'footer_defaults' => (array) ($layout['footer_defaults'] ?? []),
             'options' => [
                 'format' => 'A4',
+                'browser_binary' => trim((string) config('pdf.playwright.browser_binary', '')),
                 'margin' => [
                     'top' => (string) config('pdf.playwright.margin.top', '16.9mm'),
                     'right' => (string) config('pdf.playwright.margin.right', '16.9mm'),
