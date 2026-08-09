@@ -235,12 +235,23 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight, defaults, f
 
 function normalizeTemplateDefaults(defaults, fontConfig) {
   const input = defaults && typeof defaults === 'object' ? defaults : {};
+  const hasConfiguredFont = Boolean(
+    fontConfig
+    && typeof fontConfig.faceName === 'string'
+    && fontConfig.faceName.trim() !== ''
+    && typeof fontConfig.regular === 'string'
+    && fontConfig.regular.trim() !== ''
+  );
 
   return {
     fontSize: String(input.fontSize || '9px'),
     lineHeight: String(input.lineHeight || '1.3'),
     color: String(input.color || '#1f2933'),
-    fontFamily: String(input.fontFamily || (fontConfig && fontConfig.family) || 'Arial, Helvetica, sans-serif'),
+    fontFamily: String(
+      hasConfiguredFont
+        ? fontConfig.family
+        : (input.fontFamily || (fontConfig && fontConfig.family) || 'Arial, Helvetica, sans-serif')
+    ),
     fontWeight: String(input.fontWeight || 'normal'),
     letterSpacing: String(input.letterSpacing || 'normal'),
     textTransform: String(input.textTransform || 'none'),
