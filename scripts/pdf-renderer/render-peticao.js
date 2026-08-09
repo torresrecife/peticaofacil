@@ -38,6 +38,7 @@ async function main() {
     const page = await browser.newPage();
     const bodyHtml = String(payload.body_html || '');
     const title = String(payload.title || 'peticao');
+    const fontConfig = normalizeFontConfig(payload.assets || {});
     const margin = (payload.options && payload.options.margin) || {
       top: '30mm',
       right: '16.9mm',
@@ -53,12 +54,13 @@ async function main() {
   <meta charset="utf-8">
   <title>${escapeHtml(title)}</title>
   <style>
+    ${buildFontFaceCss(fontConfig)}
     html, body {
       margin: 0;
       padding: 0;
       background: #ffffff;
       color: #1f2933;
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: ${fontConfig.family};
       font-size: 12pt;
       line-height: 1.6;
       -webkit-print-color-adjust: exact;
@@ -107,14 +109,16 @@ async function main() {
         'header',
         margin.left,
         margin.right,
-        payload.header_defaults || {}
+        payload.header_defaults || {},
+        fontConfig
       ),
       footerTemplate: buildTemplateHtml(
         payload.footer_html || '',
         'footer',
         margin.left,
         margin.right,
-        payload.footer_defaults || {}
+        payload.footer_defaults || {},
+        fontConfig
       ),
       margin: {
         top: reservedHeaderSpace,
@@ -128,18 +132,19 @@ async function main() {
   }
 }
 
-function buildTemplateHtml(content, kind, paddingLeft, paddingRight, defaults) {
+function buildTemplateHtml(content, kind, paddingLeft, paddingRight, defaults, fontConfig) {
   const safeContent = String(content || '');
   const shellClass = kind === 'footer' ? 'template-shell template-footer' : 'template-shell template-header';
   const safePaddingLeft = String(paddingLeft || '16.9mm');
   const safePaddingRight = String(paddingRight || '16.9mm');
-  const styleDefaults = normalizeTemplateDefaults(defaults);
+  const styleDefaults = normalizeTemplateDefaults(defaults, fontConfig);
 
   return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <style>
+    ${buildFontFaceCss(fontConfig)}
     html, body {
       margin: 0;
       padding: 0;
@@ -228,18 +233,51 @@ function buildTemplateHtml(content, kind, paddingLeft, paddingRight, defaults) {
 </html>`;
 }
 
-function normalizeTemplateDefaults(defaults) {
+function normalizeTemplateDefaults(defaults, fontConfig) {
   const input = defaults && typeof defaults === 'object' ? defaults : {};
 
   return {
     fontSize: String(input.fontSize || '9px'),
     lineHeight: String(input.lineHeight || '1.3'),
     color: String(input.color || '#1f2933'),
-    fontFamily: String(input.fontFamily || 'Arial, Helvetica, sans-serif'),
+    fontFamily: String(input.fontFamily || (fontConfig && fontConfig.family) || 'Arial, Helvetica, sans-serif'),
     fontWeight: String(input.fontWeight || 'normal'),
     letterSpacing: String(input.letterSpacing || 'normal'),
     textTransform: String(input.textTransform || 'none'),
   };
+}
+
+function normalizeFontConfig(assets) {
+  const input = assets && typeof assets === 'object' ? assets : {};
+  const configuredFamily = String(input.font_family || '').trim();
+
+  return {
+    family: configuredFamily !== '' ? `"${configuredFamily}", Arial, Helvetica, sans-serif` : 'Arial, Helvetica, sans-serif',
+    faceName: configuredFamily !== '' ? configuredFamily : 'PeticaoPlaywrightFont',
+    regular: typeof input.font_regular === 'string' ? input.font_regular.trim() : '',
+    bold: typeof input.font_bold === 'string' ? input.font_bold.trim() : '',
+  };
+}
+
+function buildFontFaceCss(fontConfig) {
+  if (!fontConfig || !fontConfig.regular) {
+    return '';
+  }
+
+  let css = `@font-face { font-family: "${fontConfig.faceName}"; src: url("${fontConfig.regular}") format("${detectFontFormat(fontConfig.regular)}"); font-weight: 400; font-style: normal; }\n`;
+
+  if (fontConfig.bold) {
+    css += `@font-face { font-family: "${fontConfig.faceName}"; src: url("${fontConfig.bold}") format("${detectFontFormat(fontConfig.bold)}"); font-weight: 700; font-style: normal; }\n`;
+  }
+
+  return css;
+}
+
+function detectFontFormat(dataUrl) {
+  if (dataUrl.includes('font/woff2')) return 'woff2';
+  if (dataUrl.includes('font/woff')) return 'woff';
+  if (dataUrl.includes('font/otf')) return 'opentype';
+  return 'truetype';
 }
 
 function resolveBrowserExecutable(payload) {

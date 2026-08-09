@@ -32,6 +32,11 @@ class PeticaoPlaywrightRendererService
             'footer_html' => (string) ($layout['footer_html'] ?? ''),
             'header_defaults' => (array) ($layout['header_defaults'] ?? []),
             'footer_defaults' => (array) ($layout['footer_defaults'] ?? []),
+            'assets' => [
+                'font_family' => trim((string) config('pdf.playwright.font_family', '')),
+                'font_regular' => $this->encodeAssetAsDataUrl((string) config('pdf.playwright.font_regular_path', '')),
+                'font_bold' => $this->encodeAssetAsDataUrl((string) config('pdf.playwright.font_bold_path', '')),
+            ],
             'options' => [
                 'format' => 'A4',
                 'browser_binary' => trim((string) config('pdf.playwright.browser_binary', '')),
@@ -83,5 +88,30 @@ class PeticaoPlaywrightRendererService
     protected function quoteShellArgument($value)
     {
         return '"' . str_replace('"', '\"', $value) . '"';
+    }
+
+    protected function encodeAssetAsDataUrl($path)
+    {
+        $path = trim((string) $path);
+        if ($path === '' || !is_file($path) || !is_readable($path)) {
+            return null;
+        }
+
+        $content = @file_get_contents($path);
+        if ($content === false) {
+            return null;
+        }
+
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $mimeMap = [
+            'ttf' => 'font/ttf',
+            'otf' => 'font/otf',
+            'woff' => 'font/woff',
+            'woff2' => 'font/woff2',
+        ];
+
+        $mime = $mimeMap[$extension] ?? 'application/octet-stream';
+
+        return 'data:' . $mime . ';base64,' . base64_encode($content);
     }
 }
