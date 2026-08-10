@@ -809,6 +809,12 @@ class PeticaoExportService
         $preparedHeaderHtml = $this->prepareExportFragment($headerHtml, 'inline', 'playwright-template');
         $preparedFooterHtml = $this->prepareExportFragment($footerHtml, 'inline', 'playwright-template');
 
+        if ($this->hasConfiguredPlaywrightFont()) {
+            $bodyHtml = $this->stripInlineFontFamily($bodyHtml);
+            $preparedHeaderHtml = $this->stripInlineFontFamily($preparedHeaderHtml);
+            $preparedFooterHtml = $this->stripInlineFontFamily($preparedFooterHtml);
+        }
+
         return [
             'title' => (string) ($layout['title'] ?? 'peticao'),
             'body_html' => $this->preserveBlankEditorBlocks(
@@ -936,6 +942,35 @@ class PeticaoExportService
         }
 
         return $defaults;
+    }
+
+    protected function hasConfiguredPlaywrightFont()
+    {
+        return trim((string) config('pdf.playwright.font_family', '')) !== ''
+            && trim((string) config('pdf.playwright.font_regular_path', '')) !== '';
+    }
+
+    protected function stripInlineFontFamily($html)
+    {
+        if (!is_string($html) || trim($html) === '') {
+            return $html;
+        }
+
+        return preg_replace_callback('/style=(["\'])(.*?)\1/i', function ($matches) {
+            $quote = $matches[1];
+            $style = html_entity_decode($matches[2], ENT_QUOTES, 'UTF-8');
+
+            $style = preg_replace('/font-family\s*:\s*[^;]+;?/i', '', $style);
+            $style = preg_replace('/;;+/', ';', $style);
+            $style = trim($style);
+            $style = trim($style, ';');
+
+            if ($style === '') {
+                return '';
+            }
+
+            return 'style=' . $quote . $style . $quote;
+        }, $html);
     }
 
     protected function stripEmbeddedHeaderFooter($conteudoHtml, $cabecalhoHtml = null, $rodapeHtml = null)
