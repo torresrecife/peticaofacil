@@ -178,6 +178,9 @@ class PeticaoExportService
         $phpWord->setDefaultParagraphStyle([
             'spaceBefore' => 0,
             'spaceAfter' => 0,
+            'lineHeight' => 1.6,
+            'spacingLineRule' => \PhpOffice\PhpWord\SimpleType\LineSpacingRule::AUTO,
+            'contextualSpacing' => false,
         ]);
 
         $phpWordTempDir = storage_path('app/phpword-temp');
@@ -209,7 +212,9 @@ class PeticaoExportService
             }
         }
 
-        $this->appendPhpWordHtml($section, $documentHtml, false);
+        if (!$this->appendNativeDocxBody($section, $documentHtml)) {
+            $this->appendPhpWordHtml($section, $documentHtml, false);
+        }
 
         $tempDir = storage_path('app/word-docx');
         if (!is_dir($tempDir) && !@mkdir($tempDir, 0777, true) && !is_dir($tempDir)) {
@@ -691,7 +696,8 @@ class PeticaoExportService
             'html, body { margin: 0; padding: 0; background: #ffffff; color: #1f2933; font-family: Arial, Helvetica, sans-serif; }',
             'body { word-wrap: break-word; }',
             'p, div, td, th, li, span, strong, u { line-height: 1.6; }',
-            'p { margin: 0; text-align: justify; }',
+            'p { margin: 0 0 12px; text-align: justify; }',
+            'td p { margin: 0; }',
             'img { max-width: 100%; height: auto; }',
             'table { border-collapse: collapse; border-spacing: 0; max-width: 100%; }',
             '.word-header-table { width: 100%; table-layout: fixed; border-collapse: collapse; }',
@@ -747,6 +753,75 @@ class PeticaoExportService
         }
 
         PhpWordHtml::addHtml($container, $html, true, true);
+    }
+
+    protected function appendNativeDocxBody($container, $html)
+    {
+        if (!class_exists('DOMDocument')) {
+            return false;
+        }
+
+        $previous = libxml_use_internal_errors(true);
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $loaded = $dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        if (!$loaded) {
+            return false;
+        }
+
+        $xpath = new \DOMXPath($dom);
+        $body = $xpath->query('//body')->item(0);
+        $scope = $body ?: $dom->documentElement;
+        if (!$scope) {
+            return false;
+        }
+
+        $handled = false;
+
+        foreach ($scope->childNodes as $childNode) {
+            if ($childNode->nodeType === XML_TEXT_NODE && trim($childNode->nodeValue) === '') {
+                continue;
+            }
+
+            if ($childNode->nodeType !== XML_ELEMENT_NODE) {
+                $handled = false;
+                continue;
+            }
+
+            $tag = strtolower($childNode->nodeName);
+
+            if ($tag === 'table') {
+                $handled = $this->appendNativePhpWordTable($container, $dom->saveHTML($childNode)) || $handled;
+                continue;
+            }
+
+            if (in_array($tag, ['p', 'div', 'li'], true)) {
+                if ($this->nodeContainsOnlyImage($childNode)) {
+                    $imageNode = $this->getFirstDescendantByTagName($childNode, 'img');
+                    if ($imageNode instanceof \DOMElement) {
+                        $this->appendNativeDocxImage($container, $imageNode, $childNode);
+                        $handled = true;
+                        continue;
+                    }
+                }
+
+                if ($this->isDocxEmptyParagraphNode($childNode)) {
+                    $this->appendNativeDocxEmptyParagraph($container, $childNode);
+                    $handled = true;
+                    continue;
+                }
+
+                $this->appendNativeDocxTextBlock($container, $childNode);
+                $handled = true;
+                continue;
+            }
+
+            $handled = false;
+        }
+
+        return $handled;
     }
 
     protected function appendNativeDocxHeaderFooter($container, $html)
@@ -1017,25 +1092,66 @@ class PeticaoExportService
 
     protected function appendNativeDocxTextBlock($container, \DOMNode $node)
     {
-        $lines = $this->extractDocxTextLines($node);
-        if (empty($lines)) {
-            return;
-        }
-
         $textStyle = $this->extractDocxTextStyle($node);
-        $paragraphStyle = [
-            'alignment' => $this->resolveNativePhpWordAlignment($node) ?: 'left',
-            'spaceBefore' => 0,
-            'spaceAfter' => 0,
-        ];
+        $paragraphStyle = $this->resolveDocxParagraphStyle($node, $textStyle['lineHeight'] ?? null, false);
+        $textRun = $container->addTextRun($paragraphStyle);
+        $baseFontStyle = !empty($textStyle['font']) ? $textStyle['font'] : $this->getDefaultDocxBodyFontStyle();
+        $hasContent = $this->appendNativeDocxInlineContent($textRun, $node, $baseFontStyle);
 
-        if (!empty($textStyle['lineHeight'])) {
-            $paragraphStyle['lineHeight'] = $textStyle['lineHeight'];
+        if (!$hasContent) {
+            $textRun->addText(' ', $baseFontStyle);
+        }
+    }
+
+    protected function appendNativeDocxEmptyParagraph($container, \DOMNode $node)
+    {
+        $paragraphStyle = $this->resolveDocxParagraphStyle($node, 1.6, true);
+        $fontStyle = $this->extractDocxTextStyle($node)['font'] ?: $this->getDefaultDocxBodyFontStyle();
+        $container->addText(' ', $fontStyle, $paragraphStyle);
+    }
+
+    protected function appendNativeDocxInlineContent($container, \DOMNode $node, array $inheritedFontStyle = [])
+    {
+        $hasContent = false;
+
+        foreach ($node->childNodes as $child) {
+            if ($child->nodeType === XML_TEXT_NODE) {
+                $text = html_entity_decode($child->nodeValue, ENT_QUOTES, 'UTF-8');
+                if ($text === '') {
+                    continue;
+                }
+
+                $text = preg_replace('/\s+/u', ' ', $text);
+                if ($text === '') {
+                    continue;
+                }
+
+                $container->addText($text, $inheritedFontStyle);
+                $hasContent = true;
+                continue;
+            }
+
+            if ($child->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            $tag = strtolower($child->nodeName);
+
+            if ($tag === 'br') {
+                $container->addTextBreak();
+                $hasContent = true;
+                continue;
+            }
+
+            if ($tag === 'img') {
+                continue;
+            }
+
+            $childFontStyle = $this->mergeDocxFontStyles($inheritedFontStyle, $this->extractDocxOwnFontStyle($child));
+            $hasContent = $this->appendNativeDocxInlineContent($container, $child, $childFontStyle) || $hasContent;
         }
 
-        foreach ($lines as $line) {
-            $container->addText($line !== '' ? $line : ' ', $textStyle['font'], $paragraphStyle);
-        }
+        return $hasContent;
     }
 
     protected function extractDocxTextLines(\DOMNode $node)
@@ -1070,6 +1186,118 @@ class PeticaoExportService
 
             $this->collectDocxTextLines($child, $lines);
         }
+    }
+
+    protected function isDocxEmptyParagraphNode(\DOMNode $node)
+    {
+        $html = trim($this->innerHtml($node));
+        if ($html === '') {
+            return true;
+        }
+
+        $normalized = preg_replace('/<br\s*\/?>/i', '', $html);
+        $normalized = preg_replace('/&nbsp;|&#160;/i', '', $normalized);
+        $normalized = preg_replace('/<span\b[^>]*>\s*<\/span>/i', '', $normalized);
+        $normalized = trim(strip_tags($normalized));
+
+        return $normalized === '';
+    }
+
+    protected function resolveDocxParagraphStyle(\DOMNode $node, $lineHeight = null, $isEmptyParagraph = false)
+    {
+        $paragraphStyle = [
+            'alignment' => $this->resolveNativePhpWordAlignment($node) ?: 'left',
+            'spaceBefore' => 0,
+            'spaceAfter' => $isEmptyParagraph ? 0 : Converter::pixelToTwip(12),
+            'contextualSpacing' => false,
+            'spacingLineRule' => \PhpOffice\PhpWord\SimpleType\LineSpacingRule::AUTO,
+            'lineHeight' => $lineHeight ?: 1.6,
+        ];
+
+        if ($node->attributes && $node->attributes->getNamedItem('style')) {
+            $style = html_entity_decode($node->attributes->getNamedItem('style')->nodeValue, ENT_QUOTES, 'UTF-8');
+            $marginLeft = $this->extractCssPropertyValue($style, 'margin-left');
+            $textIndent = $this->extractCssPropertyValue($style, 'text-indent');
+
+            if ($marginLeft !== null) {
+                $paragraphStyle['indentation'] = $paragraphStyle['indentation'] ?? [];
+                $paragraphStyle['indentation']['left'] = $this->cssSizeToTwip($marginLeft);
+            }
+
+            if ($textIndent !== null) {
+                $paragraphStyle['indentation'] = $paragraphStyle['indentation'] ?? [];
+                $paragraphStyle['indentation']['firstLine'] = $this->cssSizeToTwip($textIndent);
+            }
+        }
+
+        return $paragraphStyle;
+    }
+
+    protected function extractDocxOwnFontStyle(\DOMNode $node)
+    {
+        $style = [];
+        $properties = [
+            'font-size' => null,
+            'font-family' => null,
+            'font-weight' => null,
+            'color' => null,
+        ];
+
+        if ($node->attributes && $node->attributes->getNamedItem('class')) {
+            $className = strtolower(trim((string) $node->attributes->getNamedItem('class')->nodeValue));
+            if (strpos($className, 'word-header-contact') !== false) {
+                $properties['font-size'] = '9px';
+                $properties['font-family'] = 'Tahoma, Geneva, sans-serif';
+            }
+        }
+
+        if ($node->attributes && $node->attributes->getNamedItem('style')) {
+            $styleValue = html_entity_decode($node->attributes->getNamedItem('style')->nodeValue, ENT_QUOTES, 'UTF-8');
+            foreach (array_keys($properties) as $property) {
+                $value = $this->extractCssPropertyValue($styleValue, $property);
+                if ($value !== null) {
+                    $properties[$property] = $value;
+                }
+            }
+        }
+
+        $tag = strtolower($node->nodeName);
+        if (in_array($tag, ['strong', 'b'], true)) {
+            $style['bold'] = true;
+        }
+
+        if (!empty($properties['font-family'])) {
+            $style['name'] = trim(str_replace(['"', "'"], '', explode(',', $properties['font-family'])[0]));
+        }
+
+        if (!empty($properties['font-size'])) {
+            $style['size'] = $this->cssSizeToDocxPoint($properties['font-size']);
+        }
+
+        if (!empty($properties['font-weight']) && preg_match('/bold|700|800|900/i', $properties['font-weight'])) {
+            $style['bold'] = true;
+        }
+
+        if (!empty($properties['color'])) {
+            $style['color'] = ltrim($this->normalizeCssColorToHex($properties['color']), '#');
+        }
+
+        return array_filter($style, function ($value) {
+            return $value !== null && $value !== '';
+        });
+    }
+
+    protected function mergeDocxFontStyles(array $baseStyle, array $overrideStyle)
+    {
+        return array_merge($baseStyle, $overrideStyle);
+    }
+
+    protected function getDefaultDocxBodyFontStyle()
+    {
+        return [
+            'name' => 'Tahoma',
+            'size' => 9,
+        ];
     }
 
     protected function extractDocxTextStyle(\DOMNode $node)
@@ -1402,6 +1630,29 @@ class PeticaoExportService
         return null;
     }
 
+    protected function cssSizeToTwip($value)
+    {
+        $value = trim((string) $value);
+
+        if (preg_match('/^(\d+(?:\.\d+)?)px$/i', $value, $matches)) {
+            return (int) round(Converter::pixelToTwip((float) $matches[1]));
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)pt$/i', $value, $matches)) {
+            return (int) round(Converter::pointToTwip((float) $matches[1]));
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)cm$/i', $value, $matches)) {
+            return (int) round(Converter::cmToTwip((float) $matches[1]));
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)$/', $value, $matches)) {
+            return (int) round((float) $matches[1]);
+        }
+
+        return 0;
+    }
+
     protected function cssLineHeightToDocx($value, $fontSize = 11)
     {
         $value = trim((string) $value);
@@ -1609,8 +1860,7 @@ class PeticaoExportService
     protected function normalizeDocxMarkup($html, $forHeaderFooter = false)
     {
         if (!$forHeaderFooter) {
-            $html = preg_replace('/<(p|div)([^>]*)class=(["\'])([^"\']*\bpeticao-empty-line\b[^"\']*)\3([^>]*)>(?:&nbsp;|\s|<br\s*\/?>)*<\/\1>/i', '<p style="margin:0;line-height:1;">&nbsp;</p>', $html);
-            $html = $this->transformDocxIndentedBlocks($html);
+            $html = $this->ensureDocxBodyLineHeight($html, '1.6');
         }
 
         $html = preg_replace_callback('/<table\b[^>]*>.*?<img\b[^>]*src=.*?<\/table>/is', function ($matches) {
@@ -1662,6 +1912,29 @@ class PeticaoExportService
         return $html;
     }
 
+    protected function normalizeDocxBlankBlocks($html)
+    {
+        return preg_replace_callback('/<(p|div)([^>]*)class=(["\'])([^"\']*\bpeticao-empty-line\b[^"\']*)\3([^>]*)>(?:&nbsp;|\s|<br\s*\/?>)*<\/\1>/i', function ($matches) {
+            $tag = strtolower($matches[1]);
+            $before = trim($matches[2] . ' ' . $matches[5]);
+            $classValue = trim($matches[4]);
+
+            if (preg_match('/\bstyle=(["\'])(.*?)\1/i', $before, $styleMatches)) {
+                $quote = $styleMatches[1];
+                $style = html_entity_decode($styleMatches[2], ENT_QUOTES, 'UTF-8');
+                $style = rtrim(trim($style), ';');
+                $style .= ($style === '' ? '' : '; ') . 'margin:0; font-size:1pt; line-height:12px; height:12px;';
+                $attributes = preg_replace('/\bstyle=(["\'])(.*?)\1/i', 'style=' . $quote . $style . $quote, $before, 1);
+            } else {
+                $attributes = trim($before . ' style="margin:0; font-size:1pt; line-height:12px; height:12px;"');
+            }
+
+            $attributes = trim('class="' . $classValue . '" ' . $attributes);
+
+            return '<' . $tag . ' ' . $attributes . '>&nbsp;</' . $tag . '>';
+        }, $html);
+    }
+
     protected function transformDocxIndentedBlocks($html)
     {
         return preg_replace_callback('/<(p|div)\b([^>]*)style=(["\'])(.*?)\3([^>]*)>(.*?)<\/\1>/is', function ($matches) {
@@ -1689,6 +1962,29 @@ class PeticaoExportService
             $remainingWidth = max(40, $contentWidth - $width);
 
             return '<table style="width:' . $contentWidth . 'px; border-collapse:collapse; table-layout:fixed;" width="' . $contentWidth . '" border="0" cellspacing="0" cellpadding="0"><tr><td style="width:' . $width . 'px; padding:0; font-size:1px; line-height:1;" width="' . $width . '">&nbsp;</td><td style="width:' . $remainingWidth . 'px; padding:0; vertical-align:top;" width="' . $remainingWidth . '">' . $contentTag . '</td></tr></table>';
+        }, $html);
+    }
+
+    protected function ensureDocxBodyLineHeight($html, $lineHeight)
+    {
+        return preg_replace_callback('/<(p|div|li)\b([^>]*)>/i', function ($matches) use ($lineHeight) {
+            $tag = $matches[1];
+            $attributes = $matches[2];
+
+            if (preg_match('/\bstyle=(["\'])(.*?)\1/i', $attributes, $styleMatches)) {
+                $quote = $styleMatches[1];
+                $style = html_entity_decode($styleMatches[2], ENT_QUOTES, 'UTF-8');
+
+                if ($this->extractCssPropertyValue($style, 'line-height') === null) {
+                    $style = rtrim(trim($style), ';');
+                    $style = $style === '' ? 'line-height:' . $lineHeight : $style . '; line-height:' . $lineHeight;
+                    $attributes = preg_replace('/\bstyle=(["\'])(.*?)\1/i', 'style=' . $quote . $style . $quote, $attributes, 1);
+                }
+
+                return '<' . $tag . $attributes . '>';
+            }
+
+            return '<' . $tag . $attributes . ' style="line-height:' . $lineHeight . ';">';
         }, $html);
     }
 
