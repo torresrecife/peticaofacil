@@ -3,6 +3,11 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\Shared\Converter;
+use PhpOffice\PhpWord\Shared\Html as PhpWordHtml;
+use PhpOffice\PhpWord\Settings as PhpWordSettings;
 use RuntimeException;
 use Throwable;
 
@@ -10,16 +15,11 @@ class PeticaoExportService
 {
     public function exportWordFromLayout(array $layout)
     {
-        $filename = $this->sanitizeFileName($layout['title'] ?? 'peticao') . '.doc';
-        $content = $this->renderWordDocument(
-            $layout['title'] ?? 'peticao',
-            $layout['body_html'] ?? '',
-            $layout['header_html'] ?? null,
-            $layout['footer_html'] ?? null
-        );
+        $filename = $this->sanitizeFileName($layout['title'] ?? 'peticao') . '.docx';
+        $content = $this->renderWordDocumentFromLayout($layout);
 
         return response($content, 200, [
-            'Content-Type' => 'application/msword; charset=UTF-8',
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
     }
@@ -119,29 +119,111 @@ class PeticaoExportService
 
     public function renderWordDocument($nomeArquivo, $conteudoHtml, $cabecalhoHtml = null, $rodapeHtml = null)
     {
+        return $this->renderWordDocumentFromLayout([
+            'title' => $nomeArquivo,
+            'body_html' => $conteudoHtml,
+            'header_html' => $cabecalhoHtml,
+            'footer_html' => $rodapeHtml,
+        ]);
+    }
+
+    public function renderWordDocumentFromLayout(array $layout)
+    {
         $editorCss = file_exists(public_path('ckeditor/contents.css'))
             ? $this->scopeEditorPrintCss(file_get_contents(public_path('ckeditor/contents.css')))
             : '';
 
-        $conteudoSemMoldura = $this->stripEmbeddedHeaderFooter($conteudoHtml, $cabecalhoHtml, $rodapeHtml);
-        $documentHtml = $this->preserveBlankEditorBlocks(
-            $this->normalizeWordMarkup(
-                $this->preserveAlignedSpacingMarkup(
-                    $this->normalizeAssetImageSrc($conteudoSemMoldura, 'browser')
-                )
-            )
-        );
-        $headerHtml = $this->prepareExportFragment($cabecalhoHtml, 'browser', 'word');
-        $footerHtml = $this->prepareExportFragment($rodapeHtml, 'browser', 'word');
+        $bodyHtml = (string) ($layout['body_html'] ?? '');
+        $headerHtml = (string) ($layout['header_html'] ?? '');
+        $footerHtml = (string) ($layout['footer_html'] ?? '');
+        $rawHeaderHtml = $this->normalizeAssetImageSrc($headerHtml, 'filesystem');
+        $rawFooterHtml = $this->normalizeAssetImageSrc($footerHtml, 'filesystem');
 
-        return view('peticao.word', [
-            'documentTitle' => $nomeArquivo,
-            'documentHtml' => $documentHtml,
-            'headerHtml' => $headerHtml,
-            'footerHtml' => $footerHtml,
-            'editorCss' => $editorCss,
-            'wordCss' => $this->buildWordStyles(),
-        ])->render();
+        $conteudoSemMoldura = $this->stripEmbeddedHeaderFooter($bodyHtml, $headerHtml, $footerHtml);
+        $documentHtml = $this->preparePhpWordHtmlFragment(
+            $this->preserveBlankEditorBlocks(
+                $this->normalizeDocxMarkup(
+                    $this->preserveAlignedSpacingMarkup(
+                        $this->normalizeAssetImageSrc($conteudoSemMoldura, 'filesystem')
+                    ),
+                    false
+                )
+            ),
+            $editorCss . "\n" . $this->buildDocxStyles()
+        );
+        $preparedHeaderHtml = $this->preparePhpWordHtmlFragment(
+            $this->normalizeDocxMarkup(
+                $this->preserveAlignedSpacingMarkup(
+                    $rawHeaderHtml
+                ),
+                true
+            ),
+            $this->buildDocxStyles()
+        );
+        $preparedFooterHtml = $this->preparePhpWordHtmlFragment(
+            $this->normalizeDocxMarkup(
+                $this->preserveAlignedSpacingMarkup(
+                    $rawFooterHtml
+                ),
+                true
+            ),
+            $this->buildDocxStyles()
+        );
+
+        $phpWord = new PhpWord();
+        $phpWord->setDefaultFontName('Arial');
+        $phpWord->setDefaultFontSize(12);
+
+        $phpWordTempDir = storage_path('app/phpword-temp');
+        if (!is_dir($phpWordTempDir) && !@mkdir($phpWordTempDir, 0777, true) && !is_dir($phpWordTempDir)) {
+            throw new RuntimeException('Nao foi possivel preparar o diretorio temporario do PHPWord.');
+        }
+        PhpWordSettings::setTempDir($phpWordTempDir);
+
+        $section = $phpWord->addSection([
+            'marginTop' => Converter::cmToTwip(2.54),
+            'marginRight' => Converter::cmToTwip(1.69),
+            'marginBottom' => Converter::cmToTwip(2.54),
+            'marginLeft' => Converter::cmToTwip(1.69),
+            'headerHeight' => Converter::cmToTwip(0.64),
+            'footerHeight' => Converter::cmToTwip(0.64),
+        ]);
+
+        if (trim($rawHeaderHtml) !== '') {
+            $headerContainer = $section->addHeader();
+            if (!$this->appendNativeDocxHeaderFooter($headerContainer, $rawHeaderHtml)) {
+                $this->appendPhpWordHtml($headerContainer, $preparedHeaderHtml, true);
+            }
+        }
+
+        if (trim($rawFooterHtml) !== '') {
+            $footerContainer = $section->addFooter();
+            if (!$this->appendNativeDocxHeaderFooter($footerContainer, $rawFooterHtml)) {
+                $this->appendPhpWordHtml($footerContainer, $preparedFooterHtml, true);
+            }
+        }
+
+        $this->appendPhpWordHtml($section, $documentHtml, false);
+
+        $tempDir = storage_path('app/word-docx');
+        if (!is_dir($tempDir) && !@mkdir($tempDir, 0777, true) && !is_dir($tempDir)) {
+            throw new RuntimeException('Nao foi possivel preparar o diretorio temporario do DOCX.');
+        }
+
+        $filename = $this->sanitizeFileName($layout['title'] ?? 'peticao');
+        $docxPath = $tempDir . DIRECTORY_SEPARATOR . $filename . '_' . str_replace('.', '', uniqid('', true)) . '.docx';
+
+        try {
+            IOFactory::createWriter($phpWord, 'Word2007')->save($docxPath);
+
+            if (!file_exists($docxPath) || filesize($docxPath) === 0) {
+                throw new RuntimeException('O DOCX nao foi gerado.');
+            }
+
+            return file_get_contents($docxPath);
+        } finally {
+            @unlink($docxPath);
+        }
     }
 
     public function sanitizeFileName($value)
@@ -597,6 +679,763 @@ class PeticaoExportService
         ]);
     }
 
+    protected function buildDocxStyles()
+    {
+        return implode("\n", [
+            'html, body { margin: 0; padding: 0; background: #ffffff; color: #1f2933; font-family: Arial, Helvetica, sans-serif; }',
+            'body { word-wrap: break-word; }',
+            'p, div, td, th, li, span, strong, u { line-height: 1.6; }',
+            'p { margin: 0 0 12px; text-align: justify; }',
+            'img { max-width: 100%; height: auto; }',
+            'table { border-collapse: collapse; border-spacing: 0; max-width: 100%; }',
+            '.word-header-table { width: 100%; table-layout: fixed; border-collapse: collapse; }',
+            '.word-header-table td { vertical-align: middle; padding: 0; }',
+            '.word-header-table td:first-child { width: 34%; text-align: left; }',
+            '.word-header-table td:last-child { width: 66%; text-align: right; }',
+            '.word-header-contact { width: 100%; margin: 0; font-size: 9px; line-height: 1.15; text-align: right; white-space: normal; }',
+            '.word-header-contact span { white-space: inherit !important; }',
+            '.peticao-empty-line { min-height: 1.6em; display: block; }',
+        ]);
+    }
+
+    protected function preparePhpWordHtmlFragment($html, $css = '')
+    {
+        $html = trim((string) $html);
+        if ($html === '') {
+            return '';
+        }
+
+        $css = trim((string) $css);
+        $wrappedHtml = '<html><head><meta charset="utf-8" />';
+        if ($css !== '') {
+            $wrappedHtml .= '<style type="text/css">' . $css . '</style>';
+        }
+        $wrappedHtml .= '</head><body>' . $html . '</body></html>';
+
+        $previous = libxml_use_internal_errors(true);
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = true;
+        $dom->formatOutput = false;
+        $dom->loadHTML('<?xml encoding="UTF-8">' . $wrappedHtml, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $xml = $dom->saveXML($dom->documentElement);
+
+        if (!is_string($xml) || trim($xml) === '') {
+            throw new RuntimeException('Nao foi possivel normalizar o HTML para exportacao DOCX.');
+        }
+
+        return $xml;
+    }
+
+    protected function appendPhpWordHtml($container, $html, $preferNativeTable = false)
+    {
+        $html = trim((string) $html);
+        if ($html === '') {
+            return;
+        }
+
+        if ($preferNativeTable && $this->appendNativePhpWordTable($container, $html)) {
+            return;
+        }
+
+        PhpWordHtml::addHtml($container, $html, true, true);
+    }
+
+    protected function appendNativeDocxHeaderFooter($container, $html)
+    {
+        if (!class_exists('DOMDocument')) {
+            return false;
+        }
+
+        $previous = libxml_use_internal_errors(true);
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $loaded = $dom->loadHTML('<?xml encoding="UTF-8"><body>' . $html . '</body>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        if (!$loaded) {
+            return false;
+        }
+
+        $xpath = new \DOMXPath($dom);
+        $tableNode = $xpath->query('//body//table')->item(0);
+        if ($tableNode instanceof \DOMElement) {
+            return $this->appendNativePhpWordTable($container, $dom->saveHTML($tableNode));
+        }
+
+        $paragraphNodes = $xpath->query('//body/*[self::p or self::div]');
+        if ($paragraphNodes->length === 0) {
+            return false;
+        }
+
+        $handled = false;
+        foreach ($paragraphNodes as $paragraphNode) {
+            if ($paragraphNode->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            $tag = strtolower($paragraphNode->nodeName);
+            if (($tag === 'p' || $tag === 'div') && $this->nodeContainsOnlyImage($paragraphNode)) {
+                $imageNode = $xpath->query('.//img', $paragraphNode)->item(0);
+                if ($imageNode instanceof \DOMElement) {
+                    $this->appendNativeDocxImage($container, $imageNode, $paragraphNode);
+                    $handled = true;
+                }
+                continue;
+            }
+
+            $lines = $this->extractDocxTextLines($paragraphNode);
+            if (!empty($lines)) {
+                $this->appendNativeDocxTextBlock($container, $paragraphNode);
+                $handled = true;
+            }
+        }
+
+        return $handled;
+    }
+
+    protected function appendNativePhpWordTable($container, $html)
+    {
+        if (!class_exists('DOMDocument')) {
+            return false;
+        }
+
+        $tableNode = $this->extractSingleTableNodeFromHtml($html);
+        if (!$tableNode) {
+            return false;
+        }
+
+        $contentWidthTwip = $this->getDocxContentWidthTwip();
+
+        $table = $container->addTable([
+            'width' => $contentWidthTwip,
+            'unit' => \PhpOffice\PhpWord\SimpleType\TblWidth::TWIP,
+            'layout' => \PhpOffice\PhpWord\Style\Table::LAYOUT_FIXED,
+            'borderSize' => 0,
+            'borderColor' => 'FFFFFF',
+            'cellMarginTop' => 0,
+            'cellMarginRight' => 0,
+            'cellMarginBottom' => 0,
+            'cellMarginLeft' => 0,
+        ]);
+
+        $hasRows = false;
+        foreach ($tableNode->childNodes as $sectionNode) {
+            if ($sectionNode->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            if (strtolower($sectionNode->nodeName) === 'tr') {
+                $hasRows = $this->appendNativePhpWordTableRow($table, $sectionNode, $contentWidthTwip) || $hasRows;
+                continue;
+            }
+
+            foreach ($sectionNode->childNodes as $rowNode) {
+                if ($rowNode->nodeType === XML_ELEMENT_NODE && strtolower($rowNode->nodeName) === 'tr') {
+                    $hasRows = $this->appendNativePhpWordTableRow($table, $rowNode, $contentWidthTwip) || $hasRows;
+                }
+            }
+        }
+
+        return $hasRows;
+    }
+
+    protected function appendNativePhpWordTableRow($table, \DOMNode $rowNode, $contentWidthTwip = null)
+    {
+        $cells = [];
+        foreach ($rowNode->childNodes as $cellNode) {
+            if ($cellNode->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            $tag = strtolower($cellNode->nodeName);
+            if ($tag !== 'td' && $tag !== 'th') {
+                continue;
+            }
+
+            $cells[] = $cellNode;
+        }
+
+        if (empty($cells)) {
+            return false;
+        }
+
+        $table->addRow();
+        $fallbackWidths = $this->resolveNativePhpWordRowFallbackWidths($cells, $contentWidthTwip);
+
+        foreach ($cells as $index => $cellNode) {
+            $cell = $table->addCell(
+                $this->resolveNativePhpWordCellWidth($cellNode) ?: ($fallbackWidths[$index] ?? null),
+                [
+                    'valign' => $this->resolveNativePhpWordVAlign($cellNode),
+                    'borderSize' => 0,
+                    'borderColor' => 'FFFFFF',
+                ]
+            );
+
+            $this->appendNativeDocxCellContent($cell, $cellNode);
+        }
+
+        return true;
+    }
+
+    protected function resolveNativePhpWordRowFallbackWidths(array $cells, $contentWidthTwip)
+    {
+        if ($contentWidthTwip === null || count($cells) !== 2) {
+            return [];
+        }
+
+        $firstWidth = (int) round($contentWidthTwip * 0.34);
+
+        return [
+            $firstWidth,
+            max(0, $contentWidthTwip - $firstWidth),
+        ];
+    }
+
+    protected function appendNativeDocxCellContent($cell, \DOMNode $cellNode)
+    {
+        if ($this->nodeContainsOnlyImage($cellNode)) {
+            $imageNode = $this->getFirstDescendantByTagName($cellNode, 'img');
+            if ($imageNode instanceof \DOMElement) {
+                $this->appendNativeDocxImage($cell, $imageNode, $cellNode);
+
+                return true;
+            }
+        }
+
+        $handled = false;
+
+        foreach ($cellNode->childNodes as $childNode) {
+            if ($childNode->nodeType === XML_TEXT_NODE && trim($childNode->nodeValue) !== '') {
+                $this->appendNativeDocxTextBlock($cell, $cellNode);
+                return true;
+            }
+
+            if ($childNode->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            $tag = strtolower($childNode->nodeName);
+
+            if ($tag === 'img') {
+                $this->appendNativeDocxImage($cell, $childNode, $cellNode);
+                $handled = true;
+                continue;
+            }
+
+            if (in_array($tag, ['p', 'div'], true)) {
+                if ($this->nodeContainsOnlyImage($childNode)) {
+                    $imageNode = $this->getFirstDescendantByTagName($childNode, 'img');
+                    if ($imageNode instanceof \DOMElement) {
+                        $this->appendNativeDocxImage($cell, $imageNode, $childNode);
+                        $handled = true;
+                    }
+                    continue;
+                }
+
+                $this->appendNativeDocxTextBlock($cell, $childNode);
+                $handled = true;
+                continue;
+            }
+        }
+
+        if (!$handled) {
+            $innerHtml = trim($this->innerHtml($cellNode));
+            if ($innerHtml !== '') {
+                $this->appendNativeDocxTextBlock($cell, $cellNode);
+            }
+        }
+
+        return $handled;
+    }
+
+    protected function nodeContainsOnlyImage(\DOMNode $node)
+    {
+        $text = trim(preg_replace('/\s+/u', ' ', strip_tags($this->innerHtml($node))));
+        $imageNode = $this->getFirstDescendantByTagName($node, 'img');
+
+        return $imageNode instanceof \DOMElement && $text === '';
+    }
+
+    protected function getFirstDescendantByTagName(\DOMNode $node, $tagName)
+    {
+        foreach ($node->childNodes as $child) {
+            if ($child->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            if (strtolower($child->nodeName) === strtolower($tagName)) {
+                return $child;
+            }
+
+            $found = $this->getFirstDescendantByTagName($child, $tagName);
+            if ($found) {
+                return $found;
+            }
+        }
+
+        return null;
+    }
+
+    protected function appendNativeDocxImage($container, \DOMNode $imageNode, \DOMNode $contextNode = null)
+    {
+        $src = $this->resolveDocxImageSource($imageNode);
+        if ($src === null) {
+            return;
+        }
+
+        $style = [];
+        $width = $this->resolveDocxImageDimension($imageNode, 'width');
+        $height = $this->resolveDocxImageDimension($imageNode, 'height');
+
+        if ($width !== null) {
+            $style['width'] = $width;
+        }
+
+        if ($height !== null) {
+            $style['height'] = $height;
+        }
+
+        $style['unit'] = 'px';
+
+        $alignment = $this->resolveNativePhpWordAlignment($contextNode ?: $imageNode);
+        if ($alignment !== null) {
+            $style['alignment'] = $alignment;
+        }
+
+        $container->addImage($src, $style);
+    }
+
+    protected function appendNativeDocxTextBlock($container, \DOMNode $node)
+    {
+        $lines = $this->extractDocxTextLines($node);
+        if (empty($lines)) {
+            return;
+        }
+
+        $textStyle = $this->extractDocxTextStyle($node);
+        $paragraphStyle = [
+            'alignment' => $this->resolveNativePhpWordAlignment($node) ?: 'left',
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+        ];
+
+        if (!empty($textStyle['lineHeight'])) {
+            $paragraphStyle['lineHeight'] = $textStyle['lineHeight'];
+        }
+
+        foreach ($lines as $line) {
+            $container->addText($line !== '' ? $line : ' ', $textStyle['font'], $paragraphStyle);
+        }
+    }
+
+    protected function extractDocxTextLines(\DOMNode $node)
+    {
+        $lines = [''];
+        $this->collectDocxTextLines($node, $lines);
+
+        return array_values(array_map(function ($line) {
+            return preg_replace('/\s+/u', ' ', trim($line));
+        }, array_filter($lines, function ($line) {
+            return $line !== null;
+        })));
+    }
+
+    protected function collectDocxTextLines(\DOMNode $node, array &$lines)
+    {
+        foreach ($node->childNodes as $child) {
+            if ($child->nodeType === XML_TEXT_NODE) {
+                $lines[count($lines) - 1] .= html_entity_decode($child->nodeValue, ENT_QUOTES, 'UTF-8');
+                continue;
+            }
+
+            if ($child->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            $tag = strtolower($child->nodeName);
+            if ($tag === 'br') {
+                $lines[] = '';
+                continue;
+            }
+
+            $this->collectDocxTextLines($child, $lines);
+        }
+    }
+
+    protected function extractDocxTextStyle(\DOMNode $node)
+    {
+        $style = [
+            'font' => [],
+            'lineHeight' => null,
+        ];
+
+        $properties = [
+            'font-size' => null,
+            'font-family' => null,
+            'font-weight' => null,
+            'color' => null,
+            'line-height' => null,
+        ];
+
+        $styleNodes = $this->collectElementNodeAndDescendants($node);
+
+        foreach ($styleNodes as $styleNode) {
+            if ($styleNode->attributes && $styleNode->attributes->getNamedItem('class')) {
+                $className = strtolower(trim((string) $styleNode->attributes->getNamedItem('class')->nodeValue));
+                if (strpos($className, 'word-header-contact') !== false) {
+                    $properties['font-size'] = $properties['font-size'] ?? '9px';
+                    $properties['line-height'] = $properties['line-height'] ?? '1.15';
+                    $properties['font-family'] = $properties['font-family'] ?? 'Tahoma, Geneva, sans-serif';
+                }
+            }
+
+            if (!$styleNode->attributes || !$styleNode->attributes->getNamedItem('style')) {
+                continue;
+            }
+
+            $styleValue = $styleNode->attributes->getNamedItem('style')->nodeValue;
+            foreach (array_keys($properties) as $property) {
+                if ($properties[$property] === null) {
+                    $properties[$property] = $this->extractCssPropertyValue($styleValue, $property);
+                }
+            }
+        }
+
+        if (!empty($properties['font-family'])) {
+            $style['font']['name'] = trim(str_replace(['"', "'"], '', explode(',', $properties['font-family'])[0]));
+        }
+
+        if (!empty($properties['font-size'])) {
+            $style['font']['size'] = $this->cssSizeToDocxPoint($properties['font-size']);
+        }
+
+        if (!empty($properties['font-weight']) && preg_match('/bold|700|800|900/i', $properties['font-weight'])) {
+            $style['font']['bold'] = true;
+        }
+
+        if (!empty($properties['color'])) {
+            $style['font']['color'] = ltrim($this->normalizeCssColorToHex($properties['color']), '#');
+        }
+
+        if (!empty($properties['line-height'])) {
+            $style['lineHeight'] = $this->cssLineHeightToDocx($properties['line-height'], $style['font']['size'] ?? 11);
+        }
+
+        return $style;
+    }
+
+    protected function collectElementNodeAndDescendants(\DOMNode $node)
+    {
+        $nodes = [];
+
+        if ($node->nodeType === XML_ELEMENT_NODE) {
+            $nodes[] = $node;
+        }
+
+        foreach ($node->childNodes as $child) {
+            if ($child->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            foreach ($this->collectElementNodeAndDescendants($child) as $descendant) {
+                $nodes[] = $descendant;
+            }
+        }
+
+        return $nodes;
+    }
+
+    protected function resolveDocxImageSource(\DOMNode $imageNode)
+    {
+        if (!$imageNode->attributes || !$imageNode->attributes->getNamedItem('src')) {
+            return null;
+        }
+
+        $src = html_entity_decode($imageNode->attributes->getNamedItem('src')->nodeValue, ENT_QUOTES, 'UTF-8');
+        if (stripos($src, 'file://') === 0) {
+            $src = preg_replace('#^file:(//)?#i', '', $src);
+            $src = preg_replace('#^/([A-Za-z]:/)#', '$1', $src);
+        }
+
+        return is_file($src) ? $src : null;
+    }
+
+    protected function resolveDocxImageDimension(\DOMNode $imageNode, $property)
+    {
+        $value = null;
+
+        if ($imageNode->attributes && $imageNode->attributes->getNamedItem($property)) {
+            $value = $imageNode->attributes->getNamedItem($property)->nodeValue;
+        }
+
+        if ($value === null && $imageNode->attributes && $imageNode->attributes->getNamedItem('style')) {
+            $value = $this->extractCssPropertyValue($imageNode->attributes->getNamedItem('style')->nodeValue, $property);
+        }
+
+        if ($value === null) {
+            return null;
+        }
+
+        return $this->cssSizeToPixels($value);
+    }
+
+    protected function resolveNativePhpWordAlignment(\DOMNode $node = null)
+    {
+        if ($node === null || !$node->attributes) {
+            return null;
+        }
+
+        $alignment = null;
+
+        if ($node->attributes->getNamedItem('align')) {
+            $alignment = strtolower(trim((string) $node->attributes->getNamedItem('align')->nodeValue));
+        }
+
+        if ($alignment === null && $node->attributes->getNamedItem('style')) {
+            $alignment = strtolower((string) $this->extractCssPropertyValue($node->attributes->getNamedItem('style')->nodeValue, 'text-align'));
+            if ($alignment === null || $alignment === '') {
+                $float = strtolower((string) $this->extractCssPropertyValue($node->attributes->getNamedItem('style')->nodeValue, 'float'));
+                if (in_array($float, ['left', 'right'], true)) {
+                    $alignment = $float;
+                }
+            }
+        }
+
+        if ($alignment === null && $node->attributes->getNamedItem('class')) {
+            $className = strtolower(trim((string) $node->attributes->getNamedItem('class')->nodeValue));
+            if (strpos($className, 'word-header-contact') !== false) {
+                $alignment = 'right';
+            }
+        }
+
+        if ($alignment === 'justify') {
+            return 'both';
+        }
+
+        if (in_array($alignment, ['left', 'right', 'center', 'both'], true)) {
+            return $alignment;
+        }
+
+        return null;
+    }
+
+    protected function extractSingleTableNodeFromHtml($html)
+    {
+        $previous = libxml_use_internal_errors(true);
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $loaded = $dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        if (!$loaded) {
+            return null;
+        }
+
+        $xpath = new \DOMXPath($dom);
+        $body = $xpath->query('//body')->item(0);
+        $scope = $body ?: $dom->documentElement;
+        if (!$scope) {
+            return null;
+        }
+
+        $table = $xpath->query('./table | ./div/table', $scope)->item(0);
+        if ($table instanceof \DOMElement) {
+            return $table;
+        }
+
+        $firstElement = $this->getFirstElementChild($scope);
+        if ($firstElement && strtolower($firstElement->nodeName) === 'div') {
+            $child = $this->getFirstElementChild($firstElement);
+            if ($child && strtolower($child->nodeName) === 'table') {
+                return $child;
+            }
+        }
+
+        if ($firstElement && strtolower($firstElement->nodeName) === 'table') {
+            return $firstElement;
+        }
+
+        return null;
+    }
+
+    protected function getFirstElementChild(\DOMNode $node)
+    {
+        foreach ($node->childNodes as $child) {
+            if ($child->nodeType === XML_ELEMENT_NODE) {
+                return $child;
+            }
+        }
+
+        return null;
+    }
+
+    protected function resolveNativePhpWordCellWidth(\DOMNode $cellNode)
+    {
+        $width = null;
+
+        if ($cellNode->attributes && $cellNode->attributes->getNamedItem('width')) {
+            $width = $cellNode->attributes->getNamedItem('width')->nodeValue;
+        }
+
+        if ($width === null && $cellNode->attributes && $cellNode->attributes->getNamedItem('style')) {
+            $styleWidth = $this->extractCssPropertyValue($cellNode->attributes->getNamedItem('style')->nodeValue, 'width');
+            if ($styleWidth !== null) {
+                $width = $styleWidth;
+            }
+        }
+
+        if ($width === null) {
+            return null;
+        }
+
+        $width = trim((string) $width);
+
+        if (preg_match('/^(\d+(?:\.\d+)?)%$/', $width, $matches)) {
+            return (int) round($this->getDocxContentWidthTwip() * ((float) $matches[1] / 100));
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)px$/i', $width, $matches)) {
+            return (int) round(Converter::pixelToTwip((float) $matches[1]));
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)$/', $width, $matches)) {
+            return (int) round((float) $matches[1]);
+        }
+
+        return null;
+    }
+
+    protected function getDocxContentWidthTwip()
+    {
+        return (int) round(Converter::cmToTwip(21 - 1.69 - 1.69));
+    }
+
+    protected function resolveNativePhpWordVAlign(\DOMNode $cellNode)
+    {
+        $value = null;
+
+        if ($cellNode->attributes && $cellNode->attributes->getNamedItem('valign')) {
+            $value = strtolower(trim((string) $cellNode->attributes->getNamedItem('valign')->nodeValue));
+        }
+
+        if ($value === null && $cellNode->attributes && $cellNode->attributes->getNamedItem('style')) {
+            $styleValue = $this->extractCssPropertyValue($cellNode->attributes->getNamedItem('style')->nodeValue, 'vertical-align');
+            if ($styleValue !== null) {
+                $value = strtolower(trim((string) $styleValue));
+            }
+        }
+
+        if ($value === 'middle') {
+            return 'center';
+        }
+
+        if (in_array($value, ['top', 'center', 'bottom'], true)) {
+            return $value;
+        }
+
+        return 'center';
+    }
+
+    protected function extractCssPropertyValue($style, $property)
+    {
+        if (!is_string($style) || trim($style) === '') {
+            return null;
+        }
+
+        if (preg_match('/(?:^|;)\s*' . preg_quote($property, '/') . '\s*:\s*([^;]+)/i', html_entity_decode($style, ENT_QUOTES, 'UTF-8'), $matches)) {
+            return trim($matches[1]);
+        }
+
+        return null;
+    }
+
+    protected function cssSizeToDocxPoint($value)
+    {
+        $value = trim((string) $value);
+
+        if (preg_match('/^(\d+(?:\.\d+)?)px$/i', $value, $matches)) {
+            return round(Converter::pixelToPoint((float) $matches[1]), 2);
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)pt$/i', $value, $matches)) {
+            return (float) $matches[1];
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)$/', $value, $matches)) {
+            return (float) $matches[1];
+        }
+
+        return null;
+    }
+
+    protected function cssSizeToPixels($value)
+    {
+        $value = trim((string) $value);
+
+        if (preg_match('/^(\d+(?:\.\d+)?)px$/i', $value, $matches)) {
+            return (int) round((float) $matches[1]);
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)pt$/i', $value, $matches)) {
+            return (int) round(((float) $matches[1]) / 0.75);
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)$/', $value, $matches)) {
+            return (int) round((float) $matches[1]);
+        }
+
+        return null;
+    }
+
+    protected function cssLineHeightToDocx($value, $fontSize = 11)
+    {
+        $value = trim((string) $value);
+        $fontSize = (float) $fontSize;
+
+        if (preg_match('/^(\d+(?:\.\d+)?)$/', $value, $matches)) {
+            return (float) $matches[1];
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)%$/', $value, $matches)) {
+            return round(((float) $matches[1]) / 100, 2);
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)px$/i', $value, $matches)) {
+            $points = Converter::pixelToPoint((float) $matches[1]);
+            return $fontSize > 0 ? round($points / $fontSize, 2) : null;
+        }
+
+        if (preg_match('/^(\d+(?:\.\d+)?)pt$/i', $value, $matches)) {
+            return $fontSize > 0 ? round(((float) $matches[1]) / $fontSize, 2) : null;
+        }
+
+        return null;
+    }
+
+    protected function normalizeCssColorToHex($value)
+    {
+        $value = trim((string) $value);
+
+        if (preg_match('/^#([0-9a-f]{3})$/i', $value, $matches)) {
+            $chars = strtolower($matches[1]);
+            return '#' . $chars[0] . $chars[0] . $chars[1] . $chars[1] . $chars[2] . $chars[2];
+        }
+
+        if (preg_match('/^#([0-9a-f]{6})$/i', $value, $matches)) {
+            return '#' . strtoupper($matches[1]);
+        }
+
+        if (preg_match('/rgb\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i', $value, $matches)) {
+            return sprintf('#%02X%02X%02X', $matches[1], $matches[2], $matches[3]);
+        }
+
+        return '#1F2933';
+    }
+
     protected function scopeEditorPrintCss($css)
     {
         if (!is_string($css) || trim($css) === '') {
@@ -739,6 +1578,73 @@ class PeticaoExportService
         }, $html);
 
         return $html;
+    }
+
+    protected function normalizeDocxMarkup($html, $forHeaderFooter = false)
+    {
+        $html = preg_replace_callback('/<table\b[^>]*>.*?<img\b[^>]*src=.*?<\/table>/is', function ($matches) {
+            $table = $matches[0];
+            $table = preg_replace('/<table\b([^>]*)>/i', '<table$1 class="word-header-table">', $table, 1);
+
+            $table = preg_replace_callback('/<p\b([^>]*)style=(["\'])(.*?)\2([^>]*)>(.*?)<\/p>/is', function ($pMatches) {
+                $style = html_entity_decode($pMatches[3], ENT_QUOTES, 'UTF-8');
+                if (stripos($style, 'text-align: right') === false) {
+                    return $pMatches[0];
+                }
+
+                return '<p class="word-header-contact">' . $pMatches[5] . '</p>';
+            }, $table);
+
+            return $table;
+        }, $html);
+
+        $html = preg_replace_callback('/style=(["\'])(.*?)\1/i', function ($matches) use ($forHeaderFooter) {
+            $quote = $matches[1];
+            $style = html_entity_decode($matches[2], ENT_QUOTES, 'UTF-8');
+            $style = preg_replace('/mso-[^:]+:[^;]+;?/i', '', $style);
+
+            if ($forHeaderFooter) {
+                $style = $this->convertCssPxToPt($style, [
+                    'font-size',
+                    'width',
+                    'height',
+                    'margin',
+                    'margin-top',
+                    'margin-right',
+                    'margin-bottom',
+                    'margin-left',
+                    'padding',
+                    'padding-top',
+                    'padding-right',
+                    'padding-bottom',
+                    'padding-left',
+                ]);
+            }
+
+            return 'style=' . $quote . trim($style) . $quote;
+        }, $html);
+
+        return $html;
+    }
+
+    protected function convertCssPxToPt($style, array $properties)
+    {
+        foreach ($properties as $property) {
+            $style = preg_replace_callback(
+                '/(' . preg_quote($property, '/') . '\s*:\s*)([^;]+)/i',
+                function ($matches) {
+                    return $matches[1] . preg_replace_callback('/(\d+(?:\.\d+)?)px\b/i', function ($valueMatches) {
+                        $points = round(((float) $valueMatches[1]) * 0.75, 2);
+                        $points = rtrim(rtrim(number_format($points, 2, '.', ''), '0'), '.');
+
+                        return $points . 'pt';
+                    }, $matches[2]);
+                },
+                $style
+            );
+        }
+
+        return $style;
     }
 
     protected function normalizePrintMarkup($html)

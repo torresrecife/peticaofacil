@@ -365,6 +365,8 @@
       <path value="$PROJECT_DIR$/_legacy_backup/pre-root-promotion-20260727-095601/vendor/symfony/polyfill-mbstring" />
       <path value="$PROJECT_DIR$/_legacy_backup/pre-root-promotion-20260727-095601/vendor/composer" />
       <path value="$PROJECT_DIR$/_legacy_backup/pre-root-promotion-20260727-095601/vendor/symfony/polyfill-php80" />
+      <path value="$PROJECT_DIR$/vendor/phpoffice/phpword" />
+      <path value="$PROJECT_DIR$/vendor/phpoffice/math" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="7.2">
