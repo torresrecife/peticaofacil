@@ -997,35 +997,50 @@ class PeticaoExportService
             return $html;
         }
 
-        $patterns = [
-            '/\s*<div\b[^>]*>.*?<\/div>\s*$/is',
-            '/\s*<table\b[^>]*>.*?<\/table>\s*$/is',
-            '/\s*<p\b[^>]*>.*?<\/p>\s*$/is',
-        ];
-
-        foreach ($patterns as $pattern) {
-            $updated = preg_replace_callback($pattern, function ($matches) use ($footerText) {
-                $candidateText = $this->normalizeComparableText($matches[0]);
-                if ($candidateText === '') {
-                    return $matches[0];
-                }
-
-                if ($candidateText === $footerText
-                    || strpos($candidateText, $footerText) !== false
-                    || strpos($footerText, $candidateText) !== false
-                ) {
-                    return '';
-                }
-
-                return $matches[0];
-            }, $html, 1, $count);
-
-            if ($count > 0 && $updated !== $html) {
-                return $updated;
-            }
+        if (!class_exists('DOMDocument')) {
+            return $html;
         }
 
-        return $html;
+        $previous = libxml_use_internal_errors(true);
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $wrapperId = 'peticao-footer-strip-root';
+        $loaded = $dom->loadHTML(
+            '<?xml encoding="UTF-8"><div id="' . $wrapperId . '">' . $html . '</div>',
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+        );
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        if (!$loaded) {
+            return $html;
+        }
+
+        $root = $dom->getElementById($wrapperId);
+        if (!$root) {
+            return $html;
+        }
+
+        $lastElement = $this->getLastElementChild($root);
+        if (!$lastElement) {
+            return $html;
+        }
+
+        $candidateText = $this->normalizeComparableText($dom->saveHTML($lastElement));
+        if ($candidateText === '') {
+            return $html;
+        }
+
+        $isFooterMatch = $candidateText === $footerText
+            || strpos($candidateText, $footerText) !== false
+            || strpos($footerText, $candidateText) !== false;
+
+        if (!$isFooterMatch) {
+            return $html;
+        }
+
+        $root->removeChild($lastElement);
+
+        return $this->innerHtml($root);
     }
 
     protected function normalizeComparableText($html)
@@ -1034,6 +1049,28 @@ class PeticaoExportService
         $text = preg_replace('/\s+/u', ' ', $text);
 
         return trim((string) $text);
+    }
+
+    protected function getLastElementChild(\DOMNode $node)
+    {
+        for ($child = $node->lastChild; $child !== null; $child = $child->previousSibling) {
+            if ($child->nodeType === XML_ELEMENT_NODE) {
+                return $child;
+            }
+        }
+
+        return null;
+    }
+
+    protected function innerHtml(\DOMNode $node)
+    {
+        $html = '';
+
+        foreach ($node->childNodes as $child) {
+            $html .= $node->ownerDocument->saveHTML($child);
+        }
+
+        return $html;
     }
 
     protected function preserveAlignedSpacingMarkup($html)
