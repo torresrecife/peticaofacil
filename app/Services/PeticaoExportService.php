@@ -828,6 +828,34 @@ class PeticaoExportService
 
     protected function normalizePlaywrightTemplateMarkup($html)
     {
+        $html = preg_replace_callback('/<div\b([^>]*)>(\s*<img\b[^>]*>\s*)<\/div>/is', function ($matches) {
+            $attributes = $matches[1];
+            $content = $matches[2];
+
+            if (!$this->isRightAlignedBlock($attributes)) {
+                return $matches[0];
+            }
+
+            $divStyle = 'text-align:right;width:100%;';
+            if (stripos($attributes, 'style=') !== false) {
+                $attributes = preg_replace_callback('/style=(["\'])(.*?)\1/i', function ($styleMatches) use ($divStyle) {
+                    $quote = $styleMatches[1];
+                    $current = rtrim(html_entity_decode($styleMatches[2], ENT_QUOTES, 'UTF-8'), ';');
+                    $current .= ';' . $divStyle;
+
+                    return 'style=' . $quote . $current . $quote;
+                }, $attributes, 1);
+            } else {
+                $attributes .= ' style="' . $divStyle . '"';
+            }
+
+            $content = preg_replace_callback('/<img\b([^>]*)>/i', function ($imgMatches) {
+                return $this->appendInlineStyleToTag('img', $imgMatches[1], 'max-width:100%;height:auto;display:inline-block;margin-left:auto;margin-right:0;');
+            }, $content, 1);
+
+            return '<div' . $attributes . '>' . $content . '</div>';
+        }, $html);
+
         $html = preg_replace_callback('/<table\b([^>]*)>/i', function ($matches) {
             $attributes = $matches[1];
 
@@ -870,7 +898,9 @@ class PeticaoExportService
             return '<td' . $attributes . '>';
         }, $html);
 
-        $html = preg_replace('/<img\b([^>]*)>/i', '<img$1 style="max-width:100%;height:auto;display:block;" />', $html, 1);
+        $html = preg_replace_callback('/<img\b([^>]*)>/i', function ($matches) {
+            return $this->appendInlineStyleToTag('img', $matches[1], 'max-width:100%;height:auto;display:inline-block;');
+        }, $html);
 
         $html = preg_replace_callback('/<p\b([^>]*)>(.*?)<\/p>/is', function ($matches) {
             $attributes = $matches[1];
@@ -897,6 +927,30 @@ class PeticaoExportService
         }, $html);
 
         return $html;
+    }
+
+    protected function appendInlineStyleToTag($tagName, $attributes, $extraStyle)
+    {
+        $attributes = (string) $attributes;
+        $extraStyle = trim((string) $extraStyle, ';');
+
+        if ($extraStyle === '') {
+            return '<' . $tagName . $attributes . ' />';
+        }
+
+        if (stripos($attributes, 'style=') !== false) {
+            $attributes = preg_replace_callback('/style=(["\'])(.*?)\1/i', function ($styleMatches) use ($extraStyle) {
+                $quote = $styleMatches[1];
+                $current = rtrim(html_entity_decode($styleMatches[2], ENT_QUOTES, 'UTF-8'), ';');
+                $current .= ';' . $extraStyle;
+
+                return 'style=' . $quote . $current . $quote;
+            }, $attributes, 1);
+        } else {
+            $attributes .= ' style="' . $extraStyle . '"';
+        }
+
+        return '<' . $tagName . $attributes . ' />';
     }
 
     protected function extractPlaywrightTemplateDefaults($html)
