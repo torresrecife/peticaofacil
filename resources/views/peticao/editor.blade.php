@@ -382,6 +382,12 @@ document.addEventListener('DOMContentLoaded', function () {
         updateSaveStatus('clean', 'Sem alteracoes pendentes');
     }
 
+    function normalizeContentFontSize(html) {
+        return (html || '').replace(/font-size\s*:\s*11px\b/ig, 'font-size:12px');
+    }
+
+    textarea.value = normalizeContentFontSize(textarea.value);
+
     var editor = CKEDITOR.replace(textarea.id, {
         height: 540,
         allowedContent: true
@@ -426,6 +432,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function syncEditor() {
         if (CKEDITOR.instances[textarea.id]) {
             CKEDITOR.instances[textarea.id].updateElement();
+            textarea.value = normalizeContentFontSize(textarea.value);
         }
     }
 

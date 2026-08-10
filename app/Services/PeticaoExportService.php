@@ -94,6 +94,7 @@ class PeticaoExportService
             ? $this->scopeEditorPrintCss(file_get_contents(public_path('ckeditor/contents.css')))
             : '';
 
+        $conteudoHtml = $this->normalizeContentFontSize($conteudoHtml);
         $conteudoSemMoldura = $this->stripEmbeddedHeaderFooter($conteudoHtml, $cabecalhoHtml, $rodapeHtml);
         $bodyHtml = $this->preserveBlankEditorBlocks(
             $this->normalizePrintMarkup(
@@ -136,6 +137,7 @@ class PeticaoExportService
         $bodyHtml = (string) ($layout['body_html'] ?? '');
         $headerHtml = (string) ($layout['header_html'] ?? '');
         $footerHtml = (string) ($layout['footer_html'] ?? '');
+        $bodyHtml = $this->normalizeContentFontSize($bodyHtml);
         $rawHeaderHtml = $this->normalizeAssetImageSrc($headerHtml, 'filesystem');
         $rawFooterHtml = $this->normalizeAssetImageSrc($footerHtml, 'filesystem');
 
@@ -173,6 +175,10 @@ class PeticaoExportService
         $phpWord = new PhpWord();
         $phpWord->setDefaultFontName('Arial');
         $phpWord->setDefaultFontSize(12);
+        $phpWord->setDefaultParagraphStyle([
+            'spaceBefore' => 0,
+            'spaceAfter' => 0,
+        ]);
 
         $phpWordTempDir = storage_path('app/phpword-temp');
         if (!is_dir($phpWordTempDir) && !@mkdir($phpWordTempDir, 0777, true) && !is_dir($phpWordTempDir)) {
@@ -685,7 +691,7 @@ class PeticaoExportService
             'html, body { margin: 0; padding: 0; background: #ffffff; color: #1f2933; font-family: Arial, Helvetica, sans-serif; }',
             'body { word-wrap: break-word; }',
             'p, div, td, th, li, span, strong, u { line-height: 1.6; }',
-            'p { margin: 0 0 12px; text-align: justify; }',
+            'p { margin: 0; text-align: justify; }',
             'img { max-width: 100%; height: auto; }',
             'table { border-collapse: collapse; border-spacing: 0; max-width: 100%; }',
             '.word-header-table { width: 100%; table-layout: fixed; border-collapse: collapse; }',
@@ -694,7 +700,7 @@ class PeticaoExportService
             '.word-header-table td:last-child { width: 66%; text-align: right; }',
             '.word-header-contact { width: 100%; margin: 0; font-size: 9px; line-height: 1.15; text-align: right; white-space: normal; }',
             '.word-header-contact span { white-space: inherit !important; }',
-            '.peticao-empty-line { min-height: 1.6em; display: block; }',
+            '.peticao-empty-line { margin: 0; line-height: 1; }',
         ]);
     }
 
@@ -1314,6 +1320,11 @@ class PeticaoExportService
         return (int) round(Converter::cmToTwip(21 - 1.69 - 1.69));
     }
 
+    protected function getDocxContentWidthPixels()
+    {
+        return 794 - (64 * 2);
+    }
+
     protected function resolveNativePhpWordVAlign(\DOMNode $cellNode)
     {
         $value = null;
@@ -1533,6 +1544,21 @@ class PeticaoExportService
         }, $html);
     }
 
+    protected function normalizeContentFontSize($html)
+    {
+        if (!is_string($html) || trim($html) === '') {
+            return $html;
+        }
+
+        return preg_replace_callback('/style=(["\'])(.*?)\1/i', function ($matches) {
+            $quote = $matches[1];
+            $style = html_entity_decode($matches[2], ENT_QUOTES, 'UTF-8');
+            $style = preg_replace('/font-size\s*:\s*11px\b/i', 'font-size:12px', $style);
+
+            return 'style=' . $quote . trim($style) . $quote;
+        }, $html);
+    }
+
     protected function isBlankEditorBlock($innerHtml)
     {
         if (stripos($innerHtml, '<img') !== false) {
@@ -1571,7 +1597,7 @@ class PeticaoExportService
             $style = preg_replace('/mso-[^:]+:[^;]+;?/i', '', $style);
             $style = preg_replace('/line-height\s*:\s*115%/i', 'line-height:160%', $style);
             $style = preg_replace('/line-height\s*:\s*1\.15\b/i', 'line-height:1.6', $style);
-            $style = preg_replace('/font-size\s*:\s*11px/i', 'font-size:11pt', $style);
+            $style = preg_replace('/font-size\s*:\s*11px/i', 'font-size:12pt', $style);
             $style = preg_replace('/font-size\s*:\s*9px/i', 'font-size:9pt', $style);
 
             return 'style=' . $quote . trim($style) . $quote;
@@ -1582,6 +1608,11 @@ class PeticaoExportService
 
     protected function normalizeDocxMarkup($html, $forHeaderFooter = false)
     {
+        if (!$forHeaderFooter) {
+            $html = preg_replace('/<(p|div)([^>]*)class=(["\'])([^"\']*\bpeticao-empty-line\b[^"\']*)\3([^>]*)>(?:&nbsp;|\s|<br\s*\/?>)*<\/\1>/i', '<p style="margin:0;line-height:1;">&nbsp;</p>', $html);
+            $html = $this->transformDocxIndentedBlocks($html);
+        }
+
         $html = preg_replace_callback('/<table\b[^>]*>.*?<img\b[^>]*src=.*?<\/table>/is', function ($matches) {
             $table = $matches[0];
             $table = preg_replace('/<table\b([^>]*)>/i', '<table$1 class="word-header-table">', $table, 1);
@@ -1603,21 +1634,25 @@ class PeticaoExportService
             $style = html_entity_decode($matches[2], ENT_QUOTES, 'UTF-8');
             $style = preg_replace('/mso-[^:]+:[^;]+;?/i', '', $style);
 
+            $style = $this->convertCssPxToPt($style, [
+                'margin',
+                'margin-top',
+                'margin-right',
+                'margin-bottom',
+                'margin-left',
+                'padding',
+                'padding-top',
+                'padding-right',
+                'padding-bottom',
+                'padding-left',
+                'text-indent',
+            ]);
+
             if ($forHeaderFooter) {
                 $style = $this->convertCssPxToPt($style, [
                     'font-size',
                     'width',
                     'height',
-                    'margin',
-                    'margin-top',
-                    'margin-right',
-                    'margin-bottom',
-                    'margin-left',
-                    'padding',
-                    'padding-top',
-                    'padding-right',
-                    'padding-bottom',
-                    'padding-left',
                 ]);
             }
 
@@ -1625,6 +1660,48 @@ class PeticaoExportService
         }, $html);
 
         return $html;
+    }
+
+    protected function transformDocxIndentedBlocks($html)
+    {
+        return preg_replace_callback('/<(p|div)\b([^>]*)style=(["\'])(.*?)\3([^>]*)>(.*?)<\/\1>/is', function ($matches) {
+            $tag = strtolower($matches[1]);
+            $before = $matches[2];
+            $quote = $matches[3];
+            $style = html_entity_decode($matches[4], ENT_QUOTES, 'UTF-8');
+            $after = $matches[5];
+            $innerHtml = $matches[6];
+
+            $marginLeft = $this->extractCssPropertyValue($style, 'margin-left');
+            $indentPixels = $marginLeft !== null ? $this->cssSizeToPixels($marginLeft) : null;
+            if ($indentPixels === null || $indentPixels <= 0) {
+                return $matches[0];
+            }
+
+            $cleanStyle = $this->removeCssProperty($style, 'margin-left');
+            $cleanStyle = $this->removeCssProperty($cleanStyle, 'padding-left');
+            $cleanStyle = trim($cleanStyle);
+
+            $styleAttribute = $cleanStyle !== '' ? ' style=' . $quote . $cleanStyle . $quote : '';
+            $contentTag = '<' . $tag . $before . $styleAttribute . $after . '>' . $innerHtml . '</' . $tag . '>';
+            $contentWidth = $this->getDocxContentWidthPixels();
+            $width = min((int) $indentPixels, max(0, $contentWidth - 40));
+            $remainingWidth = max(40, $contentWidth - $width);
+
+            return '<table style="width:' . $contentWidth . 'px; border-collapse:collapse; table-layout:fixed;" width="' . $contentWidth . '" border="0" cellspacing="0" cellpadding="0"><tr><td style="width:' . $width . 'px; padding:0; font-size:1px; line-height:1;" width="' . $width . '">&nbsp;</td><td style="width:' . $remainingWidth . 'px; padding:0; vertical-align:top;" width="' . $remainingWidth . '">' . $contentTag . '</td></tr></table>';
+        }, $html);
+    }
+
+    protected function removeCssProperty($style, $property)
+    {
+        if (!is_string($style) || trim($style) === '') {
+            return '';
+        }
+
+        $style = preg_replace('/(?:^|;)\s*' . preg_quote($property, '/') . '\s*:\s*[^;]+;?/i', ';', $style);
+        $style = preg_replace('/;{2,}/', ';', $style);
+
+        return trim($style, " \t\n\r\0\x0B;");
     }
 
     protected function convertCssPxToPt($style, array $properties)
