@@ -6,18 +6,30 @@ For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
 html
 {
 	background-color: #eef2f6;
-	background-image: repeating-linear-gradient(
-		to bottom,
-		#ffffff 0,
-		#ffffff 1080px,
-		#d0d7de 1082px,
-		#c0c8d2 1080px,
-		#d0d7de 1083px,
-		#ffffff 1080px,
-		#ffffff 1080px
-	);
-	background-repeat: repeat-y;
-	background-size: 100% 1123px;
+	background-image:
+		linear-gradient(
+			to bottom,
+            #ffffff 0,
+            #ffffff 1080px,
+            #d0d7de 1082px,
+            #c0c8d2 1080px,
+            #d0d7de 1083px,
+            #ffffff 1080px,
+            #ffffff 1080px
+		),
+		linear-gradient(
+			to bottom,
+            #ffffff 0,
+            #ffffff 786px,
+            #d0d7de 788px,
+            #c0c8d2 786px,
+            #d0d7de 787px,
+            #ffffff 786px,
+            #ffffff 786px
+		);
+	background-repeat: no-repeat, repeat-y;
+	background-position: 0 0, 0 1123px;
+	background-size: 100% 1083px, 100% 1123px;
 }
 
 body
