@@ -9,9 +9,6 @@ return [
     'playwright' => [
         'node_binary' => env('PDF_PLAYWRIGHT_NODE_BINARY', 'node'),
         'browser_binary' => env('PDF_PLAYWRIGHT_BROWSER_BINARY', ''),
-        'font_family' => env('PDF_PLAYWRIGHT_FONT_FAMILY', ''),
-        'font_regular_path' => env('PDF_PLAYWRIGHT_FONT_REGULAR_PATH', ''),
-        'font_bold_path' => env('PDF_PLAYWRIGHT_FONT_BOLD_PATH', ''),
         'script' => env('PDF_PLAYWRIGHT_SCRIPT', base_path('scripts/pdf-renderer/render-peticao.js')),
         'timeout' => (int) env('PDF_PLAYWRIGHT_TIMEOUT', 90),
         'margin' => [
