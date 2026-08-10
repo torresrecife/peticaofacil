@@ -950,6 +950,7 @@ class PeticaoExportService
         if (trim((string) $rodapeHtml) !== '') {
             $conteudoHtml = preg_replace('/\s*' . preg_quote(trim((string) $rodapeHtml), '/') . '\s*$/s', '', $conteudoHtml, 1);
             $conteudoHtml = $this->stripTrailingImageFooterBlock($conteudoHtml);
+            $conteudoHtml = $this->stripTrailingFooterTextBlock($conteudoHtml, $rodapeHtml);
         }
 
         return $conteudoHtml;
@@ -987,6 +988,52 @@ class PeticaoExportService
         }
 
         return $html;
+    }
+
+    protected function stripTrailingFooterTextBlock($html, $footerHtml)
+    {
+        $footerText = $this->normalizeComparableText($footerHtml);
+        if ($footerText === '') {
+            return $html;
+        }
+
+        $patterns = [
+            '/\s*<div\b[^>]*>.*?<\/div>\s*$/is',
+            '/\s*<table\b[^>]*>.*?<\/table>\s*$/is',
+            '/\s*<p\b[^>]*>.*?<\/p>\s*$/is',
+        ];
+
+        foreach ($patterns as $pattern) {
+            $updated = preg_replace_callback($pattern, function ($matches) use ($footerText) {
+                $candidateText = $this->normalizeComparableText($matches[0]);
+                if ($candidateText === '') {
+                    return $matches[0];
+                }
+
+                if ($candidateText === $footerText
+                    || strpos($candidateText, $footerText) !== false
+                    || strpos($footerText, $candidateText) !== false
+                ) {
+                    return '';
+                }
+
+                return $matches[0];
+            }, $html, 1, $count);
+
+            if ($count > 0 && $updated !== $html) {
+                return $updated;
+            }
+        }
+
+        return $html;
+    }
+
+    protected function normalizeComparableText($html)
+    {
+        $text = html_entity_decode(strip_tags((string) $html), ENT_QUOTES, 'UTF-8');
+        $text = preg_replace('/\s+/u', ' ', $text);
+
+        return trim((string) $text);
     }
 
     protected function preserveAlignedSpacingMarkup($html)
