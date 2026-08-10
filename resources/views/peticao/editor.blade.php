@@ -15,10 +15,14 @@
         display: grid;
         gap: 18px;
     }
-    .editor-command-bar {
+    .editor-sticky-stack {
         position: sticky;
         top: 12px;
         z-index: 20;
+        display: grid;
+        gap: 12px;
+    }
+    .editor-command-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -77,13 +81,7 @@
         padding: 16px;
     }
     .editor-toolbar-host {
-        position: sticky;
-        top: 82px;
-        z-index: 15;
-        min-height: 42px;
-        padding: 10px 10px 0;
-        margin: -4px -4px 16px;
-        background: #f5f7fa;
+        display: none;
     }
     .editor-workspace {
         padding: 0 8px 12px;
@@ -96,6 +94,13 @@
     .editor-shell .cke_top,
     .editor-shell .cke_bottom {
         border-radius: 8px;
+    }
+    .editor-shell .cke_top {
+        position: sticky;
+        top: 92px;
+        z-index: 19;
+        background: #ffffff;
+        border-bottom: 1px solid #d9e2ec;
     }
     .editor-shell .cke_chrome {
         border: 1px solid #cbd2d9;
@@ -198,15 +203,12 @@
         margin: 0;
     }
     @media (max-width: 960px) {
-        .editor-command-bar {
+        .editor-sticky-stack {
             position: static;
+        }
+        .editor-command-bar {
             flex-direction: column;
             align-items: stretch;
-        }
-        .editor-toolbar-host {
-            position: static;
-            margin: 0 0 12px;
-            padding: 0;
         }
         .editor-surface {
             padding: 12px;
@@ -241,19 +243,21 @@
             @csrf
             <input type="hidden" name="codigo_processo" value="{{ old('codigo_processo', $codigoProcesso ?? '') }}">
             <div class="editor-shell">
-                <div class="editor-command-bar">
-                    <div class="editor-command-bar__meta">
-                        <div class="editor-command-bar__title">
-                            <strong>{{ $modelo->tipo_nome }}</strong>
-                            <span>Revise, ajuste e salve a peticao antes da exportacao.</span>
+                <div class="editor-sticky-stack">
+                    <div class="editor-command-bar">
+                        <div class="editor-command-bar__meta">
+                            <div class="editor-command-bar__title">
+                                <strong>{{ $modelo->tipo_nome }}</strong>
+                                <span>Revise, ajuste e salve a peticao antes da exportacao.</span>
+                            </div>
+                            <span id="editor-save-status" class="editor-status-badge">Sem alteracoes pendentes</span>
+                            <span>Atalho: <strong>Ctrl+S</strong></span>
+                            <span>Documento: <strong>A4</strong></span>
                         </div>
-                        <span id="editor-save-status" class="editor-status-badge">Sem alteracoes pendentes</span>
-                        <span>Atalho: <strong>Ctrl+S</strong></span>
-                        <span>Documento: <strong>A4</strong></span>
-                    </div>
-                    <div class="actions">
-                        <a class="button secondary link" href="{{ $backRoute }}">Voltar para montagem</a>
-                        <button type="submit" id="editor-save-button">Salvar peca</button>
+                        <div class="actions">
+                            <a class="button secondary link" href="{{ $backRoute }}">Voltar para montagem</a>
+                            <button type="submit" id="editor-save-button">Salvar peca</button>
+                        </div>
                     </div>
                 </div>
 
@@ -380,10 +384,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var editor = CKEDITOR.replace(textarea.id, {
         height: 540,
-        allowedContent: true,
-        sharedSpaces: {
-            top: 'editor-toolbar-host'
-        }
+        allowedContent: true
     });
 
     if (window.CKFinder && ckfinderBaseUrl) {

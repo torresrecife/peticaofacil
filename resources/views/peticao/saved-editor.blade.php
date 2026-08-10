@@ -15,19 +15,39 @@
         display: grid;
         gap: 18px;
     }
-    .saved-editor-bar {
+    .saved-editor-sticky-stack {
         position: sticky;
         top: 12px;
         z-index: 20;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
+        display: grid;
+        gap: 0;
+    }
+    .saved-editor-bar {
+        display: grid;
+        gap: 12px;
         padding: 14px 16px;
         border: 1px solid #d9e2ec;
         border-radius: 8px;
         background: #fff;
         box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+    .saved-editor-toolbar-host {
+        width: 100%;
+    }
+    .saved-editor-toolbar-host:empty {
+        display: none;
+    }
+    .saved-editor-toolbar-host.is-mounted {
+        padding-top: 12px;
+        border-top: 1px solid #d9e2ec;
+    }
+    .saved-editor-toolbar-host .cke_top {
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
     }
     .saved-editor-bar__title {
         display: grid;
@@ -48,6 +68,12 @@
         align-items: center;
         font-size: 13px;
         color: #52606d;
+    }
+    .saved-editor-bar__row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
     }
     .saved-editor-status {
         display: inline-flex;
@@ -103,32 +129,6 @@
         gap: 12px;
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .saved-editor-summary-grid {
-        display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        margin-bottom: 12px;
-    }
-    .saved-editor-summary-card {
-        background: #f8fbfd;
-        border: 1px solid #d9e2ec;
-        border-radius: 8px;
-        padding: 10px 12px;
-        display: grid;
-        gap: 4px;
-        min-height: 72px;
-    }
-    .saved-editor-summary-card span {
-        font-size: 11px;
-        color: #7b8794;
-        text-transform: uppercase;
-    }
-    .saved-editor-summary-card strong {
-        font-size: 18px;
-        color: #102a43;
-        line-height: 1.2;
-        word-break: break-word;
-    }
     .saved-editor-meta {
         display: grid;
         gap: 12px;
@@ -165,15 +165,6 @@
         border-radius: 8px;
         padding: 12px;
     }
-    .saved-editor-toolbar-host {
-        position: sticky;
-        top: 86px;
-        z-index: 15;
-        min-height: 42px;
-        padding: 10px 10px 0;
-        margin: -4px -4px 16px;
-        background: #f5f7fa;
-    }
     .saved-editor-page-note {
         margin-top: 8px;
         font-size: 12px;
@@ -186,7 +177,6 @@
     .saved-editor-history-table td:last-child {
         width: 320px;
     }
-    .saved-editor-shell .cke_top,
     .saved-editor-shell .cke_bottom {
         border-radius: 8px;
     }
@@ -231,28 +221,19 @@
         .saved-editor-side {
             position: static;
         }
-        .saved-editor-summary-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
     }
     @media (max-width: 960px) {
-        .saved-editor-bar {
+        .saved-editor-sticky-stack {
             position: static;
+        }
+        .saved-editor-bar__row {
             flex-direction: column;
             align-items: stretch;
-        }
-        .saved-editor-toolbar-host {
-            position: static;
-            margin: 0 0 12px;
-            padding: 0;
         }
         .saved-editor-surface {
             padding: 12px;
         }
         .saved-editor-grid {
-            grid-template-columns: 1fr;
-        }
-        .saved-editor-summary-grid {
             grid-template-columns: 1fr;
         }
     }
@@ -274,46 +255,30 @@
             @method('put')
 
             <div class="saved-editor-shell">
-                <div class="saved-editor-bar">
-                    <div class="saved-editor-bar__meta">
-                        <div class="saved-editor-bar__title">
-                            <strong>{{ $peticao->display_title }}</strong>
-                            <span>Revise a minuta, ajuste o texto final e salve antes de exportar.</span>
+                <div class="saved-editor-sticky-stack">
+                    <div class="saved-editor-bar">
+                        <div class="saved-editor-bar__row">
+                            <div class="saved-editor-bar__meta">
+                                <div class="saved-editor-bar__title">
+                                    <strong>{{ $peticao->display_title }}</strong>
+                                    <span>Revise a minuta, ajuste o texto final e salve antes de exportar.</span>
+                                </div>
+                                <span id="saved-editor-status" class="saved-editor-status">Sem alteracoes pendentes</span>
+                                <span>Atalho: <strong>Ctrl+S</strong></span>
+                                <span>Documento: <strong>A4</strong></span>
+                            </div>
+                            <div class="actions">
+                                <button type="submit" id="saved-editor-save-button">Salvar peticao</button>
+                            </div>
                         </div>
-                        <span id="saved-editor-status" class="saved-editor-status">Sem alteracoes pendentes</span>
-                        <span>Atalho: <strong>Ctrl+S</strong></span>
-                        <span>Documento: <strong>A4</strong></span>
-                    </div>
-                    <div class="actions">
-                        <button type="submit" id="saved-editor-save-button">Salvar peticao</button>
+                        <div id="saved-editor-toolbar-host" class="saved-editor-toolbar-host"></div>
                     </div>
                 </div>
 
                 <div class="saved-editor-layout">
                     <div class="saved-editor-main">
-                        <div class="saved-editor-summary-grid">
-                            <div class="saved-editor-summary-card">
-                                <span>ID normalizado</span>
-                                <strong>{{ $peticao->id }}</strong>
-                            </div>
-                            <div class="saved-editor-summary-card">
-                                <span>Codigo</span>
-                                <strong style="font-size:18px;">{{ $peticao->codigo_externo ?: '-' }}</strong>
-                            </div>
-                            <div class="saved-editor-summary-card">
-                                <span>Ultimo salvamento</span>
-                                <strong style="font-size:18px;">{{ optional($peticao->salvo_em)->format('d/m/Y H:i') ?: '-' }}</strong>
-                            </div>
-                            <div class="saved-editor-summary-card">
-                                <span>Modelo</span>
-                                <strong style="font-size:18px;">{{ $peticao->display_title }}</strong>
-                            </div>
-                        </div>
-
                         <div class="form-group full">
-                            <label for="saved_editor_content">Conteudo da peticao</label>
                             <div class="saved-editor-surface">
-                                <div id="saved-editor-toolbar-host" class="saved-editor-toolbar-host"></div>
                                 <textarea id="saved_editor_content" name="cod_pecas" class="js-rich-editor" style="min-height:680px;">{{ old('cod_pecas', $peticao->conteudo_html) }}</textarea>
                             </div>
                             <div class="saved-editor-page-note">O documento fica no centro da tela. Exportacao, metadados e historico ficam separados para reduzir ruído visual durante a revisao.</div>
@@ -324,6 +289,18 @@
                         <div class="saved-editor-card">
                             <h4>Dados da peticao</h4>
                             <div class="saved-editor-meta">
+                                <div class="saved-editor-meta__item">
+                                    <span>ID normalizado</span>
+                                    <strong>{{ $peticao->id }}</strong>
+                                </div>
+                                <div class="saved-editor-meta__item">
+                                    <span>Codigo</span>
+                                    <strong>{{ $peticao->codigo_externo ?: '-' }}</strong>
+                                </div>
+                                <div class="saved-editor-meta__item">
+                                    <span>Modelo</span>
+                                    <strong>{{ $peticao->display_title }}</strong>
+                                </div>
                                 <div class="saved-editor-meta__item">
                                     <span>Nome do arquivo / cliente</span>
                                     <input id="saved_editor_nome_cli" name="nome_cli" value="{{ old('nome_cli', $peticao->display_reference) }}" required>
@@ -481,6 +458,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var ckfinderBaseUrl = @json(config('legacy.ckfinder_base_url'));
     var textarea = document.getElementById('saved_editor_content');
+    var toolbarHost = document.getElementById('saved-editor-toolbar-host');
     if (!textarea) {
         return;
     }
@@ -527,10 +505,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var editor = CKEDITOR.replace(textarea.id, {
         height: 760,
-        allowedContent: true,
-        sharedSpaces: {
-            top: 'saved-editor-toolbar-host'
-        }
+        allowedContent: true
     });
 
     if (window.CKFinder && ckfinderBaseUrl) {
@@ -547,6 +522,14 @@ document.addEventListener('DOMContentLoaded', function () {
     editor.setKeystroke(CKEDITOR.CTRL + 83, 'appSaveDocument');
 
     editor.on('instanceReady', function () {
+        if (toolbarHost && editor.container && editor.container.$) {
+            var toolbar = editor.container.$.querySelector('.cke_top');
+            if (toolbar) {
+                toolbarHost.appendChild(toolbar);
+                toolbarHost.classList.add('is-mounted');
+            }
+        }
+
         markSaved();
 
         editor.document.on('keydown', function (event) {
