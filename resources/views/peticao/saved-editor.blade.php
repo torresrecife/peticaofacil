@@ -472,6 +472,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var saveButton = document.getElementById('saved-editor-save-button');
     var isDirty = false;
     var isSubmitting = false;
+    var toolbarElement = null;
 
     function updateSaveStatus(state, text) {
         if (!saveStatus) {
@@ -514,6 +515,33 @@ document.addEventListener('DOMContentLoaded', function () {
         allowedContent: true
     });
 
+    function mountToolbarInHost() {
+        if (!toolbarHost || !toolbarElement) {
+            return;
+        }
+
+        toolbarHost.appendChild(toolbarElement);
+        toolbarHost.classList.add('is-mounted');
+    }
+
+    function mountToolbarInEditor() {
+        if (!toolbarElement || !editor.container || !editor.container.$) {
+            return;
+        }
+
+        var inner = editor.container.$.querySelector('.cke_inner');
+        var contents = editor.container.$.querySelector('.cke_contents');
+
+        if (!inner || !contents) {
+            return;
+        }
+
+        inner.insertBefore(toolbarElement, contents);
+        if (toolbarHost) {
+            toolbarHost.classList.remove('is-mounted');
+        }
+    }
+
     if (window.CKFinder && ckfinderBaseUrl) {
         CKFinder.setupCKEditor(editor, ckfinderBaseUrl);
     }
@@ -529,10 +557,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     editor.on('instanceReady', function () {
         if (toolbarHost && editor.container && editor.container.$) {
-            var toolbar = editor.container.$.querySelector('.cke_top');
-            if (toolbar) {
-                toolbarHost.appendChild(toolbar);
-                toolbarHost.classList.add('is-mounted');
+            toolbarElement = editor.container.$.querySelector('.cke_top');
+            if (toolbarElement) {
+                mountToolbarInHost();
             }
         }
 
@@ -555,6 +582,18 @@ document.addEventListener('DOMContentLoaded', function () {
         var dirtyCommands = ['bold', 'italic', 'underline', 'justifyleft', 'justifycenter', 'justifyright', 'justifyblock', 'numberedlist', 'bulletedlist', 'indent', 'outdent', 'pagebreak', 'removeformat'];
         if (event.data && dirtyCommands.indexOf((event.data.name || '').toLowerCase()) !== -1) {
             markDirty();
+        }
+
+        if (event.data && (event.data.name || '').toLowerCase() === 'maximize') {
+            window.setTimeout(function () {
+                var maximizeCommand = editor.getCommand('maximize');
+                if (maximizeCommand && maximizeCommand.state === CKEDITOR.TRISTATE_ON) {
+                    mountToolbarInEditor();
+                    return;
+                }
+
+                mountToolbarInHost();
+            }, 0);
         }
     });
 
