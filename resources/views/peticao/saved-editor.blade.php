@@ -233,6 +233,15 @@
         border: 1px solid #d9e2ec;
         border-radius: 6px;
         background: #f8fbfd;
+        cursor: pointer;
+    }
+    .saved-editor-review__issue:hover {
+        border-color: #9fb3c8;
+        background: #f0f4f8;
+    }
+    .saved-editor-review__issue.is-active {
+        border-color: #486581;
+        box-shadow: inset 0 0 0 1px #486581;
     }
     .saved-editor-review__issue-header {
         display: flex;
@@ -280,6 +289,11 @@
     .saved-editor-review__empty {
         font-size: 12px;
         color: #52606d;
+        line-height: 1.5;
+    }
+    .saved-editor-review__hint {
+        font-size: 12px;
+        color: #7b8794;
         line-height: 1.5;
     }
     .saved-editor-surface {
@@ -633,6 +647,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var isReviewRunning = false;
     var bypassReviewOnSubmit = false;
     var latestReviewResult = null;
+    var reviewStylesInjected = false;
 
     function updateSaveStatus(state, text) {
         if (!saveStatus) {
@@ -780,8 +795,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function syncEditor() {
         if (CKEDITOR.instances[textarea.id]) {
+            clearReviewHighlights();
             CKEDITOR.instances[textarea.id].updateElement();
             textarea.value = normalizeContentFontSize(textarea.value);
+            if (latestReviewResult && Array.isArray(latestReviewResult.issues) && latestReviewResult.issues.length) {
+                applyReviewHighlights(latestReviewResult.issues);
+            }
         }
     }
 
@@ -792,6 +811,300 @@ document.addEventListener('DOMContentLoaded', function () {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    }
+
+    function injectReviewStyles() {
+        if (reviewStylesInjected || !editor.document || !editor.document.getHead) {
+            return;
+        }
+
+        var head = editor.document.getHead().$;
+        if (!head) {
+            return;
+        }
+
+        var existingStyle = head.querySelector('#saved-editor-review-highlight-style');
+        if (existingStyle) {
+            reviewStylesInjected = true;
+            return;
+        }
+
+        var style = head.ownerDocument.createElement('style');
+        style.id = 'saved-editor-review-highlight-style';
+        style.type = 'text/css';
+        style.textContent = ''
+            + '.review-highlight{padding:0 1px;border-radius:2px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.08);}'
+            + '.review-highlight--alta{background:#fde8e8;color:inherit;outline:1px solid #f5a3a3;}'
+            + '.review-highlight--media{background:#fff7d6;color:inherit;outline:1px solid #f7c948;}'
+            + '.review-highlight--baixa{background:#ebf5ff;color:inherit;outline:1px solid #9ac9ff;}'
+            + '.review-highlight.is-active{outline:2px solid #486581;box-shadow:0 0 0 1px #486581 inset;}';
+        head.appendChild(style);
+        reviewStylesInjected = true;
+    }
+
+    function unwrapNode(node) {
+        if (!node || !node.parentNode) {
+            return;
+        }
+
+        while (node.firstChild) {
+            node.parentNode.insertBefore(node.firstChild, node);
+        }
+
+        node.parentNode.removeChild(node);
+    }
+
+    function clearReviewHighlights() {
+        if (!editor.document || !editor.document.$ || !editor.document.$.body) {
+            return;
+        }
+
+        Array.prototype.slice.call(
+            editor.document.$.body.querySelectorAll('span[data-review-highlight="1"]')
+        ).forEach(unwrapNode);
+    }
+
+    function normalizeWhitespaceWithMap(text) {
+        var normalized = '';
+        var map = [];
+        var inWhitespace = false;
+        var whitespaceStart = 0;
+
+        for (var index = 0; index < text.length; index += 1) {
+            var char = text.charAt(index);
+
+            if (/\s/.test(char)) {
+                if (!inWhitespace) {
+                    inWhitespace = true;
+                    whitespaceStart = index;
+                }
+                continue;
+            }
+
+            if (inWhitespace) {
+                normalized += ' ';
+                map.push({ start: whitespaceStart, end: index });
+                inWhitespace = false;
+            }
+
+            normalized += char;
+            map.push({ start: index, end: index + 1 });
+        }
+
+        if (inWhitespace) {
+            normalized += ' ';
+            map.push({ start: whitespaceStart, end: text.length });
+        }
+
+        while (normalized.charAt(0) === ' ') {
+            normalized = normalized.slice(1);
+            map.shift();
+        }
+
+        while (normalized.charAt(normalized.length - 1) === ' ') {
+            normalized = normalized.slice(0, -1);
+            map.pop();
+        }
+
+        return {
+            text: normalized,
+            map: map
+        };
+    }
+
+    function collectEditorTextNodes() {
+        var body = editor.document && editor.document.$ ? editor.document.$.body : null;
+        if (!body) {
+            return {
+                nodes: [],
+                rawText: ''
+            };
+        }
+
+        var walker = body.ownerDocument.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+            acceptNode: function (node) {
+                if (!node.nodeValue) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+
+                var tagName = node.parentNode && node.parentNode.tagName ? node.parentNode.tagName.toUpperCase() : '';
+                if (tagName === 'SCRIPT' || tagName === 'STYLE') {
+                    return NodeFilter.FILTER_REJECT;
+                }
+
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        });
+
+        var nodes = [];
+        var rawText = '';
+        var currentNode;
+
+        while ((currentNode = walker.nextNode())) {
+            var value = currentNode.nodeValue.replace(/\u00a0/g, ' ');
+            nodes.push({
+                node: currentNode,
+                start: rawText.length,
+                end: rawText.length + value.length
+            });
+            rawText += value;
+        }
+
+        return {
+            nodes: nodes,
+            rawText: rawText
+        };
+    }
+
+    function locateTextPosition(nodes, rawIndex) {
+        for (var index = 0; index < nodes.length; index += 1) {
+            var item = nodes[index];
+            if (rawIndex >= item.start && rawIndex <= item.end) {
+                return {
+                    node: item.node,
+                    offset: Math.max(0, Math.min(rawIndex - item.start, item.node.nodeValue.length))
+                };
+            }
+        }
+
+        return null;
+    }
+
+    function buildReviewRanges(issues) {
+        var textIndex = collectEditorTextNodes();
+        if (!textIndex.rawText) {
+            return [];
+        }
+
+        var normalizedText = normalizeWhitespaceWithMap(textIndex.rawText);
+        var usedRanges = [];
+        var matches = [];
+
+        issues.forEach(function (issue, issueIndex) {
+            var snippetData = normalizeWhitespaceWithMap(String(issue.snippet || '').replace(/\u00a0/g, ' '));
+            if (!snippetData.text) {
+                return;
+            }
+
+            var searchIndex = 0;
+            while (searchIndex < normalizedText.text.length) {
+                var foundIndex = normalizedText.text.indexOf(snippetData.text, searchIndex);
+                if (foundIndex === -1) {
+                    break;
+                }
+
+                var foundEndIndex = foundIndex + snippetData.text.length - 1;
+                var rawStart = normalizedText.map[foundIndex] ? normalizedText.map[foundIndex].start : null;
+                var rawEnd = normalizedText.map[foundEndIndex] ? normalizedText.map[foundEndIndex].end : null;
+
+                if (rawStart === null || rawEnd === null) {
+                    break;
+                }
+
+                var overlaps = usedRanges.some(function (range) {
+                    return rawStart < range.end && rawEnd > range.start;
+                });
+
+                if (!overlaps) {
+                    var startPosition = locateTextPosition(textIndex.nodes, rawStart);
+                    var endPosition = locateTextPosition(textIndex.nodes, rawEnd);
+
+                    if (startPosition && endPosition) {
+                        usedRanges.push({ start: rawStart, end: rawEnd });
+                        matches.push({
+                            issueIndex: issueIndex,
+                            severity: String(issue.severity || 'baixa').toLowerCase(),
+                            rawStart: rawStart,
+                            startNode: startPosition.node,
+                            startOffset: startPosition.offset,
+                            endNode: endPosition.node,
+                            endOffset: endPosition.offset
+                        });
+                    }
+
+                    break;
+                }
+
+                searchIndex = foundIndex + 1;
+            }
+        });
+
+        return matches.sort(function (left, right) {
+            return right.rawStart - left.rawStart;
+        });
+    }
+
+    function applyReviewHighlights(issues) {
+        clearReviewHighlights();
+
+        if (!issues.length || !editor.document || !editor.document.$ || !editor.document.$.body) {
+            return;
+        }
+
+        injectReviewStyles();
+
+        buildReviewRanges(issues).forEach(function (range) {
+            var nativeRange = editor.document.$.createRange();
+            nativeRange.setStart(range.startNode, range.startOffset);
+            nativeRange.setEnd(range.endNode, range.endOffset);
+
+            var wrapper = editor.document.$.createElement('span');
+            wrapper.setAttribute('data-review-highlight', '1');
+            wrapper.setAttribute('data-review-issue-index', String(range.issueIndex));
+            wrapper.className = 'review-highlight review-highlight--' + (
+                range.severity === 'alta' ? 'alta' : (range.severity === 'media' ? 'media' : 'baixa')
+            );
+
+            try {
+                nativeRange.surroundContents(wrapper);
+            } catch (error) {
+                // Ignora trechos que cruzam estruturas nao contiguas no DOM do editor.
+            }
+        });
+    }
+
+    function focusReviewHighlight(issueIndex) {
+        if (!editor.document || !editor.document.$ || !editor.document.$.body) {
+            return;
+        }
+
+        Array.prototype.forEach.call(
+            editor.document.$.body.querySelectorAll('span[data-review-highlight="1"].is-active'),
+            function (node) {
+                node.classList.remove('is-active');
+            }
+        );
+
+        Array.prototype.forEach.call(
+            document.querySelectorAll('.saved-editor-review__issue.is-active'),
+            function (node) {
+                node.classList.remove('is-active');
+            }
+        );
+
+        var highlight = editor.document.$.body.querySelector('span[data-review-issue-index="' + issueIndex + '"]');
+        if (!highlight) {
+            return;
+        }
+
+        highlight.classList.add('is-active');
+
+        if (typeof highlight.scrollIntoView === 'function') {
+            highlight.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
+        }
+
+        var reviewCard = reviewIssues
+            ? reviewIssues.querySelector('.saved-editor-review__issue[data-review-issue-index="' + issueIndex + '"]')
+            : null;
+        if (reviewCard) {
+            reviewCard.classList.add('is-active');
+        }
+
+        editor.focus();
     }
 
     function severityWeight(severity) {
@@ -870,13 +1183,13 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!issues.length) {
                 reviewIssues.innerHTML = '<div class="saved-editor-review__empty">Nenhum ponto relevante foi encontrado nesta revisao.</div>';
             } else {
-                reviewIssues.innerHTML = issues.map(function (issue) {
+                reviewIssues.innerHTML = issues.map(function (issue, issueIndex) {
                     var severityClass = (issue.severity || 'baixa') === 'alta'
                         ? 'is-high'
                         : ((issue.severity || 'baixa') === 'media' ? 'is-medium' : 'is-low');
 
                     return ''
-                        + '<div class="saved-editor-review__issue">'
+                        + '<div class="saved-editor-review__issue" data-review-issue-index="' + String(issueIndex) + '">'
                         + '  <div class="saved-editor-review__issue-header">'
                         + '      <span class="saved-editor-review__issue-title">' + escapeHtml(issue.category || 'redacao') + '</span>'
                         + '      <span class="saved-editor-review__issue-severity ' + severityClass + '">' + escapeHtml(issue.severity || 'baixa') + '</span>'
@@ -886,8 +1199,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         + (issue.suggestion ? '<div class="saved-editor-review__issue-suggestion"><strong>Sugestao:</strong> ' + escapeHtml(issue.suggestion) + '</div>' : '')
                         + '</div>';
                 }).join('');
+                reviewIssues.innerHTML += '<div class="saved-editor-review__hint">Clique em um achado para localizar o trecho destacado no editor.</div>';
             }
         }
+
+        applyReviewHighlights(issues);
     }
 
     function requestReview(options) {
@@ -940,6 +1256,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function importWordFile(file) {
+        clearReviewHighlights();
+
         var currentText = editor.getData().replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
         if (currentText !== '' && !window.confirm('O conteudo atual do editor sera substituido pelo arquivo Word importado. Deseja continuar?')) {
             return;
@@ -1002,6 +1320,22 @@ document.addEventListener('DOMContentLoaded', function () {
             }).catch(function (error) {
                 window.alert(error && error.message ? error.message : 'Falha ao revisar o texto.');
             });
+        });
+    }
+
+    if (reviewIssues) {
+        reviewIssues.addEventListener('click', function (event) {
+            var issueCard = event.target.closest('.saved-editor-review__issue');
+            if (!issueCard) {
+                return;
+            }
+
+            var issueIndex = issueCard.getAttribute('data-review-issue-index');
+            if (issueIndex === null) {
+                return;
+            }
+
+            focusReviewHighlight(issueIndex);
         });
     }
 
