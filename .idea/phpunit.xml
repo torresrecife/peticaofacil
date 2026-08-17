@@ -8,9 +8,9 @@
         <option value="$PROJECT_DIR$/staging/root-promotion/tests/Unit" />
         <option value="$PROJECT_DIR$/_legacy_backup/pre-root-promotion-20260727-095601/laravel6/tests/Unit" />
         <option value="$PROJECT_DIR$/tests/Unit" />
-        <option value="$PROJECT_DIR$/staging/root-promotion/tests/Feature" />
-        <option value="$PROJECT_DIR$/_legacy_backup/pre-root-promotion-20260727-095601/laravel6/tests/Feature" />
         <option value="$PROJECT_DIR$/tests/Feature" />
+        <option value="$PROJECT_DIR$/_legacy_backup/pre-root-promotion-20260727-095601/laravel6/tests/Feature" />
+        <option value="$PROJECT_DIR$/staging/root-promotion/tests/Feature" />
       </list>
     </option>
   </component>
