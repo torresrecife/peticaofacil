@@ -159,6 +159,129 @@
         justify-content: center;
         box-sizing: border-box;
     }
+    .saved-editor-review {
+        display: grid;
+        gap: 12px;
+    }
+    .saved-editor-review__summary {
+        display: grid;
+        gap: 8px;
+    }
+    .saved-editor-review__badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+    .saved-editor-review__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #f0f4f8;
+        border: 1px solid #bcccdc;
+        font-size: 12px;
+        font-weight: 600;
+        color: #243b53;
+    }
+    .saved-editor-review__badge.is-high {
+        background: #fde8e8;
+        border-color: #f5a3a3;
+        color: #8a1c1c;
+    }
+    .saved-editor-review__badge.is-medium {
+        background: #fff7d6;
+        border-color: #f7c948;
+        color: #8d5c00;
+    }
+    .saved-editor-review__badge.is-low {
+        background: #ebf5ff;
+        border-color: #9ac9ff;
+        color: #1d4f91;
+    }
+    .saved-editor-review__status {
+        font-size: 12px;
+        color: #52606d;
+    }
+    .saved-editor-review__summary-text {
+        font-size: 13px;
+        color: #243b53;
+        line-height: 1.5;
+    }
+    .saved-editor-review__warnings {
+        display: grid;
+        gap: 8px;
+    }
+    .saved-editor-review__warning {
+        padding: 10px 12px;
+        border-radius: 6px;
+        background: #fff7d6;
+        border: 1px solid #f7c948;
+        color: #8d5c00;
+        font-size: 12px;
+        line-height: 1.45;
+    }
+    .saved-editor-review__issues {
+        display: grid;
+        gap: 10px;
+    }
+    .saved-editor-review__issue {
+        display: grid;
+        gap: 6px;
+        padding: 12px;
+        border: 1px solid #d9e2ec;
+        border-radius: 6px;
+        background: #f8fbfd;
+    }
+    .saved-editor-review__issue-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: flex-start;
+        font-size: 12px;
+    }
+    .saved-editor-review__issue-title {
+        font-weight: 700;
+        color: #102a43;
+        text-transform: capitalize;
+    }
+    .saved-editor-review__issue-severity {
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 11px;
+    }
+    .saved-editor-review__issue-severity.is-high {
+        color: #8a1c1c;
+    }
+    .saved-editor-review__issue-severity.is-medium {
+        color: #8d5c00;
+    }
+    .saved-editor-review__issue-severity.is-low {
+        color: #1d4f91;
+    }
+    .saved-editor-review__issue-snippet {
+        margin: 0;
+        padding: 8px 10px;
+        border-radius: 4px;
+        background: #eef2f6;
+        color: #243b53;
+        font-size: 12px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    .saved-editor-review__issue-message,
+    .saved-editor-review__issue-suggestion {
+        font-size: 12px;
+        line-height: 1.5;
+        color: #243b53;
+    }
+    .saved-editor-review__empty {
+        font-size: 12px;
+        color: #52606d;
+        line-height: 1.5;
+    }
     .saved-editor-surface {
         background: #f5f7fa;
         border: 1px solid #d9e2ec;
@@ -286,6 +409,25 @@
                     </div>
 
                     <aside class="saved-editor-side">
+                        <div class="saved-editor-card">
+                            <h4>Revisao IA</h4>
+                            <div id="saved-editor-review" class="saved-editor-review">
+                                <div class="saved-editor-review__summary">
+                                    <div class="saved-editor-review__badge-row">
+                                        <span id="saved-editor-review-score" class="saved-editor-review__badge">Sem analise</span>
+                                        <span id="saved-editor-review-count" class="saved-editor-review__badge">0 achados</span>
+                                    </div>
+                                    <div id="saved-editor-review-status" class="saved-editor-review__status">A revisao automatica sera executada ao abrir a peticao.</div>
+                                    <div id="saved-editor-review-summary" class="saved-editor-review__summary-text"></div>
+                                </div>
+                                <div id="saved-editor-review-warnings" class="saved-editor-review__warnings"></div>
+                                <div id="saved-editor-review-issues" class="saved-editor-review__issues">
+                                    <div class="saved-editor-review__empty">Nenhum achado carregado ainda.</div>
+                                </div>
+                            </div>
+                            <button type="button" id="saved-editor-review-button" class="button secondary">Revisar agora</button>
+                        </div>
+
                         <div class="saved-editor-card">
                             <h4>Dados da peticao</h4>
                             <div class="saved-editor-meta">
@@ -467,6 +609,13 @@ document.addEventListener('DOMContentLoaded', function () {
     var textarea = document.getElementById('saved_editor_content');
     var toolbarHost = document.getElementById('saved-editor-toolbar-host');
     var wordImportInput = document.getElementById('saved-editor-word-import-input');
+    var reviewButton = document.getElementById('saved-editor-review-button');
+    var reviewScore = document.getElementById('saved-editor-review-score');
+    var reviewCount = document.getElementById('saved-editor-review-count');
+    var reviewStatus = document.getElementById('saved-editor-review-status');
+    var reviewSummary = document.getElementById('saved-editor-review-summary');
+    var reviewWarnings = document.getElementById('saved-editor-review-warnings');
+    var reviewIssues = document.getElementById('saved-editor-review-issues');
     if (!textarea) {
         return;
     }
@@ -481,6 +630,9 @@ document.addEventListener('DOMContentLoaded', function () {
     var isDirty = false;
     var isSubmitting = false;
     var toolbarElement = null;
+    var isReviewRunning = false;
+    var bypassReviewOnSubmit = false;
+    var latestReviewResult = null;
 
     function updateSaveStatus(state, text) {
         if (!saveStatus) {
@@ -633,6 +785,160 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function severityWeight(severity) {
+        if (severity === 'alta') {
+            return 3;
+        }
+
+        if (severity === 'media') {
+            return 2;
+        }
+
+        return 1;
+    }
+
+    function countIssuesBySeverity(issues, severity) {
+        return issues.filter(function (issue) {
+            return (issue.severity || '') === severity;
+        }).length;
+    }
+
+    function setReviewRunningState(running, label) {
+        isReviewRunning = running;
+
+        if (reviewButton) {
+            reviewButton.disabled = running;
+            reviewButton.textContent = running ? (label || 'Revisando...') : 'Revisar agora';
+        }
+
+        if (reviewStatus) {
+            reviewStatus.textContent = label || (running ? 'Revisando texto...' : reviewStatus.textContent);
+        }
+    }
+
+    function renderReview(result) {
+        latestReviewResult = result;
+
+        var issues = Array.isArray(result.issues) ? result.issues : [];
+        var highCount = countIssuesBySeverity(issues, 'alta');
+        var mediumCount = countIssuesBySeverity(issues, 'media');
+        var lowCount = countIssuesBySeverity(issues, 'baixa');
+        var dominantSeverity = highCount > 0 ? 'high' : (mediumCount > 0 ? 'medium' : 'low');
+
+        if (reviewScore) {
+            reviewScore.className = 'saved-editor-review__badge' + (issues.length ? ' is-' + dominantSeverity : '');
+            reviewScore.textContent = 'Pontuacao: ' + String(result.score || 0);
+        }
+
+        if (reviewCount) {
+            reviewCount.className = 'saved-editor-review__badge' + (issues.length ? ' is-' + dominantSeverity : '');
+            reviewCount.textContent = issues.length + ' achado' + (issues.length === 1 ? '' : 's');
+        }
+
+        if (reviewStatus) {
+            reviewStatus.textContent = 'Ultima revisao: ' + new Date().toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        if (reviewSummary) {
+            reviewSummary.textContent = result.summary || '';
+        }
+
+        if (reviewWarnings) {
+            var warnings = Array.isArray(result.warnings) ? result.warnings : [];
+            if (!warnings.length) {
+                reviewWarnings.innerHTML = '';
+            } else {
+                reviewWarnings.innerHTML = warnings.map(function (warning) {
+                    return '<div class="saved-editor-review__warning">' + escapeHtml(warning) + '</div>';
+                }).join('');
+            }
+        }
+
+        if (reviewIssues) {
+            if (!issues.length) {
+                reviewIssues.innerHTML = '<div class="saved-editor-review__empty">Nenhum ponto relevante foi encontrado nesta revisao.</div>';
+            } else {
+                reviewIssues.innerHTML = issues.map(function (issue) {
+                    var severityClass = (issue.severity || 'baixa') === 'alta'
+                        ? 'is-high'
+                        : ((issue.severity || 'baixa') === 'media' ? 'is-medium' : 'is-low');
+
+                    return ''
+                        + '<div class="saved-editor-review__issue">'
+                        + '  <div class="saved-editor-review__issue-header">'
+                        + '      <span class="saved-editor-review__issue-title">' + escapeHtml(issue.category || 'redacao') + '</span>'
+                        + '      <span class="saved-editor-review__issue-severity ' + severityClass + '">' + escapeHtml(issue.severity || 'baixa') + '</span>'
+                        + '  </div>'
+                        + (issue.snippet ? '<pre class="saved-editor-review__issue-snippet">' + escapeHtml(issue.snippet) + '</pre>' : '')
+                        + '  <div class="saved-editor-review__issue-message">' + escapeHtml(issue.message || '') + '</div>'
+                        + (issue.suggestion ? '<div class="saved-editor-review__issue-suggestion"><strong>Sugestao:</strong> ' + escapeHtml(issue.suggestion) + '</div>' : '')
+                        + '</div>';
+                }).join('');
+            }
+        }
+    }
+
+    function requestReview(options) {
+        options = options || {};
+        syncEditor();
+
+        if (isReviewRunning) {
+            return latestReviewResult
+                ? Promise.resolve(latestReviewResult)
+                : Promise.reject(new Error('A revisao ainda esta em andamento. Aguarde alguns instantes e tente novamente.'));
+        }
+
+        setReviewRunningState(true, options.statusLabel || 'Revisando texto...');
+
+        var formData = new FormData();
+        formData.append('cod_pecas', textarea.value);
+
+        return window.fetch(@json(route('peticoes.saved.review', $peticao)), {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': @json(csrf_token()),
+                'Accept': 'application/json'
+            },
+            body: formData,
+            credentials: 'same-origin'
+        }).then(function (response) {
+            return response.json().then(function (data) {
+                return {
+                    ok: response.ok,
+                    data: data
+                };
+            });
+        }).then(function (result) {
+            if (!result.ok) {
+                throw new Error(result.data && result.data.message ? result.data.message : 'Falha ao revisar o texto.');
+            }
+
+            renderReview(result.data);
+            setReviewRunningState(false);
+
+            return result.data;
+        }).catch(function (error) {
+            setReviewRunningState(false);
+            if (reviewStatus) {
+                reviewStatus.textContent = error && error.message ? error.message : 'Falha ao revisar o texto.';
+            }
+
+            return Promise.reject(error);
+        });
+    }
+
     function importWordFile(file) {
         var currentText = editor.getData().replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
         if (currentText !== '' && !window.confirm('O conteudo atual do editor sera substituido pelo arquivo Word importado. Deseja continuar?')) {
@@ -689,9 +995,64 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    if (reviewButton) {
+        reviewButton.addEventListener('click', function () {
+            requestReview({
+                statusLabel: 'Revisando texto...'
+            }).catch(function (error) {
+                window.alert(error && error.message ? error.message : 'Falha ao revisar o texto.');
+            });
+        });
+    }
+
 
     if (saveForm) {
-        saveForm.addEventListener('submit', function () {
+        saveForm.addEventListener('submit', function (event) {
+            if (!bypassReviewOnSubmit) {
+                event.preventDefault();
+                syncEditor();
+
+                requestReview({
+                    statusLabel: 'Revisando antes de salvar...'
+                }).then(function (result) {
+                    if (!result) {
+                        throw new Error('Nao foi possivel obter o resultado da revisao.');
+                    }
+
+                    var issues = Array.isArray(result.issues) ? result.issues : [];
+                    var weightedIssues = issues.filter(function (issue) {
+                        return severityWeight(issue.severity || 'baixa') >= 2;
+                    });
+
+                    if (weightedIssues.length > 0) {
+                        var shouldContinue = window.confirm(
+                            'A revisao IA encontrou ' + weightedIssues.length + ' ponto(s) medio(s) ou alto(s). Deseja salvar mesmo assim?'
+                        );
+
+                        if (!shouldContinue) {
+                            return;
+                        }
+                    }
+
+                    bypassReviewOnSubmit = true;
+                    saveForm.requestSubmit();
+                }).catch(function (error) {
+                    var shouldContinueOnError = window.confirm(
+                        (error && error.message ? error.message : 'Falha ao revisar o texto antes do save.') + ' Deseja salvar mesmo assim?'
+                    );
+
+                    if (!shouldContinueOnError) {
+                        return;
+                    }
+
+                    bypassReviewOnSubmit = true;
+                    saveForm.requestSubmit();
+                });
+
+                return;
+            }
+
+            bypassReviewOnSubmit = false;
             isSubmitting = true;
             isDirty = false;
             updateSaveStatus('saving', 'Salvando...');
@@ -719,6 +1080,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         event.preventDefault();
         event.returnValue = '';
+    });
+
+    requestReview({
+        statusLabel: 'Revisando texto inicial...'
+    }).catch(function () {
+        // Mantem a tela operacional mesmo se a revisao falhar.
     });
 });
 </script>

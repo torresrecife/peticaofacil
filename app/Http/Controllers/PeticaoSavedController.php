@@ -9,6 +9,7 @@ use App\Services\PeticaoDocumentLayoutService;
 use App\Services\PeticaoExportService;
 use App\Services\PeticaoNormalizedDraftService;
 use App\Services\PeticaoNormalizedStorageService;
+use App\Services\PeticaoSavedReviewService;
 use App\Services\PeticaoVersionAuditService;
 use App\Services\WordImportService;
 use Illuminate\Http\Request;
@@ -167,6 +168,17 @@ class PeticaoSavedController extends Controller
         return response()->json([
             'html' => $html,
         ]);
+    }
+
+    public function review(Request $request, PeticaoNormalizada $peticao, PeticaoSavedReviewService $reviewService)
+    {
+        $data = $request->validate([
+            'cod_pecas' => 'required|string',
+        ]);
+
+        return response()->json(
+            $reviewService->review($data['cod_pecas'])
+        );
     }
 
     public function print(PeticaoNormalizada $peticao, PeticaoExportService $exportService, PeticaoDocumentLayoutService $layoutService)
