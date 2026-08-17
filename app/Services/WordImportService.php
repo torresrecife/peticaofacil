@@ -40,6 +40,8 @@ class WordImportService
                 throw new RuntimeException('A conversao do arquivo Word nao gerou HTML legivel.');
             }
 
+            $html = $this->normalizeHtmlEncoding($html);
+
             return $this->prepareImportedHtml($html, dirname($htmlPath));
         } finally {
             $this->deleteDirectory($jobDir);
@@ -132,6 +134,9 @@ class WordImportService
 
     protected function prepareImportedHtml($html, $assetsDir)
     {
+        $html = preg_replace('/<meta[^>]+charset=[^>]+>/i', '', $html);
+        $html = preg_replace('/<meta[^>]+content=["\'][^"\']*charset=[^"\']*["\'][^>]*>/i', '', $html);
+
         $inlinedHtml = $this->inlineStyles($html);
 
         libxml_use_internal_errors(true);
@@ -264,6 +269,52 @@ class WordImportService
     protected function quoteShellArgument($value)
     {
         return escapeshellarg($value);
+    }
+
+    protected function normalizeHtmlEncoding($html)
+    {
+        $encoding = $this->detectHtmlEncoding($html);
+        if ($encoding === null) {
+            $encoding = 'Windows-1252';
+        }
+
+        if (strcasecmp($encoding, 'UTF-8') !== 0) {
+            if (function_exists('mb_convert_encoding')) {
+                $converted = @mb_convert_encoding($html, 'UTF-8', $encoding);
+                if ($converted !== false) {
+                    return $converted;
+                }
+            }
+
+            if (function_exists('iconv')) {
+                $converted = @iconv($encoding, 'UTF-8//IGNORE', $html);
+                if ($converted !== false) {
+                    return $converted;
+                }
+            }
+        }
+
+        return $html;
+    }
+
+    protected function detectHtmlEncoding($html)
+    {
+        if (preg_match('/<meta[^>]+charset=["\']?\s*([A-Za-z0-9\-_]+)\s*["\']?/i', $html, $matches)) {
+            return strtoupper($matches[1]);
+        }
+
+        if (preg_match('/<meta[^>]+content=["\'][^"\']*charset=([A-Za-z0-9\-_]+)/i', $html, $matches)) {
+            return strtoupper($matches[1]);
+        }
+
+        if (function_exists('mb_detect_encoding')) {
+            $detected = @mb_detect_encoding($html, ['UTF-8', 'Windows-1252', 'ISO-8859-1', 'ISO-8859-15'], true);
+            if ($detected !== false) {
+                return strtoupper($detected);
+            }
+        }
+
+        return null;
     }
 
     protected function pathToFileUri($path)
