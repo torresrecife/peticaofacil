@@ -349,6 +349,13 @@
             <input type="hidden" name="nome_cli" value="{{ old('nome_cli', $peticao->cliente_referencia) }}">
             <textarea name="cod_pecas">{{ old('cod_pecas', $peticao->conteudo_html) }}</textarea>
         </form>
+
+        <input
+            type="file"
+            id="saved-editor-word-import-input"
+            accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            style="display:none;"
+        >
     </div>
 
     <div class="panel">
@@ -459,6 +466,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var ckfinderBaseUrl = @json(config('legacy.ckfinder_base_url'));
     var textarea = document.getElementById('saved_editor_content');
     var toolbarHost = document.getElementById('saved-editor-toolbar-host');
+    var wordImportInput = document.getElementById('saved-editor-word-import-input');
     if (!textarea) {
         return;
     }
@@ -512,7 +520,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var editor = CKEDITOR.replace(textarea.id, {
         height: 760,
-        allowedContent: true
+        allowedContent: true,
+        extraPlugins: 'importword',
+        toolbar: [
+            { name: 'clipboard', items: [ 'Undo', 'Redo', '-', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', 'ImportWord', '-', 'SelectAll' ] },
+            { name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat', 'CopyFormatting' ] },
+            { name: 'paragraph', items: [ 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock' ] },
+            '/',
+            { name: 'styles', items: [ 'Styles', 'Format', 'Font', 'FontSize' ] },
+            { name: 'colors', items: [ 'TextColor', 'BGColor' ] },
+            { name: 'insert', items: [ 'Table', 'HorizontalRule', 'PageBreak', 'SpecialChar', 'Smiley', 'Image', 'Link', 'Unlink' ] },
+            { name: 'document', items: [ 'ShowBlocks', 'Maximize', 'Source', 'Preview', 'Print' ] }
+        ]
     });
 
     function mountToolbarInHost() {
@@ -597,11 +616,77 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    editor.on('wordImportRequested', function () {
+        if (!wordImportInput) {
+            window.alert('A importacao de arquivo Word nao esta disponivel nesta tela.');
+            return;
+        }
+
+        wordImportInput.value = '';
+        wordImportInput.click();
+    });
+
     function syncEditor() {
         if (CKEDITOR.instances[textarea.id]) {
             CKEDITOR.instances[textarea.id].updateElement();
             textarea.value = normalizeContentFontSize(textarea.value);
         }
+    }
+
+    function importWordFile(file) {
+        var currentText = editor.getData().replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+        if (currentText !== '' && !window.confirm('O conteudo atual do editor sera substituido pelo arquivo Word importado. Deseja continuar?')) {
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('word_file', file);
+
+        isSubmitting = true;
+        updateSaveStatus('saving', 'Importando arquivo Word...');
+
+        window.fetch(@json(route('peticoes.saved.import.word', $peticao)), {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': @json(csrf_token()),
+                'Accept': 'application/json'
+            },
+            body: formData,
+            credentials: 'same-origin'
+        }).then(function (response) {
+            return response.json().then(function (data) {
+                return {
+                    ok: response.ok,
+                    status: response.status,
+                    data: data
+                };
+            });
+        }).then(function (result) {
+            if (!result.ok) {
+                throw new Error(result.data && result.data.message ? result.data.message : 'Falha ao importar o arquivo Word.');
+            }
+
+            editor.setData(normalizeContentFontSize(result.data.html || ''), {
+                callback: function () {
+                    isSubmitting = false;
+                    markDirty();
+                }
+            });
+        }).catch(function (error) {
+            isSubmitting = false;
+            updateSaveStatus('dirty', 'Falha na importacao do Word');
+            window.alert(error && error.message ? error.message : 'Falha ao importar o arquivo Word.');
+        });
+    }
+
+    if (wordImportInput) {
+        wordImportInput.addEventListener('change', function () {
+            if (!wordImportInput.files || !wordImportInput.files.length) {
+                return;
+            }
+
+            importWordFile(wordImportInput.files[0]);
+        });
     }
 
 

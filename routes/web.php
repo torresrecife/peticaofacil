@@ -55,6 +55,7 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/exportar/word', 'PeticaoSavedController@exportVersionWord')->name('peticoes.saved.versions.export.word');
     Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/exportar/pdf', 'PeticaoSavedController@exportVersionPdf')->name('peticoes.saved.versions.export.pdf');
     Route::get('/peticoes-salvas/{peticao}/impressao', 'PeticaoSavedController@print')->name('peticoes.saved.print');
+    Route::post('/peticoes-salvas/{peticao}/importar/word', 'PeticaoSavedController@importWord')->name('peticoes.saved.import.word');
     Route::post('/peticoes-salvas/{peticao}/exportar/pdf', 'PeticaoSavedController@exportPdf')->name('peticoes.saved.export.pdf');
     Route::post('/peticoes-salvas/{peticao}/exportar/word', 'PeticaoSavedController@exportWord')->name('peticoes.saved.export.word');
     Route::get('/pecas', 'PecaController@index')->name('pecas.index');

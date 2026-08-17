@@ -10,7 +10,9 @@ use App\Services\PeticaoExportService;
 use App\Services\PeticaoNormalizedDraftService;
 use App\Services\PeticaoNormalizedStorageService;
 use App\Services\PeticaoVersionAuditService;
+use App\Services\WordImportService;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 class PeticaoSavedController extends Controller
 {
@@ -146,6 +148,25 @@ class PeticaoSavedController extends Controller
         $layout['body_html'] = $data['cod_pecas'];
 
         return $exportService->exportPdfFromLayout($request, $layout);
+    }
+
+    public function importWord(Request $request, PeticaoNormalizada $peticao, WordImportService $wordImportService)
+    {
+        $data = $request->validate([
+            'word_file' => 'required|file|mimes:doc,docx|max:25600',
+        ]);
+
+        try {
+            $html = $wordImportService->importUploadedFile($data['word_file']);
+        } catch (RuntimeException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'html' => $html,
+        ]);
     }
 
     public function print(PeticaoNormalizada $peticao, PeticaoExportService $exportService, PeticaoDocumentLayoutService $layoutService)
