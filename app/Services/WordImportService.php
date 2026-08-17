@@ -71,11 +71,26 @@ class WordImportService
 
     protected function convertWordToHtml($binary, $sourcePath, $outputDir)
     {
-        $command = $this->quoteShellArgument($binary)
-            . ' --headless --convert-to html --outdir '
-            . $this->quoteShellArgument($outputDir)
-            . ' '
-            . $this->quoteShellArgument($sourcePath);
+        $profileDir = $outputDir . DIRECTORY_SEPARATOR . 'libreoffice-profile';
+        $homeDir = $outputDir . DIRECTORY_SEPARATOR . 'home';
+        $cacheDir = $homeDir . DIRECTORY_SEPARATOR . '.cache';
+        $configDir = $homeDir . DIRECTORY_SEPARATOR . '.config';
+
+        foreach ([$profileDir, $homeDir, $cacheDir, $configDir] as $dir) {
+            if (!is_dir($dir) && !@mkdir($dir, 0777, true) && !is_dir($dir)) {
+                throw new RuntimeException('Nao foi possivel preparar o perfil temporario do LibreOffice.');
+            }
+        }
+
+        $command = $this->buildLibreOfficeCommand(
+            $binary,
+            $sourcePath,
+            $outputDir,
+            $profileDir,
+            $homeDir,
+            $cacheDir,
+            $configDir
+        );
 
         $output = [];
         $exitCode = 0;
@@ -92,6 +107,27 @@ class WordImportService
         }
 
         return $matches[0];
+    }
+
+    protected function buildLibreOfficeCommand($binary, $sourcePath, $outputDir, $profileDir, $homeDir, $cacheDir, $configDir)
+    {
+        $baseCommand = $this->quoteShellArgument($binary)
+            . ' --headless --nologo --nodefault --nolockcheck --norestore'
+            . ' -env:UserInstallation=' . $this->quoteShellArgument($this->pathToFileUri($profileDir))
+            . ' --convert-to html --outdir '
+            . $this->quoteShellArgument($outputDir)
+            . ' '
+            . $this->quoteShellArgument($sourcePath);
+
+        if (DIRECTORY_SEPARATOR === '\\') {
+            return $baseCommand;
+        }
+
+        return 'HOME=' . $this->quoteShellArgument($homeDir)
+            . ' XDG_CACHE_HOME=' . $this->quoteShellArgument($cacheDir)
+            . ' XDG_CONFIG_HOME=' . $this->quoteShellArgument($configDir)
+            . ' '
+            . $baseCommand;
     }
 
     protected function prepareImportedHtml($html, $assetsDir)
@@ -228,5 +264,16 @@ class WordImportService
     protected function quoteShellArgument($value)
     {
         return escapeshellarg($value);
+    }
+
+    protected function pathToFileUri($path)
+    {
+        $normalizedPath = str_replace('\\', '/', $path);
+
+        if (preg_match('/^[A-Za-z]:\//', $normalizedPath) === 1) {
+            return 'file:///' . str_replace('%2F', '/', rawurlencode($normalizedPath));
+        }
+
+        return 'file://' . str_replace('%2F', '/', rawurlencode($normalizedPath));
     }
 }
