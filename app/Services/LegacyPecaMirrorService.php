@@ -2,42 +2,55 @@
 
 namespace App\Services;
 
-use App\Peca;
 use App\PeticaoNormalizada;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class LegacyPecaMirrorService
 {
-    public function syncFromNormalized(PeticaoNormalizada $peticao): ?Peca
+    public function syncFromNormalized(PeticaoNormalizada $peticao)
     {
         if (!$this->isEnabled()) {
             return null;
         }
 
-        $peticao->loadMissing(['modelo', 'legacyPeca']);
+        $peticao->loadMissing(['modelo']);
         $modelo = $peticao->modelo;
 
         if (!$modelo || !$modelo->legacy_tipo_id) {
             return null;
         }
 
-        $peca = $peticao->legacyPeca ?: new Peca();
+        $legacyId = $peticao->legacy_peca_id ? (int) $peticao->legacy_peca_id : null;
+        $existing = $legacyId
+            ? DB::table('tp_pecas_tb')->where('id_pecas', $legacyId)->first()
+            : null;
+        $legacyUserId = $peticao->legacy_usuario_id ?: optional(Auth::user())->id_usu;
+        $nomeArquivo = $peticao->nome_arquivo ?: $modelo->nome;
+        $codigoExterno = $peticao->codigo_externo ?: ($existing->cod_sav ?? null) ?: $this->generateCodSav();
 
-        $peca->tipo_id = $modelo->legacy_tipo_id;
-        $peca->id_usu = $peticao->legacy_usuario_id ?: optional(Auth::user())->id_usu;
-        $peca->nome_pecas = $peticao->nome_arquivo ?: $modelo->nome;
-        $peca->nome_cli = $peticao->cliente_referencia ?: 'Sem cliente';
-        $peca->cod_pecas = $peticao->conteudo_html;
-        $peca->data_cad = $peticao->gerado_em ?: $peca->data_cad ?: now();
-        $peca->cod_sav = $peticao->codigo_externo ?: $peca->cod_sav ?: $this->generateCodSav();
-        $peca->save();
+        $payload = [
+            'tipo_id' => $modelo->legacy_tipo_id,
+            'id_usu' => $legacyUserId,
+            'nome_pecas' => $nomeArquivo,
+            'nome_cli' => $peticao->cliente_referencia ?: 'Sem cliente',
+            'cod_pecas' => $peticao->conteudo_html,
+            'data_cad' => $peticao->gerado_em ?: ($existing->data_cad ?? null) ?: now(),
+            'cod_sav' => $codigoExterno,
+        ];
 
-        $peticao->legacy_peca_id = $peca->id_pecas;
-        $peticao->legacy_usuario_id = $peca->id_usu ?: $peticao->legacy_usuario_id;
-        $peticao->codigo_externo = $peca->cod_sav;
-        $peticao->nome_arquivo = $peca->nome_pecas ?: $peticao->nome_arquivo;
+        if ($legacyId && $existing) {
+            DB::table('tp_pecas_tb')->where('id_pecas', $legacyId)->update($payload);
+        } else {
+            $legacyId = (int) DB::table('tp_pecas_tb')->insertGetId($payload);
+        }
 
-        return $peca;
+        $peticao->legacy_peca_id = $legacyId;
+        $peticao->legacy_usuario_id = $legacyUserId ?: $peticao->legacy_usuario_id;
+        $peticao->codigo_externo = $codigoExterno;
+        $peticao->nome_arquivo = $nomeArquivo ?: $peticao->nome_arquivo;
+
+        return DB::table('tp_pecas_tb')->where('id_pecas', $legacyId)->first();
     }
 
     protected function isEnabled(): bool
