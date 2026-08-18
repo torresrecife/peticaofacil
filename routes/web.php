@@ -57,6 +57,8 @@ Route::middleware(['auth', 'legacy.password.change'])->group(function () {
     Route::get('/peticoes-salvas/{peticao}/impressao', 'PeticaoSavedController@print')->name('peticoes.saved.print');
     Route::post('/peticoes-salvas/{peticao}/importar/word', 'PeticaoSavedController@importWord')->name('peticoes.saved.import.word');
     Route::post('/peticoes-salvas/{peticao}/revisar', 'PeticaoSavedController@review')->name('peticoes.saved.review');
+    Route::post('/peticoes-salvas/{peticao}/revisao/languagetool/preferencias', 'PeticaoSavedController@storeLanguageToolPreference')->name('peticoes.saved.review.preferences.store');
+    Route::post('/peticoes-salvas/{peticao}/revisao/ia', 'PeticaoSavedController@reviewWithAi')->name('peticoes.saved.review.ai');
     Route::post('/peticoes-salvas/{peticao}/exportar/pdf', 'PeticaoSavedController@exportPdf')->name('peticoes.saved.export.pdf');
     Route::post('/peticoes-salvas/{peticao}/exportar/word', 'PeticaoSavedController@exportWord')->name('peticoes.saved.export.word');
     Route::get('/pecas', 'PecaController@index')->name('pecas.index');

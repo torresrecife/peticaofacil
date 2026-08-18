@@ -274,7 +274,7 @@
 
                     <aside class="editor-side-panel">
                         <div class="editor-side-card">
-                            <h4>Dados da peticao</h4>
+                            <h4>Dados da petição</h4>
                             <div class="editor-side-grid">
                                 <div class="editor-side-item">
                                     <span>Modelo</span>

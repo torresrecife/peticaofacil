@@ -7,6 +7,7 @@ use App\PeticaoModelo;
 use App\PeticaoVersao;
 use App\Services\PeticaoDocumentLayoutService;
 use App\Services\PeticaoExportService;
+use App\Services\PeticaoSavedAiReviewService;
 use App\Services\PeticaoNormalizedDraftService;
 use App\Services\PeticaoNormalizedStorageService;
 use App\Services\PeticaoSavedReviewService;
@@ -174,10 +175,44 @@ class PeticaoSavedController extends Controller
     {
         $data = $request->validate([
             'cod_pecas' => 'required|string',
+            'plain_text' => 'nullable|string',
         ]);
 
         return response()->json(
-            $reviewService->review($data['cod_pecas'])
+            $reviewService->review($data['cod_pecas'], $data['plain_text'] ?? null, $request->user())
+        );
+    }
+
+    public function storeLanguageToolPreference(Request $request, PeticaoNormalizada $peticao, PeticaoSavedReviewService $reviewService)
+    {
+        $data = $request->validate([
+            'entry_type' => 'required|string|in:ignored_match,dictionary_word',
+            'token' => 'required|string|max:255',
+            'rule_id' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $reviewService->storePreference($request->user(), $data);
+        } catch (\InvalidArgumentException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Preferencia do LanguageTool salva.',
+        ]);
+    }
+
+    public function reviewWithAi(Request $request, PeticaoNormalizada $peticao, PeticaoSavedAiReviewService $reviewService)
+    {
+        $data = $request->validate([
+            'cod_pecas' => 'required|string',
+            'plain_text' => 'nullable|string',
+        ]);
+
+        return response()->json(
+            $reviewService->review($data['cod_pecas'], $data['plain_text'] ?? null)
         );
     }
 

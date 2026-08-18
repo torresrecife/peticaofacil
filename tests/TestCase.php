@@ -30,6 +30,7 @@ abstract class TestCase extends BaseTestCase
             'lista_itens',
             'lista_grupos',
             'user_model_favorites',
+            'user_languagetool_preferences',
             'sql_server_profiles',
             'users',
             'tp_pecas_tb',
@@ -294,6 +295,15 @@ abstract class TestCase extends BaseTestCase
             $table->string('source', 20);
             $table->unsignedBigInteger('modelo_id')->default(0);
             $table->unsignedInteger('legacy_tipo_id')->default(0);
+            $table->timestamps();
+        });
+
+        $this->createOrResetTable('user_languagetool_preferences', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('user_id');
+            $table->string('entry_type', 20);
+            $table->string('token', 255);
+            $table->string('rule_id', 255)->nullable();
             $table->timestamps();
         });
 
