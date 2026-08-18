@@ -53,7 +53,6 @@ class LegacyCutReadiness extends Command
         $normalizedGrupos = Schema::hasTable('lista_grupos') ? DB::table('lista_grupos')->count() : 'ausente';
         $legacyItens = $legacyItensExists ? DB::table('tp_lista_tb')->count() : 'arquivada';
         $normalizedItens = Schema::hasTable('lista_itens') ? DB::table('lista_itens')->count() : 'ausente';
-        $mirrorEnabled = (bool) config('legacy.mirror_legacy_listas', false);
 
         $this->line('Listas');
         $this->table(
@@ -61,7 +60,7 @@ class LegacyCutReadiness extends Command
             [
                 ['Grupos', $legacyGrupos, $normalizedGrupos, $this->statusForPair($legacyGrupos, $normalizedGrupos)],
                 ['Itens', $legacyItens, $normalizedItens, $this->statusForPair($legacyItens, $normalizedItens)],
-                ['Mirror legado', $mirrorEnabled ? 'ligado' : 'desligado', '-', $mirrorEnabled ? 'PENDENTE' : 'OK'],
+                ['Mirror legado', 'removido do fluxo Laravel', '-', 'OK'],
             ]
         );
     }
@@ -70,14 +69,13 @@ class LegacyCutReadiness extends Command
     {
         $legacyConfigs = Schema::hasTable('tp_config_db') ? DB::table('tp_config_db')->count() : 'arquivada';
         $normalizedProfiles = Schema::hasTable('sql_server_profiles') ? DB::table('sql_server_profiles')->count() : 'ausente';
-        $mirrorEnabled = (bool) config('legacy.mirror_legacy_sql_configs', false);
 
         $this->line('Servidores SQL');
         $this->table(
             ['Item', 'Legado', 'Normalizado', 'Status'],
             [
                 ['Perfis', $legacyConfigs, $normalizedProfiles, $this->statusForPair($legacyConfigs, $normalizedProfiles)],
-                ['Mirror legado', $mirrorEnabled ? 'ligado' : 'desligado', '-', $mirrorEnabled ? 'PENDENTE' : 'OK'],
+                ['Mirror legado', 'removido do fluxo Laravel', '-', 'OK'],
                 ['Superficie admin legacy', 'removida', '-', 'OK'],
             ]
         );

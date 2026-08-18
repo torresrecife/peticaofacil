@@ -13,7 +13,6 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        \App\Console\Commands\SyncUserInternalLinks::class,
         \App\Console\Commands\LegacyCutReadiness::class,
         \App\Console\Commands\ArchiveLegacyOperationalTables::class,
     ];

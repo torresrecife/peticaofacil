@@ -2,68 +2,12 @@
 
 namespace App\Services;
 
-use App\LegacyListaGrupo;
-use App\LegacyListaItem;
 use App\ListaGrupo;
 use App\ListaItem;
 use Illuminate\Support\Facades\DB;
 
 class ListaSyncService
 {
-    public function syncAll(): int
-    {
-        $count = 0;
-
-        LegacyListaGrupo::with('itens')->orderBy('id_grupo')->chunk(100, function ($grupos) use (&$count) {
-            foreach ($grupos as $grupo) {
-                $this->syncLegacyGroup($grupo);
-                $count++;
-            }
-        });
-
-        return $count;
-    }
-
-    public function syncLegacyGroup(LegacyListaGrupo $legacyGrupo): ListaGrupo
-    {
-        return DB::transaction(function () use ($legacyGrupo) {
-            $grupo = ListaGrupo::updateOrCreate(
-                ['id_grupo' => $legacyGrupo->id_grupo],
-                [
-                    'legacy_grupo_id' => $legacyGrupo->id_grupo,
-                    'nome_grupo' => $legacyGrupo->nome_grupo,
-                    'data_cad' => $legacyGrupo->data_cad,
-                ]
-            );
-
-            foreach ($legacyGrupo->itens as $legacyItem) {
-                $this->syncLegacyItem($legacyItem);
-            }
-
-            return $grupo;
-        });
-    }
-
-    public function syncLegacyItem(LegacyListaItem $legacyItem): ListaItem
-    {
-        return ListaItem::updateOrCreate(
-            ['id_lista' => $legacyItem->id_lista],
-            [
-                'legacy_lista_id' => $legacyItem->id_lista,
-                'id_grupo' => $legacyItem->id_grupo,
-                'nome_lista' => $legacyItem->nome_lista,
-                'return_1' => $legacyItem->return_1,
-                'return_2' => $legacyItem->return_2,
-                'return_3' => $legacyItem->return_3,
-                'return_4' => $legacyItem->return_4,
-                'return_5' => $legacyItem->return_5,
-                'return_6' => $legacyItem->return_6,
-                'data_cad' => $legacyItem->data_cad,
-                'id_setor' => $legacyItem->id_setor,
-            ]
-        );
-    }
-
     public function createGroup(array $data): ListaGrupo
     {
         return DB::transaction(function () use ($data) {
@@ -76,8 +20,6 @@ class ListaSyncService
                 'data_cad' => now(),
             ]);
 
-            app(LegacyListaMirrorService::class)->createGroup($grupo);
-
             return $grupo;
         });
     }
@@ -88,8 +30,6 @@ class ListaSyncService
             $grupo->nome_grupo = $data['nome_grupo'];
             $grupo->save();
 
-            app(LegacyListaMirrorService::class)->updateGroup($grupo);
-
             return $grupo;
         });
     }
@@ -98,7 +38,6 @@ class ListaSyncService
     {
         DB::transaction(function () use ($grupo) {
             ListaItem::where('id_grupo', $grupo->id_grupo)->delete();
-            app(LegacyListaMirrorService::class)->deleteGroup($grupo);
             $grupo->delete();
         });
     }
@@ -123,8 +62,6 @@ class ListaSyncService
                 'data_cad' => now(),
             ]);
 
-            app(LegacyListaMirrorService::class)->createItem($grupo, $item);
-
             return $item;
         });
     }
@@ -134,8 +71,6 @@ class ListaSyncService
         return DB::transaction(function () use ($item, $data) {
             $item->fill($data)->save();
 
-            app(LegacyListaMirrorService::class)->updateItem($item);
-
             return $item;
         });
     }
@@ -143,7 +78,6 @@ class ListaSyncService
     public function deleteItem(ListaItem $item): void
     {
         DB::transaction(function () use ($item) {
-            app(LegacyListaMirrorService::class)->deleteItem($item);
             $item->delete();
         });
     }
