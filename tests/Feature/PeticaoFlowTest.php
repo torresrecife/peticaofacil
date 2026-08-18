@@ -80,8 +80,8 @@ class PeticaoFlowTest extends TestCase
         ]);
 
         $wordResponse->assertStatus(200);
-        $wordResponse->assertHeader('content-type', 'application/msword; charset=UTF-8');
-        $this->assertStringContainsString('deferimento imediato', $wordResponse->getContent());
+        $wordResponse->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        $this->assertStringStartsWith('PK', $wordResponse->getContent());
 
         $pdfResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId . '/exportar/pdf', [
             'nome_cli' => 'Fulano da Silva',
@@ -115,8 +115,6 @@ class PeticaoFlowTest extends TestCase
 
         $previewHtml = $previewResponse->viewData('preview')['html'];
 
-        DB::table('tp_tipo_tb')->where('tipo_id', $modeloId)->delete();
-
         $this->actingAs($user)
             ->post('/peticoes/modelos/' . $modeloId . '/editor', [
                 'nome_cli' => 'Beltrano',
@@ -146,7 +144,7 @@ class PeticaoFlowTest extends TestCase
         ]);
 
         $wordResponse->assertStatus(200);
-        $wordResponse->assertHeader('content-type', 'application/msword; charset=UTF-8');
+        $wordResponse->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 
         $pdfResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId . '/exportar/pdf', [
             'nome_cli' => 'Beltrano',
@@ -166,20 +164,6 @@ class PeticaoFlowTest extends TestCase
 
         $modeloId = $this->seedModeloCompleto();
 
-        DB::table('tp_config_db')->insert([
-            'id_db' => 90,
-            'nome_db' => 'Servidor Legado Runtime',
-            'ip_db' => '192.168.10.10',
-            'data_db' => 'juridico',
-            'usu_db' => 'legacy',
-            'senha_db' => '123',
-            'table_db' => 'Processos',
-            'chave_db' => 'CodigoLegado',
-            'query_db' => 'SELECT * FROM Processos',
-            'where_db' => 'where 1=1',
-            'stt' => 'Y',
-        ]);
-
         DB::table('sql_server_profiles')->insert([
             'id' => 90,
             'legacy_config_id' => 90,
@@ -197,14 +181,12 @@ class PeticaoFlowTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        DB::table('tp_tipo_tb')->where('tipo_id', $modeloId)->update(['id_db' => 90]);
         DB::table('peticao_modelos')->where('id', $modeloId)->update(['legacy_sql_config_id' => 90]);
 
         $response = $this->actingAs($user)->get('/peticoes/modelos/' . $modeloId);
 
         $response->assertStatus(200)
-            ->assertSee('CodigoNormalizado')
-            ->assertDontSee('CodigoLegado');
+            ->assertSee('CodigoNormalizado');
     }
 
     protected function seedModeloCompleto()
@@ -223,106 +205,6 @@ class PeticaoFlowTest extends TestCase
             'cliente_area' => 1,
             'cliente_status' => 'Y',
             'cliente_creator' => now(),
-        ]);
-
-        DB::table('tp_tipo_tb')->insert([
-            'tipo_id' => 1,
-            'id_db' => null,
-            'tipo_nome' => 'Peticao de Teste',
-            'id_cliente' => 1,
-            'tipo_data' => now(),
-            'tipo_stt' => 'Y',
-            'id_setor' => 1,
-            'cod_cabec' => '<p>Cabecalho @CAMPO1@</p>',
-            'cod_rodap' => '<p>Rodape @campo4@</p>',
-            'tipo_arq' => 'doc',
-        ]);
-
-        DB::table('tp_funda_tb')->insert([
-            [
-                'fund_id' => 1,
-                'tipo_id' => 1,
-                'fund_titulo' => 'Primeiro',
-                'fund_text' => '<p>Pedido @campo2@</p>',
-                'fund_order' => 1,
-                'fund_data' => now(),
-                'fund_visi' => 'Y',
-                'fund_stt' => 'Y',
-            ],
-            [
-                'fund_id' => 2,
-                'tipo_id' => 1,
-                'fund_titulo' => 'Segundo',
-                'fund_text' => '<p>Detalhe @Campo3@</p>',
-                'fund_order' => 2,
-                'fund_data' => now(),
-                'fund_visi' => 'Y',
-                'fund_stt' => 'Y',
-            ],
-        ]);
-
-        DB::table('tp_inputs_tb')->insert([
-            [
-                'id_input' => 1,
-                'tipo_id' => 1,
-                'input_title' => 'Cliente',
-                'input_tipo' => 'TEXT',
-                'input_order' => 1,
-                'listsel' => 'N',
-                'nomepet' => 'Y',
-                'hide' => 'N',
-            ],
-            [
-                'id_input' => 2,
-                'tipo_id' => 1,
-                'input_title' => 'Pedido',
-                'input_tipo' => 'TEXT',
-                'input_order' => 2,
-                'listsel' => 'N',
-                'nomepet' => 'N',
-                'hide' => 'N',
-            ],
-            [
-                'id_input' => 3,
-                'tipo_id' => 1,
-                'input_title' => 'Observacoes',
-                'input_tipo' => 'TEXTAREA',
-                'input_order' => 3,
-                'listsel' => 'N',
-                'nomepet' => 'N',
-                'hide' => 'N',
-            ],
-            [
-                'id_input' => 4,
-                'tipo_id' => 1,
-                'input_title' => 'Resultado',
-                'input_tipo' => 'SELECT',
-                'input_order' => 4,
-                'listsel' => 'N',
-                'nomepet' => 'N',
-                'hide' => 'N',
-            ],
-        ]);
-
-        DB::table('tp_dados_tb')->insert([
-            [
-                'id_dados' => 1,
-                'id_input' => 4,
-                'nome_dados' => 'Deferir',
-                'return_1' => 'deferimento imediato',
-                'data_cad' => now(),
-                'dados_order' => 1,
-                'listsel' => 'N',
-            ],
-            [
-                'id_dados' => 2,
-                'id_input' => 4,
-                'nome_dados' => 'Indeferir',
-                'return_1' => 'indeferimento',
-                'data_cad' => now(),
-                'dados_order' => 2,
-                'listsel' => 'N',
-            ],
         ]);
 
         DB::table('peticao_modelos')->insert([

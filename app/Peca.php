@@ -33,11 +33,6 @@ class Peca extends Model
         'data_cad' => 'datetime',
     ];
 
-    public function tipo()
-    {
-        return $this->belongsTo(Tipo::class, 'tipo_id', 'tipo_id');
-    }
-
     public function modeloNormalizado()
     {
         return $this->belongsTo(PeticaoModelo::class, 'tipo_id', 'legacy_tipo_id');

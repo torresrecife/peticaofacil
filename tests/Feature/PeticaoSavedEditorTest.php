@@ -25,15 +25,6 @@ class PeticaoSavedEditorTest extends TestCase
             'data_cad' => now(),
         ]);
 
-        DB::table('tp_tipo_tb')->insert([
-            'tipo_id' => 300,
-            'tipo_nome' => 'Modelo Persistido',
-            'id_setor' => 30,
-            'tipo_data' => now(),
-            'tipo_stt' => 'Y',
-            'tipo_arq' => 'pdf',
-        ]);
-
         DB::table('peticao_modelos')->insert([
             'id' => 300,
             'legacy_tipo_id' => 300,
@@ -104,7 +95,7 @@ class PeticaoSavedEditorTest extends TestCase
                 'cod_pecas' => '<p>Texto atualizado</p>',
             ])
             ->assertStatus(200)
-            ->assertHeader('content-type', 'application/msword; charset=UTF-8');
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 
         $pdfResponse = $this->actingAs($user)
             ->post('/peticoes-salvas/4001/exportar/pdf', [
@@ -149,7 +140,7 @@ class PeticaoSavedEditorTest extends TestCase
         $this->actingAs($user)
             ->post('/peticoes-salvas/4001/versoes/' . $restoreVersionId . '/exportar/word')
             ->assertStatus(200)
-            ->assertHeader('content-type', 'application/msword; charset=UTF-8');
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 
         $versionPdfResponse = $this->actingAs($user)
             ->post('/peticoes-salvas/4001/versoes/' . $restoreVersionId . '/exportar/pdf');

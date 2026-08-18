@@ -25,15 +25,6 @@ class PeticaoLegacyMirrorToggleTest extends TestCase
             'data_cad' => now(),
         ]);
 
-        DB::table('tp_tipo_tb')->insert([
-            'tipo_id' => 77,
-            'tipo_nome' => 'Modelo Sem Espelho',
-            'id_setor' => 77,
-            'tipo_data' => now(),
-            'tipo_stt' => 'Y',
-            'tipo_arq' => 'pdf',
-        ]);
-
         DB::table('peticao_modelos')->insert([
             'id' => 77,
             'legacy_tipo_id' => 77,

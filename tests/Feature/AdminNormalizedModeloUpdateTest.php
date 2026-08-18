@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class AdminNormalizedModeloUpdateTest extends TestCase
 {
-    public function test_admin_can_update_normalized_model_without_reflecting_changes_to_legacy_by_default()
+    public function test_admin_can_update_normalized_model_directly_in_normalized_schema()
     {
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
@@ -18,18 +18,6 @@ class AdminNormalizedModeloUpdateTest extends TestCase
         DB::table('tp_setor_tb')->insert([
             ['id_setor' => 8, 'nome_setor' => 'Civel', 'cod_setor' => 'CIV', 'data_cad' => now()],
             ['id_setor' => 9, 'nome_setor' => 'Contratos', 'cod_setor' => 'CON', 'data_cad' => now()],
-        ]);
-
-        DB::table('tp_tipo_tb')->insert([
-            'tipo_id' => 88,
-            'tipo_nome' => 'Modelo Original',
-            'nome_pre' => 'Descricao Original',
-            'id_setor' => 8,
-            'tipo_data' => now(),
-            'tipo_stt' => 'Y',
-            'tipo_arq' => 'pdf',
-            'cod_cabec' => '<p>Cabecalho Antigo</p>',
-            'cod_rodap' => '<p>Rodape Antigo</p>',
         ]);
 
         DB::table('peticao_modelos')->insert([
@@ -68,7 +56,6 @@ class AdminNormalizedModeloUpdateTest extends TestCase
             ->assertRedirect('/admin/modelos-normalizados/88/edit');
 
         $modelo = DB::table('peticao_modelos')->where('id', 88)->first();
-        $tipo = DB::table('tp_tipo_tb')->where('tipo_id', 88)->first();
 
         $this->assertSame('Modelo Atualizado', $modelo->nome);
         $this->assertSame('inativo', $modelo->status);
@@ -80,14 +67,5 @@ class AdminNormalizedModeloUpdateTest extends TestCase
         $metadata = json_decode($modelo->metadata, true);
         $this->assertSame('Descricao Atualizada', $metadata['nome_pre']);
         $this->assertSame('Posfixo', $metadata['nome_pos']);
-
-        $this->assertSame('Modelo Original', $tipo->tipo_nome);
-        $this->assertSame('Descricao Original', $tipo->nome_pre);
-        $this->assertNull($tipo->nome_pos);
-        $this->assertSame('Y', $tipo->tipo_stt);
-        $this->assertSame('pdf', $tipo->tipo_arq);
-        $this->assertSame(8, (int) $tipo->id_setor);
-        $this->assertSame('<p>Cabecalho Antigo</p>', $tipo->cod_cabec);
-        $this->assertSame('<p>Rodape Antigo</p>', $tipo->cod_rodap);
     }
 }

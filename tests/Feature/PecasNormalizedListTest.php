@@ -23,15 +23,6 @@ class PecasNormalizedListTest extends TestCase
             'data_cad' => now(),
         ]);
 
-        DB::table('tp_tipo_tb')->insert([
-            'tipo_id' => 90,
-            'tipo_nome' => 'Modelo Normalizado',
-            'id_setor' => 9,
-            'tipo_data' => now(),
-            'tipo_stt' => 'Y',
-            'tipo_arq' => 'pdf',
-        ]);
-
         DB::table('peticao_modelos')->insert([
             'id' => 90,
             'legacy_tipo_id' => 90,
