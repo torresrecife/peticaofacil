@@ -38,16 +38,9 @@ class LoginController extends Controller
             ->first();
 
         if (!$user || $user->senha_usu !== $passwordHash) {
-            $user = $userSyncService->attemptLegacyFallbackLogin(
-                $credentials['username'],
-                $passwordHash
-            );
-
-            if (!$user) {
-                return back()
-                    ->withErrors(['username' => 'Usuario ou senha invalidos.'])
-                    ->withInput($request->only('username'));
-            }
+            return back()
+                ->withErrors(['username' => 'Usuario ou senha invalidos.'])
+                ->withInput($request->only('username'));
         }
 
         Auth::login($user);

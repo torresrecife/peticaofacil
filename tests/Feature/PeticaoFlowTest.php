@@ -4,10 +4,20 @@ namespace Tests\Feature;
 
 use App\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class PeticaoFlowTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (!Schema::hasTable('peticao_modelos') || !Schema::hasTable('peticoes')) {
+            $this->setUpLegacySchema();
+        }
+    }
+
     public function test_user_can_compose_preview_open_editor_save_and_export_peticao()
     {
         $user = factory(User::class)->create([

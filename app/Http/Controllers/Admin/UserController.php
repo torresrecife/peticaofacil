@@ -111,11 +111,6 @@ class UserController extends Controller
             'password' => $passwordRule,
         ];
 
-        if (config('legacy.mirror_legacy_users', false)) {
-            $legacyUserId = $user ? $user->legacy_usuario_id : null;
-            $rules['login_usu'][] = Rule::unique('tp_usu_tb', 'login_usu')->ignore($legacyUserId, 'id_usu');
-        }
-
         return $request->validate($rules);
     }
 

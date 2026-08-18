@@ -127,16 +127,14 @@ class LegacyCutReadiness extends Command
     {
         $legacyUsers = Schema::hasTable('tp_usu_tb') ? DB::table('tp_usu_tb')->count() : 'arquivada';
         $normalizedUsers = Schema::hasTable('users') ? DB::table('users')->count() : 'ausente';
-        $mirrorEnabled = (bool) config('legacy.mirror_legacy_users', false);
-        $authFallbackEnabled = (bool) config('legacy.auth_fallback_legacy_users', false);
 
         $this->line('Usuarios');
         $this->table(
             ['Item', 'Legado', 'Normalizado', 'Status'],
             [
                 ['Usuarios', $legacyUsers, $normalizedUsers, $this->statusForPair($legacyUsers, $normalizedUsers)],
-                ['Mirror legado', $mirrorEnabled ? 'ligado' : 'desligado', '-', $mirrorEnabled ? 'PENDENTE' : 'OK'],
-                ['Auth fallback', $authFallbackEnabled ? 'ligado' : 'desligado', '-', $authFallbackEnabled ? 'PENDENTE' : 'OK'],
+                ['Mirror legado', 'removido do fluxo Laravel', '-', 'OK'],
+                ['Auth fallback', 'removido do login Laravel', '-', 'OK'],
             ]
         );
     }

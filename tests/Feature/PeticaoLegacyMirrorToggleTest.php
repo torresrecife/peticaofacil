@@ -4,10 +4,20 @@ namespace Tests\Feature;
 
 use App\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class PeticaoLegacyMirrorToggleTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (!Schema::hasTable('peticao_modelos') || !Schema::hasTable('peticoes')) {
+            $this->setUpLegacySchema();
+        }
+    }
+
     public function test_normalized_editor_save_persists_only_normalized_piece()
     {
         $user = factory(User::class)->create([
@@ -16,24 +26,7 @@ class PeticaoLegacyMirrorToggleTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        DB::table('tp_setor_tb')->insert([
-            'id_setor' => 77,
-            'nome_setor' => 'Civel',
-            'cod_setor' => 'CIV',
-            'data_cad' => now(),
-        ]);
-
-        DB::table('peticao_modelos')->insert([
-            'id' => 77,
-            'legacy_tipo_id' => 77,
-            'legacy_setor_id' => 77,
-            'nome' => 'Modelo Sem Espelho',
-            'slug' => 'modelo-sem-espelho-77',
-            'status' => 'ativo',
-            'arquivo_padrao' => 'pdf',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $this->seedModeloMinimo(77, 77, 'Modelo Sem Espelho');
 
         $response = $this->actingAs($user)->post('/peticoes/modelos/77/salvar', [
             'nome_cli' => 'Cliente Sem Legado',
@@ -56,17 +49,7 @@ class PeticaoLegacyMirrorToggleTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        DB::table('peticao_modelos')->insert([
-            'id' => 78,
-            'legacy_tipo_id' => null,
-            'legacy_setor_id' => null,
-            'nome' => 'Modelo Puro',
-            'slug' => 'modelo-puro-78',
-            'status' => 'ativo',
-            'arquivo_padrao' => 'pdf',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $this->seedModeloMinimo(78, null, 'Modelo Puro');
 
         $this->actingAs($user)
             ->post('/peticoes/modelos/78/editor', [
@@ -103,5 +86,41 @@ class PeticaoLegacyMirrorToggleTest extends TestCase
             'cod_pecas' => '<p>Persistencia normalizada</p>',
         ]);
         $response->assertStatus(404);
+    }
+
+    protected function seedModeloMinimo(int $id, ?int $legacyTipoId, string $nome): void
+    {
+        DB::table('tp_setor_tb')->insert([
+            'id_setor' => $id,
+            'nome_setor' => 'Setor ' . $id,
+            'cod_setor' => 'S' . $id,
+            'data_cad' => now(),
+        ]);
+
+        DB::table('tp_clientes_db')->insert([
+            'cliente_id' => $id,
+            'cliente_name' => 'Cliente ' . $id,
+            'cliente_cod' => 'CLI' . $id,
+            'cliente_area' => 1,
+            'cliente_status' => 'Y',
+            'cliente_creator' => now(),
+        ]);
+
+        DB::table('peticao_modelos')->insert([
+            'id' => $id,
+            'legacy_tipo_id' => $legacyTipoId,
+            'legacy_cliente_id' => $id,
+            'legacy_setor_id' => $id,
+            'legacy_sql_config_id' => null,
+            'nome' => $nome,
+            'slug' => strtolower(str_replace(' ', '-', $nome)) . '-' . $id,
+            'status' => 'ativo',
+            'arquivo_padrao' => 'pdf',
+            'cabecalho_html' => '<p>Cabecalho</p>',
+            'rodape_html' => '<p>Rodape</p>',
+            'metadata' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }
