@@ -48,17 +48,9 @@ class DashboardController extends Controller
             ->get();
 
         return $favorites->map(function ($favorite) {
-            $modelo = null;
-
-            if ($favorite->modelo_id) {
-                $modelo = PeticaoModelo::with(['setor', 'cliente'])->find($favorite->modelo_id);
-            }
-
-            if (!$modelo && (int) $favorite->legacy_tipo_id > 0) {
-                $modelo = PeticaoModelo::with(['setor', 'cliente'])
-                    ->where('legacy_tipo_id', (int) $favorite->legacy_tipo_id)
-                    ->first();
-            }
+            $modelo = $favorite->modelo_id
+                ? PeticaoModelo::with(['setor', 'cliente'])->find($favorite->modelo_id)
+                : null;
 
             if ($modelo) {
                 return (object) [

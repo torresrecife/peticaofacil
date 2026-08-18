@@ -53,9 +53,7 @@ class PeticaoEditorController extends Controller
             'nome_arquivo' => $modelo->nome,
             'cliente_referencia' => $data['nome_cli'],
             'conteudo_html' => $data['cod_pecas'],
-            'campos_resolvidos' => [
-                'legacy_tipo_id' => $modelo->legacy_tipo_id,
-            ],
+            'campos_resolvidos' => [],
             'gerado_em' => now(),
             'salvo_em' => now(),
         ]);
@@ -80,7 +78,6 @@ class PeticaoEditorController extends Controller
         $layout = $layoutService->fromEditorDraft($modelo, $data['nome_cli'], $data['cod_pecas'], [
             'modelo' => $modelo->nome,
             'modelo_id' => $modelo->id,
-            'legacy_tipo_id' => $modelo->legacy_tipo_id,
         ]);
 
         return $exportService->exportWordFromLayout($layout);
@@ -101,7 +98,6 @@ class PeticaoEditorController extends Controller
         $layout = $layoutService->fromEditorDraft($modelo, $data['nome_cli'], $data['cod_pecas'], [
             'modelo' => $modelo->nome,
             'modelo_id' => $modelo->id,
-            'legacy_tipo_id' => $modelo->legacy_tipo_id,
         ]);
 
         return $exportService->exportPdfFromLayout($request, $layout);

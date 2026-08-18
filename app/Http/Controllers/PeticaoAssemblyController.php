@@ -24,10 +24,6 @@ class PeticaoAssemblyController extends Controller
             ->mapWithKeys(function ($favorite) {
                 $normalizedId = $favorite->modelo_id;
 
-                if (!$normalizedId && (int) $favorite->legacy_tipo_id > 0) {
-                    $normalizedId = PeticaoModelo::where('legacy_tipo_id', (int) $favorite->legacy_tipo_id)->value('id');
-                }
-
                 if (!$normalizedId) {
                     return [];
                 }
@@ -52,8 +48,7 @@ class PeticaoAssemblyController extends Controller
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($builder) use ($search) {
                     $builder->where('nome', 'like', '%' . $search . '%')
-                        ->orWhere('slug', 'like', '%' . $search . '%')
-                        ->orWhere('legacy_tipo_id', 'like', '%' . $search . '%');
+                        ->orWhere('slug', 'like', '%' . $search . '%');
                 });
             });
 

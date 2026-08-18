@@ -10,6 +10,8 @@ class DashboardTodaySummaryTest extends TestCase
 {
     public function test_dashboard_shows_today_petitions_and_user_totals()
     {
+        $baseTime = now()->setTime(15, 0, 0);
+
         $admin = factory(User::class)->create([
             'id_usu' => 900,
             'nome_usu' => 'Administrador',
@@ -25,8 +27,8 @@ class DashboardTodaySummaryTest extends TestCase
                 'senha_usu' => md5('123'),
                 'nivel_usu' => 'USU',
                 'status_usu' => 'ATI',
-                'data_cad' => now(),
-                'acesso_usu' => now(),
+                'data_cad' => $baseTime,
+                'acesso_usu' => $baseTime,
             ],
             [
                 'id_usu' => 902,
@@ -35,8 +37,8 @@ class DashboardTodaySummaryTest extends TestCase
                 'senha_usu' => md5('123'),
                 'nivel_usu' => 'USU',
                 'status_usu' => 'ATI',
-                'data_cad' => now(),
-                'acesso_usu' => now(),
+                'data_cad' => $baseTime,
+                'acesso_usu' => $baseTime,
             ],
         ]);
 
@@ -51,10 +53,10 @@ class DashboardTodaySummaryTest extends TestCase
                 'password' => md5('123'),
                 'nivel_usu' => 'USU',
                 'status_usu' => 'ATI',
-                'acesso_usu' => now(),
-                'data_cad' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
+                'acesso_usu' => $baseTime,
+                'data_cad' => $baseTime,
+                'created_at' => $baseTime,
+                'updated_at' => $baseTime,
             ],
             [
                 'id' => 902,
@@ -66,10 +68,10 @@ class DashboardTodaySummaryTest extends TestCase
                 'password' => md5('123'),
                 'nivel_usu' => 'USU',
                 'status_usu' => 'ATI',
-                'acesso_usu' => now(),
-                'data_cad' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
+                'acesso_usu' => $baseTime,
+                'data_cad' => $baseTime,
+                'created_at' => $baseTime,
+                'updated_at' => $baseTime,
             ],
         ]);
 
@@ -81,8 +83,8 @@ class DashboardTodaySummaryTest extends TestCase
                 'slug' => 'modelo-civel-901',
                 'status' => 'ativo',
                 'arquivo_padrao' => 'pdf',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $baseTime,
+                'updated_at' => $baseTime,
             ],
             [
                 'id' => 902,
@@ -91,8 +93,8 @@ class DashboardTodaySummaryTest extends TestCase
                 'slug' => 'modelo-trabalhista-902',
                 'status' => 'ativo',
                 'arquivo_padrao' => 'pdf',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => $baseTime,
+                'updated_at' => $baseTime,
             ],
         ]);
 
@@ -108,10 +110,10 @@ class DashboardTodaySummaryTest extends TestCase
                 'cliente_referencia' => 'Cliente Alfa',
                 'conteudo_html' => '<p>A</p>',
                 'campos_resolvidos' => null,
-                'gerado_em' => now()->subHour(),
-                'salvo_em' => now()->subHour(),
-                'created_at' => now()->subHour(),
-                'updated_at' => now()->subHour(),
+                'gerado_em' => $baseTime->copy()->subHour(),
+                'salvo_em' => $baseTime->copy()->subHour(),
+                'created_at' => $baseTime->copy()->subHour(),
+                'updated_at' => $baseTime->copy()->subHour(),
             ],
             [
                 'id' => 2,
@@ -124,10 +126,10 @@ class DashboardTodaySummaryTest extends TestCase
                 'cliente_referencia' => 'Cliente Beta',
                 'conteudo_html' => '<p>B</p>',
                 'campos_resolvidos' => null,
-                'gerado_em' => now()->subMinutes(30),
-                'salvo_em' => now()->subMinutes(30),
-                'created_at' => now()->subMinutes(30),
-                'updated_at' => now()->subMinutes(30),
+                'gerado_em' => $baseTime->copy()->subMinutes(30),
+                'salvo_em' => $baseTime->copy()->subMinutes(30),
+                'created_at' => $baseTime->copy()->subMinutes(30),
+                'updated_at' => $baseTime->copy()->subMinutes(30),
             ],
             [
                 'id' => 3,
@@ -140,10 +142,10 @@ class DashboardTodaySummaryTest extends TestCase
                 'cliente_referencia' => 'Cliente Gama',
                 'conteudo_html' => '<p>C</p>',
                 'campos_resolvidos' => null,
-                'gerado_em' => now()->subMinutes(10),
-                'salvo_em' => now()->subMinutes(10),
-                'created_at' => now()->subMinutes(10),
-                'updated_at' => now()->subMinutes(10),
+                'gerado_em' => $baseTime->copy()->subMinutes(10),
+                'salvo_em' => $baseTime->copy()->subMinutes(10),
+                'created_at' => $baseTime->copy()->subMinutes(10),
+                'updated_at' => $baseTime->copy()->subMinutes(10),
             ],
             [
                 'id' => 4,
@@ -156,10 +158,10 @@ class DashboardTodaySummaryTest extends TestCase
                 'cliente_referencia' => 'Cliente Ontem',
                 'conteudo_html' => '<p>D</p>',
                 'campos_resolvidos' => null,
-                'gerado_em' => now()->subDay(),
-                'salvo_em' => now()->subDay(),
-                'created_at' => now()->subDay(),
-                'updated_at' => now()->subDay(),
+                'gerado_em' => $baseTime->copy()->subDay(),
+                'salvo_em' => $baseTime->copy()->subDay(),
+                'created_at' => $baseTime->copy()->subDay(),
+                'updated_at' => $baseTime->copy()->subDay(),
             ],
             [
                 'id' => 5,
@@ -173,9 +175,9 @@ class DashboardTodaySummaryTest extends TestCase
                 'conteudo_html' => '<p>E</p>',
                 'campos_resolvidos' => null,
                 'gerado_em' => now()->subYears(4),
-                'salvo_em' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
+                'salvo_em' => $baseTime,
+                'created_at' => $baseTime,
+                'updated_at' => $baseTime,
             ],
         ]);
 

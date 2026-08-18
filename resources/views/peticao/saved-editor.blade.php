@@ -596,7 +596,7 @@
                         <div class="saved-editor-card">
                             <h4>Assistente IA</h4>
                             <div class="saved-editor-ai-review">
-                                <div id="saved-editor-ai-review-status" class="saved-editor-ai-review__status">A analise interpretativa por IA e opcional.</div>
+                                <div id="saved-editor-ai-review-status" class="saved-editor-ai-review__status">A analise interpretativa por IA (opcional).</div>
                                 <div id="saved-editor-ai-review-summary" class="saved-editor-review__summary-text"></div>
                                 <div id="saved-editor-ai-review-warnings" class="saved-editor-review__warnings"></div>
                                 <div id="saved-editor-ai-review-findings" class="saved-editor-ai-review__findings">

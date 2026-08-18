@@ -15,7 +15,6 @@ class FavoriteModeloController extends Controller
             'user_id' => Auth::id(),
             'source' => 'normalized',
             'modelo_id' => $modeloNormalizado->id,
-            'legacy_tipo_id' => $modeloNormalizado->legacy_tipo_id ?: 0,
         ]);
 
         return back()->with('status', 'Modelo adicionado aos favoritos.');

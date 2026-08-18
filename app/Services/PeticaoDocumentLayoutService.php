@@ -21,7 +21,6 @@ class PeticaoDocumentLayoutService
                 'codigo' => $peticao->codigo_externo,
                 'peticao_id' => $peticao->id,
                 'modelo_id' => $peticao->modelo_id,
-                'legacy_peca_id' => $peticao->legacy_peca_id,
             ]
         );
     }

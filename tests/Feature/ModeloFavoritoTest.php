@@ -116,6 +116,6 @@ class ModeloFavoritoTest extends TestCase
             ->assertStatus(200)
             ->assertSee('Favoritos')
             ->assertSee('Modelo Favorito Normalizado')
-            ->assertSee('Modelo Espelhado de Favorito Antigo');
+            ->assertDontSee('Modelo Espelhado de Favorito Antigo');
     }
 }
