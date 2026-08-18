@@ -42,7 +42,7 @@ class LegacyPecaMirrorService
 
     protected function isEnabled(): bool
     {
-        return (bool) config('legacy.mirror_legacy_pecas', true);
+        return (bool) config('legacy.mirror_legacy_pecas', false);
     }
 
     protected function generateCodSav(): string
