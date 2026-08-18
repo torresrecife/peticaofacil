@@ -9,11 +9,9 @@ use App\PeticaoModelo;
 use App\Setor;
 use App\SqlServerProfile;
 use App\Support\LegacyEditorContent;
-use App\Services\LegacyModeloMirrorService;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Schema;
 
 class NormalizedTipoController extends Controller
 {
@@ -47,17 +45,7 @@ class NormalizedTipoController extends Controller
             ->unique()
             ->values();
 
-        $legacyFallbacks = collect();
-
-        if ((bool) config('legacy.compat_admin_model_routes', true) && Schema::hasTable('tp_tipo_tb')) {
-            $legacyFallbacks = \App\Tipo::with(['setor', 'cliente', 'servidor'])
-                ->orderBy('id_setor')
-                ->orderBy('tipo_nome')
-                ->whereNotIn('tipo_id', PeticaoModelo::whereNotNull('legacy_tipo_id')->pluck('legacy_tipo_id'))
-                ->get();
-        }
-
-        return view('admin.tipos.index', compact('modelos', 'legacyFallbacks', 'search', 'suggestions'));
+        return view('admin.tipos.index', compact('modelos', 'search', 'suggestions'));
     }
 
     public function create()
@@ -78,7 +66,7 @@ class NormalizedTipoController extends Controller
         ]);
     }
 
-    public function store(Request $request, LegacyModeloMirrorService $mirrorService)
+    public function store(Request $request)
     {
         $data = $this->validateData($request);
 
@@ -99,8 +87,6 @@ class NormalizedTipoController extends Controller
             ],
         ]);
 
-        $mirrorService->syncIfEnabled($modelo->fresh(['paragrafos', 'campos.opcoes']));
-
         return redirect()->route('admin.modelos-normalizados.edit', $modelo)->with('status', 'Modelo criado.');
     }
 
@@ -119,7 +105,7 @@ class NormalizedTipoController extends Controller
         ]);
     }
 
-    public function update(Request $request, PeticaoModelo $modeloNormalizado, LegacyModeloMirrorService $mirrorService)
+    public function update(Request $request, PeticaoModelo $modeloNormalizado)
     {
         $data = $this->validateData($request);
 
@@ -138,8 +124,6 @@ class NormalizedTipoController extends Controller
             'rodape_html' => $data['cod_rodap'] ?? null,
             'metadata' => $metadata,
         ])->save();
-
-        $mirrorService->syncIfEnabled($modeloNormalizado->fresh(['paragrafos', 'campos.opcoes']));
 
         return redirect()->route('admin.modelos-normalizados.edit', $modeloNormalizado)->with('status', 'Modelo atualizado.');
     }

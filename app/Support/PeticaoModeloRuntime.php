@@ -22,7 +22,6 @@ class PeticaoModeloRuntime
     public $setor;
     public $cliente;
     public $servidor;
-    public $servidorLegacy;
     public $is_normalized;
     public $source;
 

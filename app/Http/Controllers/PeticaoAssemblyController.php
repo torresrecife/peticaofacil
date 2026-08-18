@@ -198,7 +198,7 @@ class PeticaoAssemblyController extends Controller
     protected function resolveLookupConfig($modeloFonte)
     {
         if ($modeloFonte->is_normalized) {
-            return $modeloFonte->servidor ?: $modeloFonte->servidorLegacy;
+            return $modeloFonte->servidor;
         }
 
         return $modeloFonte->servidor ?: null;
