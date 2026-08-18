@@ -13,7 +13,6 @@ class PeticaoNormalizedStorageService
     {
         return DB::transaction(function () use ($peticao, $payload, $origin) {
             $peticao->loadMissing(['modelo']);
-            $legacyPeca = null;
 
             if (!$peticao->user_id && Auth::check()) {
                 $peticao->user_id = Auth::id();
@@ -31,11 +30,6 @@ class PeticaoNormalizedStorageService
             $peticao->gerado_em = $peticao->gerado_em ?: now();
             $peticao->salvo_em = now();
             $peticao->save();
-
-            $legacyPeca = app(LegacyPecaMirrorService::class)->syncFromNormalized($peticao);
-            if ($legacyPeca) {
-                $peticao->save();
-            }
 
             $this->createVersionSnapshot($peticao, $origin);
 

@@ -111,15 +111,14 @@ class LegacyCutReadiness extends Command
     {
         $legacyPecas = Schema::hasTable('tp_pecas_tb') ? DB::table('tp_pecas_tb')->count() : 'arquivada';
         $normalizedPecas = Schema::hasTable('peticoes') ? DB::table('peticoes')->count() : 'ausente';
-        $mirrorEnabled = (bool) config('legacy.mirror_legacy_pecas', false);
 
         $this->line('Pecas');
         $this->table(
             ['Item', 'Legado', 'Normalizado', 'Status'],
             [
                 ['Historico', $legacyPecas, $normalizedPecas, $this->statusForPair($legacyPecas, $normalizedPecas)],
-                ['Mirror legado', $mirrorEnabled ? 'ligado' : 'desligado', '-', $mirrorEnabled ? 'PENDENTE' : 'OK'],
                 ['Superficie web legacy', 'removida', '-', 'OK'],
+                ['Mirror legado', 'removido do fluxo Laravel', '-', 'OK'],
             ]
         );
     }

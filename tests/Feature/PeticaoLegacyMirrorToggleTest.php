@@ -8,10 +8,8 @@ use Tests\TestCase;
 
 class PeticaoLegacyMirrorToggleTest extends TestCase
 {
-    public function test_normalized_editor_save_works_without_legacy_piece_mirroring()
+    public function test_normalized_editor_save_persists_only_normalized_piece()
     {
-        config()->set('legacy.mirror_legacy_pecas', false);
-
         $user = factory(User::class)->create([
             'id_usu' => 77,
             'nivel_usu' => 'ADM',
@@ -52,8 +50,6 @@ class PeticaoLegacyMirrorToggleTest extends TestCase
 
     public function test_normalized_editor_routes_work_without_legacy_tipo_id()
     {
-        config()->set('legacy.mirror_legacy_pecas', false);
-
         $user = factory(User::class)->create([
             'id_usu' => 78,
             'nivel_usu' => 'ADM',

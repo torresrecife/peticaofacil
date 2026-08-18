@@ -8,10 +8,8 @@ use Tests\TestCase;
 
 class PeticaoSavedEditorTest extends TestCase
 {
-    public function test_saved_peticao_editor_updates_normalized_and_legacy_records_and_exports()
+    public function test_saved_peticao_editor_updates_normalized_record_and_exports()
     {
-        config()->set('legacy.mirror_legacy_pecas', true);
-
         $user = factory(User::class)->create([
             'id_usu' => 30,
             'nivel_usu' => 'ADM',
@@ -37,20 +35,9 @@ class PeticaoSavedEditorTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        DB::table('tp_pecas_tb')->insert([
-            'id_pecas' => 3001,
-            'tipo_id' => 300,
-            'id_usu' => 30,
-            'nome_pecas' => 'Modelo Persistido',
-            'nome_cli' => 'Cliente Original',
-            'cod_pecas' => '<p>Texto original</p>',
-            'data_cad' => now(),
-            'cod_sav' => 'P3001',
-        ]);
-
         DB::table('peticoes')->insert([
             'id' => 4001,
-            'legacy_peca_id' => 3001,
+            'legacy_peca_id' => null,
             'modelo_id' => 300,
             'user_id' => $user->id,
             'legacy_usuario_id' => 30,
@@ -74,18 +61,16 @@ class PeticaoSavedEditorTest extends TestCase
 
         $this->actingAs($user)
             ->put('/peticoes-salvas/4001', [
-                'nome_cli' => 'Cliente Atualizado',
-                'cod_pecas' => '<p>Texto atualizado</p>',
-            ])->assertRedirect('/peticoes-salvas/4001/editar');
+            'nome_cli' => 'Cliente Atualizado',
+            'cod_pecas' => '<p>Texto atualizado</p>',
+        ])->assertRedirect('/peticoes-salvas/4001/editar');
 
-        $legacy = DB::table('tp_pecas_tb')->where('id_pecas', 3001)->first();
         $normalized = DB::table('peticoes')->where('id', 4001)->first();
         $versions = DB::table('peticao_versoes')->where('peticao_id', 4001)->get();
 
-        $this->assertSame('Cliente Atualizado', $legacy->nome_cli);
         $this->assertSame('Cliente Atualizado', $normalized->cliente_referencia);
-        $this->assertStringContainsString('Texto atualizado', $legacy->cod_pecas);
         $this->assertStringContainsString('Texto atualizado', $normalized->conteudo_html);
+        $this->assertSame(0, DB::table('tp_pecas_tb')->count());
         $this->assertCount(1, $versions);
         $this->assertSame('save', $versions[0]->origem_snapshot);
 
@@ -119,7 +104,7 @@ class PeticaoSavedEditorTest extends TestCase
         DB::table('peticao_versoes')->insert([
             'peticao_id' => 4001,
             'versao_numero' => 2,
-            'legacy_peca_id_snapshot' => 3001,
+            'legacy_peca_id_snapshot' => null,
             'legacy_usuario_id_snapshot' => 30,
             'user_id_snapshot' => $user->id,
             'codigo_externo_snapshot' => 'P3001',

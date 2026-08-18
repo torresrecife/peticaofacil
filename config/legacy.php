@@ -4,7 +4,6 @@ return [
     'app_url' => env('LEGACY_APP_URL', ''),
     'ckfinder_root' => env('LEGACY_CKFINDER_ROOT', ''),
     'ckfinder_base_url' => env('LEGACY_CKFINDER_BASE_URL', ''),
-    'mirror_legacy_pecas' => env('LEGACY_PECAS_MIRROR', false),
     'mirror_legacy_modelos' => env('LEGACY_MODELOS_MIRROR', false),
     'mirror_legacy_listas' => env('LEGACY_LISTAS_MIRROR', false),
     'mirror_legacy_sql_configs' => env('LEGACY_SQL_CONFIGS_MIRROR', false),
