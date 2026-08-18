@@ -15,11 +15,30 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        $this->assertSafeTestDatabase();
         $this->setUpLegacySchema();
+    }
+
+    protected function assertSafeTestDatabase(): void
+    {
+        $environment = (string) app()->environment();
+        $connection = (string) config('database.default');
+        $database = (string) config('database.connections.' . $connection . '.database');
+
+        if ($environment !== 'testing' || !preg_match('/_test$/i', $database)) {
+            throw new \RuntimeException(sprintf(
+                'Testes destrutivos bloqueados: APP_ENV deve ser testing e o banco deve terminar em _test. Ambiente atual: %s; conexao: %s; banco: %s.',
+                $environment !== '' ? $environment : '(vazio)',
+                $connection !== '' ? $connection : '(vazia)',
+                $database !== '' ? $database : '(vazio)'
+            ));
+        }
     }
 
     protected function setUpLegacySchema(): void
     {
+        $this->assertSafeTestDatabase();
+
         $tables = [
             'peticao_versoes',
             'peticoes',
@@ -38,12 +57,8 @@ abstract class TestCase extends BaseTestCase
             'tp_inputs_tb',
             'tp_funda_tb',
             'tp_tipo_tb',
-            'tp_lista_tb',
-            'tp_grupo_tb',
-            'tp_config_db',
             'tp_clientes_db',
             'tp_setor_tb',
-            'tp_usu_tb',
         ];
 
         Schema::disableForeignKeyConstraints();
@@ -73,22 +88,6 @@ abstract class TestCase extends BaseTestCase
             $table->dateTime('cliente_creator')->nullable();
         });
 
-        $this->createOrResetTable('tp_usu_tb', function (Blueprint $table) {
-            $table->increments('id_usu');
-            $table->string('nome_usu', 50);
-            $table->string('login_usu', 50)->unique();
-            $table->string('senha_usu', 255);
-            $table->string('email_usu', 50)->nullable();
-            $table->string('nivel_usu', 3)->default('USU');
-            $table->dateTime('acesso_usu')->nullable();
-            $table->dateTime('data_cad')->nullable();
-            $table->integer('id_setor')->nullable();
-            $table->string('id_cliente', 255)->nullable()->default('0');
-            $table->string('status_usu', 3)->default('ATI');
-            $table->string('estados_usu', 255)->nullable();
-            $table->string('comarca_usu', 255)->nullable();
-        });
-
         $this->createOrResetTable('users', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedInteger('legacy_usuario_id')->nullable()->unique();
@@ -110,20 +109,6 @@ abstract class TestCase extends BaseTestCase
             $table->string('comarca_usu', 255)->nullable();
             $table->rememberToken();
             $table->timestamps();
-        });
-
-        $this->createOrResetTable('tp_config_db', function (Blueprint $table) {
-            $table->increments('id_db');
-            $table->string('nome_db', 255);
-            $table->string('ip_db', 255)->nullable();
-            $table->string('data_db', 255)->nullable();
-            $table->string('usu_db', 255)->nullable();
-            $table->string('senha_db', 255)->nullable();
-            $table->string('table_db', 255)->nullable();
-            $table->string('chave_db', 255)->nullable();
-            $table->text('query_db')->nullable();
-            $table->text('where_db')->nullable();
-            $table->string('stt', 1)->default('Y');
         });
 
         $this->createOrResetTable('sql_server_profiles', function (Blueprint $table) {
@@ -155,30 +140,6 @@ abstract class TestCase extends BaseTestCase
             $table->longText('cod_cabec')->nullable();
             $table->longText('cod_rodap')->nullable();
             $table->string('tipo_arq', 255)->nullable();
-        });
-
-        $this->createOrResetTable('tp_grupo_tb', function (Blueprint $table) {
-            $table->increments('id_grupo');
-            $table->string('nome_grupo', 500);
-            $table->string('titulo_1', 500)->nullable();
-            $table->string('titulo_2', 500)->nullable();
-            $table->string('titulo_3', 500)->nullable();
-            $table->string('titulo_4', 500)->nullable();
-            $table->dateTime('data_cad')->nullable();
-        });
-
-        $this->createOrResetTable('tp_lista_tb', function (Blueprint $table) {
-            $table->increments('id_lista');
-            $table->unsignedInteger('id_grupo');
-            $table->string('nome_lista', 500)->nullable();
-            $table->string('return_1', 500)->nullable();
-            $table->string('return_2', 500)->nullable();
-            $table->string('return_3', 500)->nullable();
-            $table->string('return_4', 500)->nullable();
-            $table->string('return_5', 500)->nullable();
-            $table->string('return_6', 500)->nullable();
-            $table->dateTime('data_cad')->nullable();
-            $table->unsignedInteger('id_setor')->nullable();
         });
 
         $this->createOrResetTable('lista_grupos', function (Blueprint $table) {
@@ -390,6 +351,8 @@ abstract class TestCase extends BaseTestCase
 
     protected function createOrResetTable(string $table, \Closure $callback): void
     {
+        $this->assertSafeTestDatabase();
+
         if (!Schema::hasTable($table)) {
             try {
                 Schema::create($table, $callback);

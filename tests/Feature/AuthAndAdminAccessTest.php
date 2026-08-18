@@ -3,10 +3,20 @@
 namespace Tests\Feature;
 
 use App\User;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class AuthAndAdminAccessTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (!Schema::hasTable('users')) {
+            $this->setUpLegacySchema();
+        }
+    }
+
     public function test_guest_is_redirected_to_login()
     {
         $this->get('/painel')

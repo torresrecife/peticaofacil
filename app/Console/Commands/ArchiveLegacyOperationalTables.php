@@ -44,7 +44,7 @@ class ArchiveLegacyOperationalTables extends Command
             $tables[] = 'tp_usu_tb';
         }
 
-        $suffix = 'archive_20260727';
+        $suffix = 'archive_' . now()->format('Ymd');
         $plan = [];
 
         foreach ($tables as $table) {

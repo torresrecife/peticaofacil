@@ -4,10 +4,20 @@ namespace Tests\Feature;
 
 use App\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class AdminNormalizedSqlServerConfigTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (!Schema::hasTable('users') || !Schema::hasTable('sql_server_profiles')) {
+            $this->setUpLegacySchema();
+        }
+    }
+
     public function test_admin_can_create_sql_server_profile_in_normalized_schema_without_legacy_mirror_by_default()
     {
         $admin = factory(User::class)->create([
@@ -38,8 +48,10 @@ class AdminNormalizedSqlServerConfigTest extends TestCase
         $this->assertNotNull($profile);
         $this->assertNull($profile->legacy_config_id);
 
-        $legacy = DB::table('tp_config_db')->where('nome_db', 'Consulta Processos')->first();
-        $this->assertNull($legacy);
+        if (Schema::hasTable('tp_config_db')) {
+            $legacy = DB::table('tp_config_db')->where('nome_db', 'Consulta Processos')->first();
+            $this->assertNull($legacy);
+        }
 
         $response->assertRedirect('/admin/servidores-normalizados/' . $profile->id . '/edit');
     }

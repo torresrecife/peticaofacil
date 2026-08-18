@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\User;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class DashboardTodaySummaryTest extends TestCase
@@ -11,6 +13,26 @@ class DashboardTodaySummaryTest extends TestCase
     public function test_dashboard_shows_today_petitions_and_user_totals()
     {
         $baseTime = now()->setTime(15, 0, 0);
+
+        if (!Schema::hasTable('tp_usu_tb')) {
+            $this->createOrResetTable('tp_usu_tb', function (Blueprint $table) {
+                $table->increments('id_usu');
+                $table->string('nome_usu', 50);
+                $table->string('login_usu', 50)->unique();
+                $table->string('senha_usu', 255);
+                $table->string('email_usu', 50)->nullable();
+                $table->string('nivel_usu', 3)->default('USU');
+                $table->dateTime('acesso_usu')->nullable();
+                $table->dateTime('data_cad')->nullable();
+                $table->integer('id_setor')->nullable();
+                $table->string('id_cliente', 255)->nullable()->default('0');
+                $table->string('status_usu', 3)->default('ATI');
+                $table->string('estados_usu', 255)->nullable();
+                $table->string('comarca_usu', 255)->nullable();
+            });
+        } else {
+            DB::table('tp_usu_tb')->truncate();
+        }
 
         $admin = factory(User::class)->create([
             'id_usu' => 900,
