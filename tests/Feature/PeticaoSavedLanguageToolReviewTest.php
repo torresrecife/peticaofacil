@@ -19,7 +19,7 @@ class PeticaoSavedLanguageToolReviewTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        DB::table('tp_setor_tb')->insert([
+        DB::table('setores')->insert([
             'id_setor' => 31,
             'nome_setor' => 'Civel',
             'cod_setor' => 'CIV',
@@ -111,7 +111,7 @@ class PeticaoSavedLanguageToolReviewTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        DB::table('tp_setor_tb')->insert([
+        DB::table('setores')->insert([
             'id_setor' => 32,
             'nome_setor' => 'Civel',
             'cod_setor' => 'CIV',

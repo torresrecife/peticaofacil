@@ -57,8 +57,8 @@ abstract class TestCase extends BaseTestCase
             'tp_inputs_tb',
             'tp_funda_tb',
             'tp_tipo_tb',
-            'tp_clientes_db',
-            'tp_setor_tb',
+            'clientes',
+            'setores',
         ];
 
         Schema::disableForeignKeyConstraints();
@@ -72,14 +72,15 @@ abstract class TestCase extends BaseTestCase
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
         Schema::enableForeignKeyConstraints();
 
-        $this->createOrResetTable('tp_setor_tb', function (Blueprint $table) {
+        $this->createOrResetTable('setores', function (Blueprint $table) {
             $table->increments('id_setor');
             $table->string('nome_setor', 500);
             $table->string('cod_setor', 50)->nullable();
             $table->dateTime('data_cad')->nullable();
+            $table->binary('cod_img')->nullable();
         });
 
-        $this->createOrResetTable('tp_clientes_db', function (Blueprint $table) {
+        $this->createOrResetTable('clientes', function (Blueprint $table) {
             $table->increments('cliente_id');
             $table->string('cliente_name', 500);
             $table->string('cliente_cod', 500)->nullable();

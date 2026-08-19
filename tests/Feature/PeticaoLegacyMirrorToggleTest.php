@@ -90,14 +90,14 @@ class PeticaoLegacyMirrorToggleTest extends TestCase
 
     protected function seedModeloMinimo(int $id, ?int $legacyTipoId, string $nome): void
     {
-        DB::table('tp_setor_tb')->insert([
+        DB::table('setores')->insert([
             'id_setor' => $id,
             'nome_setor' => 'Setor ' . $id,
             'cod_setor' => 'S' . $id,
             'data_cad' => now(),
         ]);
 
-        DB::table('tp_clientes_db')->insert([
+        DB::table('clientes')->insert([
             'cliente_id' => $id,
             'cliente_name' => 'Cliente ' . $id,
             'cliente_cod' => 'CLI' . $id,

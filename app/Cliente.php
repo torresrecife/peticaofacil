@@ -9,7 +9,7 @@ class Cliente extends Model
 {
     use LegacyEncoding;
 
-    protected $table = 'tp_clientes_db';
+    protected $table = 'clientes';
     protected $primaryKey = 'cliente_id';
     public $timestamps = false;
 

@@ -15,7 +15,7 @@ class PeticaoAssociatedListFieldTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        DB::table('tp_setor_tb')->insert([
+        DB::table('setores')->insert([
             'id_setor' => 1,
             'nome_setor' => 'Juridico',
             'cod_setor' => 'JUR',

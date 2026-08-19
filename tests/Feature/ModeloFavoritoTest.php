@@ -60,7 +60,7 @@ class ModeloFavoritoTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        DB::table('tp_setor_tb')->insert([
+        DB::table('setores')->insert([
             ['id_setor' => 1, 'nome_setor' => 'Civel', 'cod_setor' => 'CIV', 'data_cad' => now()],
             ['id_setor' => 2, 'nome_setor' => 'Trabalhista', 'cod_setor' => 'TRB', 'data_cad' => now()],
         ]);

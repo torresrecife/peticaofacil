@@ -197,14 +197,14 @@ class PeticaoFlowTest extends TestCase
 
     protected function seedModeloCompleto()
     {
-        DB::table('tp_setor_tb')->insert([
+        DB::table('setores')->insert([
             'id_setor' => 1,
             'nome_setor' => 'Juridico',
             'cod_setor' => 'JUR',
             'data_cad' => now(),
         ]);
 
-        DB::table('tp_clientes_db')->insert([
+        DB::table('clientes')->insert([
             'cliente_id' => 1,
             'cliente_name' => 'Cliente Base',
             'cliente_cod' => 'CLI001',

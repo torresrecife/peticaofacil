@@ -15,7 +15,7 @@ class PeticaoIndexSourceTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        DB::table('tp_setor_tb')->insert([
+        DB::table('setores')->insert([
             ['id_setor' => 1, 'nome_setor' => 'A', 'cod_setor' => 'A', 'data_cad' => now()],
             ['id_setor' => 2, 'nome_setor' => 'B', 'cod_setor' => 'B', 'data_cad' => now()],
         ]);
@@ -66,7 +66,7 @@ class PeticaoIndexSourceTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        DB::table('tp_setor_tb')->insert([
+        DB::table('setores')->insert([
             ['id_setor' => 1, 'nome_setor' => 'A', 'cod_setor' => 'A', 'data_cad' => now()],
             ['id_setor' => 2, 'nome_setor' => 'B', 'cod_setor' => 'B', 'data_cad' => now()],
         ]);
@@ -117,7 +117,7 @@ class PeticaoIndexSourceTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        DB::table('tp_setor_tb')->insert([
+        DB::table('setores')->insert([
             ['id_setor' => 1, 'nome_setor' => 'A', 'cod_setor' => 'A', 'data_cad' => now()],
         ]);
 

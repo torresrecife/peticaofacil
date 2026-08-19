@@ -9,7 +9,7 @@ class Setor extends Model
 {
     use LegacyEncoding;
 
-    protected $table = 'tp_setor_tb';
+    protected $table = 'setores';
     protected $primaryKey = 'id_setor';
     public $timestamps = false;
 

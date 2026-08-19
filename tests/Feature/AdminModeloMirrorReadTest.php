@@ -15,7 +15,7 @@ class AdminModeloMirrorReadTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        DB::table('tp_setor_tb')->insert([
+        DB::table('setores')->insert([
             'id_setor' => 7,
             'nome_setor' => 'Fiscal',
             'cod_setor' => 'FIS',

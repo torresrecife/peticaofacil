@@ -16,7 +16,7 @@ class PecasNormalizedListTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        DB::table('tp_setor_tb')->insert([
+        DB::table('setores')->insert([
             'id_setor' => 9,
             'nome_setor' => 'Civel',
             'cod_setor' => 'CIV',

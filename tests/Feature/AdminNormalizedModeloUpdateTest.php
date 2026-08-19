@@ -15,7 +15,7 @@ class AdminNormalizedModeloUpdateTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        DB::table('tp_setor_tb')->insert([
+        DB::table('setores')->insert([
             ['id_setor' => 8, 'nome_setor' => 'Civel', 'cod_setor' => 'CIV', 'data_cad' => now()],
             ['id_setor' => 9, 'nome_setor' => 'Contratos', 'cod_setor' => 'CON', 'data_cad' => now()],
         ]);
