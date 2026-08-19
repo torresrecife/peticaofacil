@@ -4,7 +4,7 @@
 
 use App\User;
 use Faker\Generator as Faker;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,14 +18,16 @@ use Illuminate\Support\Str;
 */
 
 $factory->define(User::class, function (Faker $faker) {
+    $password = Hash::make('secret');
+
     return [
         'legacy_usuario_id' => $faker->unique()->numberBetween(1, 999999),
         'name' => $faker->name,
         'email' => $faker->unique()->safeEmail,
-        'password' => md5('secret'),
+        'password' => $password,
         'nome_usu' => $faker->name,
         'login_usu' => $faker->unique()->userName,
-        'senha_usu' => md5('secret'),
+        'senha_usu' => $password,
         'email_usu' => $faker->unique()->safeEmail,
         'nivel_usu' => 'USU',
         'acesso_usu' => now(),

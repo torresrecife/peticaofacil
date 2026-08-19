@@ -269,7 +269,7 @@ Periodically test restoration into a separate database.
 
 ## Security and known technical work
 
-- existing passwords still use MD5; gradual migration to bcrypt is the next security priority;
+- passwords are stored with bcrypt; accounts that still contain an MD5 hash are upgraded automatically after their next successful login;
 - the database remains on `latin1`; migration to `utf8mb4` must be handled separately;
 - PHP and frontend dependencies require a planned upgrade;
 - the HTML2PDF fallback should be removed after Playwright stability is confirmed.

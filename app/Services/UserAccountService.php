@@ -4,17 +4,18 @@ namespace App\Services;
 
 use App\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class UserAccountService
 {
-    public function create(array $data, ?string $passwordHash = null): User
+    public function create(array $data, string $plainPassword): User
     {
         $user = new User();
 
-        return $this->update($user, $data, $passwordHash ?: md5($data['password']));
+        return $this->update($user, $data, $plainPassword);
     }
 
-    public function update(User $user, array $data, ?string $passwordHash = null): User
+    public function update(User $user, array $data, ?string $plainPassword = null): User
     {
         $user->nome_usu = $data['nome_usu'];
         $user->login_usu = $data['login_usu'];
@@ -28,9 +29,8 @@ class UserAccountService
         $user->name = $data['nome_usu'];
         $user->email = $data['email_usu'] ?? null;
 
-        if ($passwordHash) {
-            $user->password = $passwordHash;
-            $user->senha_usu = $passwordHash;
+        if ($plainPassword !== null && $plainPassword !== '') {
+            $this->setPassword($user, $plainPassword);
         }
 
         $user->save();
@@ -60,12 +60,60 @@ class UserAccountService
 
     public function updatePassword(User $user, string $plainPassword): User
     {
-        $hash = md5($plainPassword);
-        $user->password = $hash;
-        $user->senha_usu = $hash;
+        $this->setPassword($user, $plainPassword);
         $user->acesso_usu = now();
         $user->save();
 
         return $user;
+    }
+
+    public function verifyPassword(User $user, string $plainPassword): bool
+    {
+        $modernHash = $this->modernHash($user);
+
+        if ($modernHash !== null) {
+            if (!Hash::check($plainPassword, $modernHash)) {
+                return false;
+            }
+
+            if (Hash::needsRehash($modernHash)
+                || !hash_equals((string) $user->password, (string) $user->senha_usu)) {
+                $this->setPassword($user, $plainPassword);
+                $user->save();
+            }
+
+            return true;
+        }
+
+        $legacyHash = md5($plainPassword);
+        $matches = hash_equals((string) $user->password, $legacyHash)
+            || hash_equals((string) $user->senha_usu, $legacyHash);
+
+        if (!$matches) {
+            return false;
+        }
+
+        $this->setPassword($user, $plainPassword);
+        $user->save();
+
+        return true;
+    }
+
+    protected function modernHash(User $user): ?string
+    {
+        foreach ([$user->password, $user->senha_usu] as $hash) {
+            if (is_string($hash) && preg_match('/^\$(2[ayb]|argon2(?:i|id))\$/', $hash)) {
+                return $hash;
+            }
+        }
+
+        return null;
+    }
+
+    protected function setPassword(User $user, string $plainPassword): void
+    {
+        $hash = Hash::make($plainPassword);
+        $user->password = $hash;
+        $user->senha_usu = $hash;
     }
 }

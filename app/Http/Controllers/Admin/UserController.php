@@ -61,7 +61,7 @@ class UserController extends Controller
     {
         $data = $this->validateData($request);
 
-        app(UserAccountService::class)->create($this->normalizeData($data), md5($data['password']));
+        app(UserAccountService::class)->create($this->normalizeData($data), $data['password']);
 
         return redirect()->route('admin.usuarios.index')->with('status', 'Usuario criado.');
     }
@@ -83,7 +83,7 @@ class UserController extends Controller
         app(UserAccountService::class)->update(
             $user,
             $this->normalizeData($data),
-            !empty($data['password']) ? md5($data['password']) : null
+            !empty($data['password']) ? $data['password'] : null
         );
 
         return redirect()->route('admin.usuarios.index')->with('status', 'Usuario atualizado.');

@@ -31,13 +31,11 @@ class LoginController extends Controller
             'password' => 'required|string',
         ]);
 
-        $passwordHash = md5($credentials['password']);
-
         $user = User::where('login_usu', $credentials['username'])
             ->where('status_usu', 'ATI')
             ->first();
 
-        if (!$user || $user->senha_usu !== $passwordHash) {
+        if (!$user || !$userAccountService->verifyPassword($user, $credentials['password'])) {
             return back()
                 ->withErrors(['username' => 'Usuario ou senha invalidos.'])
                 ->withInput($request->only('username'));
