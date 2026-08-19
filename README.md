@@ -1,96 +1,96 @@
 # Petição Fácil
 
-Sistema interno para criação, edição, revisão, versionamento e exportação de petições jurídicas. A aplicação administra modelos reutilizáveis, parágrafos, campos dinâmicos, listas de opções, clientes, setores e integrações com fontes externas.
+Internal system for creating, editing, reviewing, versioning, and exporting legal petitions. The application manages reusable templates, paragraphs, dynamic fields, option lists, clients, departments, and integrations with external data sources.
 
-O projeto é uma aplicação Laravel autônoma, com editor de documentos, administração do conteúdo jurídico e integrações opcionais.
+The project is a standalone Laravel application with document editing, legal content administration, and optional integrations.
 
-## Funcionalidades
+## Features
 
-- autenticação, primeiro acesso e níveis de usuário;
-- painel com favoritos e resumo da produção diária;
-- cadastro de usuários, setores e clientes;
-- administração de modelos, parágrafos e campos dinâmicos;
-- listas de opções e retornos associados aos campos;
-- montagem orientada de petições;
-- petição avulsa;
-- assistente de montagem com integração opcional à OpenAI;
-- consulta opcional de processos em sistemas jurídicos ou outras fontes externas;
-- editor rico local com CKEditor e CKFinder;
-- salvamento e histórico de versões;
-- comparação e restauração de versões;
-- revisão com LanguageTool e revisão opcional por IA;
-- importação de documentos Word com LibreOffice;
-- exportação para DOCX e PDF;
-- estatísticas operacionais.
+- authentication, first-access flow, and user access levels;
+- dashboard with favorites and daily production summaries;
+- user, department, and client management;
+- template, paragraph, and dynamic field management;
+- option lists and field return values;
+- guided petition assembly;
+- free-form petitions;
+- assembly assistant with optional OpenAI integration;
+- optional process lookup in legal systems or other external sources;
+- local rich-text editor powered by CKEditor and CKFinder;
+- petition persistence and version history;
+- version comparison and restoration;
+- LanguageTool review and optional AI review;
+- Word document import through LibreOffice;
+- DOCX and PDF export;
+- operational statistics.
 
-## Arquitetura atual
+## Current architecture
 
-- PHP `^7.2.5` ou `^8.0`;
+- PHP `^7.2.5` or `^8.0`;
 - Laravel `6.20`;
 - MySQL;
-- conectores configuráveis para consultas a sistemas externos;
-- PHPWord para DOCX;
-- Playwright/Chromium para PDF;
-- CKEditor e CKFinder servidos por `public/`;
-- Laravel Mix 5 para os assets compilados.
+- configurable connectors for external systems;
+- PHPWord for DOCX generation;
+- Playwright/Chromium for PDF generation;
+- CKEditor and CKFinder served from `public/`;
+- Laravel Mix 5 for compiled assets.
 
-As tabelas centrais são:
+The main database tables are:
 
 - `users`;
-- `setores` e `clientes`;
+- `setores` and `clientes`;
 - `peticao_modelos`;
 - `peticao_modelo_paragrafos`;
 - `peticao_modelo_campos`;
 - `peticao_modelo_campo_opcoes`;
-- `lista_grupos` e `lista_itens`;
-- `peticoes` e `peticao_versoes`;
+- `lista_grupos` and `lista_itens`;
+- `peticoes` and `peticao_versoes`;
 - `user_model_favorites`;
 - `user_languagetool_preferences`.
 
-## Requisitos
+## Requirements
 
-- PHP com extensões exigidas pelo Laravel, MySQL, DOM/XML, cURL, Mbstring, Zip e GD;
+- PHP with the extensions required by Laravel, MySQL, DOM/XML, cURL, Mbstring, Zip, and GD;
 - Composer;
 - MySQL;
-- Node.js e npm;
-- Chromium, Chrome ou Edge para geração de PDF;
-- LibreOffice, caso a importação de Word seja utilizada;
-- acesso aos sistemas externos, OpenAI e LanguageTool somente quando essas integrações forem habilitadas.
+- Node.js and npm;
+- Chromium, Chrome, or Edge for PDF generation;
+- LibreOffice when Word import is enabled;
+- access to external systems, OpenAI, and LanguageTool only when those integrations are enabled.
 
-No ambiente Windows usado no desenvolvimento, o projeto funciona com Laragon e PHP 7.2.34. Em instalações novas, prefira uma versão de PHP ainda suportada e valide previamente a compatibilidade do Laravel 6.
+The Windows development environment uses Laragon and PHP 7.2.34. For new installations, prefer a supported PHP version and verify Laravel 6 compatibility beforehand.
 
-## Instalação local
+## Local installation
 
-Clone o repositório e instale as dependências PHP:
+Clone the repository and install the PHP dependencies:
 
 ```bash
 composer install
 ```
 
-Crie o arquivo de ambiente:
+Create the environment file:
 
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
 
-No PowerShell:
+On PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
 php artisan key:generate
 ```
 
-Configure no mínimo `APP_URL` e as variáveis `DB_*`. O banco atualmente utiliza:
+At a minimum, configure `APP_URL` and the `DB_*` variables. The database currently uses:
 
 ```env
 DB_CHARSET=latin1
 DB_COLLATION=latin1_swedish_ci
 ```
 
-Não altere o charset diretamente em produção. A futura conversão para `utf8mb4` precisa de migration e auditoria dos textos existentes.
+Do not change the production character set directly. A future conversion to `utf8mb4` requires a migration and an audit of the existing text data.
 
-Depois, execute:
+Then run:
 
 ```bash
 php artisan migrate
@@ -99,43 +99,43 @@ php artisan route:clear
 php artisan view:clear
 ```
 
-### Assets frontend
+### Frontend assets
 
 ```bash
 npm install
 npm run development
 ```
 
-Para gerar os assets de produção:
+To build production assets:
 
 ```bash
 npm run production
 ```
 
-Os scripts `scripts/deploy-server.*` ainda fazem referência a `npm run build:prod`, que não existe no `package.json`. Até que sejam corrigidos, use `npm run production` diretamente.
+The `scripts/deploy-server.*` scripts still refer to `npm run build:prod`, which is not defined in `package.json`. Until those scripts are corrected, run `npm run production` directly.
 
-## Editor e uploads
+## Editor and uploads
 
-CKEditor e CKFinder estão incorporados ao projeto:
+CKEditor and CKFinder are bundled with the project:
 
 - `public/ckeditor`;
 - `public/ckfinder`;
-- uploads em `public/ckfinder/userfiles`.
+- uploads in `public/ckfinder/userfiles`.
 
-O processo do servidor web precisa de permissão de leitura e escrita em `public/ckfinder/userfiles`. Esse diretório contém dados persistentes e deve fazer parte do backup, mas não deve ser substituído inadvertidamente durante o deploy.
+The web server process requires read and write access to `public/ckfinder/userfiles`. This directory contains persistent data and must be included in backups, but it must not be overwritten inadvertently during deployment.
 
-## Exportação para PDF
+## PDF export
 
-O mecanismo recomendado é Playwright:
+Playwright is the recommended engine:
 
 ```env
 PDF_ENGINE=playwright
 PDF_PLAYWRIGHT_NODE_BINARY=node
-PDF_PLAYWRIGHT_SCRIPT=/caminho/do/projeto/scripts/pdf-renderer/render-peticao.js
+PDF_PLAYWRIGHT_SCRIPT=/path/to/project/scripts/pdf-renderer/render-peticao.js
 PDF_PLAYWRIGHT_BROWSER_BINARY=
 ```
 
-Instale o renderer:
+Install the renderer:
 
 ```bash
 cd scripts/pdf-renderer
@@ -143,22 +143,22 @@ npm ci
 npx playwright install chromium
 ```
 
-Em servidores com Chrome/Chromium já instalado, `PDF_PLAYWRIGHT_BROWSER_BINARY` pode apontar para o executável. A resposta exportada deve ter `Content-Type: application/pdf` e iniciar diretamente com `%PDF`; bytes anteriores podem fazer sistemas de tribunais classificarem o documento como `text/plain`.
+On servers where Chrome or Chromium is already installed, `PDF_PLAYWRIGHT_BROWSER_BINARY` may point to its executable. The exported response must have `Content-Type: application/pdf` and begin directly with `%PDF`; leading bytes may cause court systems to classify the document as `text/plain`.
 
-Existe fallback para HTML2PDF, porém ele é transitório e pode depender de uma biblioteca fora da raiz atual. Produção deve priorizar Playwright.
+An HTML2PDF fallback is available, but it is transitional and may depend on a library outside the current project root. Production should prioritize Playwright.
 
-## Importação de Word
+## Word import
 
-Defina o executável do LibreOffice:
+Configure the LibreOffice executable:
 
 ```env
 WORD_IMPORT_BINARY="C:\Program Files\LibreOffice\program\soffice.exe"
 WORD_IMPORT_TIMEOUT=60
 ```
 
-Em Linux, use o caminho correspondente ao `soffice` instalado.
+On Linux, use the path of the installed `soffice` executable.
 
-## Integrações opcionais
+## Optional integrations
 
 ### OpenAI
 
@@ -170,7 +170,7 @@ OPENAI_MODEL=
 OPENAI_TIMEOUT=60
 ```
 
-Nunca versione uma chave real no repositório.
+Never commit a real API key to the repository.
 
 ### LanguageTool
 
@@ -180,44 +180,44 @@ LANGUAGETOOL_BASE_URL=http://127.0.0.1:8081
 LANGUAGETOOL_LANGUAGE=pt-BR
 ```
 
-### Sistemas externos
+### External systems
 
-Os perfis de integração são administrados pela aplicação e podem representar sistemas jurídicos, bases processuais ou outras fontes de dados. As credenciais e os parâmetros de conexão devem ser mantidos fora do código e configurados de acordo com o conector utilizado.
+Integration profiles are managed by the application and may represent legal systems, procedural databases, or other data sources. Credentials and connection parameters must remain outside the source code and be configured according to the connector being used.
 
-## Testes
+## Tests
 
-Execute:
+Run:
 
 ```bash
 php vendor/bin/phpunit
 ```
 
-Ou, no Windows com o PHP do Laragon:
+On Windows with the Laragon PHP executable:
 
 ```powershell
 & "C:\laragon\bin\php\php-7.2.34-nts-Win32-VC15-x64\php.exe" vendor/bin/phpunit
 ```
 
-Há uma proteção deliberada em `tests/TestCase.php`: os testes só executam quando `APP_ENV=testing` e o nome do banco termina em `_test`. O padrão do `phpunit.xml` é:
+`tests/TestCase.php` contains a deliberate safety guard: tests run only when `APP_ENV=testing` and the database name ends in `_test`. The default database in `phpunit.xml` is:
 
 ```text
 peticaofacil_laravel_test
 ```
 
-Se houver cache de configuração do ambiente local ou de produção, limpe-o antes dos testes:
+If configuration from the local or production environment has been cached, clear it before running tests:
 
 ```bash
 php artisan config:clear
 php artisan route:clear
 ```
 
-Nunca aponte o PHPUnit para uma base operacional.
+Never point PHPUnit at an operational database.
 
-## Deploy em produção
+## Production deployment
 
-Antes do deploy, faça backup do banco e de `public/ckfinder/userfiles`.
+Before deployment, back up the database and `public/ckfinder/userfiles`.
 
-Fluxo recomendado:
+Recommended workflow:
 
 ```bash
 php artisan down
@@ -235,18 +235,18 @@ php artisan route:cache
 php artisan up
 ```
 
-Depois do deploy, valide:
+After deployment, verify:
 
-- login e primeiro acesso;
-- abertura e edição de um modelo;
-- montagem e salvamento de uma petição;
-- upload de imagem;
-- exportação DOCX;
-- exportação PDF e assinatura inicial `%PDF`;
-- integração com sistemas externos, quando usada;
-- revisão LanguageTool/IA, quando habilitada.
+- login and first-access flow;
+- template opening and editing;
+- petition assembly and persistence;
+- image uploads;
+- DOCX export;
+- PDF export and the initial `%PDF` signature;
+- external system integration, when enabled;
+- LanguageTool and AI review, when enabled.
 
-Não use em produção:
+Do not run in production:
 
 ```bash
 php artisan migrate:fresh
@@ -254,38 +254,38 @@ php artisan migrate:refresh
 php artisan migrate:reset
 ```
 
-Esses comandos podem apagar ou reconstruir tabelas.
+These commands may delete or rebuild tables.
 
-## Backup e restauração
+## Backup and restoration
 
-O backup mínimo deve incluir:
+The minimum backup set must include:
 
-1. dump completo do MySQL;
+1. a complete MySQL dump;
 2. `public/ckfinder/userfiles`;
-3. `.env` armazenado de forma segura;
-4. registro da versão/commit implantado.
+3. the `.env` file stored securely;
+4. the deployed version or commit identifier.
 
-Teste periodicamente a restauração em uma base separada. As tabelas `*_archive_*` ainda existentes são uma salvaguarda histórica e não devem ser removidas antes de um backup final validado.
+Periodically test restoration into a separate database.
 
-## Segurança e pendências conhecidas
+## Security and known technical work
 
-- senhas históricas ainda usam MD5; a migração gradual para bcrypt é a próxima prioridade de segurança;
-- o banco permanece em `latin1`; a migração para `utf8mb4` deve ser feita separadamente;
-- dependências PHP e frontend estão defasadas e precisam de atualização planejada;
-- o fallback HTML2PDF deve ser removido após confirmar a estabilidade do Playwright;
+- existing passwords still use MD5; gradual migration to bcrypt is the next security priority;
+- the database remains on `latin1`; migration to `utf8mb4` must be handled separately;
+- PHP and frontend dependencies require a planned upgrade;
+- the HTML2PDF fallback should be removed after Playwright stability is confirmed.
 
-## Estrutura útil
+## Useful project structure
 
 ```text
-app/                    aplicação Laravel
-database/migrations/    evolução do esquema
-public/ckeditor/         editor rico local
-public/ckfinder/         gerenciador de arquivos local
-resources/views/         telas Blade
-scripts/pdf-renderer/    renderer PDF com Playwright
-tests/                   testes unitários e funcionais
+app/                    Laravel application
+database/migrations/    schema evolution
+public/ckeditor/         local rich-text editor
+public/ckfinder/         local file manager
+resources/views/         Blade views
+scripts/pdf-renderer/    Playwright PDF renderer
+tests/                   unit and feature tests
 ```
 
-## Licença e acesso
+## License and access
 
-Este é um sistema interno. Defina com a organização as regras de acesso, distribuição, retenção de documentos jurídicos e tratamento de dados pessoais antes de disponibilizar código ou bases de dados a terceiros.
+This is an internal system. Before sharing the source code or databases with third parties, define the organization's access, distribution, legal-document retention, and personal-data handling policies.
