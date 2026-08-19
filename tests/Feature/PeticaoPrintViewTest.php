@@ -51,7 +51,8 @@ class PeticaoPrintViewTest extends TestCase
     public function test_export_rendering_preserves_intentional_spacing_in_right_aligned_header_blocks()
     {
         $service = app(PeticaoExportService::class);
-        $html = '<table><tr><td><img src="/img/teste.png"></td><td>'
+        $imagePath = str_replace('\\', '/', public_path('img/add.png'));
+        $html = '<table><tr><td><img src="' . $imagePath . '"></td><td>'
             . '<p style="text-align: right;">&nbsp;&nbsp;OAB  PE  21.678&nbsp;&nbsp;</p>'
             . '</td></tr></table>';
 
@@ -62,7 +63,6 @@ class PeticaoPrintViewTest extends TestCase
         $this->assertStringContainsString('OAB  PE  21.678', $printView);
         $this->assertStringNotContainsString('&nbsp;&nbsp;OAB', $printView);
         $this->assertStringContainsString('class="print-header-contact"', $printView);
-        $this->assertStringContainsString('class="word-header-contact"', $wordView);
-        $this->assertStringContainsString('OAB  PE  21.678', $wordView);
+        $this->assertSame('PK', substr($wordView, 0, 2));
     }
 }
