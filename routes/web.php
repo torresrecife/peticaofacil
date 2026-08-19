@@ -11,11 +11,7 @@
 |
 */
 
-Route::get('/', function () {
-    return auth()->check()
-        ? redirect()->route('dashboard')
-        : redirect()->route('login');
-});
+Route::get('/', 'HomeController')->name('home');
 
 Route::view('/status', 'status')->name('status');
 

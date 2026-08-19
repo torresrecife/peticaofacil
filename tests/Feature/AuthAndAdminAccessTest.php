@@ -19,8 +19,23 @@ class AuthAndAdminAccessTest extends TestCase
 
     public function test_guest_is_redirected_to_login()
     {
+        $this->get('/')
+            ->assertRedirect('/login');
+
         $this->get('/painel')
             ->assertRedirect('/login');
+    }
+
+    public function test_authenticated_user_is_redirected_from_home_to_dashboard()
+    {
+        $user = factory(User::class)->create([
+            'nivel_usu' => 'USU',
+            'acesso_usu' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get('/')
+            ->assertRedirect('/painel');
     }
 
     public function test_active_user_can_log_in_and_reach_dashboard()
