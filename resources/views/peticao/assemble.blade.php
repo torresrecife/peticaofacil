@@ -56,7 +56,7 @@
             $normalizedModel = $modeloFonte->source;
             $composeRoute = route('peticoes.normalized.compose', $normalizedModel);
             $normalizedStoreRoute = route('peticoes.normalized.saved.store', $normalizedModel);
-            $legacyEditorRoute = route('peticoes.normalized.editor.create', $normalizedModel);
+            $editorRoute = route('peticoes.normalized.editor.create', $normalizedModel);
             $lookupKey = '';
             $lookupAvailable = (bool) ($lookupConnectionStatus['available'] ?? false);
             $lookupErrorMessage = $lookupConnectionStatus['message'] ?? null;
@@ -195,15 +195,13 @@
                 <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>
                 <button type="submit">Abrir peticao normalizada</button>
             </form>
-            @if($modeloFonte->legacy_tipo_id)
-                <form method="post" action="{{ $legacyEditorRoute }}" style="margin-top:12px;">
-                    @csrf
-                    <input type="hidden" name="nome_cli" value="{{ $preview['suggested_filename'] }}">
-                    <input type="hidden" name="codigo_processo" value="{{ $codigoProcesso ?? '' }}">
-                    <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>
-                    <button type="submit" class="button secondary">Abrir editor legado</button>
-                </form>
-            @endif
+            <form method="post" action="{{ $editorRoute }}" style="margin-top:12px;">
+                @csrf
+                <input type="hidden" name="nome_cli" value="{{ $preview['suggested_filename'] }}">
+                <input type="hidden" name="codigo_processo" value="{{ $codigoProcesso ?? '' }}">
+                <textarea name="content" style="display:none;">{{ $preview['html'] }}</textarea>
+                <button type="submit" class="button secondary">Abrir editor</button>
+            </form>
         </div>
     @endif
 </div>

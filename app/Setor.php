@@ -2,12 +2,12 @@
 
 namespace App;
 
-use App\Support\LegacyEncoding;
+use App\Support\DatabaseEncoding;
 use Illuminate\Database\Eloquent\Model;
 
 class Setor extends Model
 {
-    use LegacyEncoding;
+    use DatabaseEncoding;
 
     protected $table = 'setores';
     protected $primaryKey = 'id_setor';
@@ -19,7 +19,7 @@ class Setor extends Model
         'cod_setor',
     ];
 
-    protected $legacyUtf8Fields = [
+    protected $databaseEncodedFields = [
         'nome_setor',
         'cod_setor',
     ];

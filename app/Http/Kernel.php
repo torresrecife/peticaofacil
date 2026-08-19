@@ -61,8 +61,7 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'legacy.role' => \App\Http\Middleware\EnsureLegacyRole::class,
-        'legacy.password.change' => \App\Http\Middleware\EnsureLegacyPasswordChange::class,
+        'password.initial' => \App\Http\Middleware\RequireInitialPasswordChange::class,
     ];
 
     /**

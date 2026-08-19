@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\ListaGrupo;
-use App\Services\ListaSyncService;
+use App\Services\ListaPersistenceService;
 use Illuminate\Http\Request;
 
 class ListaController extends Controller
@@ -29,7 +29,7 @@ class ListaController extends Controller
     public function store(Request $request)
     {
         $data = $this->validateData($request);
-        app(ListaSyncService::class)->createGroup($data);
+        app(ListaPersistenceService::class)->createGroup($data);
 
         return redirect()->route('admin.listas.index')->with('status', 'Lista criada.');
     }
@@ -60,14 +60,14 @@ class ListaController extends Controller
     public function update(Request $request, ListaGrupo $lista)
     {
         $data = $this->validateData($request);
-        app(ListaSyncService::class)->updateGroup($lista, $data);
+        app(ListaPersistenceService::class)->updateGroup($lista, $data);
 
         return redirect()->route('admin.listas.edit', $lista)->with('status', 'Lista atualizada.');
     }
 
     public function destroy(ListaGrupo $lista)
     {
-        app(ListaSyncService::class)->deleteGroup($lista);
+        app(ListaPersistenceService::class)->deleteGroup($lista);
 
         return redirect()->route('admin.listas.index')->with('status', 'Lista removida.');
     }

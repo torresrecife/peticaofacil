@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\PeticaoAvulsaTemplateService;
-use App\Support\LegacyEditorContent;
 use Illuminate\Http\Request;
 
 class PeticaoAvulsaConfigController extends Controller
@@ -12,9 +11,6 @@ class PeticaoAvulsaConfigController extends Controller
     public function edit(PeticaoAvulsaTemplateService $templateService)
     {
         $modelo = $templateService->resolveSystemModel();
-        $modelo->cabecalho_html = LegacyEditorContent::normalize($modelo->cabecalho_html);
-        $modelo->rodape_html = LegacyEditorContent::normalize($modelo->rodape_html);
-
         return view('admin.peticao-avulsa.form', [
             'modelo' => $modelo,
         ]);
@@ -28,8 +24,8 @@ class PeticaoAvulsaConfigController extends Controller
         ]);
 
         $modelo = $templateService->resolveSystemModel();
-        $modelo->cabecalho_html = LegacyEditorContent::denormalize($data['cod_cabec'] ?? null);
-        $modelo->rodape_html = LegacyEditorContent::denormalize($data['cod_rodap'] ?? null);
+        $modelo->cabecalho_html = $data['cod_cabec'] ?? null;
+        $modelo->rodape_html = $data['cod_rodap'] ?? null;
         $metadata = $modelo->metadata ?: [];
         $metadata['system'] = 'avulsa';
         $modelo->metadata = $metadata;

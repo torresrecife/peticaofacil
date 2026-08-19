@@ -2,12 +2,12 @@
 
 namespace App;
 
-use App\Support\LegacyEncoding;
+use App\Support\DatabaseEncoding;
 use Illuminate\Database\Eloquent\Model;
 
 class Cliente extends Model
 {
-    use LegacyEncoding;
+    use DatabaseEncoding;
 
     protected $table = 'clientes';
     protected $primaryKey = 'cliente_id';
@@ -21,7 +21,7 @@ class Cliente extends Model
         'cliente_status',
     ];
 
-    protected $legacyUtf8Fields = [
+    protected $databaseEncodedFields = [
         'cliente_name',
         'cliente_cod',
     ];

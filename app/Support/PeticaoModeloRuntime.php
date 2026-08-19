@@ -5,7 +5,6 @@ namespace App\Support;
 class PeticaoModeloRuntime
 {
     public $id;
-    public $legacy_tipo_id;
     public $tipo_id;
     public $tipo_nome;
     public $nome_pre;

@@ -2,13 +2,13 @@
 
 namespace App;
 
-use App\Support\LegacyEncoding;
+use App\Support\DatabaseEncoding;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
-    use LegacyEncoding;
+    use DatabaseEncoding;
 
     protected $table = 'users';
 
@@ -37,7 +37,7 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected $legacyUtf8Fields = [
+    protected $databaseEncodedFields = [
         'nome_usu',
         'login_usu',
         'email_usu',

@@ -2,12 +2,12 @@
 
 namespace App;
 
-use App\Support\LegacyEncoding;
+use App\Support\DatabaseEncoding;
 use Illuminate\Database\Eloquent\Model;
 
 class ListaItem extends Model
 {
-    use LegacyEncoding;
+    use DatabaseEncoding;
 
     protected $table = 'lista_itens';
     protected $primaryKey = 'id_lista';
@@ -28,7 +28,7 @@ class ListaItem extends Model
         'data_cad',
     ];
 
-    protected $legacyUtf8Fields = [
+    protected $databaseEncodedFields = [
         'nome_lista',
         'return_1',
         'return_2',

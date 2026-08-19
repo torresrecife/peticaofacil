@@ -8,7 +8,6 @@ use App\ListaGrupo;
 use App\PeticaoModelo;
 use App\Setor;
 use App\SqlServerProfile;
-use App\Support\LegacyEditorContent;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -143,25 +142,11 @@ class NormalizedTipoController extends Controller
             'cod_rodap' => 'nullable|string',
         ]);
 
-        $data['cod_cabec'] = LegacyEditorContent::denormalize($data['cod_cabec'] ?? null);
-        $data['cod_rodap'] = LegacyEditorContent::denormalize($data['cod_rodap'] ?? null);
-
         return $data;
     }
 
     protected function prepareForEditor(PeticaoModelo $modelo)
     {
-        $modelo->cabecalho_html = LegacyEditorContent::normalize($modelo->cabecalho_html);
-        $modelo->rodape_html = LegacyEditorContent::normalize($modelo->rodape_html);
-
-        if ($modelo->relationLoaded('paragrafos')) {
-            $modelo->paragrafos->transform(function ($paragrafo) {
-                $paragrafo->conteudo_html = LegacyEditorContent::normalize($paragrafo->conteudo_html);
-
-                return $paragrafo;
-            });
-        }
-
         return $modelo;
     }
 

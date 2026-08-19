@@ -13,7 +13,6 @@ class PeticaoModeloRuntimeFactory
 
         return new PeticaoModeloRuntime([
             'id' => $modelo->id,
-            'legacy_tipo_id' => $modelo->legacy_tipo_id,
             'tipo_id' => $modelo->tipo_id,
             'tipo_nome' => $modelo->tipo_nome,
             'nome_pre' => $modelo->nome_pre,

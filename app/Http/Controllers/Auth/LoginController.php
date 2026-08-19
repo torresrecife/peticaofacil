@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\User;
-use App\Services\UserSyncService;
+use App\Services\UserAccountService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -24,7 +24,7 @@ class LoginController extends Controller
         return view('auth.login');
     }
 
-    public function login(Request $request, UserSyncService $userSyncService)
+    public function login(Request $request, UserAccountService $userAccountService)
     {
         $credentials = $request->validate([
             'username' => 'required|string',
@@ -45,13 +45,13 @@ class LoginController extends Controller
 
         Auth::login($user);
         $request->session()->regenerate();
-        $userSyncService->syncInternalReferences($user);
+        $userAccountService->linkImportedRecords($user);
 
         if ($user->requiresInitialPasswordChange()) {
             return redirect()->route('password.force');
         }
 
-        $userSyncService->touchAccess($user);
+        $userAccountService->touchAccess($user);
 
         return redirect()->intended(route('dashboard'));
     }
@@ -61,7 +61,7 @@ class LoginController extends Controller
         return view('auth.force-password');
     }
 
-    public function updateForcedPassword(Request $request, UserSyncService $userSyncService)
+    public function updateForcedPassword(Request $request, UserAccountService $userAccountService)
     {
         $data = $request->validate([
             'password' => 'required|string|min:4|confirmed',
@@ -70,8 +70,8 @@ class LoginController extends Controller
         /** @var \App\User $user */
         $user = Auth::user();
 
-        $userSyncService->updatePassword($user, $data['password']);
-        $userSyncService->touchAccess($user);
+        $userAccountService->updatePassword($user, $data['password']);
+        $userAccountService->touchAccess($user);
 
         return redirect()->route('dashboard')->with('status', 'Senha atualizada com sucesso.');
     }
@@ -83,8 +83,6 @@ class LoginController extends Controller
 
     protected function performLogout(Request $request)
     {
-        $this->purgeLegacySession();
-
         if (Auth::check()) {
             Auth::logout();
         }
@@ -95,40 +93,4 @@ class LoginController extends Controller
         return redirect()->route('login');
     }
 
-    protected function purgeLegacySession()
-    {
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            @session_write_close();
-        }
-
-        $legacyName = 'PHPSESSID';
-        $legacyId = request()->cookie($legacyName);
-
-        if (!$legacyId) {
-            return;
-        }
-
-        $previousName = session_name();
-        $previousId = session_id();
-
-        @session_name($legacyName);
-        @session_id($legacyId);
-
-        if (@session_start()) {
-            $_SESSION = [];
-            @session_destroy();
-        }
-
-        @session_write_close();
-
-        if ($previousName) {
-            @session_name($previousName);
-        }
-
-        if ($previousId) {
-            @session_id($previousId);
-        }
-
-        setcookie($legacyName, '', time() - 3600, '/');
-    }
 }

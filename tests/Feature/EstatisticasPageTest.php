@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Http\Middleware\EnsureLegacyPasswordChange;
+use App\Http\Middleware\RequireInitialPasswordChange;
 use App\User;
 use Tests\TestCase;
 
@@ -10,7 +10,7 @@ class EstatisticasPageTest extends TestCase
 {
     public function test_authenticated_user_can_view_statistics_page_with_graph_sections()
     {
-        $this->withoutMiddleware(EnsureLegacyPasswordChange::class);
+        $this->withoutMiddleware(RequireInitialPasswordChange::class);
 
         $user = factory(User::class)->make([
             'id' => 920,
@@ -33,7 +33,7 @@ class EstatisticasPageTest extends TestCase
 
     public function test_statistics_menu_item_is_visible_for_regular_user()
     {
-        $this->withoutMiddleware(EnsureLegacyPasswordChange::class);
+        $this->withoutMiddleware(RequireInitialPasswordChange::class);
 
         $user = factory(User::class)->make([
             'nivel_usu' => 'USU',

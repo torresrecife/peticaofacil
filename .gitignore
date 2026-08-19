@@ -7,6 +7,7 @@
 /storage/*.key
 /vendor
 /scripts/pdf-renderer/node_modules
+/staging/
 .env
 .env.backup
 .phpunit.result.cache

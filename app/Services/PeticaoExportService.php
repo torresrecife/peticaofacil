@@ -86,7 +86,7 @@ class PeticaoExportService
             }
         }
 
-        return $this->exportLegacyPdf($request, $nomeArquivo, $conteudoHtml, $cabecalhoHtml, $rodapeHtml);
+        return $this->exportHtml2Pdf($request, $nomeArquivo, $conteudoHtml, $cabecalhoHtml, $rodapeHtml);
     }
 
     public function renderPrintView($nomeArquivo, $conteudoHtml, array $meta = [], $assetMode = 'browser', $cabecalhoHtml = null, $rodapeHtml = null)
@@ -284,9 +284,9 @@ class PeticaoExportService
         }
     }
 
-    protected function exportLegacyPdf(Request $request, $nomeArquivo, $conteudoHtml, $cabecalhoHtml = null, $rodapeHtml = null)
+    protected function exportHtml2Pdf(Request $request, $nomeArquivo, $conteudoHtml, $cabecalhoHtml = null, $rodapeHtml = null)
     {
-        $this->prepareLegacyPdfEnvironment($request);
+        $this->prepareHtml2PdfEnvironment($request);
 
         $library = $this->resolvePdfLibraryPath();
         if (!file_exists($library)) {
@@ -451,7 +451,7 @@ class PeticaoExportService
         return 'file://' . $normalized;
     }
 
-    protected function prepareLegacyPdfEnvironment(Request $request)
+    protected function prepareHtml2PdfEnvironment(Request $request)
     {
         $appUrl = (string) config('app.url', 'http://localhost');
         $parts = parse_url($appUrl);

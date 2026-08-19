@@ -2,12 +2,12 @@
 
 namespace App;
 
-use App\Support\LegacyEncoding;
+use App\Support\DatabaseEncoding;
 use Illuminate\Database\Eloquent\Model;
 
 class ListaGrupo extends Model
 {
-    use LegacyEncoding;
+    use DatabaseEncoding;
 
     protected $table = 'lista_grupos';
     protected $primaryKey = 'id_grupo';
@@ -20,7 +20,7 @@ class ListaGrupo extends Model
         'data_cad',
     ];
 
-    protected $legacyUtf8Fields = [
+    protected $databaseEncodedFields = [
         'nome_grupo',
     ];
 

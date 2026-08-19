@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\PeticaoModelo;
 use App\PeticaoModeloParagrafo;
-use App\Support\LegacyEditorContent;
 use Illuminate\Http\Request;
 
 class NormalizedParagrafoController extends Controller
@@ -24,7 +23,7 @@ class NormalizedParagrafoController extends Controller
             'modelo_id' => $modeloNormalizado->id,
             'legacy_fund_id' => null,
             'titulo' => $titulo,
-            'conteudo_html' => LegacyEditorContent::denormalize($texto),
+            'conteudo_html' => $texto,
             'ordem' => ((int) PeticaoModeloParagrafo::where('modelo_id', $modeloNormalizado->id)->max('ordem')) + 1,
             'visivel' => true,
             'ativo' => true,
@@ -45,7 +44,7 @@ class NormalizedParagrafoController extends Controller
 
         $paragrafo->fill([
             'titulo' => mb_strtoupper($data['fund_titulo'], 'UTF-8'),
-            'conteudo_html' => LegacyEditorContent::denormalize($data['fund_text'] ?? null),
+            'conteudo_html' => $data['fund_text'] ?? null,
             'ordem' => $data['fund_order'] ?: $paragrafo->ordem,
         ])->save();
 
