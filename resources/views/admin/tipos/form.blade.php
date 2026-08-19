@@ -3,13 +3,8 @@
 @section('title', $modelo->exists ? 'Editar modelo' : 'Novo modelo')
 
 @push('head')
-@php
-    $legacyAppUrl = rtrim((string) config('legacy.app_url'), '/');
-@endphp
-@if($legacyAppUrl !== '')
-    <script src="{{ $legacyAppUrl }}/ckeditor/ckeditor.js"></script>
-    <script src="{{ $legacyAppUrl }}/ckfinder/ckfinder.js"></script>
-@endif
+<script src="{{ asset('ckeditor/ckeditor.js') }}"></script>
+<script src="{{ asset('ckfinder/ckfinder.js') }}"></script>
 <style>
     .field-behavior-note {
         margin-top: 6px;
@@ -565,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    var ckfinderBaseUrl = @json(config('legacy.ckfinder_base_url'));
+    var ckfinderBaseUrl = @json(asset('ckfinder/'));
     var textareas = document.querySelectorAll('.js-rich-editor');
 
     Array.prototype.forEach.call(textareas, function (textarea, index) {

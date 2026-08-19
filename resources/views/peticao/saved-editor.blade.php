@@ -3,13 +3,8 @@
 @section('title', 'Editor de peticao salva')
 
 @push('head')
-@php
-    $legacyAppUrl = rtrim((string) config('legacy.app_url'), '/');
-@endphp
-@if($legacyAppUrl !== '')
-    <script src="{{ $legacyAppUrl }}/ckeditor/ckeditor.js"></script>
-    <script src="{{ $legacyAppUrl }}/ckfinder/ckfinder.js"></script>
-@endif
+<script src="{{ asset('ckeditor/ckeditor.js') }}"></script>
+<script src="{{ asset('ckfinder/ckfinder.js') }}"></script>
 <style>
     .saved-editor-shell {
         display: grid;
@@ -797,7 +792,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    var ckfinderBaseUrl = @json(config('legacy.ckfinder_base_url'));
+    var ckfinderBaseUrl = @json(asset('ckfinder/'));
     var textarea = document.getElementById('saved_editor_content');
     var toolbarHost = document.getElementById('saved-editor-toolbar-host');
     var wordImportInput = document.getElementById('saved-editor-word-import-input');

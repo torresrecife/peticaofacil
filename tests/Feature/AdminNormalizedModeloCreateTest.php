@@ -10,6 +10,8 @@ class AdminNormalizedModeloCreateTest extends TestCase
 {
     public function test_admin_can_create_model_first_in_normalized_schema_without_legacy_reflection_by_default()
     {
+        config(['legacy.app_url' => 'https://legacy.invalid/peticaofacil']);
+
         $admin = factory(User::class)->create([
             'nivel_usu' => 'ADM',
             'acesso_usu' => now(),
@@ -43,7 +45,10 @@ class AdminNormalizedModeloCreateTest extends TestCase
             ->get('/admin/modelos-normalizados/create')
             ->assertStatus(200)
             ->assertSee('Novo modelo')
-            ->assertSee('NEO');
+            ->assertSee('NEO')
+            ->assertSee(asset('ckeditor/ckeditor.js'), false)
+            ->assertSee(asset('ckfinder/ckfinder.js'), false)
+            ->assertDontSee('legacy.invalid', false);
 
         $response = $this->actingAs($admin)
             ->post('/admin/modelos-normalizados', [

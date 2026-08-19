@@ -21,6 +21,8 @@ class PeticaoSavedEditorTest extends TestCase
 
     public function test_saved_peticao_editor_updates_normalized_record_and_exports()
     {
+        config(['legacy.app_url' => 'https://legacy.invalid/peticaofacil']);
+
         $user = factory(User::class)->create([
             'id_usu' => 30,
             'nivel_usu' => 'ADM',
@@ -68,7 +70,10 @@ class PeticaoSavedEditorTest extends TestCase
             ->assertStatus(200)
             ->assertSee('Editor de peticao salva')
             ->assertSee('Revise a minuta, ajuste o texto final e salve antes de exportar.')
-            ->assertSee('Filtrar historico');
+            ->assertSee('Filtrar historico')
+            ->assertSee(asset('ckeditor/ckeditor.js'), false)
+            ->assertSee(asset('ckfinder/ckfinder.js'), false)
+            ->assertDontSee('legacy.invalid', false);
 
         $this->actingAs($user)
             ->put('/peticoes-salvas/4001', [

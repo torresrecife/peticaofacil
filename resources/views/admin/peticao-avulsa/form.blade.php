@@ -3,13 +3,8 @@
 @section('title', 'Configurar peticao avulsa')
 
 @push('head')
-@php
-    $legacyAppUrl = rtrim((string) config('legacy.app_url'), '/');
-@endphp
-@if($legacyAppUrl !== '')
-    <script src="{{ $legacyAppUrl }}/ckeditor/ckeditor.js"></script>
-    <script src="{{ $legacyAppUrl }}/ckfinder/ckfinder.js"></script>
-@endif
+<script src="{{ asset('ckeditor/ckeditor.js') }}"></script>
+<script src="{{ asset('ckfinder/ckfinder.js') }}"></script>
 @endpush
 
 @section('content')
@@ -55,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    var ckfinderBaseUrl = @json(config('legacy.ckfinder_base_url'));
+    var ckfinderBaseUrl = @json(asset('ckfinder/'));
     Array.prototype.forEach.call(document.querySelectorAll('.js-rich-editor'), function (textarea, index) {
         if (!textarea.id) {
             textarea.id = 'avulsa_editor_' + index;

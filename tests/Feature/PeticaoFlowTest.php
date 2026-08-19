@@ -20,6 +20,8 @@ class PeticaoFlowTest extends TestCase
 
     public function test_user_can_compose_preview_open_editor_save_and_export_peticao()
     {
+        config(['legacy.app_url' => 'https://legacy.invalid/peticaofacil']);
+
         $user = factory(User::class)->create([
             'nivel_usu' => 'USU',
             'acesso_usu' => now(),
@@ -63,7 +65,11 @@ class PeticaoFlowTest extends TestCase
 
         $editorResponse->assertStatus(200)
             ->assertSee('Editor final da peca')
-            ->assertSee('Salvar peca');
+            ->assertSee('Salvar peca')
+            ->assertSee(asset('ckeditor/ckeditor.js'), false)
+            ->assertSee(asset('ckfinder/ckfinder.js'), false)
+            ->assertSee(asset('ckfinder/'), false)
+            ->assertDontSee('legacy.invalid', false);
 
         $saveResponse = $this->actingAs($user)->post('/peticoes/modelos/' . $modeloId . '/salvar', [
             'nome_cli' => 'Fulano da Silva',

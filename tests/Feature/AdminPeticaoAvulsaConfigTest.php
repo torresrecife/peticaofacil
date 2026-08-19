@@ -10,6 +10,8 @@ class AdminPeticaoAvulsaConfigTest extends TestCase
 {
     public function test_admin_can_update_avulsa_header_and_footer_template()
     {
+        config(['legacy.app_url' => 'https://legacy.invalid/peticaofacil']);
+
         $user = factory(User::class)->create([
             'nivel_usu' => 'ADM',
             'acesso_usu' => now(),
@@ -19,7 +21,10 @@ class AdminPeticaoAvulsaConfigTest extends TestCase
             ->get('/admin/peticoes-avulsas/configuracao')
             ->assertStatus(200)
             ->assertSee('Configurar peticao avulsa')
-            ->assertSee('@TIPO_PETICAO@');
+            ->assertSee('@TIPO_PETICAO@')
+            ->assertSee(asset('ckeditor/ckeditor.js'), false)
+            ->assertSee(asset('ckfinder/ckfinder.js'), false)
+            ->assertDontSee('legacy.invalid', false);
 
         $this->actingAs($user)
             ->put('/admin/peticoes-avulsas/configuracao', [
