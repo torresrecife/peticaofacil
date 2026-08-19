@@ -42,6 +42,7 @@ class PeticaoExportService
             $content = app(PeticaoPlaywrightRendererService::class)->renderPdf(
                 $this->preparePlaywrightLayout($layout)
             );
+            $content = $this->normalizePdfBinary($content);
 
             return response($content, 200, [
                 'Content-Type' => 'application/pdf',
@@ -272,7 +273,7 @@ class PeticaoExportService
                 throw new RuntimeException('O navegador nao gerou o arquivo PDF.');
             }
 
-            return response(file_get_contents($pdfPath), 200, [
+            return response($this->normalizePdfBinary(file_get_contents($pdfPath)), 200, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => 'attachment; filename="' . $baseName . '.pdf"',
                 'X-Peticao-Pdf-Engine' => 'browser',
@@ -319,7 +320,7 @@ class PeticaoExportService
         $pdf->setDefaultFont('arial');
         $pdf->writeHTML($content);
 
-        return response($pdf->Output($this->sanitizeFileName($nomeArquivo) . '.pdf', 'S'), 200, [
+        return response($this->normalizePdfBinary($pdf->Output($this->sanitizeFileName($nomeArquivo) . '.pdf', 'S')), 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="' . $this->sanitizeFileName($nomeArquivo) . '.pdf"',
             'X-Peticao-Pdf-Engine' => 'html2pdf',
@@ -329,6 +330,29 @@ class PeticaoExportService
     protected function shouldUseBrowserPdf()
     {
         return strtolower((string) config('pdf.engine', 'browser')) === 'browser';
+    }
+
+    protected function normalizePdfBinary($content)
+    {
+        $content = (string) $content;
+        $pdfOffset = strpos($content, '%PDF-');
+
+        if ($pdfOffset === false) {
+            throw new RuntimeException('O arquivo gerado nao possui uma assinatura PDF valida.');
+        }
+
+        if ($pdfOffset > 0) {
+            $prefix = substr($content, 0, $pdfOffset);
+            $allowedPrefix = "\xEF\xBB\xBF\x00\x09\x0A\x0D\x20";
+
+            if (trim($prefix, $allowedPrefix) !== '') {
+                throw new RuntimeException('Foram encontrados dados inesperados antes da assinatura PDF.');
+            }
+
+            $content = substr($content, $pdfOffset);
+        }
+
+        return $content;
     }
 
     protected function shouldUseHtml2PdfFallback()

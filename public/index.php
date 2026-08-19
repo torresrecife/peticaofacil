@@ -55,6 +55,15 @@ $response = $kernel->handle(
     $request = Illuminate\Http\Request::capture()
 );
 
+// A single byte emitted before a PDF invalidates its magic signature and can
+// make court signing systems classify the document as text/plain. Discard
+// accidental buffered output before sending PDF responses.
+if (stripos((string) $response->headers->get('Content-Type'), 'application/pdf') === 0) {
+    while (ob_get_level() > 0 && ob_get_length() !== false && ob_get_length() > 0) {
+        ob_clean();
+    }
+}
+
 $response->send();
 
 $kernel->terminate($request, $response);
