@@ -269,8 +269,12 @@ class PeticaoSavedReviewService
     protected function extractPlainText($html)
     {
         $html = (string) $html;
-        $html = preg_replace('/<br\s*\/?>/i', ' ', $html);
-        $html = preg_replace('/<\/p>/i', '</p> ', $html);
+        $html = preg_replace('/<br\s*\/?>/i', "\n", $html);
+        $html = preg_replace(
+            '/<\/(?:address|article|aside|blockquote|dd|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|li|main|nav|ol|p|pre|section|table|tbody|td|tfoot|th|thead|tr|ul)>/i',
+            "$0\n",
+            $html
+        );
         $html = strip_tags($html);
         $html = html_entity_decode($html, ENT_QUOTES, 'UTF-8');
 

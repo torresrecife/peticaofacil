@@ -1161,34 +1161,72 @@ document.addEventListener('DOMContentLoaded', function () {
             };
         }
 
-        var walker = body.ownerDocument.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
-            acceptNode: function (node) {
-                if (!node.nodeValue) {
-                    return NodeFilter.FILTER_REJECT;
-                }
-
-                var tagName = node.parentNode && node.parentNode.tagName ? node.parentNode.tagName.toUpperCase() : '';
-                if (tagName === 'SCRIPT' || tagName === 'STYLE') {
-                    return NodeFilter.FILTER_REJECT;
-                }
-
-                return NodeFilter.FILTER_ACCEPT;
-            }
-        });
-
         var nodes = [];
         var rawText = '';
-        var currentNode;
+        var blockBoundaryTags = {
+            ADDRESS: true, ARTICLE: true, ASIDE: true, BLOCKQUOTE: true,
+            DD: true, DIV: true, DL: true, DT: true, FIELDSET: true,
+            FIGCAPTION: true, FIGURE: true, FOOTER: true, FORM: true,
+            H1: true, H2: true, H3: true, H4: true, H5: true, H6: true,
+            HEADER: true, HR: true, LI: true, MAIN: true, NAV: true,
+            OL: true, P: true, PRE: true, SECTION: true, TABLE: true,
+            TBODY: true, TD: true, TFOOT: true, TH: true, THEAD: true,
+            TR: true, UL: true
+        };
 
-        while ((currentNode = walker.nextNode())) {
-            var value = currentNode.nodeValue.replace(/\u00a0/g, ' ');
+        function appendBoundary() {
+            if (rawText && !/\s$/.test(rawText)) {
+                rawText += '\n';
+            }
+        }
+
+        function appendTextNode(node) {
+            if (!node.nodeValue) {
+                return;
+            }
+
+            var value = node.nodeValue.replace(/\u00a0/g, ' ');
             nodes.push({
-                node: currentNode,
+                node: node,
                 start: rawText.length,
                 end: rawText.length + value.length
             });
             rawText += value;
         }
+
+        function visit(node) {
+            if (node.nodeType === 3) {
+                appendTextNode(node);
+                return;
+            }
+
+            if (node.nodeType !== 1) {
+                return;
+            }
+
+            var tagName = node.tagName ? node.tagName.toUpperCase() : '';
+            if (tagName === 'SCRIPT' || tagName === 'STYLE') {
+                return;
+            }
+
+            if (tagName === 'BR' || tagName === 'HR') {
+                appendBoundary();
+                return;
+            }
+
+            var isBlockBoundary = !!blockBoundaryTags[tagName];
+            if (isBlockBoundary) {
+                appendBoundary();
+            }
+
+            Array.prototype.forEach.call(node.childNodes || [], visit);
+
+            if (isBlockBoundary) {
+                appendBoundary();
+            }
+        }
+
+        Array.prototype.forEach.call(body.childNodes || [], visit);
 
         return {
             nodes: nodes,

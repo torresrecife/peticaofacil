@@ -11,6 +11,30 @@ use Tests\TestCase;
 
 class PeticaoSavedLanguageToolReviewTest extends TestCase
 {
+    public function test_review_preserves_visual_boundaries_when_extracting_text_from_html()
+    {
+        $mock = Mockery::mock(LanguageToolClient::class);
+        $mock->shouldReceive('check')
+            ->once()
+            ->with('BRUNO HENRIQUE DE OLIVEIRA VANDERLEI OAB/MG 200624-A endereço: Rua')
+            ->andReturn([
+                'ok' => true,
+                'error' => null,
+                'error_code' => null,
+                'data' => ['matches' => []],
+            ]);
+
+        $service = new \App\Services\PeticaoSavedReviewService($mock);
+        $result = $service->review(
+            '<p>BRUNO HENRIQUE DE OLIVEIRA VANDERLEI</p>'
+            . '<p>OAB/MG 200624-A</p>'
+            . '<div>endereço:<br><br>Rua</div>'
+        );
+
+        $this->assertSame([], $result['issues']);
+        $this->assertSame(100, $result['score']);
+    }
+
     public function test_saved_peticao_review_endpoint_returns_languagetool_matches_with_offsets_and_suggestions()
     {
         $user = factory(User::class)->create([
