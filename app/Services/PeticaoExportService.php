@@ -36,6 +36,10 @@ class PeticaoExportService
 
     public function exportPdfFromLayout(Request $request, array $layout)
     {
+        $layout['body_html'] = $this->appendExporterIdentification(
+            (string) ($layout['body_html'] ?? '')
+        );
+
         $engine = strtolower((string) config('pdf.engine', 'browser'));
 
         if ($engine === 'playwright') {
@@ -74,6 +78,8 @@ class PeticaoExportService
 
     public function exportPdf(Request $request, $nomeArquivo, $conteudoHtml, $cabecalhoHtml = null, $rodapeHtml = null)
     {
+        $conteudoHtml = $this->appendExporterIdentification((string) $conteudoHtml);
+
         if ($this->shouldUseBrowserPdf()) {
             try {
                 return $this->exportBrowserPdf($nomeArquivo, $conteudoHtml, $cabecalhoHtml, $rodapeHtml);
@@ -87,6 +93,31 @@ class PeticaoExportService
         }
 
         return $this->exportHtml2Pdf($request, $nomeArquivo, $conteudoHtml, $cabecalhoHtml, $rodapeHtml);
+    }
+
+    protected function appendExporterIdentification($html, $login = null)
+    {
+        if (strpos((string) $html, 'peticao-exporter-identification') !== false) {
+            return (string) $html;
+        }
+
+        if ($login === null) {
+            $user = auth()->user();
+            $login = $user ? $user->login_usu : null;
+        }
+
+        $login = trim((string) $login);
+        if ($login === '') {
+            return (string) $html;
+        }
+
+        $safeLogin = htmlspecialchars($login, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        return (string) $html
+            . '<div class="peticao-exporter-identification" align="right"'
+            . ' style="text-align:right;color:#ccc;font-style:italic;">'
+            . $safeLogin
+            . '</div>';
     }
 
     public function renderPrintView($nomeArquivo, $conteudoHtml, array $meta = [], $assetMode = 'browser', $cabecalhoHtml = null, $rodapeHtml = null)

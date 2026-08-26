@@ -34,4 +34,25 @@ class PeticaoExportServiceTest extends TestCase
         $this->expectException(RuntimeException::class);
         $service->normalizeForTest('conteudo de texto');
     }
+
+    public function test_pdf_export_appends_legacy_user_identification_once_and_escapes_login()
+    {
+        $service = new class extends PeticaoExportService {
+            public function appendExporterForTest($html, $login)
+            {
+                return $this->appendExporterIdentification($html, $login);
+            }
+        };
+
+        $content = $service->appendExporterForTest('<p>Peticao</p>', 'fabio<script>');
+        $content = $service->appendExporterForTest($content, 'outro');
+
+        $this->assertStringContainsString('class="peticao-exporter-identification"', $content);
+        $this->assertStringContainsString('align="right"', $content);
+        $this->assertStringContainsString('color:#ccc', $content);
+        $this->assertStringContainsString('font-style:italic', $content);
+        $this->assertStringContainsString('fabio&lt;script&gt;', $content);
+        $this->assertSame(1, substr_count($content, 'peticao-exporter-identification'));
+        $this->assertStringNotContainsString('outro', $content);
+    }
 }
