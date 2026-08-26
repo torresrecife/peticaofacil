@@ -15,6 +15,10 @@ class PeticaoExportService
 {
     public function exportWordFromLayout(array $layout)
     {
+        $layout['body_html'] = $this->appendExporterIdentification(
+            (string) ($layout['body_html'] ?? '')
+        );
+
         $filename = $this->sanitizeFileName($layout['title'] ?? 'peticao') . '.docx';
         $content = $this->renderWordDocumentFromLayout($layout);
 
@@ -1295,6 +1299,7 @@ class PeticaoExportService
             'font-size' => null,
             'font-family' => null,
             'font-weight' => null,
+            'font-style' => null,
             'color' => null,
         ];
 
@@ -1333,6 +1338,10 @@ class PeticaoExportService
             $style['bold'] = true;
         }
 
+        if (!empty($properties['font-style']) && strtolower(trim($properties['font-style'])) === 'italic') {
+            $style['italic'] = true;
+        }
+
         if (!empty($properties['color'])) {
             $style['color'] = ltrim($this->normalizeCssColorToHex($properties['color']), '#');
         }
@@ -1366,6 +1375,7 @@ class PeticaoExportService
             'font-size' => null,
             'font-family' => null,
             'font-weight' => null,
+            'font-style' => null,
             'color' => null,
             'line-height' => null,
         ];
@@ -1404,6 +1414,10 @@ class PeticaoExportService
 
         if (!empty($properties['font-weight']) && preg_match('/bold|700|800|900/i', $properties['font-weight'])) {
             $style['font']['bold'] = true;
+        }
+
+        if (!empty($properties['font-style']) && strtolower(trim($properties['font-style'])) === 'italic') {
+            $style['font']['italic'] = true;
         }
 
         if (!empty($properties['color'])) {

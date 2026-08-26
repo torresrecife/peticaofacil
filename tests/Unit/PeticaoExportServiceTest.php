@@ -35,7 +35,7 @@ class PeticaoExportServiceTest extends TestCase
         $service->normalizeForTest('conteudo de texto');
     }
 
-    public function test_pdf_export_appends_legacy_user_identification_once_and_escapes_login()
+    public function test_document_export_appends_legacy_user_identification_once_and_escapes_login()
     {
         $service = new class extends PeticaoExportService {
             public function appendExporterForTest($html, $login)
@@ -54,5 +54,25 @@ class PeticaoExportServiceTest extends TestCase
         $this->assertStringContainsString('fabio&lt;script&gt;', $content);
         $this->assertSame(1, substr_count($content, 'peticao-exporter-identification'));
         $this->assertStringNotContainsString('outro', $content);
+    }
+
+    public function test_docx_native_styles_preserve_exporter_gray_italic_formatting()
+    {
+        $service = new class extends PeticaoExportService {
+            public function docxTextStyleForTest($html)
+            {
+                $dom = new \DOMDocument('1.0', 'UTF-8');
+                $dom->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+
+                return $this->extractDocxTextStyle($dom->documentElement);
+            }
+        };
+
+        $style = $service->docxTextStyleForTest(
+            '<div style="text-align:right;color:#ccc;font-style:italic;">fabio</div>'
+        );
+
+        $this->assertTrue($style['font']['italic']);
+        $this->assertSame('cccccc', $style['font']['color']);
     }
 }
