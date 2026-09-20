@@ -1,6 +1,9 @@
 /node_modules
 /public/hot
 /public/storage
+# CKFinder: uploads e cache gerados em tempo de execucao
+/public/ckfinder/userfiles/.ckfinder/cache/data/Files/
+/public/ckfinder/userfiles/files/
 /public/css
 /public/js
 /public/mix-manifest.json
