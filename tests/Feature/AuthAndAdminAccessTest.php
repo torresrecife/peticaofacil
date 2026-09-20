@@ -124,13 +124,13 @@ class AuthAndAdminAccessTest extends TestCase
             ->assertSee('Troca obrigatoria de senha');
 
         $this->post('/primeiro-acesso', [
-            'password' => 'nova1234',
-            'password_confirmation' => 'nova1234',
+            'password' => 'Minha frase nova 2026!',
+            'password_confirmation' => 'Minha frase nova 2026!',
         ])->assertRedirect('/painel');
 
         $user = User::where('login_usu', 'primeiro')->first();
-        $this->assertTrue(Hash::check('nova1234', $user->password));
-        $this->assertTrue(Hash::check('nova1234', $user->senha_usu));
+        $this->assertTrue(Hash::check('Minha frase nova 2026!', $user->password));
+        $this->assertTrue(Hash::check('Minha frase nova 2026!', $user->senha_usu));
     }
 
     public function test_non_admin_user_cannot_access_admin_area()
@@ -181,7 +181,7 @@ class AuthAndAdminAccessTest extends TestCase
             'acesso_usu' => now(),
         ]);
 
-        $this->actingAs($admin)->post('/admin/usuarios', [
+        $response = $this->actingAs($admin)->post('/admin/usuarios', [
             'nome_usu' => 'Novo Usuario Seguro',
             'login_usu' => 'novo-seguro',
             'email_usu' => 'novo-seguro@example.test',
@@ -191,11 +191,14 @@ class AuthAndAdminAccessTest extends TestCase
             'cliente_ids' => [],
             'password' => 'senha-segura',
             'password_confirmation' => 'senha-segura',
-        ])->assertRedirect('/admin/usuarios');
+        ])->assertOk();
 
         $user = User::where('login_usu', 'novo-seguro')->firstOrFail();
-        $this->assertTrue(Hash::check('senha-segura', $user->password));
-        $this->assertTrue(Hash::check('senha-segura', $user->senha_usu));
+        $temporary = $response->viewData('temporaryPassword');
+        $this->assertTrue(Hash::check($temporary, $user->password));
+        $this->assertTrue(Hash::check($temporary, $user->senha_usu));
+        $this->assertFalse(Hash::check('senha-segura', $user->password));
+        $this->assertTrue($user->must_change_password);
     }
 
     public function test_admin_user_sees_admin_menu_links()

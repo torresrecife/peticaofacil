@@ -75,9 +75,10 @@ class UserController extends Controller
         $this->authorize('create', User::class);
         $data = $this->validateData($request);
 
-        app(UserAccountService::class)->create($this->normalizeData($data), $data['password']);
+        $temporaryPassword = bin2hex(random_bytes(12));
+        $user = app(UserAccountService::class)->create($this->normalizeData($data), $temporaryPassword);
 
-        return redirect()->route('admin.usuarios.index')->with('status', 'Usuario criado.');
+        return $this->temporaryCredentials($user, $temporaryPassword);
     }
 
     public function edit(User $user)
@@ -96,18 +97,22 @@ class UserController extends Controller
         $this->authorize('update', $user);
         $data = $this->validateData($request, $user);
 
+        $temporaryPassword = !empty($data['reset_password']) ? bin2hex(random_bytes(12)) : null;
         app(UserAccountService::class)->update(
             $user,
             $this->normalizeData($data),
-            !empty($data['password']) ? $data['password'] : null
+            $temporaryPassword
         );
+
+        if ($temporaryPassword !== null) {
+            return $this->temporaryCredentials($user, $temporaryPassword);
+        }
 
         return redirect()->route('admin.usuarios.index')->with('status', 'Usuario atualizado.');
     }
 
     protected function validateData(Request $request, User $user = null)
     {
-        $passwordRule = $user ? 'nullable|string|min:4|confirmed' : 'required|string|min:4|confirmed';
         $appUserId = $user ? $user->id : null;
 
         $rules = [
@@ -124,7 +129,7 @@ class UserController extends Controller
             'id_setor' => 'nullable|integer',
             'cliente_ids' => 'nullable|array',
             'cliente_ids.*' => 'integer',
-            'password' => $passwordRule,
+            'reset_password' => 'sometimes|boolean',
         ];
 
         if ($request->user()->nivel_usu !== 'ADM') {
@@ -162,5 +167,12 @@ class UserController extends Controller
         $data['id_cliente'] = !empty($data['cliente_ids']) ? implode(',', $data['cliente_ids']) : '0';
 
         return $data;
+    }
+
+    protected function temporaryCredentials(User $user, $temporaryPassword)
+    {
+        return response()->view('admin.users.temporary-password', compact('user', 'temporaryPassword'))
+            ->header('Cache-Control', 'no-store, private, max-age=0')
+            ->header('Pragma', 'no-cache');
     }
 }

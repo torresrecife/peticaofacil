@@ -96,6 +96,8 @@ abstract class TestCase extends BaseTestCase
             $table->string('email')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
+            $table->boolean('must_change_password')->default(false);
+            $table->dateTime('temporary_password_expires_at')->nullable();
             $table->string('nome_usu', 50)->nullable();
             $table->string('login_usu', 50)->nullable();
             $table->string('senha_usu', 255)->nullable();

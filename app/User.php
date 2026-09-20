@@ -46,6 +46,8 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
+        'must_change_password' => 'boolean',
+        'temporary_password_expires_at' => 'datetime',
         'acesso_usu' => 'datetime',
         'data_cad' => 'datetime',
     ];
@@ -87,6 +89,9 @@ class User extends Authenticatable
 
     public function requiresInitialPasswordChange()
     {
+        if ($this->must_change_password) {
+            return true;
+        }
         $access = $this->getOriginal('acesso_usu');
 
         return $access === null

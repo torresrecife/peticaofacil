@@ -31,6 +31,9 @@ class UserAccountService
 
         if ($plainPassword !== null && $plainPassword !== '') {
             $this->setPassword($user, $plainPassword);
+            $user->must_change_password = true;
+            $user->temporary_password_expires_at = now()->addHours(24);
+            $user->remember_token = \Illuminate\Support\Str::random(60);
         }
 
         $user->save();
@@ -61,6 +64,9 @@ class UserAccountService
     public function updatePassword(User $user, string $plainPassword): User
     {
         $this->setPassword($user, $plainPassword);
+        $user->must_change_password = false;
+        $user->temporary_password_expires_at = null;
+        $user->remember_token = \Illuminate\Support\Str::random(60);
         $user->acesso_usu = now();
         $user->save();
 

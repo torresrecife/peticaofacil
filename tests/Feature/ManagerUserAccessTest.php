@@ -56,7 +56,7 @@ class ManagerUserAccessTest extends TestCase
         Cliente::create(['cliente_name' => 'Carteira A']);
         Cliente::create(['cliente_name' => 'Carteira B']);
         $manager = $this->account('GER', '1');
-        $this->actingAs($manager)->post('/admin/usuarios', $this->data())->assertRedirect();
+        $this->actingAs($manager)->post('/admin/usuarios', $this->data())->assertOk();
         $target = User::where('login_usu', 'managed_user')->firstOrFail();
         $this->assertSame('1', $target->id_cliente);
         foreach ([['id_setor' => 2], ['id_setor' => null], ['id_setor' => 0], ['nivel_usu' => 'ADM'], ['nivel_usu' => 'GER'], ['cliente_ids' => [2]], ['cliente_ids' => []], ['cliente_ids' => [0]]] as $invalid) {
@@ -82,10 +82,11 @@ class ManagerUserAccessTest extends TestCase
         $this->post('/admin/usuarios', $this->data())->assertStatus(403);
         $this->assertCount(0, $this->get('/admin/usuarios')->viewData('users'));
         $admin = $this->account('ADM', '0');
+        $this->app['session']->forget('password_hash');
         $this->actingAs($admin)->get('/admin/usuarios/' . $manager->id . '/edit')->assertOk();
         $data = $this->data('new_manager');
         $data['nivel_usu'] = 'GER';
-        $this->post('/admin/usuarios', $data)->assertSessionHasNoErrors()->assertRedirect();
+        $this->post('/admin/usuarios', $data)->assertSessionHasNoErrors()->assertOk();
         $this->assertSame('GER', User::where('login_usu', 'new_manager')->firstOrFail()->nivel_usu);
     }
 }

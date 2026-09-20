@@ -66,13 +66,13 @@
                     @endforeach
                 </select>
             </div>
-            <div class="form-group">
-                <label>Senha {{ $user->exists ? '(opcional)' : '' }}</label>
-                <input name="password" type="password" {{ $user->exists ? '' : 'required' }}>
-            </div>
-            <div class="form-group">
-                <label>Confirmacao de senha</label>
-                <input name="password_confirmation" type="password" {{ $user->exists ? '' : 'required' }}>
+            <div class="form-group full">
+                @if($user->exists)
+                    <label><input type="checkbox" name="reset_password" value="1"> Emitir nova senha temporaria</label>
+                    <p>Invalida a senha anterior e exige uma nova senha no proximo acesso. Validade: 24 horas.</p>
+                @else
+                    <p>Ao salvar, o sistema gerara uma senha temporaria individual, valida por 24 horas. O usuario devera troca-la no primeiro acesso.</p>
+                @endif
             </div>
         </div>
 
