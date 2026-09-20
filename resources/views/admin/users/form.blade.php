@@ -31,7 +31,9 @@
             <div class="form-group">
                 <label>Setor</label>
                 <select name="id_setor">
-                    <option value="">Selecione</option>
+                    @if(auth()->user()->nivel_usu === 'ADM')
+                        <option value="">Selecione</option>
+                    @endif
                     @foreach($setores as $setor)
                         <option value="{{ $setor->id_setor }}" @if((string) old('id_setor', $user->id_setor) === (string) $setor->id_setor) selected @endif>{{ $setor->nome_setor }}</option>
                     @endforeach
@@ -40,7 +42,7 @@
             <div class="form-group">
                 <label>Nivel</label>
                 <select name="nivel_usu">
-                    @foreach(['ADM' => 'Administrador', 'GER' => 'Gerencial', 'USU' => 'Usuario'] as $value => $label)
+                    @foreach((auth()->user()->nivel_usu === 'ADM' ? ['ADM' => 'Administrador', 'GER' => 'Gerencial', 'USU' => 'Usuario'] : ['USU' => 'Usuario']) as $value => $label)
                         <option value="{{ $value }}" @if(old('nivel_usu', $user->nivel_usu) === $value) selected @endif>{{ $label }}</option>
                     @endforeach
                 </select>
@@ -55,6 +57,9 @@
             </div>
             <div class="form-group full">
                 <label>Clientes</label>
+                @if(auth()->user()->nivel_usu === 'GER')
+                    <p>Selecione ao menos um cliente da sua carteira. Voce pode gerenciar apenas usuarios de nivel USU, do seu setor e inteiramente vinculados a essa carteira.</p>
+                @endif
                 <select name="cliente_ids[]" multiple size="8">
                     @foreach($clientes as $cliente)
                         <option value="{{ $cliente->cliente_id }}" @if(in_array((string) $cliente->cliente_id, array_map('strval', old('cliente_ids', $selectedClients)), true)) selected @endif>{{ $cliente->cliente_name }}</option>

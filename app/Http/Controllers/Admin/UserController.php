@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Services\UserAccountService;
 use App\Setor;
 use App\User;
+use App\Policies\UserPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -17,6 +18,16 @@ class UserController extends Controller
         $search = trim((string) $request->query('q', ''));
 
         $users = User::with('setor')
+            ->when($request->user()->nivel_usu !== 'ADM', function ($query) use ($request) {
+                $policy = new UserPolicy();
+                $ids = User::where('nivel_usu', 'USU')
+                    ->where('id_setor', $request->user()->id_setor)
+                    ->get(['id', 'nivel_usu', 'id_cliente', 'id_setor'])
+                    ->filter(function ($target) use ($policy, $request) {
+                        return $policy->update($request->user(), $target);
+                    })->pluck('id');
+                $query->whereIn('id', $ids);
+            })
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($inner) use ($search) {
                     $inner->where('nome_usu', 'like', '%' . $search . '%')
@@ -49,16 +60,19 @@ class UserController extends Controller
 
     public function create()
     {
+        $this->authorize('create', User::class);
         return view('admin.users.form', [
-            'user' => new User(['status_usu' => 'ATI', 'nivel_usu' => 'USU']),
-            'setores' => Setor::orderBy('nome_setor')->get(),
-            'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
+            'user' => new User(['status_usu' => 'ATI', 'nivel_usu' => 'USU',
+                'id_setor' => auth()->user()->nivel_usu === 'GER' ? auth()->user()->id_setor : null]),
+            'setores' => $this->availableSectors(),
+            'clientes' => $this->availableClients(),
             'selectedClients' => [],
         ]);
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', User::class);
         $data = $this->validateData($request);
 
         app(UserAccountService::class)->create($this->normalizeData($data), $data['password']);
@@ -68,16 +82,18 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        $this->authorize('update', $user);
         return view('admin.users.form', [
             'user' => $user,
-            'setores' => Setor::orderBy('nome_setor')->get(),
-            'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
+            'setores' => $this->availableSectors(),
+            'clientes' => $this->availableClients(),
             'selectedClients' => $user->client_ids,
         ]);
     }
 
     public function update(Request $request, User $user)
     {
+        $this->authorize('update', $user);
         $data = $this->validateData($request, $user);
 
         app(UserAccountService::class)->update(
@@ -111,7 +127,34 @@ class UserController extends Controller
             'password' => $passwordRule,
         ];
 
+        if ($request->user()->nivel_usu !== 'ADM') {
+            $rules['nivel_usu'] = ['required', Rule::in(['USU'])];
+            $rules['id_setor'] = ['required', 'integer',
+                Rule::in([$request->user()->id_setor]), Rule::exists('setores', 'id_setor')];
+            $rules['cliente_ids'] = 'required|array|min:1';
+            $rules['cliente_ids.*'] = [
+                'required', 'integer', 'distinct',
+                Rule::in((new UserPolicy())->managedClientIds($request->user())),
+                Rule::exists('clientes', 'cliente_id'),
+            ];
+        }
+
         return $request->validate($rules);
+    }
+
+    protected function availableSectors()
+    {
+        return Setor::when(auth()->user()->nivel_usu !== 'ADM', function ($query) {
+            $query->where('id_setor', auth()->user()->id_setor);
+        })->orderBy('nome_setor')->get();
+    }
+
+    protected function availableClients()
+    {
+        return Cliente::active()
+            ->when(auth()->user()->nivel_usu !== 'ADM', function ($query) {
+                $query->whereIn('cliente_id', (new UserPolicy())->managedClientIds(auth()->user()));
+            })->orderBy('cliente_name')->get();
     }
 
     protected function normalizeData(array $data)

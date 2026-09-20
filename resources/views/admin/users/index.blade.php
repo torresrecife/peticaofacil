@@ -5,7 +5,9 @@
 @section('content')
 <div class="topbar" style="margin-bottom:16px;">
     <h2 style="margin:0;">Usuarios</h2>
-    <a class="button link" href="{{ route('admin.usuarios.create') }}">Novo usuario</a>
+    @can('create', App\User::class)
+        <a class="button link" href="{{ route('admin.usuarios.create') }}">Novo usuario</a>
+    @endcan
 </div>
 
 <div class="panel" style="margin-bottom:16px;">
