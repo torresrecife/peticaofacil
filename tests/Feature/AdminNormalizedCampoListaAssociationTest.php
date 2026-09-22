@@ -298,4 +298,39 @@ class AdminNormalizedCampoListaAssociationTest extends TestCase
         $this->assertSame('decimal', $campo->comportamento);
         $this->assertSame([], json_decode($campo->eventos_frontend, true) ?: []);
     }
+
+    public function test_admin_can_apply_legacy_value_in_words_preset_to_decimal_field()
+    {
+        $admin = factory(User::class)->create(['nivel_usu' => 'ADM', 'acesso_usu' => now()]);
+        DB::table('setores')->insert([
+            'id_setor' => 1, 'nome_setor' => 'Juridico', 'cod_setor' => 'JUR', 'data_cad' => now(),
+        ]);
+        DB::table('peticao_modelos')->insert([
+            'id' => 61, 'legacy_tipo_id' => 61, 'legacy_setor_id' => 1,
+            'nome' => 'MODELO EXTENSO', 'slug' => 'modelo-extenso-61', 'status' => 'ativo',
+            'arquivo_padrao' => 'pdf', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/admin/modelos-normalizados/61/campos', [
+                'input_title' => 'VALOR DO CONTRATO',
+                'input_tipo' => 'TEXT',
+                'input_behavior' => 'decimal',
+                'input_cols' => 1,
+                'input_rols' => 0,
+                'input_blur_preset' => 'valor_extenso',
+                'input_req' => 1,
+                'input_order' => 1,
+                'nomepet' => 'N',
+                'hide' => 'true',
+            ])
+            ->assertRedirect('/admin/modelos-normalizados/61/edit');
+
+        $campo = DB::table('peticao_modelo_campos')->where('modelo_id', 61)->first();
+        $this->assertSame('decimal', $campo->comportamento);
+        $this->assertSame(
+            ['blur' => 'fc_newstring(this);'],
+            json_decode($campo->eventos_frontend, true)
+        );
+    }
 }

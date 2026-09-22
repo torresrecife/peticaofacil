@@ -161,7 +161,7 @@ class PeticaoDateFieldBehaviorTest extends TestCase
             'obrigatorio' => 1,
             'gera_nome_arquivo' => 0,
             'eventos_frontend' => json_encode([
-                'blur' => 'fillCurrencyWords(this, 7202);',
+                'blur' => 'fc_newstring(this);',
             ]),
             'created_at' => now(),
             'updated_at' => now(),
@@ -171,11 +171,11 @@ class PeticaoDateFieldBehaviorTest extends TestCase
             ->get('/peticoes/modelos/72')
             ->assertStatus(200)
             ->assertSee('data-input-behavior="decimal"', false)
-            ->assertSee('data-event-blur="fillCurrencyWords(this, 7202);"', false)
+            ->assertSee('data-event-blur="fc_newstring(this);"', false)
             ->assertSee('inputmode="decimal"', false)
             ->assertSee('function formatCurrencyInput(value)', false)
             ->assertSee("field.value = formatCurrencyInput(field.value)", false)
             ->assertSee('function currencyToWords(value)', false)
-            ->assertSee('function fillCurrencyWords(sourceField, targetFieldId)', false);
+            ->assertSee('function fc_newstring(field)', false);
     }
 }

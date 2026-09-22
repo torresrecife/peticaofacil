@@ -96,9 +96,9 @@ class NormalizedInputCampoController extends Controller
             'input_focu' => 'nullable|string|max:2000',
             'input_load' => 'nullable|string|max:2000',
             'input_blur' => 'nullable|string|max:2000',
-            'input_focu_preset' => 'nullable|in:,data_extenso_out,data_atual,dia_semana',
-            'input_load_preset' => 'nullable|in:,data_extenso_out,data_atual,dia_semana',
-            'input_blur_preset' => 'nullable|in:,data_extenso_out,data_atual,dia_semana',
+            'input_focu_preset' => 'nullable|in:,data_extenso_out,data_atual,dia_semana,valor_extenso',
+            'input_load_preset' => 'nullable|in:,data_extenso_out,data_atual,dia_semana,valor_extenso',
+            'input_blur_preset' => 'nullable|in:,data_extenso_out,data_atual,dia_semana,valor_extenso',
             'input_width' => 'nullable|integer|min:10|max:5000',
             'input_req' => 'nullable|integer|min:0|max:1',
             'input_order' => 'nullable|integer|min:1',
@@ -238,6 +238,8 @@ class NormalizedInputCampoController extends Controller
                 return 'data_atual(this);';
             case 'dia_semana':
                 return 'dia_semana(this);';
+            case 'valor_extenso':
+                return 'fc_newstring(this);';
             default:
                 return '';
         }
@@ -251,10 +253,13 @@ class NormalizedInputCampoController extends Controller
         }
 
         if ($behavior === 'date') {
-            return $script;
+            return $this->isSupportedValueOnlyScript($script) ? '' : $script;
+        }
+        if ($behavior === 'decimal') {
+            return $this->isSupportedDateOnlyScript($script) ? '' : $script;
         }
 
-        return $this->isSupportedDateOnlyScript($script) ? '' : $script;
+        return ($this->isSupportedDateOnlyScript($script) || $this->isSupportedValueOnlyScript($script)) ? '' : $script;
     }
 
     protected function isSupportedDateOnlyScript($script)
@@ -267,6 +272,14 @@ class NormalizedInputCampoController extends Controller
             'data_extenso_out(this);',
             'dia_semana(this);',
         ], true);
+    }
+
+    protected function isSupportedValueOnlyScript($script)
+    {
+        $normalized = strtolower(trim((string) $script));
+        $normalized = preg_replace('/\s+/', '', $normalized);
+
+        return $normalized === 'fc_newstring(this);';
     }
 
     protected function normalizeBehaviorValue($behavior)

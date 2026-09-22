@@ -322,6 +322,7 @@
                                 <option value="data_extenso_out">Data por extenso</option>
                                 <option value="data_atual">Data atual</option>
                                 <option value="dia_semana">Dia da semana</option>
+                                <option value="valor_extenso">Valor por extenso</option>
                             </select>
                         </div>
                         <div class="form-group full">
@@ -335,6 +336,7 @@
                                 <option value="data_extenso_out">Data por extenso</option>
                                 <option value="data_atual">Data atual</option>
                                 <option value="dia_semana">Dia da semana</option>
+                                <option value="valor_extenso">Valor por extenso</option>
                             </select>
                         </div>
                         <div class="form-group full">
@@ -348,6 +350,7 @@
                                 <option value="data_extenso_out">Data por extenso</option>
                                 <option value="data_atual">Data atual</option>
                                 <option value="dia_semana">Dia da semana</option>
+                                <option value="valor_extenso">Valor por extenso</option>
                             </select>
                         </div>
                         <div class="form-group full">
@@ -499,6 +502,7 @@
                                             <option value="data_extenso_out" @if($campo->input_focu_preset === 'data_extenso_out') selected @endif>Data por extenso</option>
                                             <option value="data_atual" @if($campo->input_focu_preset === 'data_atual') selected @endif>Data atual</option>
                                             <option value="dia_semana" @if($campo->input_focu_preset === 'dia_semana') selected @endif>Dia da semana</option>
+                                            <option value="valor_extenso" @if($campo->input_focu_preset === 'valor_extenso') selected @endif>Valor por extenso</option>
                                         </select>
                                     </div>
                                     <div class="form-group full">
@@ -512,6 +516,7 @@
                                             <option value="data_extenso_out" @if($campo->input_load_preset === 'data_extenso_out') selected @endif>Data por extenso</option>
                                             <option value="data_atual" @if($campo->input_load_preset === 'data_atual') selected @endif>Data atual</option>
                                             <option value="dia_semana" @if($campo->input_load_preset === 'dia_semana') selected @endif>Dia da semana</option>
+                                            <option value="valor_extenso" @if($campo->input_load_preset === 'valor_extenso') selected @endif>Valor por extenso</option>
                                         </select>
                                     </div>
                                     <div class="form-group full">
@@ -525,6 +530,7 @@
                                             <option value="data_extenso_out" @if($campo->input_blur_preset === 'data_extenso_out') selected @endif>Data por extenso</option>
                                             <option value="data_atual" @if($campo->input_blur_preset === 'data_atual') selected @endif>Data atual</option>
                                             <option value="dia_semana" @if($campo->input_blur_preset === 'dia_semana') selected @endif>Dia da semana</option>
+                                            <option value="valor_extenso" @if($campo->input_blur_preset === 'valor_extenso') selected @endif>Valor por extenso</option>
                                         </select>
                                     </div>
                                     <div class="form-group full">
@@ -596,7 +602,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var type = String(typeSelect.value || '').toUpperCase();
         var behavior = String(behaviorSelect.value || '');
         var canUseBehavior = type === 'TEXT' || type === 'TEXTAREA';
-        var showDatePresets = canUseBehavior && behavior === 'date';
+        var showEventPresets = canUseBehavior && (behavior === 'date' || behavior === 'decimal');
         var focusPreset = form.querySelector('[name="input_focu_preset"]');
         var loadPreset = form.querySelector('[name="input_load_preset"]');
         var blurPreset = form.querySelector('[name="input_blur_preset"]');
@@ -610,18 +616,27 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         Array.prototype.forEach.call(presetRows, function (row) {
-            row.style.display = showDatePresets ? '' : 'none';
+            row.style.display = showEventPresets ? '' : 'none';
             Array.prototype.forEach.call(row.querySelectorAll('select'), function (select) {
-                select.disabled = !showDatePresets;
+                select.disabled = !showEventPresets;
+                Array.prototype.forEach.call(select.options, function (option) {
+                    if (!option.value) return;
+                    var isValuePreset = option.value === 'valor_extenso';
+                    option.hidden = behavior === 'decimal' ? !isValuePreset : isValuePreset;
+                    option.disabled = option.hidden;
+                });
+                if (select.selectedOptions.length && select.selectedOptions[0].hidden) {
+                    select.value = '';
+                }
             });
         });
 
         if (note) {
             note.style.display = canUseBehavior ? '' : 'none';
-            note.classList.toggle('is-active', showDatePresets);
+            note.classList.toggle('is-active', showEventPresets);
         }
 
-        if (!showDatePresets) {
+        if (!showEventPresets) {
             Array.prototype.forEach.call([focusPreset, loadPreset, blurPreset], function (select) {
                 if (select) {
                     select.value = '';
@@ -632,6 +647,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (behavior !== 'date') {
             Array.prototype.forEach.call([focusTextarea, loadTextarea, blurTextarea], function (textarea) {
                 if (textarea && isSupportedDateScript(textarea.value)) {
+                    textarea.value = '';
+                }
+            });
+        }
+        if (behavior !== 'decimal') {
+            Array.prototype.forEach.call([focusTextarea, loadTextarea, blurTextarea], function (textarea) {
+                if (textarea && String(textarea.value || '').replace(/\s+/g, '').toLowerCase() === 'fc_newstring(this);') {
                     textarea.value = '';
                 }
             });

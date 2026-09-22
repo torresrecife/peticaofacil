@@ -280,9 +280,8 @@ document.addEventListener('DOMContentLoaded', function () {
             dia_semana(field);
         }
 
-        var currencyWordsMatch = raw.match(/fillCurrencyWords\(this\s*,\s*(\d+)\s*\)/i);
-        if (currencyWordsMatch) {
-            fillCurrencyWords(field, currencyWordsMatch[1]);
+        if (raw.indexOf('fc_newstring(this)') !== -1) {
+            fc_newstring(field);
         }
     }
 
@@ -452,7 +451,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var parts = [];
 
         if (reais > 0) {
-            parts.push(integerToWords(reais) + (reais === 1 ? ' real' : ' reais'));
+            var currencyName = reais === 1 ? ' real' : ((reais >= 1000000 && reais % 1000000 === 0) ? ' de reais' : ' reais');
+            parts.push(integerToWords(reais) + currencyName);
         }
         if (centavos > 0) {
             parts.push(integerToWords(centavos) + (centavos === 1 ? ' centavo' : ' centavos'));
@@ -460,11 +460,13 @@ document.addEventListener('DOMContentLoaded', function () {
         return parts.length ? parts.join(' e ') : 'zero reais';
     }
 
-    function fillCurrencyWords(sourceField, targetFieldId) {
-        var target = document.querySelector('[name="campo_' + targetFieldId + '"]');
-        if (target) {
-            target.value = currencyToWords(sourceField.value);
+    function fc_newstring(field) {
+        var amount = formatDecimal(String(field.value || '').replace(/\s*\([^)]*\)\s*$/, ''));
+        if (!amount) {
+            field.value = '';
+            return;
         }
+        field.value = amount + ' (' + currencyToWords(amount) + ')';
     }
 
     function applyFieldBehavior(field) {
@@ -544,8 +546,8 @@ document.addEventListener('DOMContentLoaded', function () {
             executeSupportedEvents(field.getAttribute('data-event-focus'), field);
         });
         field.addEventListener('blur', function () {
-            executeSupportedEvents(field.getAttribute('data-event-blur'), field);
             applyFieldBehavior(field);
+            executeSupportedEvents(field.getAttribute('data-event-blur'), field);
         });
         field.addEventListener('input', function () {
             var behavior = (field.getAttribute('data-input-behavior') || '').toLowerCase();

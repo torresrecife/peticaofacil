@@ -290,6 +290,10 @@ class PeticaoModeloCampo extends Model
             return 'dia_semana';
         }
 
+        if (stripos($script, 'fc_newstring(this)') !== false) {
+            return 'valor_extenso';
+        }
+
         return '';
     }
 
