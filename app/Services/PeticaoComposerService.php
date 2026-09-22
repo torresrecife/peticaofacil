@@ -51,7 +51,7 @@ class PeticaoComposerService
 
     protected function resolveCampoValue($campo, $rawValue)
     {
-        if ($campo->input_tipo === 'SELECT') {
+        if (in_array($campo->input_tipo, ['SELECT', 'RADIO2'], true)) {
             if ($campo->hasAssociatedListSource()) {
                 return e((string) $rawValue);
             }

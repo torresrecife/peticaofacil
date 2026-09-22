@@ -226,6 +226,7 @@
                                 <option value="TEXT">Texto</option>
                                 <option value="TEXTAREA">Textarea</option>
                                 <option value="SELECT">Select</option>
+                                <option value="RADIO2">Opções (radio)</option>
                                 <option value="HIDDEN">Oculto</option>
                                 <option value="TITLE">Titulo</option>
                             </select>
@@ -283,6 +284,13 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label>Próxima linha</label>
+                            <select name="input_rols">
+                                <option value="0">Não</option>
+                                <option value="1">Sim</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label>Padrao</label>
                             <select name="input_behavior" class="js-field-behavior-select">
                                 <option value="">Padrão</option>
@@ -294,6 +302,7 @@
                                 <option value="fone">Fone</option>
                                 <option value="cep">CEP</option>
                                 <option value="integer">Número</option>
+                                <option value="processo">Processo CNJ</option>
                             </select>
                             <div class="field-behavior-note js-date-behavior-note" style="display:none;">Os presets de data ficam disponiveis apenas para campos Texto e Textarea quando o padrao Data estiver ativo.</div>
                         </div>
@@ -403,7 +412,7 @@
                                     <div class="form-group">
                                         <label>Tipo</label>
                                         <select name="input_tipo" class="js-field-type-select">
-                                            @foreach(['TEXT', 'TEXTAREA', 'SELECT', 'HIDDEN', 'TITLE'] as $tipoCampo)
+                                            @foreach(['TEXT', 'TEXTAREA', 'SELECT', 'RADIO2', 'HIDDEN', 'TITLE'] as $tipoCampo)
                                                 <option value="{{ $tipoCampo }}" @if($campo->input_tipo === $tipoCampo) selected @endif>{{ $tipoCampo }}</option>
                                             @endforeach
                                         </select>
@@ -463,6 +472,13 @@
                                         </select>
                                     </div>
                                     <div class="form-group">
+                                        <label>Próxima linha</label>
+                                        <select name="input_rols">
+                                            <option value="0" @if((int) $campo->input_rols === 0) selected @endif>Não</option>
+                                            <option value="1" @if((int) $campo->input_rols === 1) selected @endif>Sim</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
                                         <label>Padrao</label>
                                         <select name="input_behavior" class="js-field-behavior-select">
                                             <option value="" @if($campo->input_behavior === '') selected @endif>Padrão</option>
@@ -474,6 +490,7 @@
                                             <option value="fone" @if($campo->input_behavior === 'fone') selected @endif>Fone</option>
                                             <option value="cep" @if($campo->input_behavior === 'cep') selected @endif>CEP</option>
                                             <option value="integer" @if($campo->input_behavior === 'integer') selected @endif>Número</option>
+                                            <option value="processo" @if($campo->input_behavior === 'processo') selected @endif>Processo CNJ</option>
                                         </select>
                                         <div class="field-behavior-note js-date-behavior-note" style="display:none;">Os presets de data ficam disponiveis apenas para campos Texto e Textarea quando o padrao Data estiver ativo.</div>
                                     </div>

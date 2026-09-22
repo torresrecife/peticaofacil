@@ -286,7 +286,7 @@ class PeticaoModeloCampo extends Model
             return 'data_atual';
         }
 
-        if (stripos($script, 'dia_semana(this)') !== false) {
+        if (stripos($script, 'dia_semana(this)') !== false || stripos($script, 'diasemana(this)') !== false) {
             return 'dia_semana';
         }
 
@@ -317,6 +317,7 @@ class PeticaoModeloCampo extends Model
             'phone' => 'fone',
             'cep' => 'cep',
             'integer' => 'integer',
+            'processo' => 'processo',
             'numero' => 'integer',
             'número' => 'integer',
         ];

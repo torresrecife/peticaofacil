@@ -179,7 +179,7 @@ class PeticaoAssemblyController extends Controller
 
         $value = is_scalar($value) ? (string) $value : '';
 
-        if ($campo->input_tipo === 'SELECT') {
+        if (in_array($campo->input_tipo, ['SELECT', 'RADIO2'], true)) {
             foreach ($campo->select_options as $option) {
                 if ((string) $option['return'] === $value || (string) $option['label'] === $value) {
                     return $option['label'];

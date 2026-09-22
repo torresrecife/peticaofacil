@@ -84,8 +84,8 @@ class NormalizedInputCampoController extends Controller
     {
         return $request->validate([
             'input_title' => 'required|string|max:500',
-            'input_tipo' => 'required|in:TEXT,SELECT,TEXTAREA,HIDDEN,TITLE',
-            'input_behavior' => 'nullable|in:,date,decimal,cpf,cnpj,cpf_cnpj,fone,cep,integer',
+            'input_tipo' => 'required|in:TEXT,SELECT,TEXTAREA,HIDDEN,TITLE,RADIO2',
+            'input_behavior' => 'nullable|in:,date,decimal,cpf,cnpj,cpf_cnpj,fone,cep,integer,processo',
             'input_pre' => 'nullable|string',
             'input_pos' => 'nullable|string',
             'input_db' => 'nullable|string|max:100',
@@ -117,7 +117,7 @@ class NormalizedInputCampoController extends Controller
     {
         PeticaoModeloCampoOpcao::where('campo_id', $campo->id)->delete();
 
-        if ($campo->input_tipo !== 'SELECT' || !empty($data['input_list_group_id'])) {
+        if (!in_array($campo->input_tipo, ['SELECT', 'RADIO2'], true) || !empty($data['input_list_group_id'])) {
             return;
         }
 
@@ -286,7 +286,7 @@ class NormalizedInputCampoController extends Controller
     {
         $behavior = strtolower(trim((string) $behavior));
 
-        $allowed = ['date', 'decimal', 'cpf', 'cnpj', 'cpf_cnpj', 'fone', 'cep', 'integer'];
+        $allowed = ['date', 'decimal', 'cpf', 'cnpj', 'cpf_cnpj', 'fone', 'cep', 'integer', 'processo'];
 
         return in_array($behavior, $allowed, true) ? $behavior : '';
     }

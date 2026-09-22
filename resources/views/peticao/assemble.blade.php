@@ -94,22 +94,29 @@
             <div class="form-grid">
                 @foreach($modeloFonte->campos as $campo)
                     @if($campo->input_tipo === 'TITLE')
-                        <div class="form-group full">
+                        <div class="form-group full legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }}" data-field-id="{{ $campo->id_input }}" @if(!$campo->visivel) style="display:none;" @endif>
                             <div class="panel-muted"><strong>{{ $campo->input_title }}</strong></div>
                         </div>
                     @elseif($campo->input_tipo === 'HIDDEN')
                         <input type="hidden" name="campo_{{ $campo->id_input }}" value="{{ $values['campo_'.$campo->id_input] ?? '' }}">
                     @elseif($campo->input_tipo === 'SELECT')
                         @php($dependentConfig = $campo->dependent_fill_config)
-                        <div class="form-group @if((int) $campo->input_cols >= 2) full @endif">
+                        <div class="form-group legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }} @if((int) $campo->input_cols >= 2) full @endif" data-field-id="{{ $campo->id_input }}" @if(!$campo->visivel) style="display:none;" @endif>
                             <label>{{ $campo->input_title }}</label>
                             <select
                                 name="campo_{{ $campo->id_input }}"
+                                id="campo{{ $campo->id_input }}"
+                                class="@if($dependentConfig) js-dependent-select @endif @if($campo->input_focu || $campo->input_load || $campo->input_blur) js-frontend-event-field @endif"
                                 @if($dependentConfig)
-                                    class="js-dependent-select"
                                     data-target-field="{{ $dependentConfig['target_field_id'] }}"
                                     data-return-column="{{ $dependentConfig['return_column'] }}"
-                                @endif>
+                                @endif
+                                @if($campo->input_focu || $campo->input_load || $campo->input_blur)
+                                    data-event-focus="{{ e($campo->input_focu) }}"
+                                    data-event-load="{{ e($campo->input_load) }}"
+                                    data-event-blur="{{ e($campo->input_blur) }}"
+                                @endif
+                            >
                                 <option value=""></option>
                                 @foreach($campo->select_options as $option)
                                     <option
@@ -129,10 +136,29 @@
                                 @endif
                             </div>
                         </div>
+                    @elseif($campo->input_tipo === 'RADIO2')
+                        <div class="form-group legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }} @if((int) $campo->input_cols >= 2) full @endif" data-field-id="{{ $campo->id_input }}" @if(!$campo->visivel) style="display:none;" @endif>
+                            <label>{{ $campo->input_title }}</label>
+                            @foreach($campo->select_options as $option)
+                                <label style="display:flex;gap:8px;align-items:center;font-weight:normal;">
+                                    <input type="radio" id="campo{{ $campo->id_input }}_{{ $loop->index }}" name="campo_{{ $campo->id_input }}" value="{{ $option['value'] ?? $option['label'] }}"
+                                        @if($campo->input_focu || $campo->input_load || $campo->input_blur)
+                                            class="js-frontend-event-field"
+                                            data-event-focus="{{ e($campo->input_focu) }}"
+                                            data-event-load="{{ e($campo->input_load) }}"
+                                            data-event-blur="{{ e($campo->input_blur) }}"
+                                        @endif
+                                        @if(($values['campo_'.$campo->id_input] ?? '') === ($option['value'] ?? $option['label'])) checked @endif>
+                                    {{ $option['label'] }}
+                                </label>
+                            @endforeach
+                            <div class="editor-note">Token {{ $campo->placeholder }}</div>
+                        </div>
                     @elseif($campo->input_tipo === 'TEXTAREA')
-                        <div class="form-group full">
+                        <div class="form-group full legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }}" data-field-id="{{ $campo->id_input }}" @if(!$campo->visivel) style="display:none;" @endif>
                             <label>{{ $campo->input_title }}</label>
                             <textarea
+                                id="campo{{ $campo->id_input }}"
                                 name="campo_{{ $campo->id_input }}"
                                 @if($campo->input_focu || $campo->input_load || $campo->input_blur)
                                     class="js-frontend-event-field"
@@ -147,9 +173,10 @@
                             <div class="editor-note">Token {{ $campo->placeholder }}</div>
                         </div>
                     @else
-                        <div class="form-group @if((int) $campo->input_cols >= 2) full @endif">
+                        <div class="form-group legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }} @if((int) $campo->input_cols >= 2) full @endif" data-field-id="{{ $campo->id_input }}" @if(!$campo->visivel) style="display:none;" @endif>
                             <label>{{ $campo->input_title }}</label>
                             <input
+                                id="campo{{ $campo->id_input }}"
                                 name="campo_{{ $campo->id_input }}"
                                 value="{{ $values['campo_'.$campo->id_input] ?? '' }}"
                                 @if($campo->input_focu || $campo->input_load || $campo->input_blur)
@@ -161,7 +188,7 @@
                                 @if($campo->input_behavior)
                                     data-input-behavior="{{ $campo->input_behavior }}"
                                 @endif
-                                @if(in_array($campo->input_behavior, ['date', 'cpf', 'cnpj', 'cpf_cnpj', 'cep', 'integer', 'fone']))
+                                @if(in_array($campo->input_behavior, ['date', 'cpf', 'cnpj', 'cpf_cnpj', 'cep', 'integer', 'fone', 'processo']))
                                     inputmode="numeric"
                                 @elseif($campo->input_behavior === 'decimal')
                                     inputmode="decimal"
@@ -169,6 +196,9 @@
                             >
                             <div class="editor-note">Token {{ $campo->placeholder }}</div>
                         </div>
+                    @endif
+                    @if((int) $campo->input_rols === 1)
+                        <div class="full legacy-row-break" aria-hidden="true"></div>
                     @endif
                 @endforeach
             </div>
@@ -256,7 +286,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function dia_semana(field) {
         var date = parseDateValue(field.value);
-        field.value = formatWeekday(date);
+        var raw = String(field.value || '').replace(/\s*\([^)]*\)\s*$/, '');
+        field.value = raw ? raw + ' (' + formatWeekday(date) + ')' : '';
     }
 
     function executeSupportedEvents(script, field) {
@@ -279,10 +310,33 @@ document.addEventListener('DOMContentLoaded', function () {
         if (raw.indexOf('dia_semana(this)') !== -1) {
             dia_semana(field);
         }
+        if (raw.indexOf('diasemana(this)') !== -1) {
+            dia_semana(field);
+        }
 
         if (raw.indexOf('fc_newstring(this)') !== -1) {
             fc_newstring(field);
         }
+        if (raw.indexOf('estado_ext(this)') !== -1) {
+            estado_ext(field);
+        }
+
+        var repeatMatch = raw.match(/repeteValor\(\s*(\d+)\s*,\s*(\d+)\s*\)/i);
+        if (repeatMatch) repeatFieldValue(repeatMatch[1], repeatMatch[2]);
+        var addDateMatch = raw.match(/addDataCampo\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
+        if (addDateMatch) addMonthsToField(addDateMatch[1], addDateMatch[2], addDateMatch[3]);
+        var visibilityMatch = raw.match(/mcampo\(["']([^"']+)["']\)/i);
+        if (visibilityMatch) applyConditionalFields(visibilityMatch[1]);
+        var installmentsMatch = raw.match(/nparcelas\(["']([^"']+)["']\)/i);
+        if (installmentsMatch) applyCountedFields(installmentsMatch[1], 2);
+        var assetsMatch = raw.match(/nbens\(["']([^"']+)["']\s*,\s*["'][^"']+["']\)/i);
+        if (assetsMatch) applyCountedFields(assetsMatch[1], 1);
+        var numberWordsMatch = raw.match(/fc_numextenso\(\s*(\d+)\s*,\s*(\d+)\s*,\s*["']([^"']*)["']\s*\)/i);
+        if (numberWordsMatch) fillNumberInWords(numberWordsMatch[1], numberWordsMatch[2], numberWordsMatch[3]);
+        var currentDateMatch = raw.match(/data_extenso_cur\(["']campo(\d+)["']\s*,\s*\$\(["']#campo(\d+)["']\)\.val\(\)\s*\)/i);
+        if (currentDateMatch) fillCurrentDateInWords(currentDateMatch[1], currentDateMatch[2]);
+        var validationMatch = raw.match(/validate_peticao\(\s*(?:["']([^"']*)["'])?\s*\)/i);
+        if (validationMatch) validateLegacyPetition(validationMatch[1] || '');
     }
 
     function onlyDigits(value) {
@@ -322,6 +376,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function formatInteger(value) {
         return onlyDigits(value);
+    }
+
+    function formatProcess(value) {
+        var digits = onlyDigits(value).slice(0, 20);
+        var parts = [7, 2, 4, 1, 2, 4];
+        var separators = ['-', '.', '.', '.', '.'];
+        var output = '';
+        var offset = 0;
+        for (var index = 0; index < parts.length && offset < digits.length; index++) {
+            if (index > 0) output += separators[index - 1];
+            output += digits.slice(offset, offset + parts[index]);
+            offset += parts[index];
+        }
+        return output;
     }
 
     function formatDate(value) {
@@ -469,6 +537,104 @@ document.addEventListener('DOMContentLoaded', function () {
         field.value = amount + ' (' + currencyToWords(amount) + ')';
     }
 
+    function legacyField(fieldId) {
+        return document.querySelector('[name="campo_' + fieldId + '"]:checked') || document.querySelector('[name="campo_' + fieldId + '"]');
+    }
+
+    function legacyFieldValue(fieldId) {
+        var field = legacyField(fieldId);
+        return field ? String(field.value || '') : '';
+    }
+
+    function setLegacyFieldVisibility(fieldId, visible, required) {
+        var wrapper = document.querySelector('.dis_campo' + fieldId);
+        if (!wrapper) return;
+        wrapper.style.display = visible ? '' : 'none';
+        Array.prototype.forEach.call(wrapper.querySelectorAll('input, select, textarea'), function (control) {
+            control.required = !!(visible && required);
+            if (!visible && control.type !== 'radio' && control.type !== 'checkbox') control.value = '';
+            if (!visible && (control.type === 'radio' || control.type === 'checkbox')) control.checked = false;
+        });
+    }
+
+    function legacyFieldIds(spec) {
+        return String(spec || '').split('_|_').map(function (item) {
+            return String(item).replace(/\D/g, '');
+        }).filter(Boolean);
+    }
+
+    function applyConditionalFields(spec) {
+        var ids = legacyFieldIds(spec);
+        if (ids.length < 2) return;
+        var normalized = legacyFieldValue(ids[0]).toUpperCase();
+        if (normalized.normalize) normalized = normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        normalized = normalized.replace(/[^A-Z]/g, '');
+        ids.slice(1).forEach(function (id) {
+            setLegacyFieldVisibility(id, normalized !== 'NAO', normalized === 'SIM');
+        });
+    }
+
+    function applyCountedFields(spec, multiplier) {
+        var ids = legacyFieldIds(spec);
+        if (ids.length < 2) return;
+        var count = Math.max(0, parseInt(legacyFieldValue(ids[0]), 10) || 0) * multiplier;
+        ids.slice(1).forEach(function (id, index) {
+            setLegacyFieldVisibility(id, index < count, index < count);
+        });
+    }
+
+    function repeatFieldValue(sourceId, targetId) {
+        var target = legacyField(targetId);
+        if (target && target.offsetParent !== null) target.value = legacyFieldValue(sourceId);
+    }
+
+    function addMonthsToField(sourceId, targetId, months) {
+        var target = legacyField(targetId);
+        if (!target || target.offsetParent === null) return;
+        var date = parseDateValue(legacyFieldValue(sourceId));
+        date.setMonth(date.getMonth() + (parseInt(months, 10) || 1));
+        target.value = pad(date.getDate()) + '/' + pad(date.getMonth() + 1) + '/' + date.getFullYear();
+    }
+
+    function fillNumberInWords(sourceId, targetId, noun) {
+        var number = parseInt(onlyDigits(legacyFieldValue(sourceId)), 10);
+        var target = legacyField(targetId);
+        if (!target || isNaN(number)) return;
+        var words = integerToWords(number);
+        target.value = number + ' (' + words + ') ' + noun + (number === 1 ? '' : 's');
+    }
+
+    function estado_ext(field) {
+        var states = {AC:'ACRE',AL:'ALAGOAS',AP:'AMAPÁ',AM:'AMAZONAS',BA:'BAHIA',CE:'CEARÁ',DF:'DISTRITO FEDERAL',ES:'ESPÍRITO SANTO',GO:'GOIÁS',MA:'MARANHÃO',MT:'MATO GROSSO',MS:'MATO GROSSO DO SUL',MG:'MINAS GERAIS',PA:'PARÁ',PB:'PARAÍBA',PR:'PARANÁ',PE:'PERNAMBUCO',PI:'PIAUÍ',RJ:'RIO DE JANEIRO',RN:'RIO GRANDE DO NORTE',RS:'RIO GRANDE DO SUL',RO:'RONDÔNIA',RR:'RORAIMA',SC:'SANTA CATARINA',SP:'SÃO PAULO',SE:'SERGIPE',TO:'TOCANTINS'};
+        var value = String(field.value || '').trim().toUpperCase();
+        if (states[value]) field.value = states[value];
+    }
+
+    function fillCurrentDateInWords(targetId, cityFieldId) {
+        var target = legacyField(targetId);
+        if (!target) return;
+        var city = legacyFieldValue(cityFieldId).trim();
+        target.value = (city ? city + ', ' : '') + formatDateExtenso(new Date());
+    }
+
+    function validateLegacyPetition(exceptionMode) {
+        var blocked = false;
+        Array.prototype.forEach.call(document.querySelectorAll('.new_required'), function (item) {
+            var control = item.matches('input,select,textarea') ? item : item.querySelector('input:checked, select, textarea, input');
+            if (!control) return;
+            var value = String(control.value || '').toUpperCase();
+            if (value.normalize) value = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            value = value.replace(/[^A-Z]/g, '');
+            if (exceptionMode) {
+                blocked = blocked || ['AUSENTE', 'MUDOUSE', 'DESCONHECIDO'].indexOf(value) !== -1;
+            } else {
+                blocked = blocked || value === 'NAO';
+            }
+        });
+        var submit = document.querySelector('button[name="action_type"][value="preview"]');
+        if (submit) submit.disabled = blocked;
+    }
+
     function applyFieldBehavior(field) {
         var behavior = (field.getAttribute('data-input-behavior') || '').toLowerCase();
         if (!behavior) {
@@ -498,6 +664,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (behavior === 'integer') {
             field.value = formatInteger(field.value);
+            return;
+        }
+        if (behavior === 'processo') {
+            field.value = formatProcess(field.value);
             return;
         }
         if (behavior === 'date') {
@@ -553,10 +723,15 @@ document.addEventListener('DOMContentLoaded', function () {
             var behavior = (field.getAttribute('data-input-behavior') || '').toLowerCase();
             if (behavior === 'decimal') {
                 field.value = formatCurrencyInput(field.value);
-            } else if (['date', 'cpf', 'cnpj', 'cpf_cnpj', 'cep', 'fone', 'integer'].indexOf(behavior) !== -1) {
+            } else if (['date', 'cpf', 'cnpj', 'cpf_cnpj', 'cep', 'fone', 'integer', 'processo'].indexOf(behavior) !== -1) {
                 applyFieldBehavior(field);
             }
         });
+        if (field.tagName === 'SELECT' || field.type === 'radio') {
+            field.addEventListener('change', function () {
+                executeSupportedEvents(field.getAttribute('data-event-blur') || field.getAttribute('data-event-focus'), field);
+            });
+        }
     });
 
     Array.prototype.forEach.call(document.querySelectorAll('[data-input-behavior]'), function (field) {
@@ -572,7 +747,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var behavior = (field.getAttribute('data-input-behavior') || '').toLowerCase();
             if (behavior === 'decimal') {
                 field.value = formatCurrencyInput(field.value);
-            } else if (['date', 'cpf', 'cnpj', 'cpf_cnpj', 'cep', 'fone', 'integer'].indexOf(behavior) !== -1) {
+            } else if (['date', 'cpf', 'cnpj', 'cpf_cnpj', 'cep', 'fone', 'integer', 'processo'].indexOf(behavior) !== -1) {
                 applyFieldBehavior(field);
             }
         });
