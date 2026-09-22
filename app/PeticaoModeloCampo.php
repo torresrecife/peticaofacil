@@ -307,6 +307,8 @@ class PeticaoModeloCampo extends Model
             'valor' => 'decimal',
             'cpf' => 'cpf',
             'cnpj' => 'cnpj',
+            'cpf_cnpj' => 'cpf_cnpj',
+            'cpfcnpj' => 'cpf_cnpj',
             'fone' => 'fone',
             'phone' => 'fone',
             'cep' => 'cep',

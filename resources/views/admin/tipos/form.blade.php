@@ -290,6 +290,7 @@
                                 <option value="decimal">Valor</option>
                                 <option value="cpf">Cpf</option>
                                 <option value="cnpj">Cnpj</option>
+                                <option value="cpf_cnpj">CPF/CNPJ</option>
                                 <option value="fone">Fone</option>
                                 <option value="cep">CEP</option>
                                 <option value="integer">Número</option>
@@ -466,6 +467,7 @@
                                             <option value="decimal" @if($campo->input_behavior === 'decimal') selected @endif>Valor</option>
                                             <option value="cpf" @if($campo->input_behavior === 'cpf') selected @endif>Cpf</option>
                                             <option value="cnpj" @if($campo->input_behavior === 'cnpj') selected @endif>Cnpj</option>
+                                            <option value="cpf_cnpj" @if($campo->input_behavior === 'cpf_cnpj') selected @endif>CPF/CNPJ</option>
                                             <option value="fone" @if($campo->input_behavior === 'fone') selected @endif>Fone</option>
                                             <option value="cep" @if($campo->input_behavior === 'cep') selected @endif>CEP</option>
                                             <option value="integer" @if($campo->input_behavior === 'integer') selected @endif>Número</option>

@@ -85,7 +85,7 @@ class NormalizedInputCampoController extends Controller
         return $request->validate([
             'input_title' => 'required|string|max:500',
             'input_tipo' => 'required|in:TEXT,SELECT,TEXTAREA,HIDDEN,TITLE',
-            'input_behavior' => 'nullable|in:,date,decimal,cpf,cnpj,fone,cep,integer',
+            'input_behavior' => 'nullable|in:,date,decimal,cpf,cnpj,cpf_cnpj,fone,cep,integer',
             'input_pre' => 'nullable|string',
             'input_pos' => 'nullable|string',
             'input_db' => 'nullable|string|max:100',
@@ -273,7 +273,7 @@ class NormalizedInputCampoController extends Controller
     {
         $behavior = strtolower(trim((string) $behavior));
 
-        $allowed = ['date', 'decimal', 'cpf', 'cnpj', 'fone', 'cep', 'integer'];
+        $allowed = ['date', 'decimal', 'cpf', 'cnpj', 'cpf_cnpj', 'fone', 'cep', 'integer'];
 
         return in_array($behavior, $allowed, true) ? $behavior : '';
     }

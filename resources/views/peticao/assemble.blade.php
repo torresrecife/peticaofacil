@@ -161,7 +161,7 @@
                                 @if($campo->input_behavior)
                                     data-input-behavior="{{ $campo->input_behavior }}"
                                 @endif
-                                @if(in_array($campo->input_behavior, ['cpf', 'cnpj', 'cep', 'integer', 'fone']))
+                                @if(in_array($campo->input_behavior, ['date', 'cpf', 'cnpj', 'cpf_cnpj', 'cep', 'integer', 'fone']))
                                     inputmode="numeric"
                                 @elseif($campo->input_behavior === 'decimal')
                                     inputmode="decimal"
@@ -279,6 +279,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (raw.indexOf('dia_semana(this)') !== -1) {
             dia_semana(field);
         }
+
+        var currencyWordsMatch = raw.match(/fillCurrencyWords\(this\s*,\s*(\d+)\s*\)/i);
+        if (currencyWordsMatch) {
+            fillCurrencyWords(field, currencyWordsMatch[1]);
+        }
     }
 
     function onlyDigits(value) {
@@ -320,6 +325,23 @@ document.addEventListener('DOMContentLoaded', function () {
         return onlyDigits(value);
     }
 
+    function formatDate(value) {
+        var raw = String(value || '').trim();
+        if (!raw || /[a-záàâãéêíóôõúç]/i.test(raw)) {
+            return raw;
+        }
+
+        var iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (iso) {
+            return pad(parseInt(iso[3], 10)) + '/' + pad(parseInt(iso[2], 10)) + '/' + iso[1];
+        }
+
+        var digits = onlyDigits(raw).slice(0, 8);
+        if (digits.length <= 2) return digits;
+        if (digits.length <= 4) return digits.slice(0, 2) + '/' + digits.slice(2);
+        return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
+    }
+
     function formatDecimal(value) {
         var raw = String(value || '').trim();
         if (!raw) {
@@ -345,6 +367,106 @@ document.addEventListener('DOMContentLoaded', function () {
         return number.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    function formatCurrencyInput(value) {
+        var digits = onlyDigits(value);
+        if (!digits) {
+            return '';
+        }
+
+        digits = digits.replace(/^0+(?=\d)/, '');
+        var integerPart = digits.length > 2 ? digits.slice(0, -2) : '0';
+        var decimalPart = digits.length > 1 ? digits.slice(-2) : '0' + digits;
+        integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+        return integerPart + ',' + decimalPart;
+    }
+
+    function integerGroupToWords(value) {
+        var units = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+        var teens = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+        var tens = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+        var hundreds = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+
+        value = parseInt(value, 10) || 0;
+        if (value === 100) return 'cem';
+
+        var parts = [];
+        var hundred = Math.floor(value / 100);
+        var remainder = value % 100;
+        if (hundred) parts.push(hundreds[hundred]);
+        if (remainder >= 10 && remainder <= 19) {
+            parts.push(teens[remainder - 10]);
+        } else {
+            var ten = Math.floor(remainder / 10);
+            var unit = remainder % 10;
+            if (ten) parts.push(tens[ten]);
+            if (unit) parts.push(units[unit]);
+        }
+        return parts.join(' e ');
+    }
+
+    function integerToWords(value) {
+        value = Math.floor(Math.abs(Number(value) || 0));
+        if (value === 0) return 'zero';
+
+        var scales = [
+            ['', ''],
+            ['mil', 'mil'],
+            ['milhão', 'milhões'],
+            ['bilhão', 'bilhões'],
+            ['trilhão', 'trilhões']
+        ];
+        var groups = [];
+        var scale = 0;
+        while (value > 0 && scale < scales.length) {
+            var group = value % 1000;
+            if (group) {
+                var words = integerGroupToWords(group);
+                if (scale === 1 && group === 1) {
+                    words = 'mil';
+                } else if (scale > 0) {
+                    words += ' ' + scales[scale][group === 1 ? 0 : 1];
+                }
+                groups.unshift({ value: group, words: words });
+            }
+            value = Math.floor(value / 1000);
+            scale++;
+        }
+
+        var result = groups.length ? groups[0].words : 'zero';
+        for (var index = 1; index < groups.length; index++) {
+            var connector = (groups[index].value < 100 || groups[index].value % 100 === 0) ? ' e ' : ' ';
+            result += connector + groups[index].words;
+        }
+        return result;
+    }
+
+    function currencyToWords(value) {
+        var digits = onlyDigits(value);
+        if (!digits) return '';
+
+        var centsValue = parseInt(digits, 10);
+        if (isNaN(centsValue)) return '';
+        var reais = Math.floor(centsValue / 100);
+        var centavos = centsValue % 100;
+        var parts = [];
+
+        if (reais > 0) {
+            parts.push(integerToWords(reais) + (reais === 1 ? ' real' : ' reais'));
+        }
+        if (centavos > 0) {
+            parts.push(integerToWords(centavos) + (centavos === 1 ? ' centavo' : ' centavos'));
+        }
+        return parts.length ? parts.join(' e ') : 'zero reais';
+    }
+
+    function fillCurrencyWords(sourceField, targetFieldId) {
+        var target = document.querySelector('[name="campo_' + targetFieldId + '"]');
+        if (target) {
+            target.value = currencyToWords(sourceField.value);
+        }
+    }
+
     function applyFieldBehavior(field) {
         var behavior = (field.getAttribute('data-input-behavior') || '').toLowerCase();
         if (!behavior) {
@@ -359,6 +481,11 @@ document.addEventListener('DOMContentLoaded', function () {
             field.value = formatCnpj(field.value);
             return;
         }
+        if (behavior === 'cpf_cnpj') {
+            var cpfCnpjDigits = onlyDigits(field.value).slice(0, 14);
+            field.value = cpfCnpjDigits.length <= 11 ? formatCpf(cpfCnpjDigits) : formatCnpj(cpfCnpjDigits);
+            return;
+        }
         if (behavior === 'cep') {
             field.value = formatCep(field.value);
             return;
@@ -369,6 +496,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (behavior === 'integer') {
             field.value = formatInteger(field.value);
+            return;
+        }
+        if (behavior === 'date') {
+            field.value = formatDate(field.value);
             return;
         }
         if (behavior === 'decimal') {
@@ -418,7 +549,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         field.addEventListener('input', function () {
             var behavior = (field.getAttribute('data-input-behavior') || '').toLowerCase();
-            if (['cpf', 'cnpj', 'cep', 'fone', 'integer'].indexOf(behavior) !== -1) {
+            if (behavior === 'decimal') {
+                field.value = formatCurrencyInput(field.value);
+            } else if (['date', 'cpf', 'cnpj', 'cpf_cnpj', 'cep', 'fone', 'integer'].indexOf(behavior) !== -1) {
                 applyFieldBehavior(field);
             }
         });
@@ -435,7 +568,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         field.addEventListener('input', function () {
             var behavior = (field.getAttribute('data-input-behavior') || '').toLowerCase();
-            if (['cpf', 'cnpj', 'cep', 'fone', 'integer'].indexOf(behavior) !== -1) {
+            if (behavior === 'decimal') {
+                field.value = formatCurrencyInput(field.value);
+            } else if (['date', 'cpf', 'cnpj', 'cpf_cnpj', 'cep', 'fone', 'integer'].indexOf(behavior) !== -1) {
                 applyFieldBehavior(field);
             }
         });
