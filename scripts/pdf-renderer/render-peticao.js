@@ -44,8 +44,15 @@ async function main() {
       bottom: '30mm',
       left: '16.9mm',
     };
+    const hasHeader = hasRenderableTemplate(payload.header_html);
+    const hasFooter = hasRenderableTemplate(payload.footer_html);
+    // Playwright reserves the header/footer margin even when the template is
+    // empty. Use the configured page margin for an absent asset so a blank
+    // footer does not create a visible band of unused space.
+    // The generated petition layout relies on this top reservation even when
+    // the visible header is embedded in the document body.
     const reservedHeaderSpace = '30mm';
-    const reservedFooterSpace = '30mm';
+    const reservedFooterSpace = hasFooter ? '30mm' : '15mm';
 
     const documentHtml = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -101,7 +108,7 @@ async function main() {
       path: path.resolve(outputPath),
       format: payload.options && payload.options.format ? payload.options.format : 'A4',
       printBackground: true,
-      displayHeaderFooter: true,
+      displayHeaderFooter: hasHeader || hasFooter,
       headerTemplate: buildTemplateHtml(
         payload.header_html || '',
         'header',
@@ -126,6 +133,22 @@ async function main() {
   } finally {
     await browser.close();
   }
+}
+
+function hasRenderableTemplate(value) {
+  const html = String(value || '');
+  if (/<(?:img|table|svg|canvas|iframe|object)\b/i.test(html)) {
+    return true;
+  }
+
+  const text = html
+    .replace(/<br\s*\/?\s*>/gi, '')
+    .replace(/<\/p\s*>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;|&#160;/gi, '')
+    .replace(/\s+/g, '');
+
+  return text !== '';
 }
 
 function buildTemplateHtml(content, kind, paddingLeft, paddingRight, defaults) {
