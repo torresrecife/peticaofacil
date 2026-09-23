@@ -296,11 +296,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        var behavior = (field.getAttribute('data-input-behavior') || '').toLowerCase();
-        if (behavior !== 'date') {
-            return;
-        }
-
         if (raw.indexOf('data_atual(this)') !== -1) {
             data_atual(field);
         }
