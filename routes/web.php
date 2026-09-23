@@ -81,6 +81,8 @@ Route::middleware(['auth', 'password.initial'])->group(function () {
         Route::post('modelos-normalizados', 'Admin\NormalizedTipoController@store')->name('modelos-normalizados.store');
         Route::get('modelos-normalizados/{modeloNormalizado}/edit', 'Admin\NormalizedTipoController@edit')->name('modelos-normalizados.edit');
         Route::put('modelos-normalizados/{modeloNormalizado}', 'Admin\NormalizedTipoController@update')->name('modelos-normalizados.update');
+        Route::get('modelos-normalizados/{modeloNormalizado}/exportar', 'Admin\ModeloTransferController@export')->name('modelos-normalizados.export');
+        Route::post('modelos-normalizados/importar', 'Admin\ModeloTransferController@import')->name('modelos-normalizados.import');
         Route::get('peticoes-avulsas/configuracao', 'Admin\PeticaoAvulsaConfigController@edit')->name('peticoes-avulsas.config.edit');
         Route::put('peticoes-avulsas/configuracao', 'Admin\PeticaoAvulsaConfigController@update')->name('peticoes-avulsas.config.update');
         Route::post('modelos-normalizados/{modeloNormalizado}/paragrafos', 'Admin\NormalizedParagrafoController@store')->name('modelos-normalizados.paragrafos.store');

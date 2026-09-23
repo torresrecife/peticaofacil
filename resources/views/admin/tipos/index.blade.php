@@ -6,11 +6,12 @@
 <div class="topbar" style="margin-bottom:16px;">
     <h2 style="margin:0;">Modelos de peticao</h2>
     <a class="button link" href="{{ route('admin.modelos-normalizados.create') }}">Novo modelo</a>
+    <form method="post" action="{{ route('admin.modelos-normalizados.import') }}" enctype="multipart/form-data" style="display:flex;gap:8px;align-items:center;">@csrf<input type="file" name="pacote" accept=".json,application/json" required><button type="submit">Importar modelo</button></form>
 </div>
 
 <div class="panel" style="margin-bottom:16px;">
     <form method="get" action="{{ route('admin.modelos-normalizados.index') }}">
-        <div class="form-grid" style="grid-template-columns:minmax(0, 1fr) auto;">
+        <div class="form-grid" style="grid-template-columns:minmax(0, 2fr) minmax(160px, 1fr) minmax(160px, 1fr) auto;">
             <div class="form-group">
                 <label>Buscar modelo</label>
                 <input
@@ -25,8 +26,9 @@
                 </datalist>
                 <div class="editor-note">Busca por nome, slug ou ID. O autocomplete sugere modelos normalizados cadastrados.</div>
             </div>
-            <div class="form-group" style="justify-content:end;">
-                <label>&nbsp;</label>
+            <div class="form-group"><label>Area</label><select name="setor_id"><option value="0">Todas</option>@foreach($setores as $setor)<option value="{{ $setor->id_setor }}" {{ $setorId == $setor->id_setor ? 'selected' : '' }}>{{ $setor->nome_setor }}</option>@endforeach</select></div>
+            <div class="form-group"><label>Cliente</label><select name="cliente_id"><option value="0">Todos</option>@foreach($clientes as $cliente)<option value="{{ $cliente->cliente_id }}" {{ $clienteId == $cliente->cliente_id ? 'selected' : '' }}>{{ $cliente->cliente_name }}</option>@endforeach</select></div>
+            <div class="form-group" style="justify-content:flex-start; padding-top:26px;">
                 <div class="actions">
                     <button type="submit">Buscar</button>
                     <a class="button secondary link" href="{{ route('admin.modelos-normalizados.index') }}">Limpar</a>
@@ -71,7 +73,7 @@
                         <div><strong>#{{ $modelo->id }}</strong> {{ $modelo->slug }}</div>
                         <div class="editor-note">{{ $modelo->paragrafos_count }} paragrafos, {{ $modelo->campos_count }} campos</div>
                     </td>
-                    <td><a href="{{ route('admin.modelos-normalizados.edit', $modelo) }}">Editar</a></td>
+                    <td><div style="display:inline-flex; align-items:center; gap:12px;"><a href="{{ route('admin.modelos-normalizados.edit', $modelo) }}">Editar</a><a href="{{ route('admin.modelos-normalizados.export', $modelo) }}">Exportar</a></div></td>
                 </tr>
             @empty
                 <tr>

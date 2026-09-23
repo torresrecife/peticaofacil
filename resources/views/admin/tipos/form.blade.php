@@ -117,33 +117,6 @@
         </form>
     </div>
 
-    @if($modelo->exists && $mirror)
-        <div class="panel">
-            <div class="section-title">
-                <h3>Leitura normalizada</h3>
-                <div class="editor-note">Fonte principal atual da edicao.</div>
-            </div>
-            <div class="grid">
-                <div class="stat">
-                    <span>Modelo normalizado</span>
-                    <strong>#{{ $mirror->id }}</strong>
-                </div>
-                <div class="stat">
-                    <span>Slug</span>
-                    <strong style="font-size:18px;">{{ $mirror->slug }}</strong>
-                </div>
-                <div class="stat">
-                    <span>Paragrafos</span>
-                    <strong>{{ $mirror->paragrafos->count() }}</strong>
-                </div>
-                <div class="stat">
-                    <span>Campos</span>
-                    <strong>{{ $mirror->campos->count() }}</strong>
-                </div>
-            </div>
-        </div>
-    @endif
-
     @if($modelo->exists)
         <div class="panel">
             <div class="section-title">

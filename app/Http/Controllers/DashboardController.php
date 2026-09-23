@@ -34,6 +34,7 @@ class DashboardController extends Controller
             'clienteCount' => Cliente::count(),
             'activeUserCount' => User::active()->count(),
             'todayLabel' => now()->format('d/m/Y'),
+            'todayPeticoesTotal' => $peticoesHojeNormalizadas->count(),
             'peticoesHoje' => $peticoesHoje,
             'usuariosHoje' => $usuariosHoje,
             'favoritos' => $favoritos,

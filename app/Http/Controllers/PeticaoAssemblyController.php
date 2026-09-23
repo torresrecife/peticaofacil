@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\PeticaoModelo;
+use App\Setor;
+use App\Cliente;
 use App\Services\PeticaoModeloRuntimeFactory;
 use App\Services\SqlServerLookupService;
 use App\Services\PeticaoComposerService;
@@ -14,6 +16,8 @@ class PeticaoAssemblyController extends Controller
     public function index(Request $request)
     {
         $search = trim((string) $request->query('search', ''));
+        $setorId = (int) $request->query('setor_id', 0);
+        $clienteId = (int) $request->query('cliente_id', 0);
         $favoriteNormalizedIds = [];
 
         $favoriteCollection = Auth::user()
@@ -51,6 +55,8 @@ class PeticaoAssemblyController extends Controller
                         ->orWhere('slug', 'like', '%' . $search . '%');
                 });
             });
+        $modelosQuery->when($setorId > 0, function ($query) use ($setorId) { return $query->where('legacy_setor_id', $setorId); });
+        $modelosQuery->when($clienteId > 0, function ($query) use ($clienteId) { return $query->where('legacy_cliente_id', $clienteId); });
 
         if (!empty($favoriteNormalizedIds)) {
             $modelosQuery->orderByRaw(
@@ -79,7 +85,9 @@ class PeticaoAssemblyController extends Controller
             ->unique()
             ->values();
 
-        return view('peticao.index', compact('modelos', 'favoriteRows', 'search', 'suggestions'));
+        $setores = Setor::orderBy('nome_setor')->get();
+        $clientes = Cliente::active()->orderBy('cliente_name')->get();
+        return view('peticao.index', compact('modelos', 'favoriteRows', 'search', 'suggestions', 'setorId', 'clienteId', 'setores', 'clientes'));
     }
 
     public function showNormalized(PeticaoModelo $modeloNormalizado)

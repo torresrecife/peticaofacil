@@ -136,7 +136,7 @@
         <div class="panel">
             <div class="section-title">
                 <h3>Peticoes de hoje</h3>
-                <div class="editor-note">{{ $todayLabel }} - ultimas 10</div>
+                <div class="editor-note">{{ $todayLabel }} - ultimas 10 do total de {{ $todayPeticoesTotal }}</div>
             </div>
             @if($peticoesHoje->isEmpty())
                 <div class="editor-note">Nenhuma peticao salva hoje.</div>

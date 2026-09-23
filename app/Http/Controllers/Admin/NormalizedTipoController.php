@@ -17,6 +17,8 @@ class NormalizedTipoController extends Controller
     public function index(Request $request)
     {
         $search = trim((string) $request->query('search', ''));
+        $setorId = (int) $request->query('setor_id', 0);
+        $clienteId = (int) $request->query('cliente_id', 0);
 
         $modelos = PeticaoModelo::with(['setor', 'cliente', 'servidor'])
             ->withCount(['paragrafos', 'campos'])
@@ -28,6 +30,8 @@ class NormalizedTipoController extends Controller
                         ->orWhere('legacy_tipo_id', 'like', '%' . $search . '%');
                 });
             })
+            ->when($setorId > 0, function ($query) use ($setorId) { return $query->where('legacy_setor_id', $setorId); })
+            ->when($clienteId > 0, function ($query) use ($clienteId) { return $query->where('legacy_cliente_id', $clienteId); })
             ->orderBy('legacy_setor_id')
             ->orderBy('nome')
             ->paginate(20)
@@ -44,7 +48,11 @@ class NormalizedTipoController extends Controller
             ->unique()
             ->values();
 
-        return view('admin.tipos.index', compact('modelos', 'search', 'suggestions'));
+        return view('admin.tipos.index', [
+            'modelos' => $modelos, 'search' => $search, 'suggestions' => $suggestions,
+            'setorId' => $setorId, 'clienteId' => $clienteId,
+            'setores' => Setor::orderBy('nome_setor')->get(), 'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
+        ]);
     }
 
     public function create()
