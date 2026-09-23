@@ -5,8 +5,10 @@
 @section('content')
 <div class="topbar" style="margin-bottom:16px;">
     <h2 style="margin:0;">Modelos de peticao</h2>
-    <a class="button link" href="{{ route('admin.modelos-normalizados.create') }}">Novo modelo</a>
-    <form method="post" action="{{ route('admin.modelos-normalizados.import') }}" enctype="multipart/form-data" style="display:flex;gap:8px;align-items:center;">@csrf<input type="file" name="pacote" accept=".json,application/json" required><button type="submit">Importar modelo</button></form>
+    <div style="display:flex; align-items:center; justify-content:flex-end; gap:12px; margin-left:auto;">
+        <form method="post" action="{{ route('admin.modelos-normalizados.import') }}" enctype="multipart/form-data" style="display:flex;gap:8px;align-items:center;">@csrf<input type="file" name="pacote" accept=".json,application/json" required><button type="submit">Importar modelo</button></form>
+        <a class="button link" href="{{ route('admin.modelos-normalizados.create') }}">Novo modelo</a>
+    </div>
 </div>
 
 <div class="panel" style="margin-bottom:16px;">
