@@ -117,6 +117,18 @@
         </form>
     </div>
 
+    @if(!$modelo->exists)
+        <div class="panel">
+            <div class="section-title"><h3>Criar com IA a partir de Word</h3></div>
+            <p class="editor-note">Envie um modelo .doc ou .docx. A IA identificará os campos e parágrafos, mas você revisará antes de gravar.</p>
+            <form method="post" enctype="multipart/form-data" action="{{ route('admin.modelos-normalizados.analyze-word') }}">
+                @csrf
+                <input type="file" name="word_file" accept=".doc,.docx" required>
+                <button type="submit">Analisar arquivo com IA</button>
+            </form>
+        </div>
+    @endif
+
     @if($modelo->exists)
         <div class="panel">
             <div class="section-title">

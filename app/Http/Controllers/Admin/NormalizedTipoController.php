@@ -11,6 +11,10 @@ use App\SqlServerProfile;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use App\Services\PeticaoModeloAiBuilderService;
+use Throwable;
 
 class NormalizedTipoController extends Controller
 {
@@ -95,6 +99,59 @@ class NormalizedTipoController extends Controller
         ]);
 
         return redirect()->route('admin.modelos-normalizados.edit', $modelo)->with('status', 'Modelo criado.');
+    }
+
+    public function analyzeWord(Request $request, PeticaoModeloAiBuilderService $builder)
+    {
+        $data = $request->validate(['word_file' => 'required|file|mimes:doc,docx|max:25600']);
+        try {
+            $analysis = $builder->analyze($data['word_file']);
+        } catch (Throwable $exception) {
+            report($exception);
+            return back()->withInput()->withErrors([
+                'word_file' => 'A analise demorou mais que o limite ou nao respondeu. Tente novamente com um arquivo menor ou aumente OPENAI_TIMEOUT (atual: 180 segundos).',
+            ]);
+        }
+        $request->session()->put('ai_model_analysis', $analysis);
+        return view('admin.tipos.ai-review', ['analysis' => $analysis, 'setores' => Setor::orderBy('nome_setor')->get(), 'clientes' => Cliente::active()->orderBy('cliente_name')->get(), 'servidores' => $this->availableServidores()]);
+    }
+
+    public function createFromAi(Request $request)
+    {
+        $analysis = $request->session()->get('ai_model_analysis');
+        abort_unless(is_array($analysis), 422, 'A analise expirou. Envie o arquivo novamente.');
+        $data = $request->validate(['id_setor' => 'required|integer', 'id_cliente' => 'nullable|integer', 'id_db' => 'nullable|integer', 'tipo_arq' => ['required', Rule::in(['pdf', 'word', 'pdf,word'])]]);
+        if ($request->user()->nivel_usu === 'GER') {
+            abort_unless((int) $data['id_setor'] === (int) $request->user()->id_setor, 403);
+            if (!empty($data['id_cliente'])) {
+                abort_unless(in_array((string) $data['id_cliente'], array_map('strval', $request->user()->client_ids), true), 403);
+            }
+        }
+        $modelo = DB::transaction(function () use ($analysis, $data) {
+            $modelo = PeticaoModelo::create(['nome' => $analysis['nome'], 'slug' => $this->buildSlug($analysis['nome']), 'status' => 'ativo', 'arquivo_padrao' => $data['tipo_arq'], 'legacy_setor_id' => $data['id_setor'], 'legacy_cliente_id' => $data['id_cliente'] ?: null, 'legacy_sql_config_id' => $data['id_db'] ?: null, 'cabecalho_html' => null, 'rodape_html' => null, 'metadata' => ['nome_pre' => $analysis['descricao'], 'ai_generated' => true]]);
+            $tokenMap = [];
+        foreach ($analysis['campos'] as $field) {
+            $campo = $modelo->campos()->create(['rotulo' => $field['rotulo'], 'token' => '@ai_' . Str::random(32) . '@', 'tipo' => $field['tipo'], 'comportamento' => $field['comportamento'], 'origem_coluna' => $field['origem_coluna'], 'prefixo' => $field['prefixo'], 'sufixo' => $field['sufixo'], 'ordem' => $field['ordem'], 'obrigatorio' => $field['obrigatorio'], 'visivel' => true, 'colunas_layout' => 1, 'eventos_frontend' => $this->frontendEventsForBehavior($field['comportamento'])]);
+            $campo->token = $campo->placeholder;
+            $campo->save();
+            $tokenMap[(string) $field['token']] = $campo->token;
+            foreach ($field['opcoes'] as $order => $option) $campo->opcoes()->create(['rotulo' => $option, 'valor_retorno' => $option, 'ordem' => $order + 1]);
+        }
+            $replace = function ($value) use ($tokenMap) { return str_ireplace(array_keys($tokenMap), array_values($tokenMap), (string) $value); };
+            $modelo->update(['cabecalho_html' => $replace($analysis['cabecalho_html']), 'rodape_html' => $replace($analysis['rodape_html'])]);
+            foreach ($analysis['paragrafos'] as $paragraph) $modelo->paragrafos()->create(['titulo' => mb_strtoupper($paragraph['titulo'], 'UTF-8'), 'conteudo_html' => $replace($paragraph['conteudo_html']), 'ordem' => $paragraph['ordem'], 'visivel' => true, 'ativo' => true]);
+            return $modelo;
+        });
+        $request->session()->forget('ai_model_analysis');
+        return redirect()->route('admin.modelos-normalizados.edit', $modelo)->with('status', 'Modelo criado a partir da analise IA. Revise os campos e paragrafos.');
+    }
+
+    protected function frontendEventsForBehavior($behavior)
+    {
+        $events = ['focus' => null, 'load' => null, 'blur' => null];
+        if ($behavior === 'date') $events['blur'] = 'data_atual(this);';
+        if ($behavior === 'decimal') $events['blur'] = 'fc_newstring(this);';
+        return $events;
     }
 
     public function edit(PeticaoModelo $modeloNormalizado)

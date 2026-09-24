@@ -73,6 +73,10 @@ class WordImportService
 
     protected function convertWordToHtml($binary, $sourcePath, $outputDir)
     {
+        if (!is_file($sourcePath)) {
+            throw new RuntimeException('O arquivo Word temporario nao foi encontrado para conversao.');
+        }
+
         $profileDir = $outputDir . DIRECTORY_SEPARATOR . 'libreoffice-profile';
         $homeDir = $outputDir . DIRECTORY_SEPARATOR . 'home';
         $cacheDir = $homeDir . DIRECTORY_SEPARATOR . '.cache';
@@ -98,8 +102,29 @@ class WordImportService
         $exitCode = 0;
         @exec($command . ' 2>&1', $output, $exitCode);
 
+        // Some LibreOffice Windows builds crash on documents containing footnotes
+        // when the explicit StarWriter filter is requested. Retry with the generic
+        // HTML filter before reporting the native process failure.
         if ($exitCode !== 0) {
-            throw new RuntimeException('Falha ao converter o arquivo Word: ' . trim(implode("\n", $output)));
+            $output = [];
+            $exitCode = 0;
+            $retryCommand = $this->buildLibreOfficeCommand(
+                $binary, $sourcePath, $outputDir,
+                $profileDir . '-retry', $homeDir . '-retry', $cacheDir . '-retry', $configDir . '-retry', false
+            );
+            @exec($retryCommand . ' 2>&1', $output, $exitCode);
+        }
+
+        if ($exitCode !== 0) {
+            $fallback = $this->extractDocxTextFallback($sourcePath, $outputDir);
+            if ($fallback !== null) {
+                return $fallback;
+            }
+            $details = trim(implode("\n", $output));
+            if (filter_var($details, FILTER_VALIDATE_URL)) {
+                $details = 'O conversor retornou uma URL em vez de executar o LibreOffice. Verifique WORD_IMPORT_BINARY e limpe o cache de configuracao.';
+            }
+            throw new RuntimeException('Falha ao converter o arquivo Word: ' . ($details ?: 'codigo de saida ' . $exitCode));
         }
 
         $basename = pathinfo($sourcePath, PATHINFO_FILENAME);
@@ -111,12 +136,67 @@ class WordImportService
         return $matches[0];
     }
 
-    protected function buildLibreOfficeCommand($binary, $sourcePath, $outputDir, $profileDir, $homeDir, $cacheDir, $configDir)
+    protected function extractDocxTextFallback($sourcePath, $outputDir)
     {
+        if (strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION)) !== 'docx' || !class_exists('ZipArchive')) {
+            return null;
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($sourcePath) !== true) {
+            return null;
+        }
+
+        $parts = ['word/document.xml', 'word/footnotes.xml'];
+        $html = '';
+        foreach ($parts as $part) {
+            $xml = $zip->getFromName($part);
+            if ($xml === false) {
+                continue;
+            }
+            $dom = new \DOMDocument('1.0', 'UTF-8');
+            if (!@$dom->loadXML($xml)) {
+                continue;
+            }
+            $xpath = new \DOMXPath($dom);
+            $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+            foreach ($xpath->query('//w:p') as $paragraph) {
+                $text = '';
+                foreach ($xpath->query('.//w:t', $paragraph) as $node) {
+                    $text .= $node->textContent;
+                }
+                if (trim($text) !== '') {
+                    $html .= '<p>' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '</p>';
+                }
+            }
+        }
+        $zip->close();
+
+        if (trim($html) === '') {
+            return null;
+        }
+
+        $path = $outputDir . DIRECTORY_SEPARATOR . pathinfo($sourcePath, PATHINFO_FILENAME) . '.html';
+        file_put_contents($path, '<html><body>' . $html . '</body></html>');
+        return $path;
+    }
+
+    protected function buildLibreOfficeCommand($binary, $sourcePath, $outputDir, $profileDir, $homeDir, $cacheDir, $configDir, $explicitFilter = true)
+    {
+        foreach ([$profileDir, $homeDir, $cacheDir, $configDir] as $dir) {
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0777, true);
+            }
+        }
+
+        $conversion = $explicitFilter
+            ? ' --convert-to ' . $this->quoteShellArgument('html:HTML (StarWriter)')
+            : ' --convert-to html';
+
         $baseCommand = $this->quoteShellArgument($binary)
             . ' --headless --nologo --nodefault --nolockcheck --norestore'
             . ' -env:UserInstallation=' . $this->quoteShellArgument($this->pathToFileUri($profileDir))
-            . ' --convert-to html --outdir '
+            . $conversion . ' --outdir '
             . $this->quoteShellArgument($outputDir)
             . ' '
             . $this->quoteShellArgument($sourcePath);
