@@ -231,7 +231,12 @@
                         </div>
                         <div class="form-group">
                             <label>Coluna/valor</label>
-                            <input name="input_val">
+                            <select name="input_val">
+                                <option value="">Nenhuma</option>
+                                @foreach(($neoColumns ?? []) as $neoColumn)
+                                    <option value="{{ $neoColumn }}">{{ $neoColumn }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>Associar com Base existente</label>
@@ -417,7 +422,16 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Coluna/valor</label>
-                                        <input name="input_val" value="{{ $campo->input_val }}">
+                                        @php($currentNeoColumn = trim((string) $campo->input_val))
+                                        <select name="input_val">
+                                            <option value="">Nenhuma</option>
+                                            @foreach(($neoColumns ?? []) as $neoColumn)
+                                                <option value="{{ $neoColumn }}" @if($currentNeoColumn === $neoColumn) selected @endif>{{ $neoColumn }}</option>
+                                            @endforeach
+                                            @if($currentNeoColumn !== '' && !in_array($currentNeoColumn, ($neoColumns ?? []), true))
+                                                <option value="{{ $currentNeoColumn }}" selected>{{ $currentNeoColumn }} (personalizada)</option>
+                                            @endif
+                                        </select>
                                     </div>
                                     <div class="form-group">
                                         <label>Associar com Base existente</label>

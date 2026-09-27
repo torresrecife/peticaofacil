@@ -33,7 +33,13 @@ class WordImportService
         $sourcePath = $jobDir . DIRECTORY_SEPARATOR . 'source.' . $extension;
 
         try {
-            $file->move($jobDir, basename($sourcePath));
+            // HTTP uploads podem ser movidos; arquivos locais usados em testes ou
+            // reprocessamentos devem ser copiados para preservar a origem.
+            if (function_exists('is_uploaded_file') && is_uploaded_file($file->getPathname())) {
+                $file->move($jobDir, basename($sourcePath));
+            } elseif (!@copy($file->getPathname(), $sourcePath)) {
+                throw new RuntimeException('Nao foi possivel copiar o arquivo Word para a area temporaria.');
+            }
             $htmlPath = $this->convertWordToHtml($binary, $sourcePath, $jobDir);
             $html = file_get_contents($htmlPath);
             if ($html === false || trim($html) === '') {
@@ -143,7 +149,8 @@ class WordImportService
         }
 
         $zip = new \ZipArchive();
-        if ($zip->open($sourcePath) !== true) {
+        $openResult = $zip->open($sourcePath);
+        if ($openResult !== true && $openResult !== 1) {
             return null;
         }
 
@@ -166,7 +173,7 @@ class WordImportService
                     $text .= $node->textContent;
                 }
                 if (trim($text) !== '') {
-                    $html .= '<p>' . htmlspecialchars($text, ENT_QUOTES, 'UTF-8') . '</p>';
+                    $html .= '<p>' . htmlspecialchars($this->normalizeExtractedText($text), ENT_QUOTES, 'UTF-8') . '</p>';
                 }
             }
         }
@@ -179,6 +186,20 @@ class WordImportService
         $path = $outputDir . DIRECTORY_SEPARATOR . pathinfo($sourcePath, PATHINFO_FILENAME) . '.html';
         file_put_contents($path, '<html><body>' . $html . '</body></html>');
         return $path;
+    }
+
+    protected function normalizeExtractedText($text)
+    {
+        $text = (string) $text;
+        if (function_exists('mb_check_encoding') && !mb_check_encoding($text, 'UTF-8')) {
+            if (function_exists('mb_convert_encoding')) {
+                $converted = @mb_convert_encoding($text, 'UTF-8', ['Windows-1252', 'ISO-8859-1']);
+                if ($converted !== false) {
+                    return $converted;
+                }
+            }
+        }
+        return $text;
     }
 
     protected function buildLibreOfficeCommand($binary, $sourcePath, $outputDir, $profileDir, $homeDir, $cacheDir, $configDir, $explicitFilter = true)

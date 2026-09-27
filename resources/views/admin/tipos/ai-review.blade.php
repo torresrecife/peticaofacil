@@ -18,6 +18,7 @@
             <div class="panel-muted">
                 <strong>{{ $field['rotulo'] }}</strong> — {{ $field['tipo'] }} — <code>{{ $field['token'] }}</code>
                 @if(!empty($field['origem_coluna']))<br>Coluna NEO: <code>{{ $field['origem_coluna'] }}</code>@endif
+                @if(!empty($field['lista_grupo']))<br>Lista pre-definida: <code>{{ $field['lista_grupo'] }}</code> / <code>{{ $field['lista_retorno'] ?: 'return_1' }}</code>@endif
                 @if(!empty($field['comportamento']))<br>Máscara: {{ $field['comportamento'] }}@endif
                 @if($field['obrigatorio'])
                     <span>(obrigatório)</span>

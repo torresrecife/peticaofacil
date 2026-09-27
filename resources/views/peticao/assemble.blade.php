@@ -60,6 +60,9 @@
             $lookupKey = '';
             $lookupAvailable = (bool) ($lookupConnectionStatus['available'] ?? false);
             $lookupErrorMessage = $lookupConnectionStatus['message'] ?? null;
+            $hasNeoMappedFields = $modeloFonte->campos->contains(function ($campo) {
+                return trim((string) $campo->input_val) !== '';
+            });
             if (!empty($lookupConfig)) {
                 $lookupKey = $lookupConfig->lookup_key ?? $lookupConfig->chave_db ?? '';
             }
@@ -67,7 +70,7 @@
 
         <form method="post" action="{{ $composeRoute }}">
             @csrf
-            @if(!empty($lookupConfig))
+            @if(!empty($lookupConfig) || $hasNeoMappedFields)
                 <div class="panel-muted" style="margin-bottom:20px;">
                     <div class="lookup-box">
                         <div class="lookup-inline">
@@ -84,8 +87,8 @@
                                 <button type="submit" name="action_type" value="lookup" @if(!$lookupAvailable) disabled @endif>Buscar e preencher</button>
                             </div>
                         </div>
-                        @if(!$lookupAvailable && $lookupErrorMessage)
-                            <div class="lookup-error">{{ $lookupErrorMessage }}</div>
+                        @if(!$lookupAvailable)
+                            <div class="lookup-error">{{ $lookupErrorMessage ?: 'Configure um servidor NEO no modelo para habilitar a busca automática.' }}</div>
                         @endif
                     </div>
                 </div>

@@ -19,6 +19,7 @@ class PeticaoModeloAiBuilderServiceTest extends TestCase
             'campos' => [
                 ['rotulo' => 'Autor', 'token' => '@VAR_AUTOR@', 'tipo' => 'TEXT', 'obrigatorio' => true, 'opcoes' => []],
                 ['rotulo' => 'Tipo', 'token' => '@VAR_TIPO@', 'tipo' => 'SELECT', 'obrigatorio' => false, 'opcoes' => ['A']],
+                ['rotulo' => 'Telefone profissional do advogado', 'token' => '@VAR_FONE@', 'tipo' => 'TEXT', 'obrigatorio' => false, 'opcoes' => []],
             ],
             'paragrafos' => [['titulo' => 'Fatos', 'conteudo_html' => '<p>@VAR_AUTOR@ escolheu @VAR_TIPO@.</p>']],
         ]);
@@ -26,5 +27,6 @@ class PeticaoModeloAiBuilderServiceTest extends TestCase
         $this->assertSame('@campo2@', $result['campos'][1]['token']);
         $this->assertStringContainsString('@campo1@', $result['paragrafos'][0]['conteudo_html']);
         $this->assertStringContainsString('@campo2@', $result['paragrafos'][0]['conteudo_html']);
+        $this->assertCount(2, $result['campos']);
     }
 }
