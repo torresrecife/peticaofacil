@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 class ImportStoneExecutionModel extends Command
 {
     protected $signature = 'peticao:modelo-stone-import
+        {--path= : Caminho do pacote JSON a validar/importar}
         {--dry-run : Apenas valida o pacote e as dependências}
         {--activate : Ativa o modelo após a importação}';
 
@@ -22,7 +23,7 @@ class ImportStoneExecutionModel extends Command
 
     public function handle()
     {
-        $path = database_path('data/stone-execucao-titulo-extrajudicial.json');
+        $path = $this->option('path') ?: database_path('data/stone-execucao-titulo-extrajudicial.json');
         if (!is_file($path)) {
             $this->error('Pacote não encontrado: ' . $path);
             return 1;

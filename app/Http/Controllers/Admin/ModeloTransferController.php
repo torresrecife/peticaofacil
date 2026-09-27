@@ -23,9 +23,13 @@ class ModeloTransferController extends Controller
             return back()->withErrors(['pacote' => 'O pacote deve ser um arquivo .json ou .txt.'])->withInput();
         }
 
-        $target = database_path('data/stone-execucao-titulo-extrajudicial.json');
-        $file->move(dirname($target), basename($target));
-        Artisan::call('peticao:modelo-stone-import', ['--dry-run' => true]);
+        $directory = storage_path('app/modelo-pacotes');
+        if (!is_dir($directory)) {
+            @mkdir($directory, 0775, true);
+        }
+        $target = $directory . DIRECTORY_SEPARATOR . 'modelo-' . date('YmdHis') . '.json';
+        $file->move($directory, basename($target));
+        Artisan::call('peticao:modelo-stone-import', ['--path' => $target, '--dry-run' => true]);
         return redirect()->route('admin.modelos-normalizados.index')->with('status', 'Pacote importado e validado. Execute o comando de importaÃ§ao para gravar o modelo.');
     }
 }
