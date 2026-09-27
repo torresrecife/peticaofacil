@@ -38,7 +38,7 @@ class ImportStoneExecutionModel extends Command
         $client = Cliente::whereRaw('UPPER(cliente_name) = ?', [strtoupper($package['dependencies']['client'])])->first();
         $sector = Setor::where('cod_setor', $package['dependencies']['sector_code'])->first();
         $server = SqlServerProfile::where('nome', $package['dependencies']['server'])->first();
-        $missing = array_keys(array_filter(['cliente' => !$client, 'setor' => !$sector, 'servidor NEO' => !$server]));
+        $missing = array_keys(array_filter(['setor' => !$sector, 'servidor NEO' => !$server]));
         if ($missing) {
             $this->error('Dependências ausentes: ' . implode(', ', $missing));
             return 1;
@@ -56,7 +56,10 @@ class ImportStoneExecutionModel extends Command
             return 1;
         }
 
-        $this->line('Cliente: ' . $client->cliente_name);
+        $this->line('Cliente: ' . ($client ? $client->cliente_name : 'nao vinculado (ausente neste ambiente)'));
+        if (!$client) {
+            $this->warn('O cliente do pacote nao foi encontrado; o modelo sera importado sem cliente vinculado.');
+        }
         $this->line('Setor: ' . $sector->nome_setor);
         $this->line('Servidor: ' . $server->nome);
         $this->line('Campos: ' . count($package['fields']) . '; parágrafos: ' . count($package['paragraphs']));
@@ -69,7 +72,7 @@ class ImportStoneExecutionModel extends Command
             $model = PeticaoModelo::where('slug', $package['model']['slug'])->first() ?: new PeticaoModelo();
             $model->fill(array_merge($package['model'], [
                 'legacy_tipo_id' => null,
-                'legacy_cliente_id' => $client->cliente_id,
+                'legacy_cliente_id' => $client ? $client->cliente_id : null,
                 'legacy_setor_id' => $sector->id_setor,
                 'legacy_sql_config_id' => $server->legacy_config_id,
                 'status' => $this->option('activate') ? 'ativo' : 'inativo',
