@@ -29,8 +29,11 @@ class ModeloTransferController extends Controller
         }
         $target = $directory . DIRECTORY_SEPARATOR . 'modelo-' . date('YmdHis') . '.json';
         $file->move($directory, basename($target));
-        Artisan::call('peticao:modelo-stone-import', ['--path' => $target, '--dry-run' => true]);
-        return redirect()->route('admin.modelos-normalizados.index')->with('status', 'Pacote importado e validado. Execute o comando de importaÃ§ao para gravar o modelo.');
+        $exitCode = Artisan::call('peticao:modelo-stone-import', ['--path' => $target, '--activate' => true]);
+        if ((int) $exitCode !== 0) {
+            return back()->withErrors(['pacote' => trim(Artisan::output()) ?: 'O pacote nao pode ser importado.'])->withInput();
+        }
+        return redirect()->route('admin.modelos-normalizados.index')->with('status', 'Modelo importado e ativado com sucesso.');
     }
 }
 
