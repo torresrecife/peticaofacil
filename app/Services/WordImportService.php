@@ -48,6 +48,16 @@ class WordImportService
 
             $html = $this->normalizeHtmlEncoding($html);
 
+            // Alguns documentos DOCX sao exportados pelo LibreOffice como texto
+            // corrido, embora contenham tabelas. O PhpWord preserva a estrutura
+            // de tabelas e celulas nesses casos e serve como segunda fonte HTML.
+            if ($extension === 'docx') {
+                $structuredHtml = $this->convertDocxWithPhpWord($sourcePath, $jobDir);
+                if ($structuredHtml !== null && stripos($structuredHtml, '<table') !== false) {
+                    $html = $structuredHtml;
+                }
+            }
+
             return $this->prepareImportedHtml($html, dirname($htmlPath));
         } finally {
             $this->deleteDirectory($jobDir);
@@ -186,6 +196,24 @@ class WordImportService
         $path = $outputDir . DIRECTORY_SEPARATOR . pathinfo($sourcePath, PATHINFO_FILENAME) . '.html';
         file_put_contents($path, '<html><body>' . $html . '</body></html>');
         return $path;
+    }
+
+    protected function convertDocxWithPhpWord($sourcePath, $outputDir)
+    {
+        if (!class_exists('PhpOffice\\PhpWord\\IOFactory')) {
+            return null;
+        }
+
+        try {
+            $document = \PhpOffice\PhpWord\IOFactory::load($sourcePath);
+            $writer = \PhpOffice\PhpWord\IOFactory::createWriter($document, 'HTML');
+            $path = $outputDir . DIRECTORY_SEPARATOR . pathinfo($sourcePath, PATHINFO_FILENAME) . '-phpword.html';
+            $writer->save($path);
+            $html = @file_get_contents($path);
+            return $html !== false ? $this->normalizeHtmlEncoding($html) : null;
+        } catch (\Throwable $exception) {
+            return null;
+        }
     }
 
     protected function normalizeExtractedText($text)

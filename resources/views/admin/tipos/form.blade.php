@@ -601,6 +601,59 @@ document.addEventListener('DOMContentLoaded', function () {
             allowedContent: true
         });
 
+        // TAB recua somente a primeira linha do paragrafo atual, como no Word.
+        // SHIFT+TAB remove o recuo. O foco permanece no CKEditor.
+        instance.on('key', function (event) {
+            if (event.data.keyCode !== 9) {
+                return;
+            }
+
+            event.cancel();
+            var selection = instance.getSelection();
+            var range = selection && selection.getRanges()[0];
+            var container = range ? range.startContainer : null;
+            var block = container && container.getAscendant(function (element) {
+                return element && element.type === CKEDITOR.NODE_ELEMENT && /^(p|div|li|h[1-6])$/i.test(element.getName());
+            }, true);
+            if (!block) {
+                return;
+            }
+
+            var domEvent = event.data.domEvent;
+            if (domEvent && domEvent.shiftKey) {
+                block.removeStyle('text-indent');
+            } else {
+                block.setStyle('text-indent', '1.1cm');
+            }
+        });
+
+        instance.on('contentDom', function () {
+            var editable = instance.editable();
+            editable.attachListener(editable, 'keydown', function (event) {
+                var domEvent = event.data.$;
+                if (!domEvent || domEvent.keyCode !== 9) {
+                    return;
+                }
+
+                domEvent.preventDefault();
+                domEvent.stopPropagation();
+                var selection = instance.getSelection();
+                var range = selection && selection.getRanges()[0];
+                var container = range ? range.startContainer : null;
+                var block = container && container.getAscendant(function (element) {
+                    return element && element.type === CKEDITOR.NODE_ELEMENT && /^(p|div|li|h[1-6])$/i.test(element.getName());
+                }, true);
+                if (!block) {
+                    return;
+                }
+                if (domEvent.shiftKey) {
+                    block.removeStyle('text-indent');
+                } else {
+                    block.setStyle('text-indent', '1.1cm');
+                }
+            });
+        });
+
         if (window.CKFinder && ckfinderBaseUrl) {
             CKFinder.setupCKEditor(instance, ckfinderBaseUrl);
         }

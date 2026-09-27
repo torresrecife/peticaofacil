@@ -18,10 +18,11 @@ class PeticaoModeloAiBuilderService
     public function analyze($file)
     {
         $html = $this->wordImport->importUploadedFile($file);
+        $sourceHtml = $html;
         $html = $this->prepareAiInput($html);
         $neoGuide = $this->neoGuide();
         $result = $this->client->createStructuredResponse([
-            ['role' => 'system', 'content' => 'Voce analisa modelos juridicos brasileiros. Preserve o HTML original do corpo, incluindo tabelas, estilos inline, negrito, fonte, tamanho, alinhamento e recuos. Ignore completamente cabecalhos e rodapes nativos do arquivo Word: nao copie conteudo deles para cabecalho_html ou rodape_html e nunca coloque tokens nesses campos. Todo enderecamento juridico deve permanecer como primeiro paragrafo do corpo. Retorne cabecalho_html e rodape_html vazios; o sistema aplicara o cabecalho institucional padrao separadamente. Nao crie campos para dados institucionais fixos do escritorio, incluindo endereco profissional do advogado, telefone profissional, site, e-mail institucional, logotipo, nome do escritorio ou dados de contato presentes no cabecalho/rodape. Esses dados devem ser preservados apenas como texto fixo ou ignorados quando vierem do cabecalho/rodape. Identifique no corpo os trechos que devem receber dados externos e crie um campo para cada trecho variavel. Para cada campo, preencha origem_coluna usando exclusivamente um alias do dicionario NEO abaixo quando houver correspondencia semantica. Nunca invente aliases. Se nao houver correspondencia segura, deixe origem_coluna vazia para revisao manual. Nao associe automaticamente autor e reu apenas pela posicao: considere o sentido da acao, o papel processual e o contexto do trecho. Quando o texto representar uma entidade reutilizavel cadastrada, use lista_grupo e lista_retorno: CLIENTES (id 2, nome_lista como rotulo e return_1 como qualificacao/endereco do cliente), LOCALIZADORES (id 1, return_1 a return_6 para dados do localizador), OAB POR ESTADO (id 3, return_1 para a inscricao), TIPO DE ACORDO (id 4), DIA DA SEMANA (id 5) e DADOS BANCARIOS (id 6). Para autor em acao ativa, prefira CLIENTES; crie o campo principal como SELECT e indique lista_retorno=return_1 quando o texto exigir a qualificacao/endereco cadastrado. Nao use lista para reu, salvo se houver evidencia de que o reu pertence a um cadastro reutilizavel. Use tokens temporarios como @VAR_NOME@. Dicionario NEO: ' . $neoGuide],
+            ['role' => 'system', 'content' => 'Voce analisa modelos juridicos brasileiros. Preserve o HTML original do corpo, incluindo tabelas, estilos inline, negrito, fonte, tamanho, alinhamento, bordas, larguras, celulas mescladas e recuos. Alem dos paragrafos estruturados, retorne corpo_html com uma copia fiel do HTML do corpo recebido, mantendo a hierarquia de table, tr, td, p e todos os estilos; altere somente os trechos variaveis pelos tokens identificados. Nunca transforme uma tabela em texto corrido nem duplique seu conteudo em paragrafos. Ignore completamente cabecalhos e rodapes nativos do arquivo Word: nao copie conteudo deles para cabecalho_html ou rodape_html e nunca coloque tokens nesses campos. Todo enderecamento juridico deve permanecer como primeiro paragrafo do corpo. Retorne cabecalho_html e rodape_html vazios; o sistema aplicara o cabecalho institucional padrao separadamente. Nao crie campos para dados institucionais fixos do escritorio, incluindo endereco profissional do advogado, telefone profissional, site, e-mail institucional, logotipo, nome do escritorio ou dados de contato presentes no cabecalho/rodape. Esses dados devem ser preservados apenas como texto fixo ou ignorados quando vierem do cabecalho/rodape. Identifique no corpo os trechos que devem receber dados externos e crie um campo para cada trecho variavel. Para cada campo, preencha origem_coluna usando exclusivamente um alias do dicionario NEO abaixo quando houver correspondencia semantica. Nunca invente aliases. Se nao houver correspondencia segura, deixe origem_coluna vazia para revisao manual. Nao associe automaticamente autor e reu apenas pela posicao: considere o sentido da acao, o papel processual e o contexto do trecho. Quando o texto representar uma entidade reutilizavel cadastrada, use lista_grupo e lista_retorno: CLIENTES (id 2, nome_lista como rotulo e return_1 como qualificacao/endereco do cliente), LOCALIZADORES (id 1, return_1 a return_6 para dados do localizador), OAB POR ESTADO (id 3, return_1 para a inscricao), TIPO DE ACORDO (id 4), DIA DA SEMANA (id 5) e DADOS BANCARIOS (id 6). Para autor em acao ativa, prefira CLIENTES; crie o campo principal como SELECT e indique lista_retorno=return_1 quando o texto exigir a qualificacao/endereco cadastrado. Nao use lista para reu, salvo se houver evidencia de que o reu pertence a um cadastro reutilizavel. Use tokens temporarios como @VAR_NOME@. Dicionario NEO: ' . $neoGuide],
             ['role' => 'user', 'content' => "Analise o documento Word abaixo e estruture um modelo de peticao.\n\n" . $html],
         ], $this->schema(), 'peticao_modelo_analysis');
 
@@ -29,6 +30,7 @@ class PeticaoModeloAiBuilderService
             throw new RuntimeException($result['error'] ?: 'Nao foi possivel analisar o modelo com IA.');
         }
 
+        $result['data']['_source_html'] = $sourceHtml;
         return $this->normalize($result['data']);
     }
 
@@ -53,14 +55,14 @@ class PeticaoModeloAiBuilderService
         return [
             'type' => 'object',
             'additionalProperties' => false,
-            'required' => ['nome', 'descricao', 'cabecalho_html', 'rodape_html', 'campos', 'paragrafos'],
+            'required' => ['nome', 'descricao', 'corpo_html', 'cabecalho_html', 'rodape_html', 'campos', 'paragrafos'],
             'properties' => [
-                'nome' => ['type' => 'string'], 'descricao' => ['type' => 'string'],
+                'nome' => ['type' => 'string'], 'descricao' => ['type' => 'string'], 'corpo_html' => ['type' => 'string'],
                 'cabecalho_html' => ['type' => 'string'], 'rodape_html' => ['type' => 'string'],
                 'campos' => ['type' => 'array', 'items' => ['type' => 'object', 'additionalProperties' => false,
-                    'required' => ['rotulo', 'token', 'tipo', 'obrigatorio', 'origem_coluna', 'lista_grupo', 'lista_retorno', 'comportamento', 'prefixo', 'sufixo', 'opcoes'],
+                    'required' => ['rotulo', 'token', 'tipo', 'obrigatorio', 'texto_original', 'origem_coluna', 'lista_grupo', 'lista_retorno', 'comportamento', 'prefixo', 'sufixo', 'opcoes'],
                     'properties' => [
-                        'rotulo' => ['type' => 'string'], 'token' => ['type' => 'string'],
+                        'rotulo' => ['type' => 'string'], 'token' => ['type' => 'string'], 'texto_original' => ['type' => 'string', 'description' => 'Trecho exato do documento que sera substituido pelo token, preservando acentos e pontuacao.'],
                         'tipo' => ['type' => 'string', 'enum' => ['TEXT', 'TEXTAREA', 'SELECT']],
                         'obrigatorio' => ['type' => 'boolean'],
                         'origem_coluna' => ['type' => 'string', 'description' => 'Alias exato de uma coluna do dicionario NEO. Use vazio quando nao houver correspondencia segura.'],
@@ -87,6 +89,7 @@ class PeticaoModeloAiBuilderService
     protected function normalize(array $data)
     {
         $tokens = [];
+        $sourceHtml = (string) ($data['_source_html'] ?? '');
         $fields = [];
         foreach (array_values($data['campos'] ?? []) as $index => $field) {
             if ($this->isInstitutionalContactField($field)) {
@@ -113,11 +116,24 @@ class PeticaoModeloAiBuilderService
                 'opcoes' => array_values(array_filter(array_map('trim', $field['opcoes'] ?? []))),
                 'ordem' => count($fields) + 1,
             ];
+            $original = trim((string) ($field['texto_original'] ?? ''));
+            if ($original !== '' && $sourceHtml !== '') {
+                $sourceHtml = str_ireplace($original, $token, $sourceHtml);
+            }
         }
         $replace = function ($value) use ($tokens) {
             return $tokens ? str_ireplace(array_keys($tokens), array_values($tokens), (string) $value) : (string) $value;
         };
         $paragraphs = [];
+        $bodyHtml = $sourceHtml !== '' && stripos($sourceHtml, '<table') !== false
+            ? $sourceHtml
+            : trim((string) ($data['corpo_html'] ?? ''));
+        if ($bodyHtml !== '') {
+            $paragraphs[] = ['titulo' => 'CORPO DA PETICAO', 'conteudo_html' => $replace($bodyHtml), 'ordem' => 1];
+        }
+        if ($bodyHtml !== '') {
+            return ['nome' => trim($data['nome']), 'descricao' => trim($data['descricao']), 'cabecalho_html' => '', 'rodape_html' => '', 'campos' => $fields, 'paragrafos' => $paragraphs];
+        }
         foreach (array_values($data['paragrafos'] ?? []) as $index => $paragraph) {
             $paragraphs[] = ['titulo' => trim($paragraph['titulo'] ?: 'Paragrafo ' . ($index + 1)), 'conteudo_html' => $replace($paragraph['conteudo_html']), 'ordem' => $index + 1];
         }
