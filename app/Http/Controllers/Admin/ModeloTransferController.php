@@ -16,7 +16,17 @@ class ModeloTransferController extends Controller
     }
     public function import(Request $request)
     {
-        $request->validate(['pacote'=>'required|file|mimes:json,txt|max:5120']); $target=database_path('data/stone-execucao-titulo-extrajudicial.json'); $request->file('pacote')->move(dirname($target),basename($target)); Artisan::call('peticao:modelo-stone-import',['--dry-run'=>true]); return redirect()->route('admin.modelos-normalizados.index')->with('status','Pacote importado e validado. Execute o comando de importaÃ§Ã£o para gravar o modelo.');
+        $request->validate(['pacote' => 'required|file|max:5120']);
+        $file = $request->file('pacote');
+        $extension = strtolower((string) $file->getClientOriginalExtension());
+        if (!in_array($extension, ['json', 'txt'], true)) {
+            return back()->withErrors(['pacote' => 'O pacote deve ser um arquivo .json ou .txt.'])->withInput();
+        }
+
+        $target = database_path('data/stone-execucao-titulo-extrajudicial.json');
+        $file->move(dirname($target), basename($target));
+        Artisan::call('peticao:modelo-stone-import', ['--dry-run' => true]);
+        return redirect()->route('admin.modelos-normalizados.index')->with('status', 'Pacote importado e validado. Execute o comando de importaÃ§ao para gravar o modelo.');
     }
 }
 
