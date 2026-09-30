@@ -108,7 +108,7 @@ class NormalizedInputCampoController extends Controller
             'add_class' => 'nullable|string|max:500',
             'opcoes' => 'nullable|string',
             'input_list_group_id' => 'nullable|integer|min:1',
-            'input_list_return_column' => 'nullable|in:return_1,return_2,return_3,return_4,return_5,return_6',
+            'input_list_return_column' => 'nullable',
             'input_list_target_field' => 'nullable|integer|min:1',
         ]);
     }
@@ -156,14 +156,21 @@ class NormalizedInputCampoController extends Controller
 
     protected function resolveOrigemAlias(PeticaoModeloCampo $campo, array $data)
     {
+        $returnColumns = $data['input_list_return_column'] ?? [];
+        if (!is_array($returnColumns)) {
+            $returnColumns = preg_split('/\s*[,;+|]\s*/', (string) $returnColumns, -1, PREG_SPLIT_NO_EMPTY);
+        }
+        $returnColumns = array_values(array_filter($returnColumns, function ($column) {
+            return in_array($column, ['return_1', 'return_2', 'return_3', 'return_4', 'return_5', 'return_6'], true);
+        }));
         if (
             $campo->input_tipo === 'SELECT'
             && !empty($data['input_list_group_id'])
-            && !empty($data['input_list_return_column'])
+            && !empty($returnColumns)
         ) {
             return sprintf(
                 'tp_lista_tb_|_nome_lista_|_%s_|_id_grupo=%d_|_vert',
-                $data['input_list_return_column'],
+                implode('+', $returnColumns),
                 (int) $data['input_list_group_id']
             );
         }
@@ -173,6 +180,13 @@ class NormalizedInputCampoController extends Controller
 
     protected function buildFrontendEvents(PeticaoModeloCampo $campo, array $data)
     {
+        $returnColumns = $data['input_list_return_column'] ?? [];
+        if (!is_array($returnColumns)) {
+            $returnColumns = preg_split('/\s*[,;+|]\s*/', (string) $returnColumns, -1, PREG_SPLIT_NO_EMPTY);
+        }
+        $returnColumns = array_values(array_filter($returnColumns, function ($column) {
+            return in_array($column, ['return_1', 'return_2', 'return_3', 'return_4', 'return_5', 'return_6'], true);
+        }));
         $behavior = $this->normalizeBehaviorValue($data['input_behavior'] ?? '');
         $focus = $this->sanitizeEventScriptForBehavior(
             $this->resolveEventScript($data, 'input_focu', 'input_focu_preset'),
@@ -187,14 +201,15 @@ class NormalizedInputCampoController extends Controller
             $behavior
         );
 
+        $dependentReturnColumn = count($returnColumns) === 1 ? $returnColumns[0] : null;
         if (
             $campo->input_tipo === 'SELECT'
             && !empty($data['input_list_target_field'])
-            && !empty($data['input_list_return_column'])
+            && $dependentReturnColumn
         ) {
             $generated = sprintf(
                 'fc_ajax_comp("tp_lista_tb","%s","campo%d","unir","id_lista",this,1); mcampo("campo%d_|_campo%d"); $("#campo%d").focus();',
-                $data['input_list_return_column'],
+                $dependentReturnColumn,
                 (int) $data['input_list_target_field'],
                 (int) $campo->id_input,
                 (int) $data['input_list_target_field'],

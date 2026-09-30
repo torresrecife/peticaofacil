@@ -56,6 +56,7 @@ class WordImportService
                 if ($structuredHtml !== null && stripos($structuredHtml, '<table') !== false) {
                     $html = $structuredHtml;
                 }
+                $html = $this->appendDocxFootnotes($html, $sourcePath);
             }
 
             return $this->prepareImportedHtml($html, dirname($htmlPath));
@@ -214,6 +215,46 @@ class WordImportService
         } catch (\Throwable $exception) {
             return null;
         }
+    }
+
+    protected function appendDocxFootnotes($html, $sourcePath)
+    {
+        if (!class_exists('ZipArchive')) {
+            return $html;
+        }
+        $zip = new \ZipArchive();
+        $opened = $zip->open($sourcePath);
+        if ($opened !== true && $opened !== 1) {
+            return $html;
+        }
+        $xml = $zip->getFromName('word/footnotes.xml');
+        if ($xml === false) {
+            $zip->close();
+            return $html;
+        }
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        if (!@$dom->loadXML($xml)) {
+            $zip->close();
+            return $html;
+        }
+        $xpath = new \DOMXPath($dom);
+        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+        $notes = [];
+        foreach ($xpath->query('//w:footnote') as $note) {
+            $id = (int) $note->getAttributeNS('http://schemas.openxmlformats.org/wordprocessingml/2006/main', 'id');
+            if ($id < 0) {
+                continue;
+            }
+            $text = trim($note->textContent);
+            if ($text !== '') {
+                $notes[] = '<p><sup>' . $id . '</sup> ' . htmlspecialchars($this->normalizeExtractedText($text), ENT_QUOTES, 'UTF-8') . '</p>';
+            }
+        }
+        $zip->close();
+        if (!$notes || stripos((string) $html, 'class="docx-footnotes"') !== false) {
+            return $html;
+        }
+        return (string) $html . '<hr><section class="docx-footnotes"><h3>Referências</h3>' . implode('', $notes) . '</section>';
     }
 
     protected function normalizeExtractedText($text)

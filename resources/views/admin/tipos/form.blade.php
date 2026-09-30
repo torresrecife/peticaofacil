@@ -136,24 +136,27 @@
                 <div class="editor-note">{{ $modelo->paragrafos->count() }} item(ns) neste modelo.</div>
             </div>
 
-            <div class="panel-muted" style="margin-bottom:20px;">
-                <form method="post" action="{{ $storeParagrafoRoute }}">
-                    @csrf
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Titulo</label>
-                            <input name="fund_titulo" required>
+            <details class="accordion-item" style="margin-bottom:20px;">
+                <summary>Adicionar novo paragrafo</summary>
+                <div class="accordion-body">
+                    <form method="post" action="{{ $storeParagrafoRoute }}">
+                        @csrf
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Titulo</label>
+                                <input name="fund_titulo" required>
+                            </div>
+                            <div class="form-group full">
+                                <label>Texto</label>
+                                <textarea class="js-rich-editor" name="fund_text"></textarea>
+                            </div>
                         </div>
-                        <div class="form-group full">
-                            <label>Texto</label>
-                            <textarea class="js-rich-editor" name="fund_text"></textarea>
+                        <div style="margin-top:12px;">
+                            <button type="submit">Adicionar paragrafo</button>
                         </div>
-                    </div>
-                    <div style="margin-top:12px;">
-                        <button type="submit">Adicionar paragrafo</button>
-                    </div>
-                </form>
-            </div>
+                    </form>
+                </div>
+            </details>
 
             <div class="stack">
                 @foreach($modelo->paragrafos as $paragrafo)
@@ -196,7 +199,9 @@
                 <div class="editor-note">{{ $modelo->campos->count() }} campo(s) vinculados a este modelo.</div>
             </div>
 
-            <div class="panel-muted" style="margin-bottom:20px;">
+            <details class="accordion-item" style="margin-bottom:20px;">
+                <summary>Adicionar novo campo dinâmico</summary>
+                <div class="accordion-body">
                 <form method="post" action="{{ $storeCampoRoute }}">
                     @csrf
                     <div class="form-grid">
@@ -249,8 +254,7 @@
                         </div>
                         <div class="form-group">
                             <label>Retorno da lista</label>
-                            <select name="input_list_return_column">
-                                <option value="">Nenhum</option>
+                            <select name="input_list_return_column[]" multiple size="3">
                                 @foreach(['return_1', 'return_2', 'return_3', 'return_4', 'return_5', 'return_6'] as $returnColumn)
                                     <option value="{{ $returnColumn }}">{{ strtoupper($returnColumn) }}</option>
                                 @endforeach
@@ -370,7 +374,8 @@
                         <button type="submit">Adicionar campo</button>
                     </div>
                 </form>
-            </div>
+                </div>
+            </details>
 
             <div class="stack">
                 @foreach($modelo->campos as $campo)
@@ -444,10 +449,10 @@
                                     </div>
                                     <div class="form-group">
                                         <label>Retorno da lista</label>
-                                        <select name="input_list_return_column">
-                                            <option value="">Nenhum</option>
+                                        @php($selectedReturnColumns = $listConfig['return_columns'] ?? (isset($listConfig['return_column']) ? preg_split('/\s*[+,;|]\s*/', $listConfig['return_column']) : []))
+                                        <select name="input_list_return_column[]" multiple size="3">
                                             @foreach(['return_1', 'return_2', 'return_3', 'return_4', 'return_5', 'return_6'] as $returnColumn)
-                                                <option value="{{ $returnColumn }}" @if(($listConfig['return_column'] ?? '') === $returnColumn) selected @endif>{{ strtoupper($returnColumn) }}</option>
+                                                <option value="{{ $returnColumn }}" @if(in_array($returnColumn, $selectedReturnColumns, true)) selected @endif>{{ strtoupper($returnColumn) }}</option>
                                             @endforeach
                                         </select>
                                     </div>

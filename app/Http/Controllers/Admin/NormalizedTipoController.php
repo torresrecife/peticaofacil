@@ -275,6 +275,15 @@ class NormalizedTipoController extends Controller
     {
         $groupName = trim((string) ($field['lista_grupo'] ?? ''));
         $returnColumn = trim((string) ($field['lista_retorno'] ?? ''));
+
+        // Fiel depositario deve ser escolhido entre os localizadores cadastrados,
+        // mesmo quando a IA nao preencher explicitamente a configuracao da lista.
+        $label = strtolower(trim((string) ($field['rotulo'] ?? '')));
+        $label = strtr($label, ['á' => 'a', 'ã' => 'a', 'é' => 'e', 'ê' => 'e', 'í' => 'i', 'ó' => 'o', 'ô' => 'o', 'ú' => 'u', 'ç' => 'c']);
+        if (strpos($label, 'fiel depositario') !== false || strpos($label, 'localizador') !== false) {
+            $groupName = 'LOCALIZADORES';
+            $returnColumn = $returnColumn ?: 'return_1';
+        }
         if ($groupName === '' || $returnColumn === '') {
             return null;
         }

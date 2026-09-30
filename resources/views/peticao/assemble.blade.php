@@ -38,6 +38,36 @@
         font-size: 13px;
         font-weight: 600;
     }
+    /* Tabelas da peticao ocupam uma linha propria no preview. */
+    .preview-content table {
+        display: table;
+        clear: both;
+        float: none !important;
+    }
+    .preview-content table[style*="float: right"],
+    .preview-content table[style*="float:right"] {
+        float: none !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+    }
+    .preview-content table[style*="float: left"],
+    .preview-content table[style*="float:left"] {
+        float: none !important;
+        margin-left: 0 !important;
+        margin-right: auto !important;
+    }
+    .preview-content table[align="right"],
+    .preview-content table[style*="text-align: right"],
+    .preview-content table[style*="text-align:right"] {
+        margin-left: auto !important;
+        margin-right: 0 !important;
+    }
+    .preview-content table[align="center"],
+    .preview-content table[style*="text-align: center"],
+    .preview-content table[style*="text-align:center"] {
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
 </style>
 @endpush
 
@@ -217,7 +247,7 @@
                 <h3>Preview da peticao</h3>
                 <div class="editor-note">Nome sugerido: {{ $preview['suggested_filename'] }}</div>
             </div>
-            <div class="panel-muted" style="background:#fff;">
+            <div class="panel-muted preview-content" style="background:#fff;">
                 {!! $preview['html'] !!}
             </div>
             <form method="post" action="{{ $normalizedStoreRoute }}" style="margin-top:16px;">

@@ -243,6 +243,7 @@ class PeticaoModeloCampo extends Model
             'group_id' => $groupId,
             'label_column' => $labelColumn ?: 'nome_lista',
             'return_column' => $returnColumn ?: 'return_1',
+            'return_columns' => array_values(array_filter(preg_split('/\s*[+,;|]\s*/', $returnColumn ?: 'return_1'))),
             'filter' => $filter,
             'layout' => $layout,
         ];
@@ -347,13 +348,20 @@ class PeticaoModeloCampo extends Model
 
                 $labelColumn = $config['label_column'];
                 $label = (string) ($item->{$labelColumn} ?? $item->nome_lista);
-                $returnColumn = $config['return_column'];
+                $returnColumns = $config['return_columns'] ?? [$config['return_column']];
+                $returnValues = [];
+                foreach ($returnColumns as $returnColumn) {
+                    $value = trim((string) ($item->{$returnColumn} ?? ''));
+                    if ($value !== '') {
+                        $returnValues[] = $value;
+                    }
+                }
 
                 return [
                     'id' => $item->legacy_lista_id ?: $item->id_lista,
                     'label' => $label,
                     'value' => $label,
-                    'return' => (string) ($item->{$returnColumn} ?? $label),
+                    'return' => $returnValues ? implode(' ', $returnValues) : $label,
                     'extras' => $extras,
                 ];
             })
