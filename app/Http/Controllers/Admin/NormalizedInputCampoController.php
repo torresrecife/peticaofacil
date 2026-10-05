@@ -91,6 +91,8 @@ class NormalizedInputCampoController extends Controller
             'input_db' => 'nullable|string|max:100',
             'input_val' => 'nullable|string|max:100',
             'input_alt' => 'nullable|string|max:50',
+            // Existing models may still use the legacy three-column layout. New
+            // forms expose only 1 and 2, but updates must not invalidate old data.
             'input_cols' => 'required|integer|min:1|max:3',
             'input_rols' => 'nullable|integer|min:0',
             'input_focu' => 'nullable|string|max:2000',
@@ -110,6 +112,10 @@ class NormalizedInputCampoController extends Controller
             'input_list_group_id' => 'nullable|integer|min:1',
             'input_list_return_column' => 'nullable',
             'input_list_target_field' => 'nullable|integer|min:1',
+            'conditional_value' => 'nullable|string|max:200',
+            'conditional_targets' => 'nullable|array',
+            'conditional_targets.*' => 'integer|min:1',
+            'conditional_required' => 'nullable|in:0,1',
         ]);
     }
 
@@ -227,11 +233,36 @@ class NormalizedInputCampoController extends Controller
             }
         }
 
-        return array_filter([
+        $events = array_filter([
             'focus' => $focus !== '' ? $focus : null,
             'load' => $load !== '' ? $load : null,
             'blur' => $blur !== '' ? $blur : null,
         ]);
+
+        $conditionalValue = trim((string) ($data['conditional_value'] ?? ''));
+        $conditionalTargets = array_values(array_unique(array_map('intval', (array) ($data['conditional_targets'] ?? []))));
+        $conditionalTargets = PeticaoModeloCampo::where('modelo_id', $campo->modelo_id)
+            ->where(function ($query) use ($conditionalTargets) {
+                $query->whereIn('legacy_input_id', $conditionalTargets)
+                    ->orWhereIn('id', $conditionalTargets);
+            })
+            ->where('id', '<>', $campo->id)
+            ->get(['id', 'legacy_input_id'])
+            ->map(function (PeticaoModeloCampo $target) {
+                return (int) $target->id_input;
+            })
+            ->values()
+            ->all();
+
+        if ($conditionalValue !== '' && !empty($conditionalTargets)) {
+            $events['conditional'] = [
+                'value' => $conditionalValue,
+                'target_ids' => $conditionalTargets,
+                'required' => (int) ($data['conditional_required'] ?? 0) === 1,
+            ];
+        }
+
+        return $events;
     }
 
     protected function resolveEventScript(array $data, $inputKey, $presetKey)

@@ -8,6 +8,123 @@ use Tests\TestCase;
 
 class AdminNormalizedCampoListaAssociationTest extends TestCase
 {
+    public function test_admin_can_manage_predefined_text_and_it_is_available_in_assembly()
+    {
+        $admin = factory(User::class)->create(['nivel_usu' => 'ADM', 'acesso_usu' => now()]);
+        DB::table('setores')->insert([
+            'id_setor' => 1, 'nome_setor' => 'Juridico', 'cod_setor' => 'JUR', 'data_cad' => now(),
+        ]);
+        DB::table('peticao_modelos')->insert([
+            'id' => 46, 'legacy_tipo_id' => null, 'legacy_setor_id' => 1,
+            'nome' => 'MODELO COM TEXTOS', 'slug' => 'modelo-com-textos-46',
+            'status' => 'ativo', 'arquivo_padrao' => 'pdf', 'metadata' => json_encode([]),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/admin/modelos-normalizados/46/textos-predefinidos', [
+                'template_title' => 'Fundamentação mudou-se',
+                'template_content' => '<p><strong>Texto reutilizável</strong></p>',
+            ])
+            ->assertRedirect('/admin/modelos-normalizados/46/edit');
+
+        $metadata = json_decode(DB::table('peticao_modelos')->where('id', 46)->value('metadata'), true);
+        $this->assertCount(1, $metadata['text_templates']);
+        $this->assertSame('Fundamentação mudou-se', $metadata['text_templates'][0]['title']);
+
+        $this->actingAs($admin)
+            ->get('/admin/modelos-normalizados/46/edit')
+            ->assertStatus(200)
+            ->assertSee('Textos predefinidos', false)
+            ->assertSee('Fundamentação mudou-se', false);
+
+        $this->actingAs($admin)
+            ->get('/peticoes/modelos/46')
+            ->assertStatus(200)
+            ->assertSee('Fundamentação mudou-se', false)
+            ->assertSee('var predefinedTexts =', false)
+            ->assertSee('rich-editor-load-template', false);
+    }
+
+    public function test_admin_can_configure_structured_conditional_visibility_for_normalized_fields()
+    {
+        $admin = factory(User::class)->create([
+            'nivel_usu' => 'ADM',
+            'acesso_usu' => now(),
+        ]);
+
+        DB::table('setores')->insert([
+            'id_setor' => 1,
+            'nome_setor' => 'Juridico',
+            'cod_setor' => 'JUR',
+            'data_cad' => now(),
+        ]);
+
+        DB::table('peticao_modelos')->insert([
+            'id' => 47,
+            'legacy_tipo_id' => null,
+            'legacy_setor_id' => 1,
+            'nome' => 'MODELO CONDICIONAL',
+            'slug' => 'modelo-condicional-47',
+            'status' => 'ativo',
+            'arquivo_padrao' => 'pdf',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $targetId = DB::table('peticao_modelo_campos')->insertGetId([
+            'modelo_id' => 47,
+            'legacy_input_id' => null,
+            'rotulo' => 'FUNDAMENTAÇÃO MUDOU-SE',
+            'token' => '@campo_destino@',
+            'tipo' => 'TEXTAREA',
+            'ordem' => 2,
+            'colunas_layout' => 1,
+            'linhas_layout' => 0,
+            'visivel' => 0,
+            'obrigatorio' => 0,
+            'gera_nome_arquivo' => 0,
+            'eventos_frontend' => json_encode([]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/admin/modelos-normalizados/47/campos', [
+                'input_title' => 'NOTIFICAÇÃO MUDOU-SE?',
+                'input_tipo' => 'SELECT',
+                'input_cols' => 1,
+                'input_rols' => 0,
+                'input_req' => 1,
+                'input_order' => 1,
+                'nomepet' => 'N',
+                'hide' => 'true',
+                'opcoes' => "SIM|SIM\nNÃO|NÃO",
+                'conditional_value' => 'SIM',
+                'conditional_targets' => [$targetId],
+                'conditional_required' => '1',
+            ])
+            ->assertRedirect('/admin/modelos-normalizados/47/edit');
+
+        $source = DB::table('peticao_modelo_campos')
+            ->where('modelo_id', 47)
+            ->where('rotulo', 'NOTIFICAÇÃO MUDOU-SE?')
+            ->first();
+
+        $this->assertNotNull($source);
+        $events = json_decode($source->eventos_frontend, true);
+        $this->assertSame('SIM', $events['conditional']['value']);
+        $this->assertSame([$targetId], $events['conditional']['target_ids']);
+        $this->assertTrue($events['conditional']['required']);
+
+        $this->actingAs($admin)
+            ->get('/peticoes/modelos/47')
+            ->assertStatus(200)
+            ->assertSee('var structuredConditionalRules =', false)
+            ->assertSee('"source_id":' . $source->id, false)
+            ->assertSee('"target_ids":[' . $targetId . ']', false);
+    }
+
     public function test_admin_can_store_field_with_associated_list_and_target_return()
     {
         $admin = factory(User::class)->create([

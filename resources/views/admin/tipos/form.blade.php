@@ -15,7 +15,11 @@
         color: #8d5c00;
         font-weight: 600;
     }
-    .js-date-preset-row { display: none !important; }
+    /* Presets are legacy implementation details; the editable event fields are
+       the only event controls exposed in the simplified configuration screen. */
+    .js-date-preset-row {
+        display: none !important;
+    }
 </style>
 @endpush
 
@@ -196,6 +200,67 @@
 
         <div class="panel">
             <div class="section-title">
+                <h3>Textos predefinidos</h3>
+                <div class="editor-note">{{ count($textTemplates) }} texto(s) disponível(is) para campos Textarea durante a montagem.</div>
+            </div>
+
+            <details class="accordion-item" style="margin-bottom:20px;">
+                <summary>Adicionar texto predefinido</summary>
+                <div class="accordion-body">
+                    <form method="post" action="{{ route('admin.modelos-normalizados.textos-predefinidos.store', $modelo) }}">
+                        @csrf
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Título</label>
+                                <input name="template_title" required>
+                            </div>
+                            <div class="form-group full">
+                                <label>Conteúdo</label>
+                                <textarea class="js-rich-editor" name="template_content"></textarea>
+                            </div>
+                        </div>
+                        <div style="margin-top:12px;"><button type="submit">Adicionar texto</button></div>
+                    </form>
+                </div>
+            </details>
+
+            <div class="stack">
+                @foreach($textTemplates as $template)
+                    @if(!empty($template['id']))
+                        <details class="accordion-item">
+                            <summary>{{ $template['title'] ?? 'Texto sem título' }}{{ isset($template['active']) && !$template['active'] ? ' (inativo)' : '' }}</summary>
+                            <div class="accordion-body">
+                                <form method="post" action="{{ route('admin.modelos-normalizados.textos-predefinidos.update', [$modelo, $template['id']]) }}">
+                                    @csrf
+                                    @method('put')
+                                    <div class="form-grid">
+                                        <div class="form-group">
+                                            <label>Título</label>
+                                            <input name="template_title" value="{{ $template['title'] ?? '' }}" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Disponível na montagem</label>
+                                            <select name="template_active">
+                                                <option value="1"{{ !isset($template['active']) || $template['active'] ? ' selected' : '' }}>Sim</option>
+                                                <option value="0"{{ isset($template['active']) && !$template['active'] ? ' selected' : '' }}>Não</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group full">
+                                            <label>Conteúdo</label>
+                                            <textarea class="js-rich-editor" name="template_content">{{ $template['content'] ?? '' }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div style="margin-top:12px;"><button type="submit">Salvar texto</button></div>
+                                </form>
+                            </div>
+                        </details>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="section-title">
                 <h3>Campos dinamicos</h3>
                 <div class="editor-note">{{ $modelo->campos->count() }} campo(s) vinculados a este modelo.</div>
             </div>
@@ -215,9 +280,7 @@
                             <label>Tipo</label>
                             <select name="input_tipo" class="js-field-type-select">
                                 <option value="TEXT">Texto</option>
-                                <option value="TEXTAREA">Textarea</option>
-                                <option value="SELECT">Select</option>
-                                <option value="RADIO2">Opções (radio)</option>
+                                <option value="SELECT">Opções</option>
                                 <option value="HIDDEN">Oculto</option>
                                 <option value="TITLE">Titulo</option>
                             </select>
@@ -275,7 +338,6 @@
                             <select name="input_cols">
                                 <option value="1">1</option>
                                 <option value="2">2</option>
-                                <option value="3">3</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -309,6 +371,14 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label>Visível inicialmente</label>
+                            <select name="hide">
+                                <option value="true">Sim</option>
+                                <option value="none">Não</option>
+                            </select>
+                            <div class="editor-note">Use “Não” quando uma regra condicional deve exibir este campo.</div>
+                        </div>
+                        <div class="form-group">
                             <label>Nome do arquivo</label>
                             <select name="nomepet">
                                 <option value="N">Nao</option>
@@ -318,6 +388,32 @@
                         <div class="form-group">
                             <label>Classe CSS</label>
                             <input name="add_class">
+                        </div>
+                        <div class="form-group full panel-muted">
+                            <strong>Regra condicional</strong>
+                            <div class="editor-note" style="margin:6px 0 12px;">Exibe outros campos quando este campo tiver o valor informado. Exemplo: valor “SIM” exibe “Fundamentação mudou-se”.</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Exibir campos quando o valor for</label>
+                                    <input name="conditional_value" placeholder="Ex.: SIM">
+                                </div>
+                                <div class="form-group">
+                                    <label>Tornar campos exibidos obrigatórios</label>
+                                    <select name="conditional_required">
+                                        <option value="0">Não</option>
+                                        <option value="1">Sim</option>
+                                    </select>
+                                </div>
+                                <div class="form-group full">
+                                    <label>Campos exibidos</label>
+                                    <select name="conditional_targets[]" multiple size="6">
+                                        @foreach($modelo->campos as $campoExistente)
+                                            <option value="{{ $campoExistente->id_input }}">{{ $campoExistente->input_title }} (#{{ $campoExistente->id_input }})</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="editor-note">Use Ctrl para selecionar mais de um campo. Configure os campos de destino como não visíveis inicialmente.</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group full js-date-preset-row" data-preset-row="focus" style="display:none;">
                             <label>Preset Ao Entrar</label>
@@ -365,7 +461,7 @@
                             <label>Texto padrao</label>
                             <textarea name="texto_padrao"></textarea>
                         </div>
-                        <div class="form-group full">
+                        <div class="form-group full js-options-config">
                             <label>Opcoes do select</label>
                             <textarea name="opcoes" placeholder="Uma linha por opcao. Use Nome|Retorno"></textarea>
                             <div class="editor-note">Formato: `Rotulo|Retorno`. O rotulo aparece para o usuario; o retorno entra na montagem.</div>
@@ -396,6 +492,8 @@
                                 $updateCampoRoute = route('admin.modelos-normalizados.campos.update', [$modelo, $campo]);
                                 $listConfig = $campo->associated_list_config;
                                 $dependentConfig = $campo->dependent_fill_config;
+                                $conditionalConfig = $campo->conditional_config ?: [];
+                                $conditionalTargetIds = array_map('intval', $conditionalConfig['target_ids'] ?? []);
                             @endphp
                             <form method="post" action="{{ $updateCampoRoute }}">
                                 @csrf
@@ -409,7 +507,7 @@
                                         <label>Tipo</label>
                                         <select name="input_tipo" class="js-field-type-select">
                                             @foreach(['TEXT', 'TEXTAREA', 'SELECT', 'RADIO2', 'HIDDEN', 'TITLE'] as $tipoCampo)
-                                                <option value="{{ $tipoCampo }}" @if($campo->input_tipo === $tipoCampo) selected @endif>{{ $tipoCampo }}</option>
+                                                <option value="{{ $tipoCampo }}" @if($campo->input_tipo === $tipoCampo) selected @endif>{{ $tipoCampo === 'TEXT' ? 'Texto' : ($tipoCampo === 'SELECT' ? 'Opções' : ($tipoCampo === 'HIDDEN' ? 'Oculto' : ($tipoCampo === 'TITLE' ? 'Título' : $tipoCampo))) }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -471,9 +569,10 @@
                                     <div class="form-group">
                                         <label>Colunas</label>
                                         <select name="input_cols">
-                                            @foreach([1, 2, 3] as $cols)
+                                            @foreach([1, 2] as $cols)
                                                 <option value="{{ $cols }}" @if((int) $campo->input_cols === $cols) selected @endif>{{ $cols }}</option>
                                             @endforeach
+                                            @if((int) $campo->input_cols === 3)<option value="3" selected>3 (legado)</option>@endif
                                         </select>
                                     </div>
                                     <div class="form-group">
@@ -507,6 +606,14 @@
                                         </select>
                                     </div>
                                     <div class="form-group">
+                                        <label>Visível inicialmente</label>
+                                        <select name="hide">
+                                            <option value="true" @if($campo->visivel) selected @endif>Sim</option>
+                                            <option value="none" @if(!$campo->visivel) selected @endif>Não</option>
+                                        </select>
+                                        <div class="editor-note">Use “Não” quando uma regra condicional deve exibir este campo.</div>
+                                    </div>
+                                    <div class="form-group">
                                         <label>Nome do arquivo</label>
                                         <select name="nomepet">
                                             <option value="N" @if($campo->nomepet === 'N') selected @endif>Nao</option>
@@ -516,6 +623,34 @@
                                     <div class="form-group">
                                         <label>Ordem</label>
                                         <input name="input_order" type="number" min="1" value="{{ $campo->input_order }}">
+                                    </div>
+                                    <div class="form-group full panel-muted">
+                                        <strong>Regra condicional</strong>
+                                        <div class="editor-note" style="margin:6px 0 12px;">Exibe outros campos quando este campo tiver o valor informado.</div>
+                                        <div class="form-grid">
+                                            <div class="form-group">
+                                                <label>Exibir campos quando o valor for</label>
+                                                <input name="conditional_value" value="{{ $conditionalConfig['value'] ?? '' }}" placeholder="Ex.: SIM">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Tornar campos exibidos obrigatórios</label>
+                                                <select name="conditional_required">
+                                                    <option value="0" @if(empty($conditionalConfig['required'])) selected @endif>Não</option>
+                                                    <option value="1" @if(!empty($conditionalConfig['required'])) selected @endif>Sim</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group full">
+                                                <label>Campos exibidos</label>
+                                                <select name="conditional_targets[]" multiple size="6">
+                                                    @foreach($modelo->campos as $campoExistente)
+                                                        @if((int) $campoExistente->id_input !== (int) $campo->id_input)
+                                                            <option value="{{ $campoExistente->id_input }}" @if(in_array((int) $campoExistente->id_input, $conditionalTargetIds, true)) selected @endif>{{ $campoExistente->input_title }} (#{{ $campoExistente->id_input }})</option>
+                                                        @endif
+                                                    @endforeach
+                                                </select>
+                                                <div class="editor-note">Use Ctrl para selecionar mais de um campo. Configure os campos de destino como não visíveis inicialmente.</div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="form-group full js-date-preset-row" data-preset-row="focus" style="display:none;">
                                         <label>Preset Ao Entrar</label>
@@ -563,7 +698,7 @@
                                         <label>Texto padrao</label>
                                         <textarea name="texto_padrao">{{ $campo->texto_padrao }}</textarea>
                                     </div>
-                                    <div class="form-group full">
+                                    <div class="form-group full js-options-config">
                                         <label>Opcoes do select</label>
                                         <textarea name="opcoes">@foreach($campo->dados as $dado){{ $dado->nome_dados }}|{{ $dado->return_1 }}
 @endforeach</textarea>
@@ -739,18 +874,61 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function syncDynamicFieldConfiguration(form) {
+        var typeSelect = form.querySelector('.js-field-type-select');
+        if (!typeSelect) return;
+        var type = String(typeSelect.value || '').toUpperCase();
+        var titleOnly = type === 'TITLE';
+        var optionsType = type === 'SELECT' || type === 'RADIO2';
+        var fieldGroups = form.querySelectorAll('.form-group');
+        Array.prototype.forEach.call(fieldGroups, function (group) {
+            var control = group.querySelector('[name]');
+            if (!control) return;
+            var name = control.getAttribute('name') || '';
+            var visible = true;
+
+            // Keep the editor close to the legacy configuration screen. These
+            // auxiliary controls remain in the HTML so old values are preserved,
+            // but are not shown while the simplified editor is active.
+            var legacyAdvanced = ['hide', 'add_class', 'input_list_target_field', 'conditional_value', 'conditional_required', 'conditional_targets[]', 'input_focu_preset', 'input_load_preset', 'input_blur_preset'];
+            if (legacyAdvanced.indexOf(name) !== -1) {
+                visible = false;
+            }
+
+            if (titleOnly && visible) {
+                // The type selector itself remains visible so the administrator can
+                // switch back to another configuration without reopening the form.
+                visible = ['input_tipo', 'input_title', 'input_pre', 'input_pos'].indexOf(name) !== -1;
+            } else if (group.classList.contains('js-options-config')) {
+                visible = optionsType;
+            } else if (name === 'input_behavior' || name.indexOf('input_') === 0 || name === 'hide' || name === 'nomepet' || name === 'add_class' || name === 'texto_padrao' || name === 'opcoes') {
+                visible = true;
+            }
+
+            group.style.display = visible ? '' : 'none';
+        });
+
+        Array.prototype.forEach.call(form.querySelectorAll('.panel-muted'), function (panel) {
+            if (panel.querySelector('[name="conditional_value"]')) {
+                panel.style.display = 'none';
+            }
+        });
+    }
+
     Array.prototype.forEach.call(document.querySelectorAll('form'), function (form) {
         if (!form.querySelector('.js-field-type-select')) {
             return;
         }
 
         syncFieldBehavior(form);
+        syncDynamicFieldConfiguration(form);
 
         var typeSelect = form.querySelector('.js-field-type-select');
         var behaviorSelect = form.querySelector('.js-field-behavior-select');
 
         typeSelect.addEventListener('change', function () {
             syncFieldBehavior(form);
+            syncDynamicFieldConfiguration(form);
         });
 
         if (behaviorSelect) {

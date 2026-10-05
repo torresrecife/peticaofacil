@@ -77,6 +77,7 @@ class NormalizedTipoController extends Controller
             'servidores' => $this->availableServidores(),
             'listaGrupos' => ListaGrupo::orderBy('nome_grupo')->get(),
             'neoColumns' => $this->neoColumns(null),
+            'textTemplates' => [],
         ]);
     }
 
@@ -212,6 +213,7 @@ class NormalizedTipoController extends Controller
             'servidores' => $this->availableServidores(),
             'listaGrupos' => ListaGrupo::orderBy('nome_grupo')->get(),
             'neoColumns' => $this->neoColumns($modeloNormalizado->servidor),
+            'textTemplates' => array_values((array) (($modeloNormalizado->metadata ?? [])['text_templates'] ?? [])),
         ]);
     }
 

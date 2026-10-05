@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\PeticaoModelo;
+use App\PeticaoModeloCampo;
 use App\Services\PeticaoComposerService;
 use App\Services\PeticaoModeloRuntimeFactory;
 use App\User;
@@ -39,14 +40,22 @@ class LegacyFieldCompatibilityTest extends TestCase
             'id' => 8003, 'legacy_input_id' => 8003, 'rotulo' => 'DECISÃO', 'token' => '@campo8003@',
             'tipo' => 'RADIO2', 'comportamento' => '', 'ordem' => 3, 'eventos_frontend' => '[]',
         ]));
+        DB::table('peticao_modelo_campos')->insert(array_merge($base, [
+            'id' => 8004, 'legacy_input_id' => 8004, 'rotulo' => 'FUNDAMENTAÇÃO', 'token' => '@campo8004@',
+            'tipo' => 'TEXTAREA', 'comportamento' => '', 'ordem' => 4,
+            'valor_padrao' => '<p>Texto predefinido</p>', 'eventos_frontend' => '[]',
+        ]));
         DB::table('peticao_modelo_campo_opcoes')->insert([
             ['campo_id' => 8003, 'rotulo' => 'SIM', 'valor_retorno' => 'DEFERIDO', 'ordem' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['campo_id' => 8003, 'rotulo' => 'NÃO', 'valor_retorno' => 'INDEFERIDO', 'ordem' => 2, 'created_at' => now(), 'updated_at' => now()],
         ]);
         DB::table('peticao_modelo_paragrafos')->insert([
-            'modelo_id' => 80, 'titulo' => 'TESTE', 'conteudo_html' => '<p>@campo8003@</p>',
+            'modelo_id' => 80, 'titulo' => 'TESTE', 'conteudo_html' => '<p>@campo8003@</p><div>@campo8004@</div>',
             'ordem' => 1, 'visivel' => 1, 'ativo' => 1, 'created_at' => now(), 'updated_at' => now(),
         ]);
+
+        $this->assertSame('RADIO2', PeticaoModeloCampo::findOrFail(8003)->input_tipo);
+        $this->assertSame('TEXTAREA', PeticaoModeloCampo::findOrFail(8004)->input_tipo);
 
         $this->actingAs($user)->get('/peticoes/modelos/80')
             ->assertStatus(200)
@@ -54,11 +63,20 @@ class LegacyFieldCompatibilityTest extends TestCase
             ->assertSee('legacy-row-break', false)
             ->assertSee('data-event-blur="diasemana(this);"', false)
             ->assertSee('type="radio"', false)
+            ->assertSee('class="secondary js-open-rich-editor"', false)
+            ->assertSee('Texto predefinido', false)
             ->assertSee('function formatProcess(value)', false)
             ->assertSee("raw.indexOf('diasemana(this)')", false);
         $model = PeticaoModelo::findOrFail(80);
         $runtime = app(PeticaoModeloRuntimeFactory::class)->fromNormalized($model);
-        $result = app(PeticaoComposerService::class)->compose($runtime, ['campo_8003' => 'SIM']);
+        $result = app(PeticaoComposerService::class)->compose($runtime, [
+            'campo_8003' => 'SIM',
+            'campo_8004' => '<p onclick="alert(1)"><strong>Fundamentação editada</strong> @campo8003@<script>alert(2)</script></p>',
+        ]);
         $this->assertStringContainsString('DEFERIDO', $result['html']);
+        $this->assertStringContainsString('<strong>Fundamentação editada</strong>', $result['html']);
+        $this->assertStringNotContainsString('@campo8003@', $result['html']);
+        $this->assertStringNotContainsString('onclick=', $result['html']);
+        $this->assertStringNotContainsString('<script', $result['html']);
     }
 }

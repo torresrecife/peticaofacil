@@ -90,9 +90,18 @@
             gap: 16px;
             margin-top: 16px;
         }
-        .dashboard-layout .stack { gap: 16px; }
-        .dashboard-layout .panel { min-width: 0; padding: 16px; }
-        .dashboard-layout table { display: block; overflow-x: auto; white-space: nowrap; }
+        .dashboard-layout .stack {
+            gap: 16px;
+        }
+        .dashboard-layout .panel {
+            min-width: 0;
+            padding: 16px;
+        }
+        .dashboard-layout table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
     }
 </style>
 @endpush

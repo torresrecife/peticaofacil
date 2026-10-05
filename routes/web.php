@@ -89,6 +89,8 @@ Route::middleware(['auth', 'password.initial'])->group(function () {
         Route::put('peticoes-avulsas/configuracao', 'Admin\PeticaoAvulsaConfigController@update')->name('peticoes-avulsas.config.update');
         Route::post('modelos-normalizados/{modeloNormalizado}/paragrafos', 'Admin\NormalizedParagrafoController@store')->name('modelos-normalizados.paragrafos.store');
         Route::put('modelos-normalizados/{modeloNormalizado}/paragrafos/{paragrafo}', 'Admin\NormalizedParagrafoController@update')->name('modelos-normalizados.paragrafos.update');
+        Route::post('modelos-normalizados/{modeloNormalizado}/textos-predefinidos', 'Admin\NormalizedTextTemplateController@store')->name('modelos-normalizados.textos-predefinidos.store');
+        Route::put('modelos-normalizados/{modeloNormalizado}/textos-predefinidos/{templateId}', 'Admin\NormalizedTextTemplateController@update')->name('modelos-normalizados.textos-predefinidos.update');
         Route::post('modelos-normalizados/{modeloNormalizado}/campos', 'Admin\NormalizedInputCampoController@store')->name('modelos-normalizados.campos.store');
         Route::put('modelos-normalizados/{modeloNormalizado}/campos/{campo}', 'Admin\NormalizedInputCampoController@update')->name('modelos-normalizados.campos.update');
         Route::resource('listas', 'Admin\ListaController')->except(['show'])->parameters([

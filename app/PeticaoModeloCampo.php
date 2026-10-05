@@ -144,6 +144,13 @@ class PeticaoModeloCampo extends Model
         return $this->eventos_frontend['blur'] ?? null;
     }
 
+    public function getConditionalConfigAttribute()
+    {
+        $config = $this->eventos_frontend['conditional'] ?? null;
+
+        return is_array($config) ? $config : null;
+    }
+
     public function getInputBehaviorAttribute()
     {
         if (!empty($this->attributes['comportamento'])) {
