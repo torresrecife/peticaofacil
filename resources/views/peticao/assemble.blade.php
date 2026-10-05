@@ -953,7 +953,6 @@ document.addEventListener('DOMContentLoaded', function () {
             field.value = formatDecimal(field.value);
             return;
         }
-        }
     }
 
     function applyDependentSelect(select) {
