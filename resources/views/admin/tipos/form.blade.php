@@ -15,6 +15,7 @@
         color: #8d5c00;
         font-weight: 600;
     }
+    .js-date-preset-row { display: none !important; }
 </style>
 @endpush
 

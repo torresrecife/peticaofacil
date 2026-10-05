@@ -357,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (visibilityMatch) applyConditionalFields(visibilityMatch[1]);
         var installmentsMatch = raw.match(/nparcelas\(["']([^"']+)["']\)/i);
         if (installmentsMatch) applyCountedFields(installmentsMatch[1], 2);
-        var assetsMatch = raw.match(/nbens\(["']([^"']+)["']\s*,\s*["'][^"']+["']\)/i);
+        var assetsMatch = raw.match(/nbens\s*\(\s*["']([^"']+)["']/i);
         if (assetsMatch) applyCountedFields(assetsMatch[1], 1);
         var numberWordsMatch = raw.match(/fc_numextenso\(\s*(\d+)\s*,\s*(\d+)\s*,\s*["']([^"']*)["']\s*\)/i);
         if (numberWordsMatch) fillNumberInWords(numberWordsMatch[1], numberWordsMatch[2], numberWordsMatch[3]);

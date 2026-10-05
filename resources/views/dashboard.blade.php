@@ -77,6 +77,23 @@
         font-size: 13px;
         font-weight: bold;
     }
+    .dashboard-layout {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+        margin-top: 24px;
+        align-items: start;
+    }
+    @media (max-width: 900px) {
+        .dashboard-layout {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .dashboard-layout .stack { gap: 16px; }
+        .dashboard-layout .panel { min-width: 0; padding: 16px; }
+        .dashboard-layout table { display: block; overflow-x: auto; white-space: nowrap; }
+    }
 </style>
 @endpush
 
@@ -100,7 +117,7 @@
     </div>
 </div>
 
-<div style="display:grid; gap:24px; grid-template-columns:minmax(0, 1.4fr) minmax(320px, 0.9fr); margin-top:24px;">
+<div class="dashboard-layout">
     <div class="panel">
         <div class="section-title">
             <h2 style="margin:0;">Favoritos</h2>
