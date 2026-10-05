@@ -43,20 +43,23 @@ Route::middleware(['auth', 'password.initial'])->group(function () {
     Route::post('/peticoes/modelos/{modeloNormalizado}/exportar/pdf', 'PeticaoEditorController@exportNormalizedPdf')->name('peticoes.normalized.editor.export.pdf');
     Route::post('/peticoes/modelos/{modeloNormalizado}/exportar/word', 'PeticaoEditorController@exportNormalizedWord')->name('peticoes.normalized.editor.export.word');
     Route::post('/peticoes/modelos/{modeloNormalizado}/peticao-normalizada', 'PeticaoSavedController@storeFromNormalizedPreview')->name('peticoes.normalized.saved.store');
-    Route::get('/peticoes-salvas/{peticao}/editar', 'PeticaoSavedController@edit')->name('peticoes.saved.edit');
-    Route::put('/peticoes-salvas/{peticao}', 'PeticaoSavedController@update')->name('peticoes.saved.update');
-    Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/restaurar', 'PeticaoSavedController@restoreVersion')->name('peticoes.saved.versions.restore');
-    Route::get('/peticoes-salvas/{peticao}/versoes/{versao}/comparar', 'PeticaoSavedController@compareVersions')->name('peticoes.saved.versions.compare');
-    Route::get('/peticoes-salvas/{peticao}/versoes/{versao}/impressao', 'PeticaoSavedController@printVersion')->name('peticoes.saved.versions.print');
-    Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/exportar/word', 'PeticaoSavedController@exportVersionWord')->name('peticoes.saved.versions.export.word');
-    Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/exportar/pdf', 'PeticaoSavedController@exportVersionPdf')->name('peticoes.saved.versions.export.pdf');
-    Route::get('/peticoes-salvas/{peticao}/impressao', 'PeticaoSavedController@print')->name('peticoes.saved.print');
-    Route::post('/peticoes-salvas/{peticao}/importar/word', 'PeticaoSavedController@importWord')->name('peticoes.saved.import.word');
-    Route::post('/peticoes-salvas/{peticao}/revisar', 'PeticaoSavedController@review')->name('peticoes.saved.review');
-    Route::post('/peticoes-salvas/{peticao}/revisao/languagetool/preferencias', 'PeticaoSavedController@storeLanguageToolPreference')->name('peticoes.saved.review.preferences.store');
-    Route::post('/peticoes-salvas/{peticao}/revisao/ia', 'PeticaoSavedController@reviewWithAi')->name('peticoes.saved.review.ai');
-    Route::post('/peticoes-salvas/{peticao}/exportar/pdf', 'PeticaoSavedController@exportPdf')->name('peticoes.saved.export.pdf');
-    Route::post('/peticoes-salvas/{peticao}/exportar/word', 'PeticaoSavedController@exportWord')->name('peticoes.saved.export.word');
+    // Pecas salvas: so o autor, o GER do setor do autor e o ADM (PeticaoPolicy).
+    Route::middleware('can:access,peticao')->group(function () {
+        Route::get('/peticoes-salvas/{peticao}/editar', 'PeticaoSavedController@edit')->name('peticoes.saved.edit');
+        Route::put('/peticoes-salvas/{peticao}', 'PeticaoSavedController@update')->name('peticoes.saved.update');
+        Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/restaurar', 'PeticaoSavedController@restoreVersion')->name('peticoes.saved.versions.restore');
+        Route::get('/peticoes-salvas/{peticao}/versoes/{versao}/comparar', 'PeticaoSavedController@compareVersions')->name('peticoes.saved.versions.compare');
+        Route::get('/peticoes-salvas/{peticao}/versoes/{versao}/impressao', 'PeticaoSavedController@printVersion')->name('peticoes.saved.versions.print');
+        Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/exportar/word', 'PeticaoSavedController@exportVersionWord')->name('peticoes.saved.versions.export.word');
+        Route::post('/peticoes-salvas/{peticao}/versoes/{versao}/exportar/pdf', 'PeticaoSavedController@exportVersionPdf')->name('peticoes.saved.versions.export.pdf');
+        Route::get('/peticoes-salvas/{peticao}/impressao', 'PeticaoSavedController@print')->name('peticoes.saved.print');
+        Route::post('/peticoes-salvas/{peticao}/importar/word', 'PeticaoSavedController@importWord')->name('peticoes.saved.import.word');
+        Route::post('/peticoes-salvas/{peticao}/revisar', 'PeticaoSavedController@review')->name('peticoes.saved.review');
+        Route::post('/peticoes-salvas/{peticao}/revisao/languagetool/preferencias', 'PeticaoSavedController@storeLanguageToolPreference')->name('peticoes.saved.review.preferences.store');
+        Route::post('/peticoes-salvas/{peticao}/revisao/ia', 'PeticaoSavedController@reviewWithAi')->name('peticoes.saved.review.ai');
+        Route::post('/peticoes-salvas/{peticao}/exportar/pdf', 'PeticaoSavedController@exportPdf')->name('peticoes.saved.export.pdf');
+        Route::post('/peticoes-salvas/{peticao}/exportar/word', 'PeticaoSavedController@exportWord')->name('peticoes.saved.export.word');
+    });
     Route::get('/pecas', 'PecaController@index')->name('pecas.index');
 
     Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function () {

@@ -19,10 +19,7 @@ class PecaController extends Controller
             ->orderByRaw('COALESCE(gerado_em, created_at) DESC')
             ->orderByDesc('id');
 
-        $user = Auth::user();
-        if ($user && $user->nivel_usu !== 'ADM') {
-            $query->where('user_id', $user->id);
-        }
+        $query->visibleTo(Auth::user());
 
         if ($modeloId) {
             $query->where('modelo_id', $modeloId);

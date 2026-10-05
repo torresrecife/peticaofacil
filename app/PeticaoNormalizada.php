@@ -63,6 +63,46 @@ class PeticaoNormalizada extends Model
         return 'Modelo';
     }
 
+    /**
+     * Pecas que o usuario pode abrir: as proprias, as dos autores do seu
+     * setor quando ele e GER, e todas quando ele e ADM.
+     *
+     * E a forma de consulta de App\Policies\PeticaoPolicy::access().
+     * Mude as duas juntas.
+     */
+    public function scopeVisibleTo($query, User $user)
+    {
+        if ($user->nivel_usu === 'ADM') {
+            return $query;
+        }
+
+        $legacyUserId = (int) $user->legacy_usuario_id;
+        $sectorId = $user->nivel_usu === 'GER' ? (int) $user->id_setor : 0;
+
+        return $query->where(function ($visible) use ($user, $legacyUserId, $sectorId) {
+            $visible->where('user_id', $user->id);
+
+            if ($legacyUserId > 0) {
+                $visible->orWhere(function ($legacy) use ($legacyUserId) {
+                    $legacy->whereNull('user_id')->where('legacy_usuario_id', $legacyUserId);
+                });
+            }
+
+            if ($sectorId > 0) {
+                $visible->orWhereIn('user_id', function ($users) use ($sectorId) {
+                    $users->select('id')->from('users')->where('id_setor', $sectorId);
+                });
+                $visible->orWhere(function ($legacy) use ($sectorId) {
+                    $legacy->whereNull('user_id')->whereIn('legacy_usuario_id', function ($users) use ($sectorId) {
+                        $users->select('legacy_usuario_id')->from('users')
+                            ->where('id_setor', $sectorId)
+                            ->whereNotNull('legacy_usuario_id');
+                    });
+                });
+            }
+        });
+    }
+
     public function modelo()
     {
         return $this->belongsTo(PeticaoModelo::class, 'modelo_id');

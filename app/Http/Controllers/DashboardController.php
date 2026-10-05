@@ -16,6 +16,7 @@ class DashboardController extends Controller
         $today = now()->toDateString();
 
         $peticoesHojeNormalizadas = PeticaoNormalizada::with(['modelo', 'user'])
+            ->visibleTo(Auth::user())
             ->whereDate('gerado_em', $today)
             ->orderByDesc('gerado_em')
             ->orderByDesc('id')
