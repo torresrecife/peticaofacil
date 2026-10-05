@@ -75,8 +75,32 @@ $baseUrl = '/' . ltrim($baseUrl, '/');
 /*============================ Enable PHP Connector HERE ==============================*/
 // https://ckeditor.com/docs/ckfinder/ckfinder3-php/configuration.html#configuration_options_authentication
 
+// So atende quem traz a credencial assinada que o Laravel emite para usuarios
+// logados (cookie pf_filemanager, ver App\Http\Middleware\IssueFileManagerToken).
+// Sem chave, sem cookie ou com assinatura invalida, o conector fica desabilitado.
+require_once dirname(dirname(__DIR__)) . '/app/Support/FileManagerToken.php';
+
 $config['authentication'] = function () {
-    return true;
+    $cookie = \App\Support\FileManagerToken::COOKIE;
+    $token = isset($_COOKIE[$cookie]) && is_string($_COOKIE[$cookie]) ? $_COOKIE[$cookie] : '';
+    if ($token === '') {
+        return false;
+    }
+
+    // A chave e a mesma do Laravel: o .env do projeto ou, quando definida no
+    // servidor, a variavel de ambiente APP_KEY.
+    $keys = array(
+        \App\Support\FileManagerToken::keyFromEnvFile(dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . '.env'),
+        (string) getenv('APP_KEY'),
+    );
+
+    foreach (array_unique($keys) as $key) {
+        if ($key !== '' && \App\Support\FileManagerToken::verify($token, $key) !== null) {
+            return true;
+        }
+    }
+
+    return false;
 };
 
 /*============================ License Key ============================================*/

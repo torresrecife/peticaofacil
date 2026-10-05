@@ -12,6 +12,7 @@ class EncryptCookies extends Middleware
      * @var array
      */
     protected $except = [
-        //
+        // Lido pelo CKFinder fora do Laravel; o valor ja e assinado.
+        \App\Support\FileManagerToken::COOKIE,
     ];
 }
