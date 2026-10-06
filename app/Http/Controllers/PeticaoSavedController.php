@@ -13,6 +13,7 @@ use App\Services\PeticaoNormalizedStorageService;
 use App\Services\PeticaoSavedReviewService;
 use App\Services\PeticaoVersionAuditService;
 use App\Services\WordImportService;
+use App\Support\HtmlSanitizer;
 use Illuminate\Http\Request;
 use RuntimeException;
 
@@ -132,7 +133,7 @@ class PeticaoSavedController extends Controller
         $peticao->load('modelo');
         $layout = $layoutService->fromSavedPeticao($peticao);
         $layout['title'] = $data['nome_cli'];
-        $layout['body_html'] = $data['cod_pecas'];
+        $layout['body_html'] = HtmlSanitizer::clean($data['cod_pecas']);
 
         return $exportService->exportWordFromLayout($layout);
     }
@@ -147,7 +148,7 @@ class PeticaoSavedController extends Controller
         $peticao->load('modelo');
         $layout = $layoutService->fromSavedPeticao($peticao);
         $layout['title'] = $data['nome_cli'];
-        $layout['body_html'] = $data['cod_pecas'];
+        $layout['body_html'] = HtmlSanitizer::clean($data['cod_pecas']);
 
         return $exportService->exportPdfFromLayout($request, $layout);
     }

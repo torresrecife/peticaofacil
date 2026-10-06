@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\PeticaoNormalizada;
 use App\PeticaoVersao;
+use App\Support\HtmlSanitizer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -23,7 +24,7 @@ class PeticaoNormalizedStorageService
             }
 
             $peticao->cliente_referencia = $payload['nome_cli'];
-            $peticao->conteudo_html = $payload['cod_pecas'];
+            $peticao->conteudo_html = HtmlSanitizer::clean($payload['cod_pecas']);
             if (!empty($payload['codigo_processo'])) {
                 $peticao->codigo_externo = $payload['codigo_processo'];
             }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\PeticaoModelo;
 use App\PeticaoNormalizada;
 use App\PeticaoVersao;
+use App\Support\HtmlSanitizer;
 
 class PeticaoDocumentLayoutService
 {
@@ -53,7 +54,7 @@ class PeticaoDocumentLayoutService
     {
         return [
             'title' => (string) $title,
-            'body_html' => (string) $bodyHtml,
+            'body_html' => HtmlSanitizer::clean((string) $bodyHtml),
             'header_html' => $modelo ? (string) ($modelo->cabecalho_html ?: '') : '',
             'footer_html' => $modelo ? (string) ($modelo->rodape_html ?: '') : '',
             'meta' => $meta,
