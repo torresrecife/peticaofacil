@@ -43,6 +43,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Quem ve a tela de depuracao
+    |--------------------------------------------------------------------------
+    |
+    | Mesmo com APP_DEBUG=true, a tela de depuracao so aparece para acessos
+    | feitos da propria maquina (ver App\Support\DebugAccess). Para liberar
+    | outros computadores, liste os IPs em APP_DEBUG_IPS, separados por virgula.
+    |
+    */
+
+    'debug_ips' => array_values(array_filter(array_map('trim', explode(',', (string) env('APP_DEBUG_IPS', ''))))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application URL
     |--------------------------------------------------------------------------
     |

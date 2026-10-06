@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Support\DebugAccess;
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 
@@ -50,6 +51,9 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
+        // Cobre tambem os erros que acontecem antes dos middlewares (inicializacao).
+        DebugAccess::restrict($request);
+
         return parent::render($request, $exception);
     }
 }
