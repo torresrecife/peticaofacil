@@ -357,7 +357,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (visibilityMatch) applyConditionalFields(visibilityMatch[1]);
         var installmentsMatch = raw.match(/nparcelas\(["']([^"']+)["']\)/i);
         if (installmentsMatch) applyCountedFields(installmentsMatch[1], 2);
-        var assetsMatch = raw.match(/nbens\(["']([^"']+)["']\s*,\s*["'][^"']+["']\)/i);
+        // A regra chega do atributo HTML com as aspas como &quot; (a view escapa duas
+        // vezes), entao a busca por aspas nunca casava e os campos de bens nao apareciam.
+        var assetsRule = raw.split('&quot;').join('"').split('&#039;').join("'").split('&#39;').join("'");
+        var assetsMatch = assetsRule.match(/nbens\s*\(\s*["']([^"']+)["']/i);
         if (assetsMatch) applyCountedFields(assetsMatch[1], 1);
         var numberWordsMatch = raw.match(/fc_numextenso\(\s*(\d+)\s*,\s*(\d+)\s*,\s*["']([^"']*)["']\s*\)/i);
         if (numberWordsMatch) fillNumberInWords(numberWordsMatch[1], numberWordsMatch[2], numberWordsMatch[3]);
@@ -739,6 +742,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     Array.prototype.forEach.call(document.querySelectorAll('.js-frontend-event-field'), function (field) {
         executeSupportedEvents(field.getAttribute('data-event-load'), field);
+        // Quantidade de bens: reaplica ao carregar, para os campos BEM continuarem
+        // visiveis depois de "Buscar e preencher" e de "Gerar preview".
+        if (field.tagName === 'SELECT' && String(field.getAttribute('data-event-focus') || '').indexOf('nbens') !== -1) {
+            executeSupportedEvents(field.getAttribute('data-event-focus'), field);
+        }
         applyFieldBehavior(field);
         field.addEventListener('focus', function () {
             executeSupportedEvents(field.getAttribute('data-event-focus'), field);
