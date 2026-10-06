@@ -203,14 +203,16 @@ class NormalizedTipoController extends Controller
     public function edit(PeticaoModelo $modeloNormalizado)
     {
         $modeloNormalizado->load(['paragrafos', 'campos.opcoes', 'setor', 'cliente', 'servidor']);
+        $linkedServerCode = $modeloNormalizado->legacy_sql_config_id;
+        $linkedClientId = $modeloNormalizado->legacy_cliente_id;
         $modeloNormalizado = $this->prepareForEditor($modeloNormalizado);
 
         return view('admin.tipos.form', [
             'modelo' => $modeloNormalizado,
             'mirror' => $modeloNormalizado,
             'setores' => Setor::orderBy('nome_setor')->get(),
-            'clientes' => Cliente::active()->orderBy('cliente_name')->get(),
-            'servidores' => $this->availableServidores(),
+            'clientes' => $this->availableClientes($linkedClientId),
+            'servidores' => $this->availableServidores($linkedServerCode),
             'listaGrupos' => ListaGrupo::orderBy('nome_grupo')->get(),
             'neoColumns' => $this->neoColumns($modeloNormalizado->servidor),
             'textTemplates' => array_values((array) (($modeloNormalizado->metadata ?? [])['text_templates'] ?? [])),
@@ -307,8 +309,37 @@ class NormalizedTipoController extends Controller
         return $slug . '-' . substr(md5((string) microtime(true)), 0, 8);
     }
 
-    protected function availableServidores(): Collection
+    /**
+     * Mesma regra dos servidores: o cliente ja vinculado continua na lista
+     * mesmo inativo, para o modelo nao virar "Todos do setor" ao ser salvo.
+     */
+    protected function availableClientes($linkedId = null): Collection
     {
-        return SqlServerProfile::active()->orderBy('nome')->get();
+        return Cliente::query()
+            ->where(function ($query) use ($linkedId) {
+                $query->where('cliente_status', 'Y');
+                if ($linkedId) {
+                    $query->orWhere('cliente_id', $linkedId);
+                }
+            })
+            ->orderBy('cliente_name')
+            ->get();
+    }
+
+    /**
+     * Servidores ativos e, na edicao, tambem o que ja esta vinculado ao modelo:
+     * se ele sumisse da lista por estar inativo, salvar o modelo apagaria o vinculo.
+     */
+    protected function availableServidores($linkedCode = null): Collection
+    {
+        return SqlServerProfile::query()
+            ->where(function ($query) use ($linkedCode) {
+                $query->where('status', 'ativo');
+                if ($linkedCode) {
+                    $query->orWhere('legacy_config_id', $linkedCode);
+                }
+            })
+            ->orderBy('nome')
+            ->get();
     }
 }

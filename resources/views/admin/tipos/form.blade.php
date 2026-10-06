@@ -79,7 +79,7 @@
                     <select name="id_cliente">
                         <option value="">Todos do setor</option>
                         @foreach($clientes as $cliente)
-                            <option value="{{ $cliente->cliente_id }}" @if((string) old('id_cliente', $modelo->id_cliente) === (string) $cliente->cliente_id) selected @endif>{{ $cliente->cliente_name }}</option>
+                            <option value="{{ $cliente->cliente_id }}" @if((string) old('id_cliente', $modelo->id_cliente) === (string) $cliente->cliente_id) selected @endif>{{ $cliente->cliente_name }}@if($cliente->cliente_status !== 'Y') (inativo)@endif</option>
                         @endforeach
                     </select>
                 </div>
@@ -88,7 +88,7 @@
                     <select name="id_db">
                         <option value="">Nenhum</option>
                         @foreach($servidores as $servidor)
-                            <option value="{{ $servidor->id_db }}" @if((string) old('id_db', $modelo->id_db) === (string) $servidor->id_db) selected @endif>{{ $servidor->nome_db }}</option>
+                            <option value="{{ $servidor->id_db }}" @if((string) old('id_db', $modelo->id_db) === (string) $servidor->id_db) selected @endif>{{ $servidor->nome_db }}@if($servidor->stt !== 'Y') (inativo)@endif</option>
                         @endforeach
                     </select>
                 </div>
