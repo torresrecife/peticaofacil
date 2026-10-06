@@ -18,7 +18,7 @@
                 <th>Banco</th>
                 <th>Tabela</th>
                 <th>Status</th>
-                <th>Mirror legado</th>
+                <th>Codigo de vinculo</th>
                 <th></th>
             </tr>
         </thead>

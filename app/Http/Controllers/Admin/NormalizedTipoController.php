@@ -130,7 +130,7 @@ class NormalizedTipoController extends Controller
     {
         $analysis = $request->session()->get('ai_model_analysis');
         abort_unless(is_array($analysis), 422, 'A analise expirou. Envie o arquivo novamente.');
-        $data = $request->validate(['id_setor' => 'required|integer', 'id_cliente' => 'nullable|integer', 'id_db' => 'nullable|integer', 'tipo_arq' => ['required', Rule::in(['pdf', 'word', 'pdf,word'])]]);
+        $data = $request->validate(['id_setor' => 'required|integer', 'id_cliente' => 'nullable|integer', 'id_db' => 'nullable|integer|exists:sql_server_profiles,legacy_config_id', 'tipo_arq' => ['required', Rule::in(['pdf', 'word', 'pdf,word'])]]);
         if ($request->user()->nivel_usu === 'GER') {
             abort_unless((int) $data['id_setor'] === (int) $request->user()->id_setor, 403);
             if (!empty($data['id_cliente'])) {
@@ -248,7 +248,7 @@ class NormalizedTipoController extends Controller
             // limite historico usado para os nomes auxiliares do modelo.
             'nome_pre' => 'nullable|string|max:2000',
             'nome_pos' => 'nullable|string|max:2000',
-            'id_db' => 'nullable|integer',
+            'id_db' => 'nullable|integer|exists:sql_server_profiles,legacy_config_id',
             'id_cliente' => 'nullable|integer',
             'id_setor' => 'required|integer',
             'tipo_stt' => ['required', Rule::in(['Y', 'N'])],

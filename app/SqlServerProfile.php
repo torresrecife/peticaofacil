@@ -29,6 +29,33 @@ class SqlServerProfile extends Model
     ];
 
     /**
+     * Os modelos apontam para o servidor por legacy_config_id
+     * (peticao_modelos.legacy_sql_config_id). Servidores vindos do sistema
+     * antigo ja trazem esse codigo; os criados aqui recebem o proximo livre,
+     * senao nao poderiam ser escolhidos em nenhum modelo.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function (SqlServerProfile $profile) {
+            if (!$profile->legacy_config_id) {
+                $profile->legacy_config_id = static::nextLinkCode();
+            }
+        });
+    }
+
+    public static function nextLinkCode()
+    {
+        // Acima tambem dos codigos que algum modelo cita sem servidor correspondente,
+        // para um servidor novo nao herdar esses modelos por acaso.
+        return max(
+            (int) static::query()->max('legacy_config_id'),
+            (int) PeticaoModelo::query()->max('legacy_sql_config_id')
+        ) + 1;
+    }
+
+    /**
      * A senha fica criptografada no banco com a chave da aplicacao.
      * Um valor que nao decifra e tratado como texto puro: e o caso de
      * registros anteriores a migration de criptografia.

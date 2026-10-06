@@ -20,7 +20,7 @@
         <div style="margin-bottom:16px; padding:12px 14px; border:1px solid #dbeafe; background:#eff6ff; color:#1d4ed8; border-radius:8px;">
             Fonte principal atual da edicao.
             @if($config->legacy_config_id)
-                Mirror legado: {{ $config->legacy_config_id }}.
+                Codigo de vinculo com os modelos: {{ $config->legacy_config_id }}.
             @endif
         </div>
     @endif

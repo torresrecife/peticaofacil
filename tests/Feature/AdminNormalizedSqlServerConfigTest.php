@@ -46,7 +46,8 @@ class AdminNormalizedSqlServerConfigTest extends TestCase
 
         $profile = DB::table('sql_server_profiles')->where('nome', 'Consulta Processos')->first();
         $this->assertNotNull($profile);
-        $this->assertNull($profile->legacy_config_id);
+        // Sem espelho no legado, mas com o codigo que permite vincular o servidor a um modelo.
+        $this->assertSame(1, (int) $profile->legacy_config_id);
 
         if (Schema::hasTable('tp_config_db')) {
             $legacy = DB::table('tp_config_db')->where('nome_db', 'Consulta Processos')->first();
