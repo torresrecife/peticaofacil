@@ -368,6 +368,9 @@ class WordImportService
 
             $resolvedPath = $this->resolveImagePath($src, $assetsDir);
             if ($resolvedPath === null || !is_file($resolvedPath)) {
+                // Imagem que aponta para fora da conversao (ou nao existe):
+                // remove o src para nao deixar um caminho local no HTML salvo.
+                $image->removeAttribute('src');
                 continue;
             }
 
@@ -376,8 +379,16 @@ class WordImportService
                 $mimeType = 'image/png';
             }
 
+            // Defesa adicional: so embute o que for realmente imagem, ainda que
+            // o arquivo esteja dentro da pasta da conversao.
+            if (stripos($mimeType, 'image/') !== 0) {
+                $image->removeAttribute('src');
+                continue;
+            }
+
             $contents = file_get_contents($resolvedPath);
             if ($contents === false) {
+                $image->removeAttribute('src');
                 continue;
             }
 
@@ -385,23 +396,45 @@ class WordImportService
         }
     }
 
+    /**
+     * Resolve o src de uma imagem SOMENTE dentro da pasta temporaria daquela
+     * conversao ($assetsDir). O LibreOffice e o PhpWord extraem as imagens do
+     * .docx para essa pasta; qualquer outra coisa (file://, http://, caminho
+     * absoluto, ou ".." escapando a pasta) e recusada, para um documento nao
+     * conseguir fazer o servidor ler um arquivo seu arbitrario (ex.: o .env).
+     */
     protected function resolveImagePath($src, $assetsDir)
     {
-        $src = html_entity_decode($src, ENT_QUOTES, 'UTF-8');
+        $src = trim(html_entity_decode($src, ENT_QUOTES, 'UTF-8'));
 
-        if (stripos($src, 'file:///') === 0) {
-            $path = preg_replace('#^file:///+#i', '', $src);
-
-            return str_replace('/', DIRECTORY_SEPARATOR, $path);
+        // Qualquer esquema (file://, http://, data: ja foi tratado antes) sai.
+        if ($src === '' || preg_match('#^[a-z][a-z0-9+.\-]*:#i', $src)) {
+            return null;
         }
 
-        if (preg_match('#^[a-z]+://#i', $src)) {
+        // Caminho absoluto (/etc/passwd, \\servidor\share, C:\...) sai.
+        if (preg_match('#^([/\\\\]|[A-Za-z]:)#', $src)) {
+            return null;
+        }
+
+        $base = realpath($assetsDir);
+        if ($base === false) {
             return null;
         }
 
         $relativePath = ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, rawurldecode($src)), DIRECTORY_SEPARATOR);
+        $candidate = realpath($base . DIRECTORY_SEPARATOR . $relativePath);
+        if ($candidate === false) {
+            return null;
+        }
 
-        return $assetsDir . DIRECTORY_SEPARATOR . $relativePath;
+        // O arquivo resolvido tem de ficar dentro da pasta da conversao.
+        $prefix = $base . DIRECTORY_SEPARATOR;
+        if ($candidate !== $base && strncmp($candidate, $prefix, strlen($prefix)) !== 0) {
+            return null;
+        }
+
+        return $candidate;
     }
 
     protected function innerHtml(\DOMNode $node)
