@@ -2,8 +2,12 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
+
 class SqlServerLookupService
 {
+    const MAX_CODE_LENGTH = 255;
+
     public function connectionStatus($config)
     {
         $serverName = trim((string) ($config->nome_db ?? $config->nome ?? 'Servidor SQL'));
@@ -36,26 +40,27 @@ class SqlServerLookupService
 
     public function fetchByCode($config, $code)
     {
+        $code = (string) $code;
+        $sql = $this->buildLookupSql($config);
+
+        // O codigo viaja como parametro, nunca dentro do texto do SQL.
+        if ($sql === null || $code === '' || strlen($code) > self::MAX_CODE_LENGTH) {
+            return null;
+        }
+
         $connection = $this->openConnection($config);
         if (!$connection) {
             return null;
         }
 
-        $query = trim((string) $config->query_db);
-        $where = trim((string) $config->where_db);
-        $table = trim((string) $config->table_db);
-        $key = trim((string) $config->chave_db);
-
-        $escapedCode = str_replace("'", "''", (string) $code);
-
-        if ($query !== '') {
-            $sql = $query . ' ' . $where . " AND " . $key . " = '" . $escapedCode . "'";
-        } else {
-            $sql = "SELECT * FROM " . $table . " WHERE " . $key . " = '" . $escapedCode . "'";
-        }
-
-        $result = sqlsrv_query($connection, $sql);
+        $result = sqlsrv_query($connection, $sql, [[
+            $code,
+            SQLSRV_PARAM_IN,
+            SQLSRV_PHPTYPE_STRING('UTF-8'),
+            SQLSRV_SQLTYPE_VARCHAR(self::MAX_CODE_LENGTH),
+        ]]);
         if (!$result) {
+            $this->logQueryFailure($config);
             sqlsrv_close($connection);
             return null;
         }
@@ -71,6 +76,51 @@ class SqlServerLookupService
         sqlsrv_close($connection);
 
         return $this->normalizeRow($row);
+    }
+
+    /**
+     * Monta o SQL da consulta por codigo com um marcador `?` no lugar do
+     * valor. Query, where, tabela e chave vem do cadastro do servidor,
+     * mantido por administradores; o codigo digitado pelo usuario nao
+     * entra aqui.
+     */
+    public function buildLookupSql($config)
+    {
+        $query = trim((string) $config->query_db);
+        $where = trim((string) $config->where_db);
+        $table = trim((string) $config->table_db);
+        $key = trim((string) $config->chave_db);
+
+        if ($key === '') {
+            return null;
+        }
+
+        if ($query !== '') {
+            return $query . ' ' . $where . ' AND ' . $key . ' = ?';
+        }
+
+        if ($table === '') {
+            return null;
+        }
+
+        return 'SELECT * FROM ' . $table . ' WHERE ' . $key . ' = ?';
+    }
+
+    protected function logQueryFailure($config)
+    {
+        $errors = [];
+        foreach ((array) sqlsrv_errors() as $error) {
+            $errors[] = [
+                'sqlstate' => isset($error['SQLSTATE']) ? $error['SQLSTATE'] : null,
+                'code' => isset($error['code']) ? $error['code'] : null,
+                'message' => isset($error['message']) ? $error['message'] : null,
+            ];
+        }
+
+        Log::warning('neo_lookup_query_failed', [
+            'servidor' => trim((string) ($config->nome_db ?? $config->nome ?? '')),
+            'erros' => $errors,
+        ]);
     }
 
     protected function normalizeRow(array $row)
