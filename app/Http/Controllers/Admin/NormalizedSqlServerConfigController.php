@@ -44,7 +44,14 @@ class NormalizedSqlServerConfigController extends Controller
 
     public function update(Request $request, SqlServerProfile $servidorNormalizado)
     {
-        $servidorNormalizado->fill($this->validateData($request))->save();
+        $data = $this->validateData($request);
+
+        // A tela nao devolve a senha: campo em branco significa manter a atual.
+        if (trim((string) $request->input('senha_db')) === '') {
+            unset($data['password']);
+        }
+
+        $servidorNormalizado->fill($data)->save();
 
         return redirect()->route('admin.servidores-normalizados.edit', $servidorNormalizado)->with('status', 'Servidor SQL atualizado.');
     }

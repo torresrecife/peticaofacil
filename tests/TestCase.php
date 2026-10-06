@@ -121,7 +121,7 @@ abstract class TestCase extends BaseTestCase
             $table->string('host', 255);
             $table->string('database_name', 255);
             $table->string('username', 255);
-            $table->string('password', 255)->nullable();
+            $table->text('password')->nullable();
             $table->string('table_name', 255)->nullable();
             $table->string('lookup_key', 255)->nullable();
             $table->longText('base_query')->nullable();

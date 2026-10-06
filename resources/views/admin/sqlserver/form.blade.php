@@ -56,7 +56,14 @@
             </div>
             <div class="form-group">
                 <label>Senha</label>
-                <input name="senha_db" value="{{ old('senha_db', $config->senha_db) }}">
+                <input type="password" name="senha_db" value="" autocomplete="new-password">
+                <div class="editor-note">
+                    @if($config->exists && $config->hasPassword())
+                        Senha cadastrada. Deixe em branco para manter; preencha para trocar.
+                    @else
+                        Nenhuma senha cadastrada.
+                    @endif
+                </div>
             </div>
             <div class="form-group">
                 <label>Tabela</label>

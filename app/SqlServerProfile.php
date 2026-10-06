@@ -2,7 +2,9 @@
 
 namespace App;
 
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Crypt;
 
 class SqlServerProfile extends Model
 {
@@ -21,6 +23,40 @@ class SqlServerProfile extends Model
         'where_clause',
         'status',
     ];
+
+    protected $hidden = [
+        'password',
+    ];
+
+    /**
+     * A senha fica criptografada no banco com a chave da aplicacao.
+     * Um valor que nao decifra e tratado como texto puro: e o caso de
+     * registros anteriores a migration de criptografia.
+     */
+    public function getPasswordAttribute($value)
+    {
+        if ($value === null || $value === '') {
+            return $value;
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (DecryptException $exception) {
+            return $value;
+        }
+    }
+
+    public function setPasswordAttribute($value)
+    {
+        $this->attributes['password'] = ($value === null || $value === '')
+            ? null
+            : Crypt::encryptString((string) $value);
+    }
+
+    public function hasPassword()
+    {
+        return !empty($this->attributes['password']);
+    }
 
     public function scopeActive($query)
     {
