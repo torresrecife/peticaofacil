@@ -8,6 +8,7 @@ use App\Cliente;
 use App\Services\PeticaoModeloRuntimeFactory;
 use App\Services\SqlServerLookupService;
 use App\Services\PeticaoComposerService;
+use App\Services\PeticaoRequiredFieldsService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
@@ -153,14 +154,23 @@ class PeticaoAssemblyController extends Controller
         }
 
         $preview = null;
+        $missingRequired = [];
         if ($request->input('action_type', 'preview') === 'preview') {
             $preview = $composer->compose($modeloFonte, $values);
+
+            // Aviso, nao bloqueio: a previa sai mesmo com obrigatorio em branco.
+            $required = app(PeticaoRequiredFieldsService::class);
+            $missingRequired = $required->missing(
+                $modeloFonte->campos,
+                $values,
+                $required->parseHiddenIds($request->input('hidden_fields'))
+            );
         }
 
-        return $this->renderAssemble($modelo, $modeloFonte, $preview, $values, $codigoProcesso, $lookupStatus, $lookupConnectionStatus);
+        return $this->renderAssemble($modelo, $modeloFonte, $preview, $values, $codigoProcesso, $lookupStatus, $lookupConnectionStatus, $missingRequired);
     }
 
-    protected function renderAssemble($modelo, $modeloFonte, $preview = null, array $values = [], $codigoProcesso = '', $lookupStatus = null, $lookupConnectionStatus = null)
+    protected function renderAssemble($modelo, $modeloFonte, $preview = null, array $values = [], $codigoProcesso = '', $lookupStatus = null, $lookupConnectionStatus = null, array $missingRequired = [])
     {
         $lookupConfig = $this->resolveLookupConfig($modeloFonte);
         if ($lookupConfig && $lookupConnectionStatus === null) {
@@ -176,6 +186,8 @@ class PeticaoAssemblyController extends Controller
             'lookupStatus' => $lookupStatus,
             'lookupConfig' => $lookupConfig,
             'lookupConnectionStatus' => $lookupConnectionStatus,
+            'missingRequired' => $missingRequired,
+            'requiredFields' => app(PeticaoRequiredFieldsService::class),
         ]);
     }
 

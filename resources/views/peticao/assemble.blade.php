@@ -40,6 +40,33 @@
         font-size: 13px;
         font-weight: 600;
     }
+    .required-mark {
+        color: #b42318;
+        font-weight: 700;
+    }
+    .required-warning {
+        background: #fffaeb;
+        color: #7a4b00;
+        border: 1px solid #f5d48a;
+        border-radius: 6px;
+        padding: 12px 14px;
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+    .required-warning .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+    .legacy-field-wrap.is-missing-required > label:first-of-type {
+        color: #b42318;
+    }
+    .legacy-field-wrap.is-missing-required input:not([type="radio"]),
+    .legacy-field-wrap.is-missing-required select,
+    .legacy-field-wrap.is-missing-required .rich-text-card {
+        border-color: #b42318;
+    }
     /* Tabelas da peticao ocupam uma linha propria no preview. */
     .preview-content table {
         display: table;
@@ -157,6 +184,9 @@
             if (!empty($lookupConfig)) {
                 $lookupKey = $lookupConfig->lookup_key ?? $lookupConfig->chave_db ?? '';
             }
+            $requiredFields = $requiredFields ?? app(\App\Services\PeticaoRequiredFieldsService::class);
+            $missingRequired = $missingRequired ?? [];
+            $missingRequiredIds = array_map('strval', array_column($missingRequired, 'id'));
             $conditionalRules = $modeloFonte->campos->map(function ($campo) {
                 $config = $campo->conditional_config;
                 if (!$config || empty($config['value']) || empty($config['target_ids'])) {
@@ -183,7 +213,7 @@
                 })->values()->all();
         @endphp
 
-        <form method="post" action="{{ $composeRoute }}">
+        <form method="post" action="{{ $composeRoute }}" data-assemble-form>
             @csrf
             @if(!empty($lookupConfig) || $hasNeoMappedFields)
                 <div class="panel-muted" style="margin-bottom:20px;">
@@ -199,7 +229,7 @@
                                 <div class="editor-note">Busca no SQL Server configurado para este modelo e preenche automaticamente os campos mapeados.</div>
                             </div>
                             <div class="actions">
-                                <button type="submit" name="action_type" value="lookup" @if(!$lookupAvailable) disabled @endif>Buscar e preencher</button>
+                                <button type="submit" name="action_type" value="lookup" formnovalidate @if(!$lookupAvailable) disabled @endif>Buscar e preencher</button>
                             </div>
                         </div>
                         @if(!$lookupAvailable)
@@ -212,16 +242,17 @@
             <div class="form-grid">
                 @foreach($modeloFonte->campos as $campo)
                     @php($fieldType = $campo->input_tipo)
+                    @php($fieldRequired = $requiredFields->isRequired($campo))
                     @if($fieldType === 'TITLE')
-                        <div class="form-group full legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }}" data-field-id="{{ $campo->id_input }}" @if(!$campo->visivel) style="display:none;" @endif>
+                        <div class="form-group full legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }}" data-field-id="{{ $campo->id_input }}" data-field-label="{{ $campo->input_title }}" @if($fieldRequired) data-required="1" @endif @if(!$campo->visivel) style="display:none;" @endif>
                             <div class="panel-muted"><strong>{{ $campo->input_title }}</strong></div>
                         </div>
                     @elseif($fieldType === 'HIDDEN')
                         <input type="hidden" name="campo_{{ $campo->id_input }}" value="{{ $values['campo_'.$campo->id_input] ?? '' }}">
                     @elseif($fieldType === 'SELECT')
                         @php($dependentConfig = $campo->dependent_fill_config)
-                        <div class="form-group legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }} @if((int) $campo->input_cols >= 2) full @endif" data-field-id="{{ $campo->id_input }}" @if(!$campo->visivel) style="display:none;" @endif>
-                            <label>{{ $campo->input_title }}</label>
+                        <div class="form-group legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }} @if((int) $campo->input_cols >= 2) full @endif" data-field-id="{{ $campo->id_input }}" data-field-label="{{ $campo->input_title }}" @if($fieldRequired) data-required="1" @endif @if(!$campo->visivel) style="display:none;" @endif>
+                            <label>{{ $campo->input_title }}@if($fieldRequired) <span class="required-mark" title="Campo obrigatório">*</span>@endif</label>
                             <select
                                 name="campo_{{ $campo->id_input }}"
                                 id="campo{{ $campo->id_input }}"
@@ -256,8 +287,8 @@
                             </div>
                         </div>
                     @elseif($fieldType === 'RADIO2')
-                        <div class="form-group legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }} @if((int) $campo->input_cols >= 2) full @endif" data-field-id="{{ $campo->id_input }}" @if(!$campo->visivel) style="display:none;" @endif>
-                            <label>{{ $campo->input_title }}</label>
+                        <div class="form-group legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }} @if((int) $campo->input_cols >= 2) full @endif" data-field-id="{{ $campo->id_input }}" data-field-label="{{ $campo->input_title }}" @if($fieldRequired) data-required="1" @endif @if(!$campo->visivel) style="display:none;" @endif>
+                            <label>{{ $campo->input_title }}@if($fieldRequired) <span class="required-mark" title="Campo obrigatório">*</span>@endif</label>
                             @foreach($campo->select_options as $option)
                                 <label style="display:flex;gap:8px;align-items:center;font-weight:normal;">
                                     <input type="radio" id="campo{{ $campo->id_input }}_{{ $loop->index }}" name="campo_{{ $campo->id_input }}" value="{{ $option['value'] ?? $option['label'] }}"
@@ -276,8 +307,8 @@
                     @elseif($fieldType === 'TEXTAREA')
                         @php($textareaKey = 'campo_'.$campo->id_input)
                         @php($textareaValue = array_key_exists($textareaKey, $values) ? ($values[$textareaKey] ?? '') : ($campo->texto_padrao ?? ''))
-                        <div class="form-group full legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }}" data-field-id="{{ $campo->id_input }}" @if(!$campo->visivel) style="display:none;" @endif>
-                            <label>{{ $campo->input_title }}</label>
+                        <div class="form-group full legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }}" data-field-id="{{ $campo->id_input }}" data-field-label="{{ $campo->input_title }}" @if($fieldRequired) data-required="1" @endif @if(!$campo->visivel) style="display:none;" @endif>
+                            <label>{{ $campo->input_title }}@if($fieldRequired) <span class="required-mark" title="Campo obrigatório">*</span>@endif</label>
                             <textarea
                                 id="campo{{ $campo->id_input }}"
                                 name="campo_{{ $campo->id_input }}"
@@ -299,8 +330,8 @@
                             <div class="editor-note">Token {{ $campo->placeholder }}. O editor abre somente quando necessário.</div>
                         </div>
                     @else
-                        <div class="form-group legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }} @if((int) $campo->input_cols >= 2) full @endif" data-field-id="{{ $campo->id_input }}" @if(!$campo->visivel) style="display:none;" @endif>
-                            <label>{{ $campo->input_title }}</label>
+                        <div class="form-group legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }} @if((int) $campo->input_cols >= 2) full @endif" data-field-id="{{ $campo->id_input }}" data-field-label="{{ $campo->input_title }}" @if($fieldRequired) data-required="1" @endif @if(!$campo->visivel) style="display:none;" @endif>
+                            <label>{{ $campo->input_title }}@if($fieldRequired) <span class="required-mark" title="Campo obrigatório">*</span>@endif</label>
                             <input
                                 id="campo{{ $campo->id_input }}"
                                 name="campo_{{ $campo->id_input }}"
@@ -358,8 +389,17 @@
                     </div>
                 </div>
             </div>
+            <input type="hidden" name="hidden_fields" id="hidden-fields" value="">
+            <div class="required-warning" id="required-check" role="alert" style="display:none; margin-top:20px;">
+                <strong>Há campos obrigatórios em branco:</strong> <span id="required-check-list"></span>
+                <div class="actions">
+                    <button type="button" class="secondary" id="required-check-fill">Preencher agora</button>
+                    <button type="button" id="required-check-continue">Gerar mesmo assim</button>
+                </div>
+            </div>
             <div style="margin-top:20px;">
                 <button type="submit" name="action_type" value="preview">Gerar preview</button>
+                <span class="editor-note" style="margin-left:12px;"><span class="required-mark">*</span> Campo obrigatório</span>
             </div>
         </form>
     </div>
@@ -370,6 +410,13 @@
                 <h3>Preview da peticao</h3>
                 <div class="editor-note">Nome sugerido: {{ $preview['suggested_filename'] }}</div>
             </div>
+            @if(!empty($missingRequired))
+                <div class="required-warning" role="alert" data-missing-required="{{ implode(',', $missingRequiredIds) }}">
+                    <strong>Prévia gerada com {{ count($missingRequired) }} {{ count($missingRequired) === 1 ? 'campo obrigatório' : 'campos obrigatórios' }} em branco:</strong>
+                    {{ implode(', ', array_column($missingRequired, 'label')) }}.
+                    Confira antes de salvar ou abrir o editor.
+                </div>
+            @endif
             <div class="panel-muted preview-content" style="background:#fff;">
                 {!! $preview['html'] !!}
             </div>
@@ -1064,6 +1111,125 @@ document.addEventListener('DOMContentLoaded', function () {
 
     quantity.addEventListener('change', updateAssetFields);
     updateAssetFields();
+});
+</script>
+<script>
+// Campos obrigatorios: aviso antes de gerar a previa, sem impedir quem quiser seguir.
+document.addEventListener('DOMContentLoaded', function () {
+    var form = document.querySelector('form[data-assemble-form]');
+    if (!form) return;
+
+    var previewButton = form.querySelector('button[name="action_type"][value="preview"]');
+    var hiddenInput = document.getElementById('hidden-fields');
+    var box = document.getElementById('required-check');
+    var list = document.getElementById('required-check-list');
+    var lastAction = '';
+    var confirmed = false;
+
+    function wrappers() {
+        return Array.prototype.slice.call(form.querySelectorAll('.legacy-field-wrap[data-field-id]'));
+    }
+
+    function isShown(wrapper) {
+        return window.getComputedStyle(wrapper).display !== 'none';
+    }
+
+    function isBlank(wrapper) {
+        if (wrapper.querySelector('input[type="radio"]')) {
+            return !wrapper.querySelector('input[type="radio"]:checked');
+        }
+        var control = wrapper.querySelector('select, textarea, input:not([type="hidden"])');
+        if (!control) return false;
+        var value = String(control.value || '');
+        if (control.tagName === 'TEXTAREA') {
+            if (/<(img|table|hr)\b/i.test(value)) return false;
+            // DOMParser nao executa nem carrega nada do conteudo.
+            value = new DOMParser().parseFromString(value, 'text/html').body.textContent || '';
+        }
+        return value.replace(/ /g, ' ').trim() === '';
+    }
+
+    function missingRequired() {
+        return wrappers().filter(function (wrapper) {
+            return wrapper.getAttribute('data-required') === '1' && isShown(wrapper) && isBlank(wrapper);
+        });
+    }
+
+    function mark(ids) {
+        wrappers().forEach(function (wrapper) {
+            var missing = ids.indexOf(String(wrapper.getAttribute('data-field-id'))) !== -1;
+            wrapper.classList.toggle('is-missing-required', missing);
+        });
+    }
+
+    function focusField(wrapper) {
+        var target = wrapper.querySelector('.js-open-rich-editor')
+            || wrapper.querySelector('select, input:not([type="hidden"]), textarea');
+        wrapper.scrollIntoView({block: 'center'});
+        if (target) target.focus();
+    }
+
+    // O servidor precisa saber o que as regras da tela esconderam; ver PeticaoRequiredFieldsService.
+    function writeHiddenFields() {
+        if (!hiddenInput) return;
+        hiddenInput.value = ['0'].concat(wrappers().filter(function (wrapper) {
+            return !isShown(wrapper);
+        }).map(function (wrapper) {
+            return wrapper.getAttribute('data-field-id');
+        })).join(',');
+    }
+
+    form.addEventListener('click', function (event) {
+        var button = event.target.closest ? event.target.closest('button[type="submit"]') : null;
+        if (button) lastAction = button.value;
+    });
+
+    form.addEventListener('submit', function (event) {
+        writeHiddenFields();
+
+        var action = event.submitter ? event.submitter.value : lastAction;
+        if (action !== 'preview' || confirmed || !box) return;
+
+        var missing = missingRequired();
+        if (!missing.length) return;
+
+        event.preventDefault();
+        mark(missing.map(function (wrapper) { return String(wrapper.getAttribute('data-field-id')); }));
+        list.textContent = missing.map(function (wrapper) {
+            return wrapper.getAttribute('data-field-label') || ('Campo ' + wrapper.getAttribute('data-field-id'));
+        }).join(', ') + '.';
+        box.style.display = '';
+        box.scrollIntoView({block: 'center'});
+    });
+
+    var fillButton = document.getElementById('required-check-fill');
+    if (fillButton) {
+        fillButton.addEventListener('click', function () {
+            var missing = missingRequired();
+            box.style.display = 'none';
+            if (missing.length) focusField(missing[0]);
+        });
+    }
+
+    var continueButton = document.getElementById('required-check-continue');
+    if (continueButton) {
+        continueButton.addEventListener('click', function () {
+            confirmed = true;
+            if (previewButton) previewButton.click();
+        });
+    }
+
+    // O destaque some assim que o campo recebe algo.
+    ['input', 'change'].forEach(function (type) {
+        form.addEventListener(type, function (event) {
+            var wrapper = event.target.closest ? event.target.closest('.legacy-field-wrap') : null;
+            if (wrapper && !isBlank(wrapper)) wrapper.classList.remove('is-missing-required');
+        });
+    });
+
+    // Previa gerada com pendencias: os campos que o servidor apontou voltam destacados.
+    var fromServer = @json($missingRequiredIds);
+    if (fromServer.length) mark(fromServer);
 });
 </script>
 @endpush
