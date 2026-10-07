@@ -44,6 +44,30 @@
         color: #b42318;
         font-weight: 700;
     }
+    .ajuizamento-alert {
+        background: #fdecea;
+        border: 1px solid #f3b4ab;
+        border-left: 5px solid #c0392b;
+        color: #8a1f17;
+        border-radius: 8px;
+        padding: 14px 16px;
+        margin-bottom: 18px;
+    }
+    .ajuizamento-alert .titulo {
+        font-weight: 700;
+        font-size: 15px;
+        margin-bottom: 4px;
+    }
+    .ajuizamento-alert ul { margin: 8px 0 0; padding-left: 20px; }
+    .ajuizamento-alert li { margin: 2px 0; }
+    .ajuizamento-alert .campo { font-weight: 600; }
+    .legacy-field-wrap.is-blocking {
+        box-shadow: -3px 0 0 #c0392b;
+        padding-left: 8px;
+    }
+    .legacy-field-wrap.is-blocking > label:first-of-type { color: #c0392b; }
+    .legacy-field-wrap.is-blocking select,
+    .legacy-field-wrap.is-blocking input:not([type="radio"]) { border-color: #c0392b; }
     .required-warning {
         background: #fffaeb;
         color: #7a4b00;
@@ -238,6 +262,12 @@
                     </div>
                 </div>
             @endif
+
+            <div class="ajuizamento-alert" id="ajuizamento-alert" role="alert" style="display:none;">
+                <div class="titulo">⚠ Esta petição não deve ser ajuizada</div>
+                <div>Revise as respostas que impedem o ajuizamento:</div>
+                <ul id="ajuizamento-alert-list"></ul>
+            </div>
 
             <div class="form-grid">
                 @foreach($modeloFonte->campos as $campo)
@@ -458,6 +488,22 @@ document.addEventListener('DOMContentLoaded', function () {
         return text ? (text.length > 150 ? text.slice(0, 147) + '...' : text) : 'Nenhum conteúdo informado.';
     }
 
+    // Mantem o resumo visivel do campo de texto rico em dia quando ele e
+    // preenchido por uma regra (dependencia, condicional), nao so pelo modal.
+    function refreshRichSummary(source) {
+        if (!source || !source.classList || !source.classList.contains('js-rich-text-source')) return;
+        var card = source.parentNode ? source.parentNode.querySelector('.js-rich-text-summary') : null;
+        if (card) card.textContent = summarizeRichText(source.value);
+    }
+
+    // Preenche um campo por codigo e avisa a tela (resumo + listeners).
+    function assignFieldValue(control, value) {
+        if (!control) return;
+        control.value = (value == null) ? '' : value;
+        refreshRichSummary(control);
+        control.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
     function ensureRichEditor() {
         if (richEditor || !richWorkspace || typeof window.CKEDITOR === 'undefined') return richEditor;
         richEditor = window.CKEDITOR.replace(richWorkspace.id, {
@@ -645,7 +691,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var currentDateMatch = raw.match(/data_extenso_cur\(["']campo(\d+)["']\s*,\s*\$\(["']#campo(\d+)["']\)\.val\(\)\s*\)/i);
         if (currentDateMatch) fillCurrentDateInWords(currentDateMatch[1], currentDateMatch[2]);
         var validationMatch = raw.match(/validate_peticao\(\s*(?:["']([^"']*)["'])?\s*\)/i);
-        if (validationMatch) validateLegacyPetition(validationMatch[1] || '');
+        if (validationMatch) validateLegacyPetition();
     }
 
     function onlyDigits(value) {
@@ -861,7 +907,7 @@ document.addEventListener('DOMContentLoaded', function () {
         wrapper.style.display = visible ? '' : 'none';
         Array.prototype.forEach.call(wrapper.querySelectorAll('input, select, textarea'), function (control) {
             control.required = !!(visible && required);
-            if (!visible && control.type !== 'radio' && control.type !== 'checkbox') control.value = '';
+            if (!visible && control.type !== 'radio' && control.type !== 'checkbox') { control.value = ''; refreshRichSummary(control); }
             if (!visible && (control.type === 'radio' || control.type === 'checkbox')) control.checked = false;
         });
     }
@@ -939,22 +985,81 @@ document.addEventListener('DOMContentLoaded', function () {
         target.value = (city ? city + ', ' : '') + formatDateExtenso(new Date());
     }
 
-    function validateLegacyPetition(exceptionMode) {
-        var blocked = false;
+    function normalizeBlockValue(raw) {
+        var value = String(raw || '').toUpperCase();
+        if (value.normalize) value = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return value.replace(/[^A-Z]/g, '');
+    }
+
+    // Cada campo diz, no proprio evento, quando bloqueia: validate_peticao() -> "NÃO";
+    // validate_peticao('x') (argumento nao vazio) -> AUSENTE/MUDOU-SE/DESCONHECIDO.
+    function fieldBlockMode(wrapper) {
+        var control = (wrapper.matches && wrapper.matches('input,select,textarea')) ? wrapper : wrapper.querySelector('select, textarea, input');
+        var ev = '';
+        if (control) {
+            ev = (control.getAttribute('data-event-focus') || '') + ' '
+               + (control.getAttribute('data-event-blur') || '') + ' '
+               + (control.getAttribute('data-event-load') || '');
+        }
+        ev = ev.replace(/&quot;/g, '"').replace(/&#0?39;/g, "'");
+        var match = /validate_peticao\(\s*(["'][^"']*["'])?\s*\)/i.exec(ev);
+        var arg = match && match[1] ? match[1].replace(/["']/g, '').trim() : '';
+        return arg !== '' ? 'exception' : 'nao';
+    }
+
+    // Monta o aviso de "não ajuizar": lista os campos que impedem, destaca-os e
+    // bloqueia a geração. Substitui a antiga borda vermelha em todo o formulário.
+    function validateLegacyPetition() {
+        var reasons = [];
         Array.prototype.forEach.call(document.querySelectorAll('.new_required'), function (item) {
-            var control = item.matches('input,select,textarea') ? item : item.querySelector('input:checked, select, textarea, input');
-            if (!control) return;
-            var value = String(control.value || '').toUpperCase();
-            if (value.normalize) value = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            value = value.replace(/[^A-Z]/g, '');
-            if (exceptionMode) {
-                blocked = blocked || ['AUSENTE', 'MUDOUSE', 'DESCONHECIDO'].indexOf(value) !== -1;
-            } else {
-                blocked = blocked || value === 'NAO';
+            var wrapper = (item.classList && item.classList.contains('legacy-field-wrap'))
+                ? item
+                : (item.closest ? item.closest('.legacy-field-wrap') : null);
+            var scope = wrapper || item;
+            var control = (item.matches && item.matches('input,select,textarea'))
+                ? item
+                : (scope.querySelector('input:checked') || scope.querySelector('select, textarea, input'));
+
+            if (!control || (wrapper && window.getComputedStyle(wrapper).display === 'none')) {
+                if (wrapper) wrapper.classList.remove('is-blocking');
+                return;
+            }
+
+            var raw = String(control.value || '').trim();
+            var value = normalizeBlockValue(raw);
+            var bad = fieldBlockMode(scope) === 'exception'
+                ? ['AUSENTE', 'MUDOUSE', 'DESCONHECIDO'].indexOf(value) !== -1
+                : value === 'NAO';
+
+            if (bad) {
+                reasons.push({ label: (wrapper && wrapper.getAttribute('data-field-label')) || 'Campo', value: raw });
+                if (wrapper) wrapper.classList.add('is-blocking');
+            } else if (wrapper) {
+                wrapper.classList.remove('is-blocking');
             }
         });
+
+        var alertBox = document.getElementById('ajuizamento-alert');
+        var list = document.getElementById('ajuizamento-alert-list');
+        if (alertBox && list) {
+            list.innerHTML = '';
+            reasons.forEach(function (reason) {
+                var li = document.createElement('li');
+                var campo = document.createElement('span');
+                campo.className = 'campo';
+                campo.textContent = reason.label;
+                var valor = document.createElement('span');
+                valor.textContent = reason.value !== '' ? reason.value : '(em branco)';
+                li.appendChild(campo);
+                li.appendChild(document.createTextNode(': '));
+                li.appendChild(valor);
+                list.appendChild(li);
+            });
+            alertBox.style.display = reasons.length ? '' : 'none';
+        }
+
         var submit = document.querySelector('button[name="action_type"][value="preview"]');
-        if (submit) submit.disabled = blocked;
+        if (submit) submit.disabled = reasons.length > 0;
     }
 
     function applyFieldBehavior(field) {
@@ -1016,13 +1121,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var selectedOption = select.options[select.selectedIndex];
         if (!selectedOption || !selectedOption.value) {
-            target.value = '';
+            assignFieldValue(target, '');
             return;
         }
 
         var datasetKey = returnColumn.replace('_', '-');
         var returnValue = selectedOption.getAttribute('data-' + datasetKey) || '';
-        target.value = returnValue;
+        assignFieldValue(target, returnValue);
     }
 
     Array.prototype.forEach.call(document.querySelectorAll('.js-dependent-select'), function (select) {
@@ -1086,6 +1191,16 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // "Não ajuizar": roda no carregamento (inclusive com os dados do NEO já preenchidos)
+    // e a cada alteração dos campos que decidem o ajuizamento.
+    Array.prototype.forEach.call(document.querySelectorAll('.new_required'), function (item) {
+        var control = (item.matches && item.matches('input,select,textarea')) ? item : item.querySelector('select, textarea, input');
+        if (!control) return;
+        control.addEventListener('change', validateLegacyPetition);
+        control.addEventListener('input', validateLegacyPetition);
+    });
+    validateLegacyPetition();
 });
 </script>
 <script>
