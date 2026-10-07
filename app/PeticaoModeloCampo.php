@@ -198,17 +198,26 @@ class PeticaoModeloCampo extends Model
         }
 
         return $this->opcoes->map(function ($item) {
+            // valor_retorno ja chega normalizado (null para "undefined"/"null"/vazio).
+            $retorno = $item->valor_retorno;
+
+            // Extras expostos como data-return-* para o preenchimento dependente.
+            // return_1 e o retorno real (o paragrafo); sem ele, o campo alvo fica
+            // vazio para o usuario digitar, em vez de receber "undefined" ou o rotulo.
+            $extras = [];
+            foreach (array_merge(['return_1' => $retorno], $item->valores_extras ?: []) as $key => $value) {
+                $value = PeticaoModeloCampoOpcao::normalizeReturn($value);
+                if ($value !== null) {
+                    $extras[$key] = $value;
+                }
+            }
+
             return [
                 'id' => $item->id_dados,
                 'label' => $item->rotulo,
                 'value' => $item->rotulo,
-                'return' => $item->valor_retorno ?: $item->rotulo,
-                'extras' => array_filter(array_merge(
-                    ['return_1' => $item->valor_retorno ?: $item->rotulo],
-                    $item->valores_extras ?: []
-                ), function ($value) {
-                    return $value !== null && $value !== '';
-                }),
+                'return' => $retorno ?: $item->rotulo,
+                'extras' => $extras,
             ];
         })->values()->all();
     }
