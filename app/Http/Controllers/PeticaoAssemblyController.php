@@ -48,7 +48,8 @@ class PeticaoAssemblyController extends Controller
             ->values()
             ->all();
 
-        $modelosQuery = PeticaoModelo::with(['setor', 'cliente'])
+        $modelosQuery = PeticaoModelo::withoutSystem()
+            ->with(['setor', 'cliente'])
             ->where('status', 'ativo')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($builder) use ($search) {
@@ -72,7 +73,8 @@ class PeticaoAssemblyController extends Controller
 
         $suggestions = collect();
 
-        $normalizedSuggestions = PeticaoModelo::where('status', 'ativo')
+        $normalizedSuggestions = PeticaoModelo::withoutSystem()
+            ->where('status', 'ativo')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where('nome', 'like', '%' . $search . '%');
             })
@@ -93,6 +95,10 @@ class PeticaoAssemblyController extends Controller
 
     public function showNormalized(PeticaoModelo $modeloNormalizado)
     {
+        if ($modeloNormalizado->is_system) {
+            return redirect()->route('peticoes.avulsas.create');
+        }
+
         $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromNormalized($modeloNormalizado);
 
         return $this->renderAssemble($modeloNormalizado, $modeloFonte);
@@ -100,6 +106,10 @@ class PeticaoAssemblyController extends Controller
 
     public function composeNormalized(Request $request, PeticaoModelo $modeloNormalizado, PeticaoComposerService $composer, SqlServerLookupService $lookup)
     {
+        if ($modeloNormalizado->is_system) {
+            return redirect()->route('peticoes.avulsas.create');
+        }
+
         $modeloFonte = app(PeticaoModeloRuntimeFactory::class)->fromNormalized($modeloNormalizado);
 
         return $this->renderComposedAssemble($request, $modeloNormalizado, $modeloFonte, $composer, $lookup);

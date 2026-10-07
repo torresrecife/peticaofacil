@@ -10,6 +10,8 @@ class ModeloTransferController extends Controller
 {
     public function export(PeticaoModelo $modeloNormalizado, PeticaoModeloPackageService $packages)
     {
+        abort_if($modeloNormalizado->is_system, 404);
+
         $package = $packages->export($modeloNormalizado);
 
         return response()->streamDownload(function () use ($package) {

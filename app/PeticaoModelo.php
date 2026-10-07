@@ -26,6 +26,25 @@ class PeticaoModelo extends Model
         'metadata' => 'array',
     ];
 
+    /** Slug do modelo de sistema que guarda o cabeçalho/rodapé da petição avulsa. */
+    const SYSTEM_AVULSA_SLUG = '__peticao-avulsa__';
+
+    /** Verdadeiro para o modelo interno "Peticao avulsa", que não é um modelo comum. */
+    public function getIsSystemAttribute()
+    {
+        return $this->slug === self::SYSTEM_AVULSA_SLUG
+            || (is_array($this->metadata) && ($this->metadata['system'] ?? null) === 'avulsa');
+    }
+
+    /** Exclui o modelo de sistema das listagens de modelos. */
+    public function scopeWithoutSystem($query)
+    {
+        return $query->where(function ($builder) {
+            $builder->where('slug', '<>', self::SYSTEM_AVULSA_SLUG)
+                ->orWhereNull('slug');
+        });
+    }
+
     public function setor()
     {
         return $this->belongsTo(Setor::class, 'legacy_setor_id', 'id_setor');

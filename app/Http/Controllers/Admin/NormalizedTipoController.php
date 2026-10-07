@@ -25,7 +25,8 @@ class NormalizedTipoController extends Controller
         $setorId = (int) $request->query('setor_id', 0);
         $clienteId = (int) $request->query('cliente_id', 0);
 
-        $modelos = PeticaoModelo::with(['setor', 'cliente', 'servidor'])
+        $modelos = PeticaoModelo::withoutSystem()
+            ->with(['setor', 'cliente', 'servidor'])
             ->withCount(['paragrafos', 'campos'])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($builder) use ($search) {
@@ -42,7 +43,7 @@ class NormalizedTipoController extends Controller
             ->paginate(20)
             ->appends($request->except('page'));
 
-        $suggestions = PeticaoModelo::query()
+        $suggestions = PeticaoModelo::withoutSystem()
             ->when($search !== '', function ($query) use ($search) {
                 $query->where('nome', 'like', '%' . $search . '%');
             })
@@ -202,6 +203,11 @@ class NormalizedTipoController extends Controller
 
     public function edit(PeticaoModelo $modeloNormalizado)
     {
+        if ($modeloNormalizado->is_system) {
+            return redirect()->route('admin.peticoes-avulsas.config.edit')
+                ->with('status', 'A petição avulsa é configurada em tela própria.');
+        }
+
         $modeloNormalizado->load(['paragrafos', 'campos.opcoes', 'setor', 'cliente', 'servidor']);
         $linkedServerCode = $modeloNormalizado->legacy_sql_config_id;
         $linkedClientId = $modeloNormalizado->legacy_cliente_id;
@@ -221,6 +227,11 @@ class NormalizedTipoController extends Controller
 
     public function update(Request $request, PeticaoModelo $modeloNormalizado)
     {
+        if ($modeloNormalizado->is_system) {
+            return redirect()->route('admin.peticoes-avulsas.config.edit')
+                ->with('status', 'A petição avulsa é configurada em tela própria.');
+        }
+
         $data = $this->validateData($request);
 
         $metadata = $modeloNormalizado->metadata ?: [];
