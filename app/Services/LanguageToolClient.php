@@ -38,6 +38,22 @@ class LanguageToolClient
 
     protected function post($path, array $payload)
     {
+        $timeout = (int) config('languagetool.timeout', 20);
+        if ($timeout < 1) {
+            $timeout = 20;
+        }
+
+        // Timeout curto so para a conexao: se o servidor nao estiver no ar
+        // (ex.: LanguageTool local desligado), a revisao falha rapido em vez
+        // de travar a tela ate o timeout total.
+        $connectTimeout = (int) config('languagetool.connect_timeout', 5);
+        if ($connectTimeout < 1) {
+            $connectTimeout = 5;
+        }
+        if ($connectTimeout > $timeout) {
+            $connectTimeout = $timeout;
+        }
+
         $ch = curl_init(rtrim((string) config('languagetool.base_url'), '/') . $path);
 
         curl_setopt_array($ch, [
@@ -47,7 +63,9 @@ class LanguageToolClient
                 'Content-Type: application/x-www-form-urlencoded',
             ],
             CURLOPT_POSTFIELDS => http_build_query($payload),
-            CURLOPT_TIMEOUT => (int) config('languagetool.timeout', 20),
+            CURLOPT_CONNECTTIMEOUT => $connectTimeout,
+            CURLOPT_TIMEOUT => $timeout,
+            CURLOPT_NOSIGNAL => true,
         ]);
 
         $raw = curl_exec($ch);
@@ -58,7 +76,8 @@ class LanguageToolClient
         if ($raw === false || $curlError) {
             return [
                 'ok' => false,
-                'error' => 'Falha HTTP LanguageTool: ' . $curlError,
+                'error' => 'Nao foi possivel conectar ao servidor de revisao (LanguageTool).'
+                    . ($curlError !== '' ? ' Detalhe tecnico: ' . $curlError : ''),
                 'error_code' => 'http_transport_error',
                 'data' => null,
             ];

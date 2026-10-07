@@ -7,6 +7,7 @@ use App\PeticaoModelo;
 use App\PeticaoVersao;
 use App\Services\PeticaoDocumentLayoutService;
 use App\Services\PeticaoExportService;
+use App\Services\LanguageToolClient;
 use App\Services\PeticaoSavedAiReviewService;
 use App\Services\PeticaoNormalizedDraftService;
 use App\Services\PeticaoNormalizedStorageService;
@@ -38,7 +39,7 @@ class PeticaoSavedController extends Controller
         return redirect()->route('peticoes.saved.edit', $peticao);
     }
 
-    public function edit(PeticaoNormalizada $peticao)
+    public function edit(PeticaoNormalizada $peticao, LanguageToolClient $languageTool)
     {
         $origin = request()->query('origin');
         $userId = request()->query('user_id');
@@ -80,6 +81,7 @@ class PeticaoSavedController extends Controller
             'selectedDateFrom' => $dateFrom,
             'selectedDateTo' => $dateTo,
             'usuariosHistorico' => $usuariosHistorico,
+            'languageToolEnabled' => $languageTool->isEnabled(),
         ]);
     }
 

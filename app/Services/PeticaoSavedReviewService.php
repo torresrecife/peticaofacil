@@ -23,6 +23,7 @@ class PeticaoSavedReviewService
         if ($text === '') {
             return [
                 'mode' => 'languagetool',
+                'available' => true,
                 'summary' => 'O documento esta vazio. Nao ha conteudo para revisar.',
                 'score' => 100,
                 'issues' => [],
@@ -32,14 +33,21 @@ class PeticaoSavedReviewService
 
         $response = $this->client->check($text);
         if (!$response['ok']) {
+            $notEnabled = ($response['error_code'] ?? '') === 'languagetool_not_enabled';
+
             return [
                 'mode' => 'languagetool',
-                'summary' => 'Nao foi possivel concluir a revisao ortografica e gramatical.',
-                'score' => 0,
+                'available' => false,
+                'summary' => $notEnabled
+                    ? 'A revisao automatica (LanguageTool) nao esta ativa neste ambiente.'
+                    : 'O servidor de revisao (LanguageTool) esta indisponivel no momento.',
+                'score' => null,
                 'issues' => [],
-                'warnings' => array_values(array_filter([
-                    $response['error'] ?? 'Falha ao consultar o LanguageTool.',
-                ])),
+                'warnings' => $notEnabled
+                    ? []
+                    : array_values(array_filter([
+                        $response['error'] ?? 'Falha ao consultar o LanguageTool.',
+                    ])),
             ];
         }
 
@@ -53,6 +61,7 @@ class PeticaoSavedReviewService
 
         return [
             'mode' => 'languagetool',
+            'available' => true,
             'summary' => $this->buildSummary($issues),
             'score' => $this->calculateScore($issues),
             'issues' => $issues,

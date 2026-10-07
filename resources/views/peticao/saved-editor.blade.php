@@ -809,6 +809,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var aiReviewSummary = document.getElementById('saved-editor-ai-review-summary');
     var aiReviewWarnings = document.getElementById('saved-editor-ai-review-warnings');
     var aiReviewFindings = document.getElementById('saved-editor-ai-review-findings');
+    var languageToolEnabled = @json($languageToolEnabled ?? false);
     if (!textarea) {
         return;
     }
@@ -963,12 +964,16 @@ document.addEventListener('DOMContentLoaded', function () {
             event.data.preventDefault();
         });
 
-        window.setTimeout(function () {
-            requestReview({
-                statusLabel: 'Analisando automaticamente o texto...'
-            }).catch(function () {
-            });
-        }, 250);
+        if (languageToolEnabled) {
+            window.setTimeout(function () {
+                requestReview({
+                    statusLabel: 'Analisando automaticamente o texto...'
+                }).catch(function () {
+                });
+            }, 250);
+        } else if (reviewStatus) {
+            reviewStatus.textContent = 'Revisao automatica desativada neste ambiente.';
+        }
 
     });
 
@@ -1708,7 +1713,45 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function renderReviewUnavailable(result) {
+        latestReviewResult = result;
+
+        var message = (result && result.summary)
+            ? result.summary
+            : 'Revisao ortografica indisponivel no momento.';
+        var warnings = (result && Array.isArray(result.warnings)) ? result.warnings : [];
+
+        if (reviewStatus) {
+            reviewStatus.textContent = message;
+        }
+        if (reviewScore) {
+            reviewScore.className = 'saved-editor-review__badge';
+            reviewScore.textContent = 'Sem analise';
+        }
+        if (reviewCount) {
+            reviewCount.className = 'saved-editor-review__badge';
+            reviewCount.textContent = '0 achados';
+        }
+        if (reviewSummary) {
+            reviewSummary.textContent = message;
+        }
+        if (reviewWarnings) {
+            reviewWarnings.innerHTML = warnings.map(function (warning) {
+                return '<div class="saved-editor-review__warning">' + escapeHtml(warning) + '</div>';
+            }).join('');
+        }
+        if (reviewIssues) {
+            reviewIssues.innerHTML = '<div class="saved-editor-review__empty">' + escapeHtml(message) + '</div>';
+        }
+        applyReviewHighlights([]);
+    }
+
     function renderReview(result) {
+        if (result && result.available === false) {
+            renderReviewUnavailable(result);
+            return;
+        }
+
         latestReviewResult = result;
 
         var issues = Array.isArray(result.issues) ? result.issues : [];
