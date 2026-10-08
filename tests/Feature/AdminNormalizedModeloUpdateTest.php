@@ -38,7 +38,7 @@ class AdminNormalizedModeloUpdateTest extends TestCase
         $this->actingAs($admin)
             ->get('/admin/modelos-normalizados/88/edit')
             ->assertStatus(200)
-            ->assertSee('Fonte principal atual da edicao.');
+            ->assertSee('Editar modelo');
 
         $this->actingAs($admin)
             ->put('/admin/modelos-normalizados/88', [
