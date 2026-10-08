@@ -243,7 +243,14 @@ class PeticaoModeloCampo extends Model
         $labelColumn = $parts[1] ?? 'nome_lista';
         $returnColumn = $parts[2] ?? 'return_1';
         $filter = $parts[3] ?? '';
-        $layout = $parts[4] ?? null;
+        $layout = strtolower(trim((string) ($parts[4] ?? '')));
+
+        // 6o campo do input_db = campo do qual esta lista depende (ex.: ESTADO).
+        // No legado a lista "hori" e filtrada por nome_lista = valor desse campo.
+        $dependencyFieldId = null;
+        if (isset($parts[5]) && preg_match('/(\d+)/', $parts[5], $dm)) {
+            $dependencyFieldId = (int) $dm[1];
+        }
 
         $groupId = null;
         if (preg_match('/id_grupo=(\d+)/i', $filter, $matches)) {
@@ -261,7 +268,8 @@ class PeticaoModeloCampo extends Model
             'return_column' => $returnColumn ?: 'return_1',
             'return_columns' => array_values(array_filter(preg_split('/\s*[+,;|]\s*/', $returnColumn ?: 'return_1'))),
             'filter' => $filter,
-            'layout' => $layout,
+            'layout' => $layout !== '' ? $layout : null,
+            'dependency_field_id' => $dependencyFieldId,
         ];
     }
 
@@ -316,6 +324,16 @@ class PeticaoModeloCampo extends Model
 
     protected function normalizeBehaviorValue($value)
     {
+        return static::mapLegacyBehavior($value);
+    }
+
+    /**
+     * Mapeia o input_alt do sistema antigo (e os rotulos de comportamento do
+     * novo) para o conjunto de mascaras suportado pela montagem. Publica e
+     * estatica para que o backfill possa reutilizar a mesma tabela.
+     */
+    public static function mapLegacyBehavior($value)
+    {
         $value = strtolower(trim((string) $value));
 
         $map = [
@@ -349,11 +367,14 @@ class PeticaoModeloCampo extends Model
             return [];
         }
 
+        $isHori = ($config['layout'] ?? null) === 'hori';
+        $orderColumn = $isHori ? 'return_2' : ($config['label_column'] ?: 'nome_lista');
+
         return ListaItem::query()
             ->where('id_grupo', $config['group_id'])
-            ->orderBy('nome_lista')
+            ->orderBy($orderColumn)
             ->get()
-            ->map(function ($item) use ($config) {
+            ->map(function ($item) use ($config, $isHori) {
                 $extras = [];
                 foreach (['return_1', 'return_2', 'return_3', 'return_4', 'return_5', 'return_6'] as $column) {
                     $value = $item->{$column};
@@ -362,9 +383,35 @@ class PeticaoModeloCampo extends Model
                     }
                 }
 
+                if ($isHori) {
+                    // Lista dependente (ex.: FIEL DEPOSITARIO por ESTADO):
+                    // - chave de dependencia = nome_lista (a sigla do estado);
+                    // - rotulo exibido = nome (return_2);
+                    // - valor inserido na peticao = clausula completa, concatenando
+                    //   return_2..return_6 direto (como o "hori" do sistema antigo).
+                    $clause = '';
+                    foreach (['return_2', 'return_3', 'return_4', 'return_5', 'return_6'] as $c) {
+                        $clause .= (string) ($item->{$c} ?? '');
+                    }
+                    $clause = trim($clause);
+                    $label = trim((string) ($item->return_2 ?? ''));
+                    if ($label === '') {
+                        $label = trim((string) $item->nome_lista);
+                    }
+
+                    return [
+                        'id' => $item->legacy_lista_id ?: $item->id_lista,
+                        'label' => $label !== '' ? $label : '(sem nome)',
+                        'value' => $clause !== '' ? $clause : $label,
+                        'return' => $clause,
+                        'dependency_key' => trim((string) $item->nome_lista),
+                        'extras' => $extras,
+                    ];
+                }
+
                 $labelColumn = $config['label_column'];
-                $label = (string) ($item->{$labelColumn} ?? $item->nome_lista);
-                $returnColumns = $config['return_columns'] ?? [$config['return_column']];
+                $label = trim((string) ($item->{$labelColumn} ?? $item->nome_lista));
+                $returnColumns = $config['return_columns'] ?: [$config['return_column']];
                 $returnValues = [];
                 foreach ($returnColumns as $returnColumn) {
                     $value = trim((string) ($item->{$returnColumn} ?? ''));
@@ -372,12 +419,17 @@ class PeticaoModeloCampo extends Model
                         $returnValues[] = $value;
                     }
                 }
+                $resolved = $returnValues ? implode(' ', $returnValues) : $label;
 
+                // Em lista "vert" o valor do SELECT continua sendo o rotulo (ex.: o
+                // nome que vai para @campoN@); o(s) RETURN alimentam outro campo via
+                // preenchimento dependente (fc_ajax_comp), nao o proprio SELECT.
                 return [
                     'id' => $item->legacy_lista_id ?: $item->id_lista,
-                    'label' => $label,
+                    'label' => $label !== '' ? $label : '(sem nome)',
                     'value' => $label,
-                    'return' => $returnValues ? implode(' ', $returnValues) : $label,
+                    'return' => $resolved,
+                    'dependency_key' => null,
                     'extras' => $extras,
                 ];
             })

@@ -296,6 +296,13 @@
                                     data-event-load="{{ e($campo->input_load) }}"
                                     data-event-blur="{{ e($campo->input_blur) }}"
                                 @endif
+                                @if($campo->hasAssociatedListSource())
+                                    @php($listCfg = $campo->associated_list_config)
+                                    data-list-select="1"
+                                    @if(!empty($listCfg['dependency_field_id']))
+                                        data-dependency-field="{{ $listCfg['dependency_field_id'] }}"
+                                    @endif
+                                @endif
                             >
                                 <option value=""></option>
                                 @foreach($campo->select_options as $option)
@@ -304,6 +311,9 @@
                                         @foreach(($option['extras'] ?? []) as $extraKey => $extraValue)
                                             data-{{ str_replace('_', '-', $extraKey) }}="{{ $extraValue }}"
                                         @endforeach
+                                        @if(!empty($option['dependency_key']))
+                                            data-dependency-key="{{ $option['dependency_key'] }}"
+                                        @endif
                                         @if(($values['campo_'.$campo->id_input] ?? '') === ($option['value'] ?? $option['label'])) selected @endif>{{ $option['label'] }}</option>
                                 @endforeach
                             </select>
@@ -1135,6 +1145,43 @@ document.addEventListener('DOMContentLoaded', function () {
         select.addEventListener('change', function () {
             applyDependentSelect(select);
         });
+    });
+
+    // Listas pre-definidas dependentes (ex.: FIEL DEPOSITARIO filtrado pelo ESTADO).
+    // A lista so mostra os itens cuja chave (nome_lista, ex.: a sigla do estado)
+    // bate com o valor do campo do qual ela depende. O valor inserido na peticao
+    // e a clausula ja concatenada (option.value).
+    Array.prototype.forEach.call(document.querySelectorAll('select[data-list-select][data-dependency-field]'), function (select) {
+        var depId = select.getAttribute('data-dependency-field');
+
+        function dependencyValue() {
+            var checked = document.querySelector('[name="campo_' + depId + '"]:checked');
+            var dep = checked || document.querySelector('[name="campo_' + depId + '"]');
+            return dep ? String(dep.value || '').trim().toUpperCase() : '';
+        }
+
+        function refilter() {
+            var key = dependencyValue();
+            Array.prototype.forEach.call(select.options, function (op) {
+                if (op.value === '') { op.hidden = false; op.disabled = false; return; }
+                var okey = String(op.getAttribute('data-dependency-key') || '').trim().toUpperCase();
+                var show = key !== '' && okey === key;
+                op.hidden = !show;
+                op.disabled = !show;
+            });
+            var sel = select.options[select.selectedIndex];
+            if (sel && sel.value !== '' && sel.hidden) {
+                select.value = '';
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+
+        Array.prototype.forEach.call(document.querySelectorAll('[name="campo_' + depId + '"]'), function (control) {
+            control.addEventListener('change', refilter);
+            control.addEventListener('input', refilter);
+            control.addEventListener('blur', refilter);
+        });
+        refilter();
     });
 
     var structuredConditionalRules = @json($conditionalRules);

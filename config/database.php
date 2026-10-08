@@ -63,6 +63,25 @@ return [
             ]) : [],
         ],
 
+        // Conexao somente-leitura ao banco do sistema ANTIGO (peticaofacil_old),
+        // usada por comandos de migracao/backfill (ex.: recuperar mascaras).
+        // Por padrao reaproveita host/credenciais do MySQL principal.
+        'legacy_mysql' => [
+            'driver' => 'mysql',
+            'host' => env('LEGACY_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('LEGACY_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('LEGACY_DB_DATABASE', 'peticaofacil_old'),
+            'username' => env('LEGACY_DB_USERNAME', env('DB_USERNAME', 'forge')),
+            'password' => env('LEGACY_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => env('LEGACY_DB_CHARSET', 'latin1'),
+            'collation' => env('LEGACY_DB_COLLATION', 'latin1_swedish_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => false,
+            'engine' => null,
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),
