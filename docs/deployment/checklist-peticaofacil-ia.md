@@ -1,7 +1,7 @@
 # Checklist de deploy — branch `peticaofacil_ia`
 
-Cobre os commits de 05/10 a 06/10/2026 (achados 1–15, salvo o 4; motor dos
-formulários Safra). Detalhe de cada mudança em `docs/HANDOFF-peticaofacil-ia.md`.
+Cobre os commits de 05/10 a 20/10/2026 (achados 1–15, salvo o 4; motor dos
+formulários Safra e Volkswagen; correção do obrigatório). Detalhe de cada mudança em `docs/HANDOFF-peticaofacil-ia.md`.
 
 A produção recebe por `git pull`. Não há mudança em `composer.json`,
 `package.json` nem no renderizador de PDF: não é preciso `composer install`,
@@ -26,7 +26,7 @@ Variáveis novas (todas opcionais; ver `.env.example`):
 | Variável | Para quê | Produção |
 | --- | --- | --- |
 | `APP_DEBUG_IPS` | IPs que podem ver a tela de depuração | deixar vazio |
-| `LEGACY_DB_HOST/PORT/DATABASE/USERNAME/PASSWORD` | leitura do banco antigo pelo backfill de máscaras | só se o `peticaofacil_old` existir no servidor; vazio reaproveita `DB_*` |
+| `LEGACY_DB_HOST/PORT/DATABASE/USERNAME/PASSWORD` | leitura do banco antigo pelos comandos `peticao:backfill-*` | **não é preciso em produção** (a migration usa o arquivo do repositório) |
 | `LEGACY_DB_CHARSET/COLLATION` | charset do banco antigo | padrão latin1 |
 | `LANGUAGETOOL_CONNECT_TIMEOUT` | tempo para desistir do LanguageTool | padrão 5 |
 
@@ -38,6 +38,7 @@ Variáveis novas (todas opcionais; ver `.env.example`):
 ```bash
 php artisan down
 git pull
+php artisan peticao:backfill-obrigatorio --snapshot   # relatório do item 4 (não grava)
 php artisan migrate --force
 php artisan config:clear
 php artisan route:clear
@@ -55,43 +56,41 @@ Migrations desta entrega (todas podem rodar mais de uma vez):
    aos servidores criados pela tela nova.
 3. `2026_10_06_000100_clean_undefined_option_returns` — troca o texto "undefined"/"null"
    das opções de SELECT por vazio.
+4. `2026_10_20_000100_restore_legacy_campo_obrigatorio_e_mascaras` — corrige o
+   "obrigatório" dos campos, que veio **invertido** da migração do legado, e preenche
+   máscaras vazias. Lê `database/data/legacy-campos.json` (vai no `git pull`): **não
+   precisa do banco antigo em produção**. Ver item 4.
 
-## 4. Máscaras dos campos (backfill)
+## 4. Obrigatório e máscaras dos campos — **importante**
 
-O backfill já foi aplicado no banco local. Em produção, escolha um caminho:
+A migração do legado gravou o "obrigatório" invertido (no legado `input_req = 2` é
+Sim e `1` é Não): a montagem marca e cobra os campos errados, e o assistente pede os
+campos errados. A migration 4 corrige isso sozinha no `migrate --force`.
 
-- **O servidor enxerga o `peticaofacil_old`:**
-  ```bash
-  php artisan peticao:backfill-comportamento          # relatório, não grava
-  php artisan peticao:backfill-comportamento --apply  # grava
-  ```
-- **Não enxerga:** gere o SQL numa máquina que enxergue os dois bancos e aplique-o
-  no MySQL de produção:
-  ```bash
-  php artisan peticao:backfill-comportamento --sql=backfill-mascaras.sql
-  ```
-  Atenção: os UPDATEs casam pelo `legacy_input_id`, então o arquivo deve ser gerado
-  contra um banco novo equivalente ao de produção.
+Por que é seguro:
+- só altera duas colunas de `peticao_modelo_campos` (`obrigatorio` e `comportamento`
+  vazio); não apaga nem cria nada;
+- localiza cada campo pelo código do legado (`legacy_input_id`), não pelo id do banco:
+  vale para a produção mesmo ela sendo mais nova que a cópia local;
+- campos criados no sistema novo (sem código do legado) não são tocados;
+- campos editados na tela depois da migração (`updated_at > created_at`) mantêm o
+  obrigatório escolhido;
+- tudo numa transação; rodar de novo não muda nada.
 
-Esperado (pelo relatório local): só 1 campo a preencher; os demais já estavam certos.
-
-## 4b. Campo "obrigatório" (backfill) — **importante**
-
-A migração gravou o "obrigatório" **invertido** (no legado `input_req = 2` é Sim e
-`1` é Não). Sem esta correção, a montagem marca com asterisco e cobra os campos
-errados, e o assistente pede os campos errados. Mesmos caminhos do item 4:
+Conferência (o `--snapshot` lê o mesmo arquivo da migration, sem o banco antigo):
 
 ```bash
-php artisan peticao:backfill-obrigatorio          # relatório, não grava
-php artisan peticao:backfill-obrigatorio --apply  # grava
-# ou, sem acesso ao banco antigo:
-php artisan peticao:backfill-obrigatorio --sql=backfill-obrigatorio.sql
+# depois do git pull e ANTES do migrate: relatório do que vai mudar (não grava)
+php artisan peticao:backfill-obrigatorio --snapshot
+php artisan migrate --force
+# depois: deve mostrar a_corrigir = 0
+php artisan peticao:backfill-obrigatorio --snapshot
 ```
 
-Esperado (pelo relatório local): ~2.744 campos a corrigir. Campos editados na tela
-depois da migração são mantidos (relatório: `editados_mantidos`); `--overwrite`
-corrige também esses. Rode **uma vez só**: o comando compara com o legado, então
-repetir não desfaz nada, mas `--overwrite` sobrepõe escolhas feitas na tela.
+Esperado: algo perto de 2.744 campos a corrigir (o número local); diferença vem de
+campos editados na tela em produção, que aparecem em `editados_mantidos`.
+Se algo der errado, a volta é o backup do item 1 (a migration não tem `down`:
+desfazer seria inverter de novo).
 
 ## 5. Conferência depois
 

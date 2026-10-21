@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\PeticaoModeloCampo;
+use App\Services\LegacyCampoRestoreService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -10,13 +10,14 @@ use Illuminate\Support\Facades\DB;
  * Corrige o "obrigatorio" dos campos migrados, que veio invertido.
  *
  * No sistema antigo tp_inputs_tb.input_req = 2 e obrigatorio e 1 nao e
- * (PeticaoModeloCampo::mapLegacyRequired). A migracao gravou o contrario:
- * campos obrigatorios ficaram opcionais e vice-versa.
+ * (PeticaoModeloCampo::mapLegacyRequired). A migracao gravou o contrario.
  *
- * Casa por legacy_input_id. Campos editados no sistema novo depois da
- * migracao (updated_at > created_at) sao mantidos: o valor deles foi
- * escolhido por alguem na tela. Use --overwrite para corrigi-los tambem.
+ * A migration 2026_10_20_000100 ja faz esta correcao no deploy, lendo
+ * database/data/legacy-campos.json. Este comando serve para relatorio e para
+ * rodar de novo contra o banco antigo (--snapshot le o arquivo em vez dele).
  *
+ * Campos editados no sistema novo depois da migracao (updated_at > created_at)
+ * sao mantidos; use --overwrite para corrigi-los tambem.
  * Por seguranca o padrao e somente relatorio (dry-run); use --apply para gravar.
  */
 class BackfillCampoObrigatorio extends Command
@@ -24,124 +25,82 @@ class BackfillCampoObrigatorio extends Command
     protected $signature = 'peticao:backfill-obrigatorio
         {--apply : Grava as alteracoes (sem esta flag apenas relata)}
         {--overwrite : Corrige tambem campos editados no sistema novo depois da migracao}
-        {--modelo=* : Limita a um ou mais tipo_id legados}
-        {--sql= : Em vez de gravar, escreve os UPDATEs num arquivo .sql}';
+        {--modelo=* : Limita a um ou mais tipo_id legados (so com o banco antigo)}
+        {--snapshot : Le database/data/legacy-campos.json em vez do banco antigo}
+        {--sql= : Em vez de gravar, escreve UPDATEs portaveis (por legacy_input_id) num arquivo .sql}';
 
     protected $description = 'Corrige o campo obrigatorio (invertido na migracao) a partir do input_req do sistema antigo.';
 
-    public function handle()
+    public function handle(LegacyCampoRestoreService $service)
     {
-        $apply = (bool) $this->option('apply');
-        $overwrite = (bool) $this->option('overwrite');
-        $modelos = array_filter(array_map('intval', (array) $this->option('modelo')));
-        $sqlPath = $this->option('sql');
-
-        try {
-            $query = DB::connection('legacy_mysql')->table('tp_inputs_tb')
-                ->select('id_input', 'tipo_id', 'input_req');
-            if ($modelos) {
-                $query->whereIn('tipo_id', $modelos);
-            }
-            $legacyRows = $query->get()->keyBy('id_input');
-        } catch (\Throwable $e) {
-            $this->error('Nao foi possivel ler o banco antigo (conexao legacy_mysql / peticaofacil_old).');
-            $this->line('Configure LEGACY_DB_* no .env e rode na maquina que enxerga o banco antigo.');
-            $this->line('Detalhe: ' . $e->getMessage());
+        $fields = $this->legacyFields($service);
+        if ($fields === null) {
             return 1;
         }
 
-        $this->info('Lidos ' . count($legacyRows) . ' campos do sistema antigo.');
+        $this->info('Lidos ' . count($fields) . ' campos do sistema antigo.');
 
-        $stats = [
-            'ja_ok' => 0,
-            'a_corrigir' => 0,
-            'editados_mantidos' => 0,
-            'sem_campo_novo' => 0,
-        ];
-        $porValor = ['passa_a_obrigatorio' => 0, 'passa_a_opcional' => 0];
-        $updates = [];   // [campo_id => 0|1]
-        $exemplos = [];
-
-        $campos = DB::table('peticao_modelo_campos')
-            ->whereIn('legacy_input_id', $legacyRows->keys()->all())
-            ->get(['id', 'legacy_input_id', 'rotulo', 'obrigatorio', 'created_at', 'updated_at'])
-            ->keyBy('legacy_input_id');
-
-        foreach ($legacyRows as $legacyId => $row) {
-            $campo = $campos[$legacyId] ?? null;
-            if (!$campo) {
-                $stats['sem_campo_novo']++;
-                continue;
-            }
-
-            $esperado = PeticaoModeloCampo::mapLegacyRequired($row->input_req) ? 1 : 0;
-            if ((int) $campo->obrigatorio === $esperado) {
-                $stats['ja_ok']++;
-                continue;
-            }
-
-            $editado = $campo->updated_at && $campo->created_at && $campo->updated_at > $campo->created_at;
-            if ($editado && !$overwrite) {
-                $stats['editados_mantidos']++;
-                if (count($exemplos) < 20) {
-                    $exemplos[] = "campo {$campo->id} (legacy {$legacyId}) {$campo->rotulo}: editado em {$campo->updated_at} (mantido; use --overwrite)";
-                }
-                continue;
-            }
-
-            $stats['a_corrigir']++;
-            $porValor[$esperado ? 'passa_a_obrigatorio' : 'passa_a_opcional']++;
-            $updates[$campo->id] = $esperado;
-        }
-
-        $this->line('');
-        $this->info('Resumo:');
-        foreach ($stats + $porValor as $k => $v) {
-            $this->line(sprintf('  %-22s %d', $k, $v));
-        }
-        if ($exemplos) {
-            $this->line('');
-            $this->warn('Campos editados no sistema novo (mantidos):');
-            foreach ($exemplos as $ex) {
-                $this->line('  ' . $ex);
-            }
-        }
-
-        $total = count($updates);
-        $this->line('');
-        $this->info("Campos a atualizar: {$total}");
-
-        if ($sqlPath) {
-            $lines = [];
-            foreach ($updates as $campoId => $valor) {
-                $lines[] = 'UPDATE peticao_modelo_campos SET obrigatorio = ' . (int) $valor . ' WHERE id = ' . (int) $campoId . ';';
-            }
-            file_put_contents($sqlPath, implode("\n", $lines) . "\n");
+        if ($sqlPath = $this->option('sql')) {
+            file_put_contents($sqlPath, $service->toSql($fields, 'obrigatorio', (bool) $this->option('overwrite')));
             $this->info("Script SQL gravado em: {$sqlPath}");
             return 0;
         }
 
-        if (!$apply) {
+        $plan = $service->planRequired($fields, (bool) $this->option('overwrite'));
+        $values = array_count_values(array_map('strval', $plan['updates']));
+
+        $this->line('');
+        $this->info('Resumo:');
+        foreach (['ja_ok', 'a_corrigir', 'editados_mantidos', 'sem_campo_novo'] as $key) {
+            $this->line(sprintf('  %-22s %d', $key, $plan[$key]));
+        }
+        $this->line(sprintf('  %-22s %d', 'passa_a_obrigatorio', $values['1'] ?? 0));
+        $this->line(sprintf('  %-22s %d', 'passa_a_opcional', $values['0'] ?? 0));
+
+        if ($plan['editados']) {
+            $this->line('');
+            $this->warn('Campos editados no sistema novo (mantidos; use --overwrite):');
+            foreach (array_slice($plan['editados'], 0, 20) as $campo) {
+                $this->line("  campo {$campo->id} (legacy {$campo->legacy_input_id}) {$campo->rotulo}: editado em {$campo->updated_at}");
+            }
+        }
+
+        $this->line('');
+        $this->info('Campos a atualizar: ' . count($plan['updates']));
+
+        if (!$this->option('apply')) {
             $this->comment('Modo relatorio (dry-run). Rode com --apply para gravar.');
             return 0;
         }
 
-        // Sem tocar em updated_at: o campo continua contando como "nao editado na tela".
-        $afetados = 0;
-        DB::transaction(function () use ($updates, &$afetados) {
-            foreach ([1, 0] as $valor) {
-                $ids = array_keys(array_filter($updates, function ($v) use ($valor) {
-                    return $v === $valor;
-                }));
-                foreach (array_chunk($ids, 500) as $chunk) {
-                    $afetados += DB::table('peticao_modelo_campos')
-                        ->whereIn('id', $chunk)
-                        ->update(['obrigatorio' => $valor]);
-                }
-            }
-        });
-
-        $this->info("Gravado. Linhas atualizadas: {$afetados}.");
+        $this->info('Gravado. Linhas atualizadas: ' . $service->apply($plan['updates'], 'obrigatorio') . '.');
         return 0;
+    }
+
+    protected function legacyFields(LegacyCampoRestoreService $service)
+    {
+        if ($this->option('snapshot')) {
+            return $service->loadSnapshot();
+        }
+
+        try {
+            $query = DB::connection('legacy_mysql')->table('tp_inputs_tb')->select('id_input', 'input_req', 'input_alt');
+            $modelos = array_filter(array_map('intval', (array) $this->option('modelo')));
+            if ($modelos) {
+                $query->whereIn('tipo_id', $modelos);
+            }
+
+            $fields = [];
+            foreach ($query->get() as $row) {
+                $fields[(string) $row->id_input] = ['req' => (int) $row->input_req, 'alt' => (string) $row->input_alt];
+            }
+
+            return $fields;
+        } catch (\Throwable $e) {
+            $this->error('Nao foi possivel ler o banco antigo (conexao legacy_mysql / peticaofacil_old).');
+            $this->line('Use --snapshot para ler database/data/legacy-campos.json.');
+            $this->line('Detalhe: ' . $e->getMessage());
+            return null;
+        }
     }
 }

@@ -11,7 +11,7 @@ Histórico das correções feitas na branch `peticaofacil_ia`, para quem continu
 resumo TEXTAREA + banner "não ajuizar") `906d7b84`(achado 14 — avulsa oculta)
 `507d1455`(achado 15 LanguageTool) `dcad0d49`(**motor Safra: máscaras backfill +
 listas dependentes**) `0f75160e`(correção de 2 testes desatualizados).
-**Suíte: 232 testes, 1270 asserções, OK.**
+**Suíte: 236 testes, 1292 asserções, OK.**
 
 ## Achados (segurança/qualidade) — todos commitados salvo o 4
 1. Chave `}` sobrando quebrava o JS da montagem (`assemble.blade.php`).
@@ -126,7 +126,13 @@ Correção: `PeticaoModeloCampo::mapLegacyRequired()` + comando
 `peticao:backfill-obrigatorio` (dry-run padrão, `--apply`, `--sql`, `--modelo`,
 `--overwrite`; mantém campos com `updated_at > created_at`). **Aplicado no banco
 local**; reversão local guardada em `%TEMP%\vw\backup\obrigatorio-antes.sql`.
-Produção: ver item 4b do checklist de deploy.
+Produção (20/10): a **migration `2026_10_20_000100`** aplica a mesma correção no
+`migrate --force`, lendo `database/data/legacy-campos.json` (foto de `tp_inputs_tb`
+gerada por `peticao:legacy-campos-snapshot`), sem precisar do banco antigo. Lógica em
+`LegacyCampoRestoreService` (usada pela migration e pelo comando; `--snapshot` lê o
+arquivo; `--sql` gera UPDATEs portáveis por `legacy_input_id`). Testado localmente:
+banco voltado ao estado invertido → `migrate` corrigiu os 2.744. Teste:
+`LegacyCampoRestoreServiceTest`.
 
 **Motor — 2 lacunas corrigidas** (a primeira estava também no #18 do piloto):
 1. Um select com dois `fc_ajax_comp` (ex.: #18 COM SEGREDO DE JUSTIÇA?: return_1 →
@@ -152,11 +158,11 @@ o comando importa inativo — ativar após conferência.
 
 ## Pendências / próximos passos
 - **Push** da branch e **deploy** (`migrate --force` onde há migration: 2026_10_05_000100,
-  2026_10_05_000200, 2026_10_06_000100). Produção recebe por `git pull` (sem acesso ao servidor).
-- Em produção, se `peticaofacil_old` não estiver lá, rodar o backfill com `--sql=arquivo`
-  e aplicar o .sql.
+  2026_10_05_000200, 2026_10_06_000100, 2026_10_20_000100). Produção recebe por `git pull` (sem acesso ao servidor).
 - Opcional: regra de auto-máscara (CPF/CNPJ/CEP/telefone onde o legado nunca mascarava).
-- Em produção, rodar também `peticao:backfill-obrigatorio` (item 4b do checklist).
+- Obrigatório e máscaras vão sozinhos pela migration 2026_10_20_000100 (item 4 do
+  checklist). Se o legado for editado de novo, regerar `legacy-campos.json` com
+  `peticao:legacy-campos-snapshot`.
 - Varredura dos formulários dos outros clientes (Safra completa e Volkswagen feitas; o
   backfill já cobriu máscaras nos 238 modelos). Os scripts da comparação eram
   temporários: refazer a partir da descrição acima.

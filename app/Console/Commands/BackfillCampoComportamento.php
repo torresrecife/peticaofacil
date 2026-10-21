@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\PeticaoModeloCampo;
+use App\Services\LegacyCampoRestoreService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -26,7 +27,7 @@ class BackfillCampoComportamento extends Command
         {--apply : Grava as alteracoes (sem esta flag apenas relata)}
         {--overwrite : Sobrescreve comportamento ja preenchido quando divergir do legado}
         {--modelo=* : Limita a um ou mais tipo_id legados}
-        {--sql= : Em vez de gravar, escreve os UPDATEs num arquivo .sql}';
+        {--sql= : Em vez de gravar, escreve UPDATEs portaveis (por legacy_input_id) num arquivo .sql}';
 
     protected $description = 'Recupera as mascaras de campo (comportamento) a partir do input_alt do sistema antigo.';
 
@@ -63,7 +64,6 @@ class BackfillCampoComportamento extends Command
         ];
         $porMascara = [];
         $updates = [];   // [campo_id => comportamento]
-        $sqlLines = [];
         $exemplos = [];
 
         foreach ($legacyRows as $row) {
@@ -101,7 +101,6 @@ class BackfillCampoComportamento extends Command
 
             $porMascara[$legacyBehavior] = ($porMascara[$legacyBehavior] ?? 0) + 1;
             $updates[$campo->id] = $legacyBehavior;
-            $sqlLines[] = "UPDATE peticao_modelo_campos SET comportamento = '" . $legacyBehavior . "' WHERE id = " . (int) $campo->id . ";";
         }
 
         $this->line('');
@@ -129,7 +128,12 @@ class BackfillCampoComportamento extends Command
         $this->info("Campos a atualizar: {$total}");
 
         if ($sqlPath) {
-            file_put_contents($sqlPath, implode("\n", $sqlLines) . "\n");
+            // Gerado do legado, nao do estado deste banco: vale tambem para outra copia (producao).
+            $legacyFields = [];
+            foreach ($legacyRows as $row) {
+                $legacyFields[(string) $row->id_input] = ['alt' => (string) $row->input_alt];
+            }
+            file_put_contents($sqlPath, app(LegacyCampoRestoreService::class)->toSql($legacyFields, 'comportamento', $overwrite));
             $this->info("Script SQL gravado em: {$sqlPath}");
             return 0;
         }
