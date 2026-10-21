@@ -75,6 +75,24 @@ O backfill já foi aplicado no banco local. Em produção, escolha um caminho:
 
 Esperado (pelo relatório local): só 1 campo a preencher; os demais já estavam certos.
 
+## 4b. Campo "obrigatório" (backfill) — **importante**
+
+A migração gravou o "obrigatório" **invertido** (no legado `input_req = 2` é Sim e
+`1` é Não). Sem esta correção, a montagem marca com asterisco e cobra os campos
+errados, e o assistente pede os campos errados. Mesmos caminhos do item 4:
+
+```bash
+php artisan peticao:backfill-obrigatorio          # relatório, não grava
+php artisan peticao:backfill-obrigatorio --apply  # grava
+# ou, sem acesso ao banco antigo:
+php artisan peticao:backfill-obrigatorio --sql=backfill-obrigatorio.sql
+```
+
+Esperado (pelo relatório local): ~2.744 campos a corrigir. Campos editados na tela
+depois da migração são mantidos (relatório: `editados_mantidos`); `--overwrite`
+corrige também esses. Rode **uma vez só**: o comando compara com o legado, então
+repetir não desfaz nada, mas `--overwrite` sobrepõe escolhas feitas na tela.
+
 ## 5. Conferência depois
 
 - [ ] Login e primeiro acesso (troca de senha temporária).
@@ -85,6 +103,10 @@ Esperado (pelo relatório local): só 1 campo a preencher; os demais já estavam
       escolher ESTADO e ver só os depositários daquele estado) e com máscaras
       (data, valor, CPF/CNPJ).
 - [ ] Opções de SELECT não mostram mais "undefined".
+- [ ] Asteriscos de obrigatório nos campos certos (comparar um modelo com o legado).
+- [ ] Safra INICIAL DE BUSCA: "COM SEGREDO DE JUSTIÇA? = SIM" preenche o título e o
+      parágrafo; "LOCAL DA NOTIFICAÇÃO = PESQUISA" mostra o campo seguinte.
+- [ ] Volkswagen MINUTA: TIPO DE PESSOA troca o documento entre CPF e CNPJ.
 - [ ] Banner "não ajuizar" e resumo do TEXTAREA na montagem.
 - [ ] Salvar a peça, reabrir, comparar versões.
 - [ ] Usuário comum não abre peça salva de outro usuário (deve dar 403).

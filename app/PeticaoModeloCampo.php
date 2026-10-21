@@ -275,25 +275,45 @@ class PeticaoModeloCampo extends Model
 
     public function getDependentFillConfigAttribute()
     {
+        $configs = $this->dependent_fill_configs;
+
+        return $configs ? $configs[0] : null;
+    }
+
+    /**
+     * Todos os fc_ajax_comp do campo. Um mesmo select pode abastecer mais de um
+     * alvo (ex.: SEGREDO DE JUSTICA: return_1 no titulo e return_2 no paragrafo).
+     */
+    public function getDependentFillConfigsAttribute()
+    {
+        $configs = [];
+
         foreach (['focus', 'load', 'blur'] as $eventName) {
             $script = trim((string) ($this->eventos_frontend[$eventName] ?? ''));
             if ($script === '') {
                 continue;
             }
 
-            if (preg_match('/fc_ajax_comp\("([^"]+)","([^"]+)","campo(\d+)","[^"]+","([^"]+)",this,1\)/i', $script, $matches)) {
-                return [
-                    'source_table' => $matches[1],
-                    'return_column' => $matches[2],
-                    'target_field_id' => (int) $matches[3],
-                    'lookup_key' => $matches[4],
-                    'event' => $eventName,
-                    'raw' => $script,
-                ];
+            if (preg_match_all('/fc_ajax_comp\("([^"]+)","([^"]+)","campo(\d+)","[^"]+","([^"]+)",this,1\)/i', $script, $all, PREG_SET_ORDER)) {
+                foreach ($all as $matches) {
+                    $key = (int) $matches[3] . '|' . $matches[2];
+                    if (isset($configs[$key])) {
+                        continue;
+                    }
+
+                    $configs[$key] = [
+                        'source_table' => $matches[1],
+                        'return_column' => $matches[2],
+                        'target_field_id' => (int) $matches[3],
+                        'lookup_key' => $matches[4],
+                        'event' => $eventName,
+                        'raw' => $script,
+                    ];
+                }
             }
         }
 
-        return null;
+        return array_values($configs);
     }
 
     protected function detectEventPreset($script)
@@ -358,6 +378,15 @@ class PeticaoModeloCampo extends Model
         ];
 
         return $map[$value] ?? '';
+    }
+
+    /**
+     * No sistema antigo tp_inputs_tb.input_req = 2 e obrigatorio e 1 nao e
+     * (tela de cadastro: Sim=2, Nao=1; EnviarDados() barra obrigatorio==2).
+     */
+    public static function mapLegacyRequired($inputReq)
+    {
+        return (int) trim((string) $inputReq) === 2;
     }
 
     protected function buildListSelectOptions()

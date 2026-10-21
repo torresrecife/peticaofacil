@@ -296,6 +296,7 @@
                                 @if($dependentConfig)
                                     data-target-field="{{ $dependentConfig['target_field_id'] }}"
                                     data-return-column="{{ $dependentConfig['return_column'] }}"
+                                    data-dependent-fills="{{ json_encode(array_map(function ($fill) { return ['target' => $fill['target_field_id'], 'column' => $fill['return_column']]; }, $campo->dependent_fill_configs)) }}"
                                 @endif
                                 @if($campo->input_focu || $campo->input_load || $campo->input_blur)
                                     data-event-focus="{{ e($campo->input_focu) }}"
@@ -708,8 +709,21 @@ document.addEventListener('DOMContentLoaded', function () {
         if (repeatMatch) repeatFieldValue(repeatMatch[1], repeatMatch[2]);
         var addDateMatch = raw.match(/addDataCampo\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
         if (addDateMatch) addMonthsToField(addDateMatch[1], addDateMatch[2], addDateMatch[3]);
-        var visibilityMatch = raw.match(/mcampo\(["']([^"']+)["']\)/i);
-        if (visibilityMatch) applyConditionalFields(visibilityMatch[1]);
+        // Um evento pode ter varios mcampo(), um por alvo (ex.: segredo de justica).
+        var visibilityPattern = /mcampo\(["']([^"']+)["']\)/gi;
+        var visibilityMatch;
+        while ((visibilityMatch = visibilityPattern.exec(raw)) !== null) {
+            applyConditionalFields(visibilityMatch[1]);
+        }
+
+        // Mostrar/ocultar em ternario jQuery:
+        // ($(this).val()=="X"?$(".dis_campoN").show()+...attr("obrigatorio",2):$(".dis_campoN").hide()+...)
+        var ternaryPattern = /\$\(\s*this\s*\)\.val\(\s*\)\s*==\s*["']([^"']*)["']\s*\?\s*\$\(\s*["']\.dis_campo(\d+)["']\s*\)\.show\(\)([^:]*):/gi;
+        var ternaryMatch;
+        while ((ternaryMatch = ternaryPattern.exec(raw)) !== null) {
+            var shown = normalizeConditionalValue(field.value) === normalizeConditionalValue(ternaryMatch[1]);
+            setLegacyFieldVisibility(ternaryMatch[2], shown, shown && /obrigatorio["']\s*,\s*["']?2/i.test(ternaryMatch[3]));
+        }
         var installmentsMatch = raw.match(/nparcelas\(["']([^"']+)["']\)/i);
         if (installmentsMatch) applyCountedFields(installmentsMatch[1], 2);
         // Legacy models use nbens("campo941_|_campo942...", "input").
@@ -1187,27 +1201,35 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function dependentFills(select) {
+        var fills = [];
+        try {
+            fills = JSON.parse(select.getAttribute('data-dependent-fills') || '[]') || [];
+        } catch (e) {
+            fills = [];
+        }
+        if (!fills.length && select.getAttribute('data-target-field') && select.getAttribute('data-return-column')) {
+            fills = [{ target: select.getAttribute('data-target-field'), column: select.getAttribute('data-return-column') }];
+        }
+        return fills;
+    }
+
     function applyDependentSelect(select) {
-        var targetFieldId = select.getAttribute('data-target-field');
-        var returnColumn = select.getAttribute('data-return-column');
-        if (!targetFieldId || !returnColumn) {
-            return;
-        }
+        dependentFills(select).forEach(function (fill) {
+            var target = document.querySelector('[name=\"campo_' + fill.target + '\"]');
+            if (!target || !fill.column) {
+                return;
+            }
 
-        var target = document.querySelector('[name=\"campo_' + targetFieldId + '\"]');
-        if (!target) {
-            return;
-        }
+            var selectedOption = select.options[select.selectedIndex];
+            if (!selectedOption || !selectedOption.value) {
+                assignFieldValue(target, '');
+                return;
+            }
 
-        var selectedOption = select.options[select.selectedIndex];
-        if (!selectedOption || !selectedOption.value) {
-            assignFieldValue(target, '');
-            return;
-        }
-
-        var datasetKey = returnColumn.replace('_', '-');
-        var returnValue = selectedOption.getAttribute('data-' + datasetKey) || '';
-        assignFieldValue(target, returnValue);
+            var datasetKey = String(fill.column).replace('_', '-');
+            assignFieldValue(target, selectedOption.getAttribute('data-' + datasetKey) || '');
+        });
     }
 
     Array.prototype.forEach.call(document.querySelectorAll('.js-dependent-select'), function (select) {

@@ -11,7 +11,7 @@ Histórico das correções feitas na branch `peticaofacil_ia`, para quem continu
 resumo TEXTAREA + banner "não ajuizar") `906d7b84`(achado 14 — avulsa oculta)
 `507d1455`(achado 15 LanguageTool) `dcad0d49`(**motor Safra: máscaras backfill +
 listas dependentes**) `0f75160e`(correção de 2 testes desatualizados).
-**Suíte: 225 testes, 1262 asserções, OK.**
+**Suíte: 232 testes, 1270 asserções, OK.**
 
 ## Achados (segurança/qualidade) — todos commitados salvo o 4
 1. Chave `}` sobrando quebrava o JS da montagem (`assemble.blade.php`).
@@ -110,6 +110,39 @@ addDataCampo, mcampo + retorno, cópias, lista dependente por ESTADO, OAB por UF
 - Eventos `load` nunca rodavam no legado (input não tem onload); no novo rodam na
   abertura — já era assim antes desta varredura.
 
+## Safra — os 37 restantes (20/10/2026)
+Cliente SAFRA (ATIVAS) = `cliente_id=1`, 47 modelos (o piloto cobriu 10).
+
+**Dados:** fiéis ao legado; só os cabeçalhos de #76, #78 e #188 foram trocados pelo
+institucional novo (edição no sistema novo, mantida). #218 é texto fixo, sem campos
+(igual ao legado).
+
+**Achado grave — "obrigatório" invertido em todo o sistema:** no legado
+`tp_inputs_tb.input_req = 2` é obrigatório (cadastro: Sim=2/Não=1; `EnviarDados()`
+barra `obrigatorio==2`; `mcampo` grava 2 ao mostrar). A migração gravou 1→obrigatório.
+Relatório: 2.744 campos invertidos, 3 certos (justamente os 3 editados na tela depois
+da migração), 712 sem legado (criados no novo, não mexidos).
+Correção: `PeticaoModeloCampo::mapLegacyRequired()` + comando
+`peticao:backfill-obrigatorio` (dry-run padrão, `--apply`, `--sql`, `--modelo`,
+`--overwrite`; mantém campos com `updated_at > created_at`). **Aplicado no banco
+local**; reversão local guardada em `%TEMP%\vw\backup\obrigatorio-antes.sql`.
+Produção: ver item 4b do checklist de deploy.
+
+**Motor — 2 lacunas corrigidas** (a primeira estava também no #18 do piloto):
+1. Um select com dois `fc_ajax_comp` (ex.: #18 COM SEGREDO DE JUSTIÇA?: return_1 →
+   título, return_2 → parágrafo) só preenchia o primeiro alvo, e só o primeiro
+   `mcampo` rodava. Agora `dependent_fill_configs` (todos) + `data-dependent-fills`, e
+   todos os `mcampo()` do evento rodam.
+2. Mostrar/ocultar em ternário jQuery
+   (`($(this).val()=="PESQUISA"?$(".dis_campoN").show()+…attr("obrigatorio",2):…hide()…)`,
+   #18 LOCAL DA NOTIFICAÇÃO) não rodava.
+Testes: `CampoObrigatorioMapTest`.
+
+**Verificado:** as 47 montagens num Chromium headless (Playwright do gerador de PDF),
+todos os eventos disparados, sem erro de JS; #18 exercitado nas duas correções.
+Eventos que são texto e não JS (#159 DATA: "data atual" / "data por extenso") não
+faziam nada no legado e continuam sem efeito.
+
 ## Modelo Stone (#222)
 Criado pelo pacote v2 (sem modelo no legado). 23 campos, 5 parágrafos, setor RCJ -
 VAREJO, servidor NEO; todos os tokens dos textos têm campo, nenhum marcador solto
@@ -123,7 +156,8 @@ o comando importa inativo — ativar após conferência.
 - Em produção, se `peticaofacil_old` não estiver lá, rodar o backfill com `--sql=arquivo`
   e aplicar o .sql.
 - Opcional: regra de auto-máscara (CPF/CNPJ/CEP/telefone onde o legado nunca mascarava).
-- Varredura dos formulários dos outros clientes (Safra piloto e Volkswagen feitos; o
+- Em produção, rodar também `peticao:backfill-obrigatorio` (item 4b do checklist).
+- Varredura dos formulários dos outros clientes (Safra completa e Volkswagen feitas; o
   backfill já cobriu máscaras nos 238 modelos). Os scripts da comparação eram
   temporários: refazer a partir da descrição acima.
 - Excluir tabelas `*_archive_20260727` / `*_archive_20260818` (13) quando estável

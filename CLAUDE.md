@@ -22,11 +22,13 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 ## Como rodar (no Laragon, terminal normal)
 - Testes: `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
   `_test` e `APP_ENV=testing` (há guarda em `tests/TestCase.php`).
-  Estado atual da suíte: **225 testes, 1262 asserções, OK**.
+  Estado atual da suíte: **232 testes, 1270 asserções, OK**.
 - Migrations: `php artisan migrate` (produção: `--force`).
 - Backfill de máscaras: `php artisan peticao:backfill-comportamento`
   (`--dry-run` é o padrão/relatório; `--apply` grava; `--modelo=`, `--overwrite`,
   `--sql=arquivo`). **Já aplicado localmente** (1 campo).
+- Backfill do obrigatório: `php artisan peticao:backfill-obrigatorio` (mesmas opções,
+  mais `--overwrite` para campos editados na tela). **Já aplicado localmente** (2.744).
 - Fluxo combinado: implementar → rodar PHPUnit → commitar com o prefixo.
 
 ## Mapa do motor dos formulários (montagem)
@@ -58,6 +60,12 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 - **Formulários Volkswagen (26) e modelo Stone (#222):** dados conferidos com o
   legado (fiéis); motor ganhou cópia de valor em jQuery, HIDDEN com id/evento e
   `alteraInput` (CPF/CNPJ). Detalhe no handoff.
+- **Safra completa (47):** dois `fc_ajax_comp`/`mcampo` no mesmo evento e
+  mostrar/ocultar em ternário jQuery. **"Obrigatório" vinha invertido da migração
+  em todo o sistema** (legado: `input_req` 2 = Sim): `peticao:backfill-obrigatorio`,
+  já aplicado localmente; falta em produção.
+- Teste de JS sem login: gerar o HTML da montagem como ADM pelo kernel do Laravel e
+  abrir num Chromium headless (Playwright de `scripts/pdf-renderer`).
 
 ## Pendências
 - **Push da branch `peticaofacil_ia`** e **deploy** (`migrate --force` onde houver
