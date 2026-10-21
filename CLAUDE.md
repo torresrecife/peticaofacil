@@ -22,7 +22,7 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 ## Como rodar (no Laragon, terminal normal)
 - Testes: `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
   `_test` e `APP_ENV=testing` (há guarda em `tests/TestCase.php`).
-  Estado atual da suíte: **223 testes, 1252 asserções, OK**.
+  Estado atual da suíte: **225 testes, 1262 asserções, OK**.
 - Migrations: `php artisan migrate` (produção: `--force`).
 - Backfill de máscaras: `php artisan peticao:backfill-comportamento`
   (`--dry-run` é o padrão/relatório; `--apply` grava; `--modelo=`, `--overwrite`,
@@ -35,7 +35,8 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
   cpf/cnpj/cpf_cnpj/cep/fone/processo), revelar condicional (`structuredConditionalRules`),
   campos contados (bens/parcelas), editor rico do TEXTAREA (modal + textos
   predefinidos), datas por extenso, preenchimento dependente (`applyDependentSelect`
-  via fc_ajax_comp / data-return-*), **listas dependentes** (`data-list-select`/
+  via fc_ajax_comp / data-return-*), cópias jQuery (`copyFieldValue`), TIPO DE PESSOA
+  (`applyPersonType`), **listas dependentes** (`data-list-select`/
   `data-dependency-field`/`data-dependency-key`) e banner "não ajuizar"
   (`validateLegacyPetition`).
 - Modelo de campo: `app/PeticaoModeloCampo.php`.
@@ -54,6 +55,9 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 - **Formulários Safra (commit dcad0d49):** máscaras (backfill) + listas
   dependentes. Piloto dos 10 modelos Safra de menor ID legado verificado ao vivo,
   tudo OK.
+- **Formulários Volkswagen (26) e modelo Stone (#222):** dados conferidos com o
+  legado (fiéis); motor ganhou cópia de valor em jQuery, HIDDEN com id/evento e
+  `alteraInput` (CPF/CNPJ). Detalhe no handoff.
 
 ## Pendências
 - **Push da branch `peticaofacil_ia`** e **deploy** (`migrate --force` onde houver

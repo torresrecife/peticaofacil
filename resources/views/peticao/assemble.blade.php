@@ -278,7 +278,13 @@
                             <div class="panel-muted"><strong>{{ $campo->input_title }}</strong></div>
                         </div>
                     @elseif($fieldType === 'HIDDEN')
-                        <input type="hidden" name="campo_{{ $campo->id_input }}" value="{{ $values['campo_'.$campo->id_input] ?? '' }}">
+                        {{-- Com id e eventos, como no legado: outros campos copiam valores para ele (ex.: UF, COMARCA). --}}
+                        <input type="hidden" id="campo{{ $campo->id_input }}" name="campo_{{ $campo->id_input }}" value="{{ $values['campo_'.$campo->id_input] ?? '' }}"
+                            @if($campo->input_load)
+                                class="js-frontend-event-field"
+                                data-event-load="{{ e($campo->input_load) }}"
+                            @endif
+                        >
                     @elseif($fieldType === 'SELECT')
                         @php($dependentConfig = $campo->dependent_fill_config)
                         <div class="form-group legacy-field-wrap dis_campo{{ $campo->id_input }} {{ $campo->add_class }} @if((int) $campo->input_cols >= 2) full @endif" data-field-id="{{ $campo->id_input }}" data-field-label="{{ $campo->input_title }}" @if($fieldRequired) data-required="1" @endif @if(!$campo->visivel) style="display:none;" @endif>
@@ -308,6 +314,9 @@
                                 @foreach($campo->select_options as $option)
                                     <option
                                         value="{{ $option['value'] ?? $option['label'] }}"
+                                        @if(isset($option['id']) && $option['id'] !== '')
+                                            data-ident="{{ $option['id'] }}"
+                                        @endif
                                         @foreach(($option['extras'] ?? []) as $extraKey => $extraValue)
                                             data-{{ str_replace('_', '-', $extraKey) }}="{{ $extraValue }}"
                                         @endforeach
@@ -683,6 +692,18 @@ document.addEventListener('DOMContentLoaded', function () {
             estado_ext(field);
         }
 
+        // Copias de valor escritas em jQuery no legado, na ordem em que aparecem:
+        // $("#campoA").val($(this).val()), $("#campoA").val($("#campoB").val()) e
+        // $(this).val($("#campoB").val()).
+        var copyPattern = /\$\(\s*(this|["']#campo(\d+)["'])\s*\)\.val\(\s*\$\(\s*(this|["']#campo(\d+)["'])\s*\)\.val\(\s*\)\s*\)/gi;
+        var copyMatch;
+        while ((copyMatch = copyPattern.exec(raw)) !== null) {
+            copyFieldValue(copyMatch[2] ? legacyField(copyMatch[2]) : field, copyMatch[4] ? legacyField(copyMatch[4]) : field);
+        }
+
+        var personTypeMatch = raw.match(/alteraInput\(\s*this\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
+        if (personTypeMatch) applyPersonType(field, personTypeMatch[1], personTypeMatch[2], personTypeMatch[3]);
+
         var repeatMatch = raw.match(/repeteValor\(\s*(\d+)\s*,\s*(\d+)\s*\)/i);
         if (repeatMatch) repeatFieldValue(repeatMatch[1], repeatMatch[2]);
         var addDateMatch = raw.match(/addDataCampo\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
@@ -964,6 +985,55 @@ document.addEventListener('DOMContentLoaded', function () {
     function repeatFieldValue(sourceId, targetId) {
         var target = legacyField(targetId);
         if (target && target.offsetParent !== null) target.value = legacyFieldValue(sourceId);
+    }
+
+    // Ao contrario de repeteValor, a copia em jQuery do legado nao olhava se o
+    // alvo estava visivel: ela tambem abastece campos ocultos (HIDDEN). Como o
+    // .val() do jQuery, nao dispara eventos: a mascara do alvo nao reformata o
+    // valor copiado (ex.: "1.234,56 (mil ...)" num campo decimal).
+    function copyFieldValue(target, source) {
+        if (!target || !source || target === source) return;
+        target.value = source.value;
+        refreshRichSummary(target);
+    }
+
+    // alteraInput(this, alvo, opcaoCpf, opcaoCnpj): o TIPO DE PESSOA escolhido troca
+    // o rotulo e a mascara do campo do documento. As opcoes sao reconhecidas pelo
+    // codigo (data-ident); se nenhum dos dois codigos existir no select (modelo
+    // copiado de outro com os codigos antigos), vale o texto FISICA/JURIDICA.
+    function applyPersonType(select, targetId, cpfIdent, cnpjIdent) {
+        if (!select || select.tagName !== 'SELECT') return;
+        var target = legacyField(targetId);
+        if (!target) return;
+
+        var options = Array.prototype.slice.call(select.options);
+        var knowsIdents = options.some(function (op) {
+            var ident = op.getAttribute('data-ident');
+            return ident === String(cpfIdent) || ident === String(cnpjIdent);
+        });
+        var selected = select.options[select.selectedIndex];
+        if (!selected || !selected.value) return;
+
+        var type = '';
+        if (knowsIdents) {
+            var ident = selected.getAttribute('data-ident');
+            type = ident === String(cpfIdent) ? 'cpf' : (ident === String(cnpjIdent) ? 'cnpj' : '');
+        } else {
+            var label = normalizeBlockValue(selected.textContent);
+            type = label === 'FISICA' ? 'cpf' : (label === 'JURIDICA' ? 'cnpj' : '');
+        }
+        if (!type || target.getAttribute('data-input-behavior') === type) return;
+
+        target.setAttribute('data-input-behavior', type);
+        target.setAttribute('inputmode', 'numeric');
+        assignFieldValue(target, '');
+
+        var wrapper = document.querySelector('.dis_campo' + targetId);
+        var labelNode = wrapper ? wrapper.querySelector('label') : null;
+        if (labelNode && labelNode.firstChild && labelNode.firstChild.nodeType === 3) {
+            labelNode.firstChild.nodeValue = type.toUpperCase() + labelNode.firstChild.nodeValue.match(/\s*$/)[0];
+        }
+        if (wrapper) wrapper.setAttribute('data-field-label', type.toUpperCase());
     }
 
     function addMonthsToField(sourceId, targetId, months) {

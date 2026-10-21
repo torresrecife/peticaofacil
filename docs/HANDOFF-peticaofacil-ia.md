@@ -11,7 +11,7 @@ Histórico das correções feitas na branch `peticaofacil_ia`, para quem continu
 resumo TEXTAREA + banner "não ajuizar") `906d7b84`(achado 14 — avulsa oculta)
 `507d1455`(achado 15 LanguageTool) `dcad0d49`(**motor Safra: máscaras backfill +
 listas dependentes**) `0f75160e`(correção de 2 testes desatualizados).
-**Suíte: 223 testes, 1252 asserções, OK.**
+**Suíte: 225 testes, 1262 asserções, OK.**
 
 ## Achados (segurança/qualidade) — todos commitados salvo o 4
 1. Chave `}` sobrando quebrava o JS da montagem (`assemble.blade.php`).
@@ -77,14 +77,55 @@ Listas dependentes (hori): ESTADO=CE → só os depositários do CE; valor inser
 cláusula concatenada (nome, CPF, telefone). Vert: valor=rótulo; as de preenchimento
 (77/83) preenchem o alvo (OAB/UF) via fc_ajax_comp. Sem lacunas nos 10.
 
+## Formulários Volkswagen (20/10/2026)
+Cliente VOLKSWAGEN = `cliente_id=2` (26 modelos, legado 49…313 → #5…#211).
+
+**Dados:** comparação campo a campo com `peticaofacil_old` (rótulo, tipo, input_db,
+input_val, prefixo/sufixo, texto padrão, classe, eventos, layout, ordem, visível,
+nome do arquivo, máscara, opções com return_1..5, parágrafos): **migração fiel**.
+Única diferença: cabeçalho de #80 e #81 trocado pelo cabeçalho institucional novo
+(edição feita no sistema novo, mantida).
+
+**Motor — 3 lacunas corrigidas** (`assemble.blade.php`):
+1. Cópia de valor escrita em jQuery: `$("#campoA").val($(this).val())`,
+   `$("#campoA").val($("#campoB").val())`, `$(this).val($("#campoB").val())`
+   (`copyFieldValue`, sem disparar eventos, como o `.val()`). Ex.: #19 VALOR VENCIDOS →
+   VALOR DA CAUSA e purga; CONTRATO FIRMADO EM → COMARCA = CIDADE; #42 CONTRATO →
+   CONTRATO2 (no legado estava `#Campo1505`, com C maiúsculo, e não funcionava).
+2. Campo HIDDEN ganhou `id` e evento `load` (antes não tinha id: nada o abastecia).
+3. `alteraInput(this, alvo, idCpf, idCnpj)` — TIPO DE PESSOA troca rótulo e máscara
+   do documento entre CPF e CNPJ (`applyPersonType`; opções com `data-ident`). Em #42 os
+   códigos do evento (453/454) não existem no select (modelo copiado; quebrado no
+   legado) → cai no texto FÍSICA/JURÍDICA. Só limpa o documento quando o tipo muda.
+Teste: `PeticaoLegacyFieldEventsTest`.
+
+**Verificado no navegador** (HTML da montagem gerado como ADM): os 26 sem erro de JS
+com todos os eventos disparados; #5, #19, #42 e #39 exercitados (CPF/CNPJ, parcelas,
+addDataCampo, mcampo + retorno, cópias, lista dependente por ESTADO, OAB por UF).
+
+**Lacunas de cadastro herdadas do legado (não do motor):**
+- #138 FUNDAMENTOS: SIM/NÃO com retorno "undefined" no legado → o RETORNO fica vazio
+  para digitar (comportamento igual ao legado).
+- #139 ENDEREÇO: select sem nenhuma opção (também no legado) → só o RETORNO é usado.
+- Eventos `load` nunca rodavam no legado (input não tem onload); no novo rodam na
+  abertura — já era assim antes desta varredura.
+
+## Modelo Stone (#222)
+Criado pelo pacote v2 (sem modelo no legado). 23 campos, 5 parágrafos, setor RCJ -
+VAREJO, servidor NEO; todos os tokens dos textos têm campo, nenhum marcador solto
+(só CÓDIGO NEO não aparece no texto, como esperado). Máscaras, valor por extenso e
+data da petição verificados no navegador. Está **ativo** no banco local; em produção
+o comando importa inativo — ativar após conferência.
+
 ## Pendências / próximos passos
 - **Push** da branch e **deploy** (`migrate --force` onde há migration: 2026_10_05_000100,
   2026_10_05_000200, 2026_10_06_000100). Produção recebe por `git pull` (sem acesso ao servidor).
 - Em produção, se `peticaofacil_old` não estiver lá, rodar o backfill com `--sql=arquivo`
   e aplicar o .sql.
 - Opcional: regra de auto-máscara (CPF/CNPJ/CEP/telefone onde o legado nunca mascarava).
-- Varredura dos formulários dos outros clientes (o motor é genérico; o backfill já
-  cobriu máscaras nos 238 modelos).
+- Varredura dos formulários dos outros clientes (Safra piloto e Volkswagen feitos; o
+  backfill já cobriu máscaras nos 238 modelos). Os scripts da comparação eram
+  temporários: refazer a partir da descrição acima.
 - Excluir tabelas `*_archive_20260727` / `*_archive_20260818` (13) quando estável
   (incluem senha antiga do NEO em texto puro).
 - Achado 4 (GER na administração).
