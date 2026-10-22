@@ -87,6 +87,24 @@ class PeticaoLegacyFieldEventsTest extends TestCase
             ->assertSee('function copyFieldValue(target, source)', false);
     }
 
+    public function test_cpfcnpj_mask_event_is_handled()
+    {
+        $user = $this->seedModelo([
+            [
+                'id' => 9201,
+                'legacy_input_id' => 9201,
+                'rotulo' => 'CPF/CNPJ',
+                'eventos_frontend' => json_encode(['blur' => 'cpfcnpj_mask(9201);']),
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->get('/peticoes/modelos/90')
+            ->assertStatus(200)
+            ->assertSee('data-event-blur="cpfcnpj_mask(9201);"', false)
+            ->assertSee('var documentMaskPattern = /cpfcnpj_mask', false);
+    }
+
     public function test_person_type_select_exposes_option_codes_for_alteraInput()
     {
         $user = $this->seedModelo([

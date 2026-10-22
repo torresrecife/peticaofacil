@@ -11,7 +11,7 @@ Histórico das correções feitas na branch `peticaofacil_ia`, para quem continu
 resumo TEXTAREA + banner "não ajuizar") `906d7b84`(achado 14 — avulsa oculta)
 `507d1455`(achado 15 LanguageTool) `dcad0d49`(**motor Safra: máscaras backfill +
 listas dependentes**) `0f75160e`(correção de 2 testes desatualizados).
-**Suíte: 236 testes, 1292 asserções, OK.**
+**Suíte: 237 testes, 1295 asserções, OK.**
 
 ## Achados (segurança/qualidade) — todos commitados salvo o 4
 1. Chave `}` sobrando quebrava o JS da montagem (`assemble.blade.php`).
@@ -149,6 +149,30 @@ todos os eventos disparados, sem erro de JS; #18 exercitado nas duas correções
 Eventos que são texto e não JS (#159 DATA: "data atual" / "data por extenso") não
 faziam nada no legado e continuam sem efeito.
 
+## Modelos sem cliente (108) — 22/10/2026
+`legacy_cliente_id` vazio: 91 vindos do legado (`id_cliente = 0` lá) + 17 criados pela
+importação com IA (#224–241, 25 e 27/09).
+
+**91 do legado:** campos, opções e parágrafos fiéis; obrigatório já corrigido. 12
+cabeçalhos trocados pelo institucional novo e 2 parágrafos editados no sistema novo
+(#17 REQUERIMENTO reformatado de 10 para 12px; #9 EXPEDIÇÃO DE NOVO MANDADO com
+`<p>&nbsp;</p>` virando `<p></p>` — o export já trata parágrafo vazio como linha em
+branco, `preserveBlankEditorBlocks`). 29 são texto fixo, sem campos (igual ao legado).
+
+**Motor:** `cpfcnpj_mask(N)` (#17) agora aplica a máscara CPF/CNPJ — no legado a
+função era chamada mas **nunca existiu** (dava erro). `merge_fields("pessoa |932|3800",
+"933")` (#17 QUALIFICAÇÃO) também nunca existiu no legado; **não implementado**, falta
+definir o texto (decisão do Fabio). Verificado headless: 108 sem erro de JS; #9
+(cópia para HIDDEN), #12 (`estado_ext`), #15 (5 listas por ESTADO), #17 (máscara e
+`nbens`).
+
+**Modelos da IA — 9 quebrados (#224–232):** criados por uma versão antiga do
+importador, com marcas `@campoN_1@` no texto e no token. A montagem só troca
+`@campoN@`: a peça sai com as marcas literais e nenhum campo entra no texto. Os 8
+seguintes (#234–241) estão corretos. Há 7 peças salvas desses modelos no banco local.
+Todos os 17 estão ativos e parecem testes do importador (nomes repetidos, "…2",
+"…3333"). **Decisão pendente:** corrigir as marcas, inativar ou excluir.
+
 ## Modelo Stone (#222)
 Criado pelo pacote v2 (sem modelo no legado). 23 campos, 5 parágrafos, setor RCJ -
 VAREJO, servidor NEO; todos os tokens dos textos têm campo, nenhum marcador solto
@@ -163,7 +187,8 @@ o comando importa inativo — ativar após conferência.
 - Obrigatório e máscaras vão sozinhos pela migration 2026_10_20_000100 (item 4 do
   checklist). Se o legado for editado de novo, regerar `legacy-campos.json` com
   `peticao:legacy-campos-snapshot`.
-- Varredura dos formulários dos outros clientes (Safra completa e Volkswagen feitas; o
+- Modelos da IA #224–241 (9 quebrados) e `merge_fields` do #17: decisões do Fabio.
+- Varredura dos formulários dos outros clientes (Safra, Volkswagen e sem cliente feitos; o
   backfill já cobriu máscaras nos 238 modelos). Os scripts da comparação eram
   temporários: refazer a partir da descrição acima.
 - Excluir tabelas `*_archive_20260727` / `*_archive_20260818` (13) quando estável

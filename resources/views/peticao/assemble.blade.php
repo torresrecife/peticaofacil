@@ -702,6 +702,18 @@ document.addEventListener('DOMContentLoaded', function () {
             copyFieldValue(copyMatch[2] ? legacyField(copyMatch[2]) : field, copyMatch[4] ? legacyField(copyMatch[4]) : field);
         }
 
+        // cpfcnpj_mask(N): chamado no legado (#17 REQUERIMENTO), mas a funcao nunca
+        // existiu la; aplica a mascara CPF/CNPJ que o nome indica.
+        var documentMaskPattern = /cpfcnpj_mask\(\s*(\d+)\s*\)/gi;
+        var documentMaskMatch;
+        while ((documentMaskMatch = documentMaskPattern.exec(raw)) !== null) {
+            var documentField = legacyField(documentMaskMatch[1]);
+            if (documentField) {
+                var documentDigits = onlyDigits(documentField.value).slice(0, 14);
+                documentField.value = documentDigits.length <= 11 ? formatCpf(documentDigits) : formatCnpj(documentDigits);
+            }
+        }
+
         var personTypeMatch = raw.match(/alteraInput\(\s*this\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
         if (personTypeMatch) applyPersonType(field, personTypeMatch[1], personTypeMatch[2], personTypeMatch[3]);
 

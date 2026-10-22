@@ -22,7 +22,7 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 ## Como rodar (no Laragon, terminal normal)
 - Testes: `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
   `_test` e `APP_ENV=testing` (há guarda em `tests/TestCase.php`).
-  Estado atual da suíte: **236 testes, 1292 asserções, OK**.
+  Estado atual da suíte: **237 testes, 1295 asserções, OK**.
 - Migrations: `php artisan migrate` (produção: `--force`).
 - Backfill de máscaras: `php artisan peticao:backfill-comportamento`
   (`--dry-run` é o padrão/relatório; `--apply` grava; `--modelo=`, `--overwrite`,
@@ -65,6 +65,9 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
   em todo o sistema** (legado: `input_req` 2 = Sim): `peticao:backfill-obrigatorio`,
   já aplicado localmente; em produção vai pela migration `2026_10_20_000100`
   (lê `database/data/legacy-campos.json`, sem o banco antigo).
+- **Sem cliente (108):** 91 do legado fiéis; `cpfcnpj_mask` implementado. Pendentes
+  (decisão do Fabio): 9 modelos de IA quebrados (#224–232, marcas `@campoN_1@`) e
+  `merge_fields` do #17.
 - Teste de JS sem login: gerar o HTML da montagem como ADM pelo kernel do Laravel e
   abrir num Chromium headless (Playwright de `scripts/pdf-renderer`).
 
