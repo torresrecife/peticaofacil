@@ -66,8 +66,8 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
   já aplicado localmente; em produção vai pela migration `2026_10_20_000100`
   (lê `database/data/legacy-campos.json`, sem o banco antigo).
 - **Sem cliente (108):** 91 do legado fiéis; `cpfcnpj_mask` implementado. Pendentes
-  (decisão do Fabio): 9 modelos de IA quebrados (#224–232, marcas `@campoN_1@`) e
-  `merge_fields` do #17.
+  (decisão do Fabio): `merge_fields` do #17. Os 17 modelos de teste da IA (#224–241)
+  foram inativados no banco local.
 - Teste de JS sem login: gerar o HTML da montagem como ADM pelo kernel do Laravel e
   abrir num Chromium headless (Playwright de `scripts/pdf-renderer`).
 

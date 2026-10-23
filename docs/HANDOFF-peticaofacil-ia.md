@@ -171,7 +171,11 @@ importador, com marcas `@campoN_1@` no texto e no token. A montagem só troca
 `@campoN@`: a peça sai com as marcas literais e nenhum campo entra no texto. Os 8
 seguintes (#234–241) estão corretos. Há 7 peças salvas desses modelos no banco local.
 Todos os 17 estão ativos e parecem testes do importador (nomes repetidos, "…2",
-"…3333"). **Decisão pendente:** corrigir as marcas, inativar ou excluir.
+"…3333"). **Decisão do Fabio (22/10): inativar.** Os 17 foram inativados **no banco
+local** (`status = inativo`); saem da lista de montagem e do assistente, e as 7 peças
+salvas continuam abrindo. Desfazer: voltar `status` para `ativo` nos ids 224–232 e
+234–241. Não há migration: a produção não recebe essa mudança (se esses testes
+existirem lá, inativar na tela de modelos).
 
 ## Modelo Stone (#222)
 Criado pelo pacote v2 (sem modelo no legado). 23 campos, 5 parágrafos, setor RCJ -
@@ -187,7 +191,7 @@ o comando importa inativo — ativar após conferência.
 - Obrigatório e máscaras vão sozinhos pela migration 2026_10_20_000100 (item 4 do
   checklist). Se o legado for editado de novo, regerar `legacy-campos.json` com
   `peticao:legacy-campos-snapshot`.
-- Modelos da IA #224–241 (9 quebrados) e `merge_fields` do #17: decisões do Fabio.
+- `merge_fields` do #17: decisão do Fabio (modelos da IA #224–241 já inativados no local).
 - Varredura dos formulários dos outros clientes (Safra, Volkswagen e sem cliente feitos; o
   backfill já cobriu máscaras nos 238 modelos). Os scripts da comparação eram
   temporários: refazer a partir da descrição acima.
