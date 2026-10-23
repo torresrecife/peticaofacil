@@ -177,6 +177,32 @@ salvas continuam abrindo. Desfazer: voltar `status` para `ativo` nos ids 224–2
 234–241. Não há migration: a produção não recebe essa mudança (se esses testes
 existirem lá, inativar na tela de modelos).
 
+### Análise do `merge_fields` (#17 REQUERIMENTO) — 22/10/2026
+Evento do campo 933 QUALIFICAÇÃO: `merge_fields("pessoa |932|3800","933")` — partes
+separadas por `|`: o texto "pessoa ", o campo 932 PESSOA (física/jurídica) e o 933
+CPF/CNPJ (do NEO, `reu_cpfcnpj`). No texto: "…que promove contra **@CAMPO922@**,
+@campo933@, esclarecer…". Nas 54 peças salvas do #17 o campo foi digitado à mão sem
+padrão ("física, cpf: …", "pessoa física, …", só o CPF, o nome repetido, "réu",
+"XXX", vazio). **Sugestão** (padrão dos outros modelos do escritório):
+- física → `pessoa física, inscrita no CPF sob o nº 000.000.000-00`
+- jurídica → `pessoa jurídica de direito privado, inscrita no CNPJ sob o nº 00.000.000/0000-00`
+- PESSOA vazio → deduz pelo documento (11 dígitos = física, 14 = jurídica);
+  sem documento → só "pessoa física"/"pessoa jurídica de direito privado".
+- Preenche ao entrar na QUALIFICAÇÃO (como o evento pede) só se ela estiver vazia;
+  o usuário pode editar.
+Simulado no Chrome logado com o processo 32216005: a peça sai "…que promove contra
+CARLOS JOSE DOS SANTOS, pessoa física, inscrita no CPF sob o nº …, esclarecer…".
+**Não implementado** — aguarda o "de acordo" do Fabio com o texto.
+Visto no teste: o CPF/CNPJ vem do NEO sem máscara (a máscara só roda ao sair do
+campo); e o texto fica "…GUARARAPES - PE/" quando ESTADO DO PROCESSO PRINCIPAL está
+vazio (a COMARCA do NEO já traz a UF).
+
+## Itaú (29) — 22/10/2026
+Cliente ITAÚ (ATIVAS) = `cliente_id=5`. Dados fiéis ao legado (cabeçalhos de #26 e
+#29 trocados pelo institucional novo). Só usa eventos já suportados (datas e uma lista
+OAB por UF no #26). Headless: 29 sem erro de JS; #26 preenche a OAB pela UF. Nenhuma
+correção necessária.
+
 ## Modelo Stone (#222)
 Criado pelo pacote v2 (sem modelo no legado). 23 campos, 5 parágrafos, setor RCJ -
 VAREJO, servidor NEO; todos os tokens dos textos têm campo, nenhum marcador solto
@@ -191,8 +217,8 @@ o comando importa inativo — ativar após conferência.
 - Obrigatório e máscaras vão sozinhos pela migration 2026_10_20_000100 (item 4 do
   checklist). Se o legado for editado de novo, regerar `legacy-campos.json` com
   `peticao:legacy-campos-snapshot`.
-- `merge_fields` do #17: decisão do Fabio (modelos da IA #224–241 já inativados no local).
-- Varredura dos formulários dos outros clientes (Safra, Volkswagen e sem cliente feitos; o
+- `merge_fields` do #17: sugestão pronta (seção "Análise do merge_fields"), aguarda o de acordo do Fabio. Modelos da IA #224–241 já inativados no local.
+- Varredura dos formulários dos outros clientes (Safra, Volkswagen, sem cliente e Itaú feitos; o
   backfill já cobriu máscaras nos 238 modelos). Os scripts da comparação eram
   temporários: refazer a partir da descrição acima.
 - Excluir tabelas `*_archive_20260727` / `*_archive_20260818` (13) quando estável
