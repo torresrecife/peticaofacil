@@ -11,7 +11,7 @@ Histórico das correções feitas na branch `peticaofacil_ia`, para quem continu
 resumo TEXTAREA + banner "não ajuizar") `906d7b84`(achado 14 — avulsa oculta)
 `507d1455`(achado 15 LanguageTool) `dcad0d49`(**motor Safra: máscaras backfill +
 listas dependentes**) `0f75160e`(correção de 2 testes desatualizados).
-**Suíte: 237 testes, 1295 asserções, OK.**
+**Suíte: 238 testes, 1300 asserções, OK.**
 
 ## Achados (segurança/qualidade) — todos commitados salvo o 4
 1. Chave `}` sobrando quebrava o JS da montagem (`assemble.blade.php`).
@@ -161,8 +161,8 @@ branco, `preserveBlankEditorBlocks`). 29 são texto fixo, sem campos (igual ao l
 
 **Motor:** `cpfcnpj_mask(N)` (#17) agora aplica a máscara CPF/CNPJ — no legado a
 função era chamada mas **nunca existiu** (dava erro). `merge_fields("pessoa |932|3800",
-"933")` (#17 QUALIFICAÇÃO) também nunca existiu no legado; **não implementado**, falta
-definir o texto (decisão do Fabio). Verificado headless: 108 sem erro de JS; #9
+"933")` (#17 QUALIFICAÇÃO) também nunca existiu no legado; implementado em 24/10 (ver "Análise do
+`merge_fields`" abaixo). Verificado headless: 108 sem erro de JS; #9
 (cópia para HIDDEN), #12 (`estado_ext`), #15 (5 listas por ESTADO), #17 (máscara e
 `nbens`).
 
@@ -192,7 +192,13 @@ padrão ("física, cpf: …", "pessoa física, …", só o CPF, o nome repetido,
   o usuário pode editar.
 Simulado no Chrome logado com o processo 32216005: a peça sai "…que promove contra
 CARLOS JOSE DOS SANTOS, pessoa física, inscrita no CPF sob o nº …, esclarecer…".
-**Não implementado** — aguarda o "de acordo" do Fabio com o texto.
+**Implementado em 24/10** com o de acordo do Fabio (`mergeFields`/`buildQualification`
+em `assemble.blade.php`): monta o texto já na abertura (dados do NEO), acompanha
+PESSOA e CPF/CNPJ, e não sobrescreve texto digitado pelo usuário (só o gerado antes;
+apagar o campo volta a gerar). O rótulo CPF/CNPJ segue o tamanho do documento (11 ou
+14 dígitos), mesmo que PESSOA diga outra coisa. Outros formatos de `merge_fields`
+juntam texto e valores com espaço. Conferido no Chrome logado com o processo
+32216005: QUALIFICAÇÃO preenchida sozinha após "Buscar e preencher".
 Visto no teste: o CPF/CNPJ vem do NEO sem máscara (a máscara só roda ao sair do
 campo); e o texto fica "…GUARARAPES - PE/" quando ESTADO DO PROCESSO PRINCIPAL está
 vazio (a COMARCA do NEO já traz a UF).
@@ -217,7 +223,7 @@ o comando importa inativo — ativar após conferência.
 - Obrigatório e máscaras vão sozinhos pela migration 2026_10_20_000100 (item 4 do
   checklist). Se o legado for editado de novo, regerar `legacy-campos.json` com
   `peticao:legacy-campos-snapshot`.
-- `merge_fields` do #17: sugestão pronta (seção "Análise do merge_fields"), aguarda o de acordo do Fabio. Modelos da IA #224–241 já inativados no local.
+- `merge_fields` do #17: implementado (24/10). Modelos da IA #224–241 já inativados no local.
 - Varredura dos formulários dos outros clientes (Safra, Volkswagen, sem cliente e Itaú feitos; o
   backfill já cobriu máscaras nos 238 modelos). Os scripts da comparação eram
   temporários: refazer a partir da descrição acima.

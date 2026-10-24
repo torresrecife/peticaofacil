@@ -714,6 +714,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        var mergeMatch = raw.match(/merge_fields\(\s*["']([^"']*)["']\s*,\s*["'](\d+)["']\s*\)/i);
+        if (mergeMatch) mergeFields(mergeMatch[1], mergeMatch[2]);
+
         var personTypeMatch = raw.match(/alteraInput\(\s*this\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
         if (personTypeMatch) applyPersonType(field, personTypeMatch[1], personTypeMatch[2], personTypeMatch[3]);
 
@@ -1027,6 +1030,66 @@ document.addEventListener('DOMContentLoaded', function () {
     // o rotulo e a mascara do campo do documento. As opcoes sao reconhecidas pelo
     // codigo (data-ident); se nenhum dos dois codigos existir no select (modelo
     // copiado de outro com os codigos antigos), vale o texto FISICA/JURIDICA.
+    // Qualificacao da parte no padrao do escritorio, a partir de PESSOA e do documento.
+    // Sem PESSOA, deduz pelo documento: 11 digitos = fisica, 14 = juridica.
+    function buildQualification(personType, documentValue) {
+        var digits = onlyDigits(documentValue).slice(0, 14);
+        var person = normalizeBlockValue(personType);
+        if (!person && digits.length === 11) person = 'FISICA';
+        if (!person && digits.length === 14) person = 'JURIDICA';
+        if (person !== 'FISICA' && person !== 'JURIDICA') return '';
+
+        var juridica = person === 'JURIDICA';
+        var text = juridica ? 'pessoa jurídica de direito privado' : 'pessoa física';
+        if (digits) {
+            // O rotulo segue o documento digitado (CPF tem 11 digitos, CNPJ 14).
+            var isCnpj = digits.length > 11 || (digits.length !== 11 && juridica);
+            text += ', inscrita no ' + (isCnpj ? 'CNPJ' : 'CPF') + ' sob o nº '
+                + (isCnpj ? formatCnpj(digits) : formatCpf(digits));
+        }
+        return text;
+    }
+
+    // merge_fields("pessoa |PESSOA|DOCUMENTO", "ALVO"): chamado no legado (#17
+    // REQUERIMENTO, QUALIFICACAO), mas a funcao nunca existiu la. Monta a
+    // qualificacao; outros formatos juntam texto e valores dos campos com espaco.
+    // So escreve se o alvo estiver vazio ou ainda com o texto gerado antes (o
+    // usuario pode editar; trocar PESSOA ou documento atualiza o texto gerado).
+    function mergeFields(spec, targetId) {
+        var target = legacyField(targetId);
+        if (!target) return;
+
+        var parts = String(spec || '').split('|');
+        var value;
+        if (parts.length === 3 && /^\s*pessoa\s*$/i.test(parts[0]) && /^\d+$/.test(parts[1]) && /^\d+$/.test(parts[2])) {
+            value = buildQualification(legacyFieldValue(parts[1]), legacyFieldValue(parts[2]));
+        } else {
+            value = parts.map(function (part) {
+                return /^\d+$/.test(part.trim()) ? legacyFieldValue(part.trim()) : part;
+            }).join(' ').replace(/\s+/g, ' ').trim();
+        }
+
+        var current = String(target.value || '').trim();
+        var generated = target.getAttribute('data-merged-value');
+        if (current === '' || current === generated) {
+            target.value = value;
+            target.setAttribute('data-merged-value', value);
+        }
+
+        // Na primeira vez, passa a acompanhar os campos de origem.
+        if (!target.getAttribute('data-merge-bound')) {
+            target.setAttribute('data-merge-bound', '1');
+            parts.forEach(function (part) {
+                if (!/^\d+$/.test(part.trim())) return;
+                Array.prototype.forEach.call(document.querySelectorAll('[name="campo_' + part.trim() + '"]'), function (source) {
+                    ['change', 'blur'].forEach(function (eventName) {
+                        source.addEventListener(eventName, function () { mergeFields(spec, targetId); });
+                    });
+                });
+            });
+        }
+    }
+
     function applyPersonType(select, targetId, cpfIdent, cnpjIdent) {
         if (!select || select.tagName !== 'SELECT') return;
         var target = legacyField(targetId);
@@ -1340,6 +1403,16 @@ document.addEventListener('DOMContentLoaded', function () {
             } else if (['date', 'cpf', 'cnpj', 'cpf_cnpj', 'cep', 'fone', 'integer', 'processo'].indexOf(behavior) !== -1) {
                 applyFieldBehavior(field);
             }
+        });
+    });
+
+    // merge_fields: monta o texto ja na abertura (dados do NEO) e passa a acompanhar
+    // as origens, sem esperar o usuario entrar no campo.
+    Array.prototype.forEach.call(document.querySelectorAll('.js-frontend-event-field'), function (field) {
+        ['focus', 'load', 'blur'].forEach(function (eventName) {
+            var script = String(field.getAttribute('data-event-' + eventName) || '').split('&quot;').join('"');
+            var match = script.match(/merge_fields\(\s*["']([^"']*)["']\s*,\s*["'](\d+)["']\s*\)/i);
+            if (match) mergeFields(match[1], match[2]);
         });
     });
 

@@ -87,6 +87,28 @@ class PeticaoLegacyFieldEventsTest extends TestCase
             ->assertSee('function copyFieldValue(target, source)', false);
     }
 
+    public function test_merge_fields_builds_the_party_qualification()
+    {
+        $user = $this->seedModelo([
+            ['id' => 9301, 'legacy_input_id' => 9301, 'rotulo' => 'CPF/CNPJ'],
+            ['id' => 9302, 'legacy_input_id' => 9302, 'rotulo' => 'PESSOA', 'tipo' => 'SELECT'],
+            [
+                'id' => 9303,
+                'legacy_input_id' => 9303,
+                'rotulo' => 'QUALIFICAÇÃO',
+                'eventos_frontend' => json_encode(['focus' => 'merge_fields("pessoa |9302|9301","9303");']),
+            ],
+        ]);
+
+        $this->actingAs($user)
+            ->get('/peticoes/modelos/90')
+            ->assertStatus(200)
+            ->assertSee('data-event-focus="merge_fields(&amp;quot;pessoa |9302|9301&amp;quot;,&amp;quot;9303&amp;quot;);"', false)
+            ->assertSee('function mergeFields(spec, targetId)', false)
+            ->assertSee("'pessoa jurídica de direito privado' : 'pessoa física'", false)
+            ->assertSee("', inscrita no ' + (isCnpj ? 'CNPJ' : 'CPF') + ' sob o nº '", false);
+    }
+
     public function test_cpfcnpj_mask_event_is_handled()
     {
         $user = $this->seedModelo([
