@@ -1413,6 +1413,63 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // PESSOA (FISICA/JURIDICA) -> mascara do campo de documento seguinte no
+    // formulario, mesmo sem alteraInput no modelo: FISICA = CPF, JURIDICA = CNPJ,
+    // sem escolha = pelo tamanho. O numero vindo do NEO nunca e apagado: se nao
+    // servir para o tipo escolhido, fica formatado pelo tamanho.
+    (function linkPersonTypeToDocument() {
+        var controls = Array.prototype.slice.call(document.querySelectorAll('[name^="campo_"]'));
+        controls.forEach(function (select, index) {
+            if (select.tagName !== 'SELECT') return;
+            var events = (select.getAttribute('data-event-focus') || '') + (select.getAttribute('data-event-blur') || '');
+            if (/alteraInput/i.test(events)) return;
+            var labels = Array.prototype.slice.call(select.options).filter(function (op) { return op.value; }).map(function (op) {
+                return normalizeBlockValue(op.textContent).replace(/^PESSOA/, '');
+            });
+            if (labels.length !== 2 || labels.indexOf('FISICA') === -1 || labels.indexOf('JURIDICA') === -1) return;
+
+            // O documento seguinte no formulario; sem ele, o anterior mais proximo
+            // (no REQUERIMENTO o CPF/CNPJ vem antes do campo PESSOA).
+            var isDocument = function (control) {
+                return ['cpf', 'cnpj', 'cpf_cnpj'].indexOf(control.getAttribute('data-input-behavior')) !== -1
+                    && !control.getAttribute('data-person-linked');
+            };
+            var documentField = null;
+            for (var i = index + 1; i < controls.length && !documentField; i++) {
+                if (isDocument(controls[i])) documentField = controls[i];
+            }
+            for (var j = index - 1; j >= 0 && !documentField; j--) {
+                if (isDocument(controls[j])) documentField = controls[j];
+            }
+            if (!documentField) return;
+            documentField.setAttribute('data-person-linked', '1');
+
+            function apply() {
+                var selected = select.options[select.selectedIndex];
+                var person = selected && selected.value ? normalizeBlockValue(selected.textContent).replace(/^PESSOA/, '') : '';
+                var wanted = person === 'FISICA' ? 'cpf' : (person === 'JURIDICA' ? 'cnpj' : 'cpf_cnpj');
+                var digits = onlyDigits(documentField.value);
+                var fits = !digits || (wanted === 'cpf' && digits.length === 11) || (wanted === 'cnpj' && digits.length === 14) || wanted === 'cpf_cnpj';
+                documentField.setAttribute('data-input-behavior', fits ? wanted : 'cpf_cnpj');
+                documentField.setAttribute('inputmode', 'numeric');
+                applyFieldBehavior(documentField);
+            }
+
+            select.addEventListener('change', apply);
+            // Ao corrigir o numero, a mascara volta a seguir o tipo escolhido
+            // assim que o tamanho servir (ex.: apagou o CNPJ com PESSOA = FISICA).
+            documentField.addEventListener('input', function () {
+                var selected = select.options[select.selectedIndex];
+                var person = selected && selected.value ? normalizeBlockValue(selected.textContent).replace(/^PESSOA/, '') : '';
+                var digits = onlyDigits(documentField.value).length;
+                if (documentField.getAttribute('data-input-behavior') === 'cpf_cnpj' && ((person === 'FISICA' && digits <= 11) || person === 'JURIDICA')) {
+                    apply();
+                }
+            });
+            apply();
+        });
+    })();
+
     // merge_fields: monta o texto ja na abertura (dados do NEO) e passa a acompanhar
     // as origens, sem esperar o usuario entrar no campo.
     Array.prototype.forEach.call(document.querySelectorAll('.js-frontend-event-field'), function (field) {

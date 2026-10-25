@@ -22,7 +22,7 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 ## Como rodar (no Laragon, terminal normal)
 - Testes: `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
   `_test` e `APP_ENV=testing` (há guarda em `tests/TestCase.php`).
-  Estado atual da suíte: **255 testes, 1373 asserções, OK**.
+  Estado atual da suíte: **267 testes, 1386 asserções, OK**.
 - Migrations: `php artisan migrate` (produção: `--force`).
 - Backfill de máscaras: `php artisan peticao:backfill-comportamento`
   (`--dry-run` é o padrão/relatório; `--apply` grava; `--modelo=`, `--overwrite`,
@@ -83,8 +83,9 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 ## Pendências
 - **Push da branch `peticaofacil_ia`** e **deploy** (`migrate --force` onde houver
   migration). Produção recebe por `git pull`; sem acesso direto ao servidor.
-- Opcional: regra de "auto-máscara" (CPF/CNPJ/CEP/telefone onde o legado nunca
-  mascarou) — ampliaria além da paridade.
+- Auto-máscara feita (25/10): migration `2026_10_25_000100` (CPF/CNPJ/CEP pelo rótulo,
+  `App\Support\CampoMascaraPorRotulo`) e PESSOA FÍSICA/JURÍDICA liga a máscara do
+  documento mais próximo (`linkPersonTypeToDocument` na montagem). Telefone: nenhum campo.
 - Varredura dos formulários dos demais clientes (motor já é genérico).
 - Excluir tabelas arquivadas `*_archive_*` (13) quando o sistema estiver estável.
 - Achado 4 (o que o nível GER pode na administração) — decisão do Fabio.

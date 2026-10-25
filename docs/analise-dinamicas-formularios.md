@@ -227,3 +227,17 @@ marcador), sem escrever script.
 **Fase 3 — agente de IA:** ampliar o esquema para propor essas dinâmicas a partir do
 DOCX (opções com retorno, condicionais, repetição, qualificação, extensos, forma do
 marcador), sempre para revisão na tela antes de gravar.
+
+## 4e. Máscaras de documento e CEP — 25/10/2026
+Pedido do Fabio (print do #34 AÇÃO DE EXECUÇÃO: CPF/CNPJ e CEP sem formato).
+- Migration `2026_10_25_000100` + `App\Support\CampoMascaraPorRotulo`: em campos TEXT,
+  rótulo com CPF e CNPJ → `cpf_cnpj`; só CPF → `cpf`; só CNPJ → `cnpj`; CEP → `cep`.
+  Troca só máscara ausente ou incompatível (33 campos). Inclui campos "CPF/CNPJ" que
+  tinham máscara só de CPF, que cortava o CNPJ em 11 dígitos.
+- Montagem: um select com as opções FÍSICA e JURÍDICA (sem `alteraInput`) liga-se ao
+  campo de documento seguinte no formulário (sem ele, ao anterior). FÍSICA → CPF,
+  JURÍDICA → CNPJ, sem escolha → pelo tamanho. O número vindo do NEO não é apagado;
+  se não servir para o tipo, fica formatado pelo tamanho até ser corrigido.
+- A formatação já roda ao carregar (dados do NEO) e ao digitar.
+Conferido no Chrome (#34, processo 32216005): CPF 346.238.504-63, CEP 54330-065;
+FÍSICA limita a CPF. No #17, o CPF/CNPJ vem antes do PESSOA e também fica ligado.

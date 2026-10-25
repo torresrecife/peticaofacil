@@ -69,6 +69,10 @@ Migrations desta entrega (todas podem rodar mais de uma vez):
    "obrigatório" dos campos, que veio **invertido** da migração do legado, e preenche
    máscaras vazias. Lê `database/data/legacy-campos.json` (vai no `git pull`): **não
    precisa do banco antigo em produção**. Ver item 4.
+5. `2026_10_25_000100_apply_document_masks_by_label` — máscara de CPF, CNPJ, CPF/CNPJ
+   e CEP pelo rótulo dos campos de texto (33 campos no local). Corrige campos sem
+   máscara e campos "CPF/CNPJ" com máscara só de CPF, que cortava o CNPJ vindo do NEO
+   em 11 dígitos. Só altera a máscara ausente ou incompatível.
 
 ## 4. Obrigatório e máscaras dos campos — **importante**
 
@@ -132,6 +136,8 @@ desfazer seria inverter de novo).
 - [ ] MINUTA Volkswagen: quantidade de parcelas = 3, preencher a 1ª: a tabela da prévia
       tem só 3 linhas, sem `@campo…_pre@` nem tags à mostra.
 - [ ] AÇÃO DE EXECUÇÃO (#34): PESSOA = FÍSICA sai "pessoa FÍSICA" (antes saía "1").
+- [ ] AÇÃO DE EXECUÇÃO (#34) com um código de processo: CPF/CNPJ e CEP já vêm
+      formatados; PESSOA = FÍSICA limita o documento a CPF, JURÍDICA a CNPJ.
 - [ ] REQUERIMENTO: com o código do processo, a QUALIFICAÇÃO vem preenchida ("pessoa
       física, inscrita no CPF sob o nº …").
 
@@ -156,10 +162,10 @@ php artisan config:clear && php artisan route:clear && php artisan view:clear
 php artisan up
 ```
 
-As migrations 2, 3 e 4 não precisam ser desfeitas (o código antigo ignora as mudanças;
-a 4 só corrige o obrigatório, que continua certo). A 1 deixa a senha do NEO cifrada, que
+As migrations 2 a 5 não precisam ser desfeitas (o código antigo ignora as mudanças;
+a 4 e a 5 só corrigem obrigatório e máscaras, que continuam certos). A 1 deixa a senha do NEO cifrada, que
 o código antigo **não** sabe ler: antes de voltar o código, rode
-`php artisan migrate:rollback --step=4` (desfaz as quatro desta entrega; só a 1 tem
+`php artisan migrate:rollback --step=5` (desfaz as cinco desta entrega; só a 1 tem
 efeito ao desfazer: decifra a senha) — ou restaure o backup do banco.
 
 ## Depois que estabilizar

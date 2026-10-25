@@ -149,6 +149,8 @@ class PeticaoLegacyFieldEventsTest extends TestCase
             ->assertSee('data-ident="353"', false)
             ->assertSee('data-ident="354"', false)
             ->assertSee('data-event-focus="alteraInput(this,9102,353,354);"', false)
-            ->assertSee('function applyPersonType(select, targetId, cpfIdent, cnpjIdent)', false);
+            ->assertSee('function applyPersonType(select, targetId, cpfIdent, cnpjIdent)', false)
+            // Selects FISICA/JURIDICA sem alteraInput tambem ligam a mascara do documento.
+            ->assertSee('(function linkPersonTypeToDocument()', false);
     }
 }
