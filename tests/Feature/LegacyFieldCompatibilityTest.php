@@ -73,7 +73,9 @@ class LegacyFieldCompatibilityTest extends TestCase
             'campo_8003' => 'SIM',
             'campo_8004' => '<p onclick="alert(1)"><strong>Fundamentação editada</strong> @campo8003@<script>alert(2)</script></p>',
         ]);
-        $this->assertStringContainsString('DEFERIDO', $result['html']);
+        // Campo do legado: o marcador traz o texto da opcao (no legado o value era o nome_dados).
+        $this->assertStringContainsString('<p>SIM</p>', $result['html']);
+        $this->assertStringNotContainsString('DEFERIDO', $result['html']);
         $this->assertStringContainsString('<strong>Fundamentação editada</strong>', $result['html']);
         $this->assertStringNotContainsString('@campo8003@', $result['html']);
         $this->assertStringNotContainsString('onclick=', $result['html']);

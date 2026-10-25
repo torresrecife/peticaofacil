@@ -22,7 +22,7 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 ## Como rodar (no Laragon, terminal normal)
 - Testes: `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
   `_test` e `APP_ENV=testing` (há guarda em `tests/TestCase.php`).
-  Estado atual da suíte: **238 testes, 1300 asserções, OK**.
+  Estado atual da suíte: **245 testes, 1314 asserções, OK**.
 - Migrations: `php artisan migrate` (produção: `--force`).
 - Backfill de máscaras: `php artisan peticao:backfill-comportamento`
   (`--dry-run` é o padrão/relatório; `--apply` grava; `--modelo=`, `--overwrite`,
@@ -68,6 +68,9 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 - **Sem cliente (108):** 91 do legado fiéis; `cpfcnpj_mask` e
   `merge_fields` do #17 implementados (QUALIFICAÇÃO automática). **Itaú (29):** fiel, nada a corrigir. Os 17 modelos de teste da IA (#224–241)
   foram inativados no banco local.
+- **Montagem do texto (fase 1, 24/10):** `PeticaoComposerService` segue o `parag.php`:
+  `@CAMPO@`=MAIÚSCULAS, `@Campo@`=Iniciais, `@campo@`=como digitado; `_pre`/`_pos` só com
+  valor; select do legado = texto da opção. Ver `docs/analise-dinamicas-formularios.md`.
 - Teste de JS sem login: gerar o HTML da montagem como ADM pelo kernel do Laravel e
   abrir num Chromium headless (Playwright de `scripts/pdf-renderer`).
 

@@ -61,7 +61,8 @@ class OptionReturnUndefinedTest extends TestCase
 
         $this->assertStringNotContainsStringIgnoringCase('undefined', $html);
         $this->assertStringContainsString('Resposta: SIM', $html);
-        $this->assertStringContainsString('Texto: Parágrafo predefinido', $html);
+        // Campo do legado: o marcador traz o texto da opcao escolhida.
+        $this->assertStringContainsString('Texto: COM TEXTO', $html);
     }
 
     public function test_montagem_select_has_no_undefined_return_attribute()

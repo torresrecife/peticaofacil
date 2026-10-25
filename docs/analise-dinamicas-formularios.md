@@ -102,6 +102,40 @@ digitada pela data de hoje (`NormalizedTipoController::frontendEventsForBehavior
 Data comum deveria ter só a máscara. `data_atual` serve só para "data da petição", e
 ao carregar a página.
 
+## 4b. Fase 1 — feita em 24/10/2026
+
+`PeticaoComposerService` reescrito com as regras do `parag.php`:
+- **Forma do marcador:** `@CAMPO@` em maiúsculas, `@Campo@` com iniciais
+  maiúsculas e `@campo@` como digitado. A transformação respeita tags e entidades HTML.
+  Diferenças em relação ao legado, que eram erros dele: nas iniciais maiúsculas,
+  "da/de/do/dos/das/com/para/sob/a…" ficam minúsculas (o legado deixava "Dos", "Da"),
+  a UF depois de "-" ou "/" fica em maiúsculas ("- PE"; o legado gerava "- Pe"), siglas
+  como CPF, CNPJ, S.A, LTDA e ME ficam em maiúsculas, e acentos funcionam ("João").
+  Quando o mesmo campo aparece no texto em duas formas (#5: `@CAMPO697@` e
+  `@campo697@`), as duas são trocadas; o legado só trocava a primeira e deixava a
+  outra literal na peça.
+- **`@campoN_pre@` / `@campoN_pos@`** e prefixo/sufixo simples só entram quando o campo
+  tem valor, sem escapar o HTML. A tabela de parcelas volta a ter uma linha por parcela.
+- **Select vindo do legado:** o marcador traz o texto da opção escolhida, como no
+  legado (o value era o `nome_dados`). Campo criado no sistema novo continua trazendo
+  o retorno da opção (ex.: Stone). Corrige o #34 ("pessoa **1**" → "pessoa **FÍSICA**").
+- **Limpeza de vírgulas** de campos vazios, como no legado.
+- **Importador com IA:** data não ganha mais `data_atual` ao sair do campo. Também
+  corrigido o erro 500 da criação sem cliente/servidor.
+- **Não feito, a pedido:** o encurtamento "…EM ALIENAÇÃO FIDUCIÁRIA" → "BUSCA E APREENSÃO".
+
+**Comparação legado × novo** nos 8 mais usados (#9, #18, #5, #14, #1, #15, #17, #11),
+com os dados do NEO do processo 32216005 e as interações do formulário: o algoritmo do
+`parag.php` (copiado, rodado offline) e o motor novo geram o mesmo texto. Sobram só o
+cabeçalho institucional (que o novo inclui) e as correções acima. O `parag.php` não roda
+no MySQL local (`ONLY_FULL_GROUP_BY` quebra o `SELECT * … GROUP BY`); é problema do
+ambiente local, não da produção do legado.
+
+Achado de dados (não corrigido): no #34, as opções de PESSOA têm retorno "1"/"2" e
+esse retorno abastece o campo "inscrita no @campo1199@", que sai "inscrita no 1". O
+legado fazia igual. O retorno deveria ser "CPF"/"CNPJ" (ou usar a qualificação
+automática do #17).
+
 ## 5. Proposta (em ordem)
 
 **Fase 1 — corrigir a montagem do texto** (afeta peças de quase todos os modelos)

@@ -309,7 +309,7 @@ class PeticaoFlowTest extends TestCase
             [
                 'id' => 4,
                 'modelo_id' => 1,
-                'legacy_input_id' => 4,
+                'legacy_input_id' => null, // criado no sistema novo: o marcador traz o retorno da opcao
                 'rotulo' => 'Resultado',
                 'token' => '@campo4@',
                 'tipo' => 'SELECT',

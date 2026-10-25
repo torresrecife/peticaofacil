@@ -140,7 +140,7 @@ class NormalizedTipoController extends Controller
         }
         $analysis = $this->sanitizeAiAnalysisColumns($analysis, $data['id_db'] ?? null);
         $modelo = DB::transaction(function () use ($analysis, $data) {
-            $modelo = PeticaoModelo::create(['nome' => $analysis['nome'], 'slug' => $this->buildSlug($analysis['nome']), 'status' => 'ativo', 'arquivo_padrao' => $data['tipo_arq'], 'legacy_setor_id' => $data['id_setor'], 'legacy_cliente_id' => $data['id_cliente'] ?: null, 'legacy_sql_config_id' => $data['id_db'] ?: null, 'cabecalho_html' => null, 'rodape_html' => null, 'metadata' => ['nome_pre' => $analysis['descricao'], 'ai_generated' => true]]);
+            $modelo = PeticaoModelo::create(['nome' => $analysis['nome'], 'slug' => $this->buildSlug($analysis['nome']), 'status' => 'ativo', 'arquivo_padrao' => $data['tipo_arq'], 'legacy_setor_id' => $data['id_setor'], 'legacy_cliente_id' => ($data['id_cliente'] ?? null) ?: null, 'legacy_sql_config_id' => ($data['id_db'] ?? null) ?: null, 'cabecalho_html' => null, 'rodape_html' => null, 'metadata' => ['nome_pre' => $analysis['descricao'], 'ai_generated' => true]]);
             $tokenMap = [];
         foreach ($analysis['campos'] as $field) {
             $listConfig = $this->resolveAiListConfig($field);
@@ -162,7 +162,8 @@ class NormalizedTipoController extends Controller
     protected function frontendEventsForBehavior($behavior)
     {
         $events = ['focus' => null, 'load' => null, 'blur' => null];
-        if ($behavior === 'date') $events['blur'] = 'data_atual(this);';
+        // Data fica so com a mascara: data_atual(this) troca o valor pela data de
+        // hoje e, ao sair do campo, apagava a data digitada (ex.: data do contrato).
         if ($behavior === 'decimal') $events['blur'] = 'fc_newstring(this);';
         return $events;
     }
