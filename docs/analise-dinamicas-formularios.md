@@ -276,3 +276,33 @@ Varredura dos 25 modelos mais usados (peça mais recente de cada um no legado, P
 pelo mesmo html2pdf × PDF novo): 22 com o mesmo número de páginas; #18 INICIAL DE BUSCA
 6 → 8, #89 INICIAL BUSCA 3 → 4 e #17 REQUERIMENTO 1 → 2, pela letra maior (11-12pt contra
 8-9pt no legado). Entrelinha e margens iguais às do legado.
+
+## 4g. Importação de DOCX com IA: formatação e notas de rodapé — 25/10/2026
+Pedido do Fabio: o modelo #243 (NOVA INICIAL – NÃO PROCURADO) veio sem estilo no editor,
+e as notas de rodapé são o maior desafio. Os modelos do legado não têm notas; é recurso novo.
+- **Causa da perda de estilo:** as duas conversões do Word falhavam no Laragon e a
+  importação caía no texto puro. (1) O caminho do perfil do LibreOffice ia como
+  `file:///C%3A/...` e o `escapeshellarg` do Windows troca `%` por espaço: o LibreOffice
+  fechava com erro. (2) O PhpWord gravava temporários em `C:\Windows\Temp`, sem permissão
+  para o Apache. Com o texto puro, a IA devolvia o corpo só com `<p>`.
+- **Correção (`WordImportService`):** caminho do perfil sem codificar no Windows; PhpWord
+  com temporários na pasta da conversão; falhas registradas no log. O LibreOffice é a
+  fonte principal; o PhpWord só entra quando o LibreOffice devolve só o texto ou achata
+  uma tabela.
+- **Limpeza (`App\Support\WordHtmlCleaner`):** `<font>` vira `<span>`, títulos viram
+  parágrafo, `align` vira `text-align`, e saem cabeçalho/rodapé nativos do Word, estilos
+  sem efeito e Arial/Calibri. Os pedaços de texto com o mesmo estilo são juntados, o que
+  reduz o HTML (192KB → 60KB no #243). As caixas de texto do Word, que tinham posição
+  absoluta, viram bloco com borda à direita.
+- **Notas (opção A, escolhida pelo Fabio):** a chamada fica no texto como `<sup>N</sup>` e
+  as notas vão para o fim da peça, numa lista `peticao-notas` (linha, letra 9pt),
+  numeradas pela ordem das chamadas. Uma nota que é só um endereço web fica alinhada à
+  esquerda.
+- **IA:** ela não copia mais o corpo. O corpo é sempre o HTML do Word, e o sistema troca
+  cada `texto_original` pelo token, inclusive quando o trecho atravessa negrito
+  (`<b>BANCO X</b>, pessoa jurídica…`: o token entra e as tags continuam fechadas). A
+  instrução pede só a parte variável, por exemplo a comarca e não o endereçamento inteiro.
+Medido no DOCX do #243, com a IA de verdade: 23 a 33 campos por rodada, todos colocados
+no texto, com negrito, 52 parágrafos centralizados, recuos, tabela e as 9 notas no fim.
+O #243 já gravado continua sem estilo: é preciso importar o DOCX de novo.
+

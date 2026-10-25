@@ -58,6 +58,35 @@ class PeticaoModeloAiBuilderServiceTest extends TestCase
         );
     }
 
+    public function test_word_html_replacement_crosses_bold_and_keeps_tags_closed()
+    {
+        $service = new class(new WordImportService(), new OpenAIResponsesClient()) extends PeticaoModeloAiBuilderService {
+            public function replaceForTest($html, array $originals) { return $this->replaceOriginals($html, $originals); }
+        };
+        $html = '<p><span style="font-size: 10pt"><b>BANCO X S/A (BX)</b>, pessoa jurídica, CEP 04344-020, por seu advogado</span></p>';
+
+        $result = $service->replaceForTest($html, [
+            ['text' => 'BANCO X S/A (BX), pessoa jurídica, CEP 04344-020', 'token' => '@campo3@', 'order' => 3],
+            ['text' => 'BANCO X S/A', 'token' => '@CAMPO4@', 'order' => 4],
+        ]);
+
+        $this->assertSame('<p><span style="font-size: 10pt"><b>@campo3@</b>, por seu advogado</span></p>', $result);
+    }
+
+    public function test_body_is_the_word_html_even_without_tables()
+    {
+        $service = new class(new WordImportService(), new OpenAIResponsesClient()) extends PeticaoModeloAiBuilderService {
+            public function normalizeForTest(array $data) { return $this->normalize($data); }
+        };
+        $result = $service->normalizeForTest([
+            'nome' => 'Inicial', 'descricao' => '', 'cabecalho_html' => '', 'rodape_html' => '', 'corpo_html' => '<p>copia da IA</p>', 'paragrafos' => [],
+            'campos' => [['rotulo' => 'Reu', 'token' => '@VAR_REU@', 'tipo' => 'TEXT', 'obrigatorio' => true, 'opcoes' => [], 'texto_original' => 'JOSE', 'marcador' => 'MAIUSCULAS']],
+            '_source_html' => '<p style="text-align: center"><b>Em face de JOSE</b><sup>1</sup></p><div class="peticao-notas"><hr><p><sup>1</sup> Nota</p></div>',
+        ]);
+
+        $this->assertSame('<p style="text-align: center"><b>Em face de @CAMPO1@</b><sup>1</sup></p><div class="peticao-notas"><hr><p><sup>1</sup> Nota</p></div>', $result['paragrafos'][0]['conteudo_html']);
+    }
+
     public function test_dynamics_marker_case_and_option_returns_are_normalized()
     {
         $service = new class(new WordImportService(), new OpenAIResponsesClient()) extends PeticaoModeloAiBuilderService {

@@ -2,12 +2,17 @@
 
 namespace App\Services;
 
+use App\Support\WordHtmlCleaner;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 
 class WordImportService
 {
+    /** A conversao pelo LibreOffice falhou e sobrou so o texto (sem formatacao). */
+    protected $usedTextFallback = false;
+
     public function importUploadedFile(UploadedFile $file)
     {
         $extension = strtolower((string) $file->getClientOriginalExtension());
@@ -40,6 +45,7 @@ class WordImportService
             } elseif (!@copy($file->getPathname(), $sourcePath)) {
                 throw new RuntimeException('Nao foi possivel copiar o arquivo Word para a area temporaria.');
             }
+            $this->usedTextFallback = false;
             $htmlPath = $this->convertWordToHtml($binary, $sourcePath, $jobDir);
             $html = file_get_contents($htmlPath);
             if ($html === false || trim($html) === '') {
@@ -48,12 +54,15 @@ class WordImportService
 
             $html = $this->normalizeHtmlEncoding($html);
 
-            // Alguns documentos DOCX sao exportados pelo LibreOffice como texto
-            // corrido, embora contenham tabelas. O PhpWord preserva a estrutura
-            // de tabelas e celulas nesses casos e serve como segunda fonte HTML.
+            // O LibreOffice e a fonte mais fiel (negrito, alinhamento, recuos,
+            // notas). O PhpWord entra quando o LibreOffice so devolveu o texto,
+            // ou quando ele achatou uma tabela que o PhpWord preserva.
             if ($extension === 'docx') {
                 $structuredHtml = $this->convertDocxWithPhpWord($sourcePath, $jobDir);
-                if ($structuredHtml !== null && stripos($structuredHtml, '<table') !== false) {
+                if ($structuredHtml !== null && (
+                    $this->usedTextFallback
+                    || (stripos($html, '<table') === false && stripos($structuredHtml, '<table') !== false)
+                )) {
                     $html = $structuredHtml;
                 }
                 $html = $this->appendDocxFootnotes($html, $sourcePath);
@@ -135,6 +144,8 @@ class WordImportService
         if ($exitCode !== 0) {
             $fallback = $this->extractDocxTextFallback($sourcePath, $outputDir);
             if ($fallback !== null) {
+                Log::warning('Importacao Word: LibreOffice falhou, usando so o texto.', ['exit' => $exitCode, 'saida' => implode("\n", $output)]);
+                $this->usedTextFallback = true;
                 return $fallback;
             }
             $details = trim(implode("\n", $output));
@@ -206,6 +217,9 @@ class WordImportService
         }
 
         try {
+            // O PhpWord grava arquivos temporarios; a pasta padrao do Windows
+            // (C:\Windows\Temp) nao aceita escrita pelo Apache do Laragon.
+            \PhpOffice\PhpWord\Settings::setTempDir($outputDir);
             $document = \PhpOffice\PhpWord\IOFactory::load($sourcePath);
             $writer = \PhpOffice\PhpWord\IOFactory::createWriter($document, 'HTML');
             $path = $outputDir . DIRECTORY_SEPARATOR . pathinfo($sourcePath, PATHINFO_FILENAME) . '-phpword.html';
@@ -213,6 +227,7 @@ class WordImportService
             $html = @file_get_contents($path);
             return $html !== false ? $this->normalizeHtmlEncoding($html) : null;
         } catch (\Throwable $exception) {
+            Log::warning('Importacao Word: PhpWord falhou.', ['erro' => $exception->getMessage()]);
             return null;
         }
     }
@@ -225,6 +240,11 @@ class WordImportService
         $zip = new \ZipArchive();
         $opened = $zip->open($sourcePath);
         if ($opened !== true && $opened !== 1) {
+            return $html;
+        }
+        // As notas ja vieram na conversao (LibreOffice/PhpWord): o WordHtmlCleaner arruma.
+        if (preg_match('/sdfootnote|NoteRef|peticao-notas/i', (string) $html)) {
+            $zip->close();
             return $html;
         }
         $xml = $zip->getFromName('word/footnotes.xml');
@@ -247,14 +267,14 @@ class WordImportService
             }
             $text = trim($note->textContent);
             if ($text !== '') {
-                $notes[] = '<p><sup>' . $id . '</sup> ' . htmlspecialchars($this->normalizeExtractedText($text), ENT_QUOTES, 'UTF-8') . '</p>';
+                $notes[] = '<p style="' . WordHtmlCleaner::NOTE_STYLE . '"><sup>' . (count($notes) + 1) . '</sup> ' . htmlspecialchars($this->normalizeExtractedText($text), ENT_QUOTES, 'UTF-8') . '</p>';
             }
         }
         $zip->close();
-        if (!$notes || stripos((string) $html, 'class="docx-footnotes"') !== false) {
+        if (!$notes) {
             return $html;
         }
-        return (string) $html . '<hr><section class="docx-footnotes"><h3>Referências</h3>' . implode('', $notes) . '</section>';
+        return (string) $html . '<div class="peticao-notas"><hr>' . implode('', $notes) . '</div>';
     }
 
     protected function normalizeExtractedText($text)
@@ -324,7 +344,7 @@ class WordImportService
         $html = $this->innerHtml($body);
         $html = preg_replace('/<(?:meta|title|link)[^>]*>/i', '', $html);
 
-        return trim((string) $html);
+        return WordHtmlCleaner::clean(trim((string) $html));
     }
 
     protected function inlineStyles($html)
@@ -524,8 +544,10 @@ class WordImportService
     {
         $normalizedPath = str_replace('\\', '/', $path);
 
+        // No Windows o escapeshellarg troca "%" por espaco: "C%3A" virava "C 3A"
+        // e o LibreOffice fechava com erro. O caminho vai sem codificar.
         if (preg_match('/^[A-Za-z]:\//', $normalizedPath) === 1) {
-            return 'file:///' . str_replace('%2F', '/', rawurlencode($normalizedPath));
+            return 'file:///' . $normalizedPath;
         }
 
         return 'file://' . str_replace('%2F', '/', rawurlencode($normalizedPath));

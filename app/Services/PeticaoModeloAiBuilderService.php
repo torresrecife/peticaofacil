@@ -22,7 +22,7 @@ class PeticaoModeloAiBuilderService
         $html = $this->prepareAiInput($html);
         $neoGuide = $this->neoGuide();
         $result = $this->client->createStructuredResponse([
-            ['role' => 'system', 'content' => 'Voce analisa modelos juridicos brasileiros. Preserve o HTML original do corpo, incluindo tabelas, estilos inline, negrito, fonte, tamanho, alinhamento, bordas, larguras, celulas mescladas e recuos. Alem dos paragrafos estruturados, retorne corpo_html com uma copia fiel do HTML do corpo recebido, mantendo a hierarquia de table, tr, td, p e todos os estilos; altere somente os trechos variaveis pelos tokens identificados. Nunca transforme uma tabela em texto corrido nem duplique seu conteudo em paragrafos. Ignore completamente cabecalhos e rodapes nativos do arquivo Word: nao copie conteudo deles para cabecalho_html ou rodape_html e nunca coloque tokens nesses campos. Todo enderecamento juridico deve permanecer como primeiro paragrafo do corpo. Retorne cabecalho_html e rodape_html vazios; o sistema aplicara o cabecalho institucional padrao separadamente. Nao crie campos para dados institucionais fixos do escritorio, incluindo endereco profissional do advogado, telefone profissional, site, e-mail institucional, logotipo, nome do escritorio ou dados de contato presentes no cabecalho/rodape. Esses dados devem ser preservados apenas como texto fixo ou ignorados quando vierem do cabecalho/rodape. Identifique no corpo os trechos que devem receber dados externos e crie um campo para cada trecho variavel. Para cada campo, preencha origem_coluna usando exclusivamente um alias do dicionario NEO abaixo quando houver correspondencia semantica. Nunca invente aliases. Se nao houver correspondencia segura, deixe origem_coluna vazia para revisao manual. Nao associe automaticamente autor e reu apenas pela posicao: considere o sentido da acao, o papel processual e o contexto do trecho. Quando o texto representar uma entidade reutilizavel cadastrada, use lista_grupo e lista_retorno: CLIENTES (id 2, nome_lista como rotulo e return_1 como qualificacao/endereco do cliente), LOCALIZADORES (id 1, return_1 a return_6 para dados do localizador), OAB POR ESTADO (id 3, return_1 para a inscricao), TIPO DE ACORDO (id 4), DIA DA SEMANA (id 5) e DADOS BANCARIOS (id 6). Para autor em acao ativa, prefira CLIENTES; crie o campo principal como SELECT e indique lista_retorno=return_1 quando o texto exigir a qualificacao/endereco cadastrado. Nao use lista para reu, salvo se houver evidencia de que o reu pertence a um cadastro reutilizavel. Use tokens temporarios como @VAR_NOME@. Dicionario NEO: ' . $neoGuide . ' ' . $this->dynamicsGuide()],
+            ['role' => 'system', 'content' => 'Voce analisa modelos juridicos brasileiros. Nao copie o corpo do documento: retorne corpo_html vazio e paragrafos como lista vazia. O sistema usa o HTML original do Word (com toda a formatacao e as notas de rodape) e troca, ele mesmo, cada texto_original pelo token do campo. Por isso texto_original deve ser o trecho exato do documento, como aparece no texto (mesmas maiusculas, acentos e pontuacao), sem tags HTML e dentro de um unico paragrafo. texto_original e so a parte que muda de uma peca para outra, nunca a frase inteira: no enderecamento "EXCELENTISSIMO(A) SENHOR(A) ... DA COMARCA DE RECIFE-PE", o campo da comarca e "RECIFE" (e a UF "PE", se for outro campo); o texto fixo em volta continua no documento. As notas de rodape do documento (lista no fim, numeradas) sao texto fixo: nao crie campos nelas. Ignore completamente cabecalhos e rodapes nativos do arquivo Word: nao copie conteudo deles para cabecalho_html ou rodape_html e nunca coloque tokens nesses campos. Todo enderecamento juridico deve permanecer como primeiro paragrafo do corpo. Retorne cabecalho_html e rodape_html vazios; o sistema aplicara o cabecalho institucional padrao separadamente. Nao crie campos para dados institucionais fixos do escritorio, incluindo endereco profissional do advogado, telefone profissional, site, e-mail institucional, logotipo, nome do escritorio ou dados de contato presentes no cabecalho/rodape. Esses dados devem ser preservados apenas como texto fixo ou ignorados quando vierem do cabecalho/rodape. Identifique no corpo os trechos que devem receber dados externos e crie um campo para cada trecho variavel. Para cada campo, preencha origem_coluna usando exclusivamente um alias do dicionario NEO abaixo quando houver correspondencia semantica. Nunca invente aliases. Se nao houver correspondencia segura, deixe origem_coluna vazia para revisao manual. Nao associe automaticamente autor e reu apenas pela posicao: considere o sentido da acao, o papel processual e o contexto do trecho. Quando o texto representar uma entidade reutilizavel cadastrada, use lista_grupo e lista_retorno: CLIENTES (id 2, nome_lista como rotulo e return_1 como qualificacao/endereco do cliente), LOCALIZADORES (id 1, return_1 a return_6 para dados do localizador), OAB POR ESTADO (id 3, return_1 para a inscricao), TIPO DE ACORDO (id 4), DIA DA SEMANA (id 5) e DADOS BANCARIOS (id 6). Para autor em acao ativa, prefira CLIENTES; crie o campo principal como SELECT e indique lista_retorno=return_1 quando o texto exigir a qualificacao/endereco cadastrado. Nao use lista para reu, salvo se houver evidencia de que o reu pertence a um cadastro reutilizavel. Use tokens temporarios como @VAR_NOME@. Dicionario NEO: ' . $neoGuide . ' ' . $this->dynamicsGuide()],
             ['role' => 'user', 'content' => "Analise o documento Word abaixo e estruture um modelo de peticao.\n\n" . $html],
         ], $this->schema(), 'peticao_modelo_analysis');
 
@@ -173,7 +173,9 @@ class PeticaoModeloAiBuilderService
             }
         }
         $paragraphs = [];
-        $bodyHtml = $sourceHtml !== '' && stripos($sourceHtml, '<table') !== false
+        // O corpo e sempre o HTML do Word (formatacao e notas preservadas); a
+        // copia feita pela IA so vale quando nao ha o HTML de origem.
+        $bodyHtml = trim($sourceHtml) !== ''
             ? $sourceHtml
             : trim((string) ($data['corpo_html'] ?? ''));
         if ($bodyHtml !== '') {
@@ -225,11 +227,39 @@ class PeticaoModeloAiBuilderService
             if (!preg_match_all($pattern, $html, $matches, PREG_OFFSET_CAPTURE)) {
                 preg_match_all($pattern . 'i', $html, $matches, PREG_OFFSET_CAPTURE);
             }
+            $found = false;
             foreach ($matches[0] ?? [] as $match) {
                 $start = $match[1];
                 $end = $start + strlen($match[0]);
                 if (!$insideTag($start, $end)) {
-                    $candidates[] = ['start' => $start, 'end' => $end, 'field' => $index, 'order' => $original['order']];
+                    $candidates[] = ['start' => $start, 'end' => $end, 'field' => $index, 'order' => $original['order'], 'tags' => ''];
+                    $found = true;
+                }
+            }
+            if ($found) {
+                continue;
+            }
+            // Trecho que atravessa formatacao (ex.: "<b>BANCO X</b>, pessoa
+            // juridica..."): aceita tags de letra no meio. O token entra no
+            // lugar do texto e as tags do meio ficam depois dele, vazias, para
+            // o HTML continuar fechado do mesmo jeito.
+            $inlineTags = '(?:<\/?(?:b|strong|i|em|u|span|font|sup|sub|a)\b[^>]*>)*';
+            $characters = preg_split('//u', $original['text'], -1, PREG_SPLIT_NO_EMPTY);
+            if (count($characters) < 4 || count($characters) > 600) {
+                continue;
+            }
+            $crossPattern = '/(?<![\pL\pN])' . implode($inlineTags, array_map(function ($character) {
+                return preg_quote($character, '/');
+            }, $characters)) . '(?![\pL\pN])/u';
+            if (!@preg_match_all($crossPattern, $html, $matches, PREG_OFFSET_CAPTURE)) {
+                @preg_match_all($crossPattern . 'i', $html, $matches, PREG_OFFSET_CAPTURE);
+            }
+            foreach ($matches[0] ?? [] as $match) {
+                $start = $match[1];
+                $end = $start + strlen($match[0]);
+                if (!$insideTag($start, $start + 1) && !$insideTag($end - 1, $end)) {
+                    preg_match_all('/<[^>]*>/', $match[0], $innerTags);
+                    $candidates[] = ['start' => $start, 'end' => $end, 'field' => $index, 'order' => $original['order'], 'tags' => implode('', $innerTags[0])];
                 }
             }
         }
@@ -267,7 +297,7 @@ class PeticaoModeloAiBuilderService
             return $b['start'] - $a['start'];
         });
         foreach ($chosen as $span) {
-            $html = substr_replace($html, $originals[$span['field']]['token'], $span['start'], $span['end'] - $span['start']);
+            $html = substr_replace($html, $originals[$span['field']]['token'] . $span['tags'], $span['start'], $span['end'] - $span['start']);
         }
 
         return $html;

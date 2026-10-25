@@ -22,7 +22,7 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 ## Como rodar (no Laragon, terminal normal)
 - Testes: `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
   `_test` e `APP_ENV=testing` (há guarda em `tests/TestCase.php`).
-  Estado atual da suíte: **271 testes, OK**.
+  Estado atual da suíte: **276 testes, OK**.
 - Migrations: `php artisan migrate` (produção: `--force`).
 - Backfill de máscaras: `php artisan peticao:backfill-comportamento`
   (`--dry-run` é o padrão/relatório; `--apply` grava; `--modelo=`, `--overwrite`,
@@ -80,6 +80,9 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 - **Tipografia (25/10):** `App\Support\PeticaoTipografia` (px→pt a partir de 10px, parágrafo
   sem margem, entrelinha 1.15) no editor, prévia, impressão, PDF e Word; CKEditor carregado
   por `partials/ckeditor.blade.php` (carimbo de versão contra cache).
+- **Importação DOCX (25/10):** LibreOffice (caminho do perfil corrigido no Windows) +
+  `App\Support\WordHtmlCleaner` (limpa o HTML, notas de rodapé no fim da peça); a IA só
+  aponta os campos e o corpo é o HTML do Word.
 - Teste de JS sem login: gerar o HTML da montagem como ADM pelo kernel do Laravel e
   abrir num Chromium headless (Playwright de `scripts/pdf-renderer`).
 
