@@ -104,8 +104,14 @@ class PeticaoComposerService
                 $value = $option['value'] ?? $option['label'];
                 if ((string) $value === (string) $rawValue) {
                     // No legado o value da opcao e o proprio texto (nome_dados).
-                    // Modelos criados no sistema novo usam o retorno da opcao.
-                    return e($this->isLegacyField($campo) ? $option['label'] : $option['return']);
+                    // Modelos criados no sistema novo usam o retorno da opcao, que
+                    // pode ser o HTML de um trecho opcional (importacao com IA).
+                    if ($this->isLegacyField($campo)) {
+                        return e($option['label']);
+                    }
+                    $return = (string) $option['return'];
+
+                    return $return !== strip_tags($return) ? $this->sanitizeRichText($return) : e($return);
                 }
             }
         }

@@ -171,6 +171,46 @@ guarda a configuração em `eventos_frontend['dinamica']`:
 - A tela funciona mesmo sem o CKEditor carregado (antes, o script parava inteiro).
 Testes: `AdminCampoDinamicaTest`.
 
+## 4d. Fase 3 — feita em 24/10/2026 (importação de DOCX com IA)
+
+`PeticaoModeloAiBuilderService` (esquema + instruções) e
+`NormalizedTipoController::createFromAi/applyAiDynamics`:
+- O agente devolve, por campo: **marcador** (MAIÚSCULAS / INICIAIS / COMO_DIGITADO,
+  conforme o trecho no documento → `@CAMPOn@`/`@Campon@`/`@campon@`), **extenso**
+  (data por extenso, data de hoje por extenso na data da petição, valor por extenso),
+  **opções com retornos** (`{rotulo, retornos[]}`) e uma **dinâmica** (os mesmos tipos
+  da tela, referindo os outros campos pelos tokens temporários).
+- Instruções: trecho opcional → SELECT SIM/NÃO com o HTML do trecho no Retorno 1, e o
+  token do SELECT no lugar do trecho (na montagem, select criado no sistema novo traz o
+  retorno, agora sem escapar o HTML); dados que só valem com SIM → mostrar com SIM;
+  qualificação → PESSOA + CPF/CNPJ + QUALIFICAÇÃO; itens repetidos → quantidade +
+  próxima parcela; datas/valores → máscara e extenso.
+- Na criação, as dinâmicas viram os scripts do motor (via `CampoDinamica::scripts`),
+  ficam gravadas para a tela de edição, e os campos que só aparecem por dinâmica nascem
+  ocultos. A revisão antes de gravar mostra marcador, extenso, opções com retorno e a
+  dinâmica de cada campo.
+- **Troca dos trechos no HTML do Word (bug antigo):** era um "substituir tudo" que ignora
+  maiúsculas e minúsculas. A UF "PE" virava token dentro de "pessoa" e de "pede", as três
+  parcelas "R$ 1.500,00" viravam o mesmo campo, "Recife" do endereço virava a comarca.
+  Agora a troca é por palavra inteira, fora das tags, na ordem do documento (cada
+  ocorrência vai para o próximo campo com aquele texto) e com o trecho mais longo
+  primeiro (a frase da qualificação engole o CPF dela).
+- **Montagem:** o tipo de pessoa (`alteraInput`) só limpa o documento se o número não
+  servir para o tipo escolhido; antes apagava o CPF/CNPJ que veio do NEO.
+
+**Teste real** (DOCX de exemplo com qualificação, tabela de 3 parcelas, valor por
+extenso, parágrafo de segredo de justiça e fecho com data; gpt-5.6, cerca de 100 s): o
+agente propôs PESSOA/CPF-CNPJ/QUALIFICAÇÃO com qualificação e tipo de pessoa, quantidade
+de parcelas (2 campos por item) com próxima parcela, segredo de justiça como SIM/NÃO com
+o parágrafo, valor por extenso, data de hoje no fecho e cópia comarca → local do fecho.
+Modelo criado numa transação desfeita (nada ficou no banco); tela de montagem e peça
+conferidas no headless.
+**Limitação:** a tabela de parcelas do Word fica como está. Linhas de parcelas não
+escolhidas saem com o número e células vazias. Para a linha sumir, ajuste na tela:
+prefixo/sufixo da linha nos campos e marcadores `_pre`/`_pos` (botões "Prefixo/Sufixo").
+Testes: `PeticaoModeloAiBuilderServiceTest` (normalização e troca dos trechos),
+`AdminAiModeloDynamicsTest` (criação até a peça).
+
 ## 5. Proposta (em ordem)
 
 **Fase 1 — corrigir a montagem do texto** (afeta peças de quase todos os modelos)

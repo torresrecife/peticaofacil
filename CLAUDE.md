@@ -22,7 +22,7 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 ## Como rodar (no Laragon, terminal normal)
 - Testes: `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
   `_test` e `APP_ENV=testing` (há guarda em `tests/TestCase.php`).
-  Estado atual da suíte: **252 testes, OK (última execução completa: 242 OK + 10 refeitos após o MySQL reiniciar)**.
+  Estado atual da suíte: **255 testes, 1373 asserções, OK**.
 - Migrations: `php artisan migrate` (produção: `--force`).
 - Backfill de máscaras: `php artisan peticao:backfill-comportamento`
   (`--dry-run` é o padrão/relatório; `--apply` grava; `--modelo=`, `--overwrite`,
@@ -74,6 +74,9 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 - **Tela de edição (fase 2):** painel "Dinâmica do campo" gera os scripts do legado
   (`App\Support\CampoDinamica`: fromRequest/scripts/detect); opções atualizadas pelo
   rótulo (mantém legacy_dado_id e retornos 2–5).
+- **Importação com IA (fase 3):** o agente devolve marcador/extenso/opções com retorno/
+  dinâmica por campo; `createFromAi` grava como scripts (`applyAiDynamics`). Select
+  criado no sistema novo traz o retorno (HTML do trecho opcional, saneado).
 - Teste de JS sem login: gerar o HTML da montagem como ADM pelo kernel do Laravel e
   abrir num Chromium headless (Playwright de `scripts/pdf-renderer`).
 

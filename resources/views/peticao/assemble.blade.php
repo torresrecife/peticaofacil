@@ -1115,7 +1115,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         target.setAttribute('data-input-behavior', type);
         target.setAttribute('inputmode', 'numeric');
-        assignFieldValue(target, '');
+        // O legado sempre limpava o documento. Aqui so limpa se o numero nao serve
+        // para o tipo escolhido: o CPF/CNPJ costuma vir preenchido do NEO.
+        var digits = onlyDigits(target.value);
+        if ((type === 'cpf' && digits.length === 11) || (type === 'cnpj' && digits.length === 14)) {
+            assignFieldValue(target, type === 'cpf' ? formatCpf(digits) : formatCnpj(digits));
+        } else {
+            assignFieldValue(target, '');
+        }
 
         var wrapper = document.querySelector('.dis_campo' + targetId);
         var labelNode = wrapper ? wrapper.querySelector('label') : null;

@@ -141,16 +141,46 @@ class NormalizedTipoController extends Controller
         $analysis = $this->sanitizeAiAnalysisColumns($analysis, $data['id_db'] ?? null);
         $modelo = DB::transaction(function () use ($analysis, $data) {
             $modelo = PeticaoModelo::create(['nome' => $analysis['nome'], 'slug' => $this->buildSlug($analysis['nome']), 'status' => 'ativo', 'arquivo_padrao' => $data['tipo_arq'], 'legacy_setor_id' => $data['id_setor'], 'legacy_cliente_id' => ($data['id_cliente'] ?? null) ?: null, 'legacy_sql_config_id' => ($data['id_db'] ?? null) ?: null, 'cabecalho_html' => null, 'rodape_html' => null, 'metadata' => ['nome_pre' => $analysis['descricao'], 'ai_generated' => true]]);
-            $tokenMap = [];
+            $idByToken = [];
+            $campos = [];
         foreach ($analysis['campos'] as $field) {
             $listConfig = $this->resolveAiListConfig($field);
-            $campo = $modelo->campos()->create(['rotulo' => $field['rotulo'], 'token' => '@ai_' . Str::random(32) . '@', 'tipo' => $listConfig ? 'SELECT' : $field['tipo'], 'comportamento' => $field['comportamento'], 'origem_coluna' => $field['origem_coluna'], 'origem_alias' => $listConfig, 'prefixo' => $field['prefixo'], 'sufixo' => $field['sufixo'], 'ordem' => $field['ordem'], 'obrigatorio' => $field['obrigatorio'], 'visivel' => true, 'colunas_layout' => 1, 'eventos_frontend' => $this->frontendEventsForBehavior($field['comportamento'])]);
+            $campo = $modelo->campos()->create(['rotulo' => $field['rotulo'], 'token' => '@ai_' . Str::random(32) . '@', 'tipo' => $listConfig ? 'SELECT' : $field['tipo'], 'comportamento' => $field['comportamento'], 'origem_coluna' => $field['origem_coluna'], 'origem_alias' => $listConfig, 'prefixo' => $field['prefixo'], 'sufixo' => $field['sufixo'], 'ordem' => $field['ordem'], 'obrigatorio' => $field['obrigatorio'], 'visivel' => true, 'colunas_layout' => 1, 'eventos_frontend' => $this->frontendEventsForBehavior($field['comportamento'], $field['extenso'] ?? '')]);
             $campo->token = $this->uniqueAiToken($campo->id_input, $campo->id);
             $campo->save();
-            $tokenMap[(string) $field['token']] = $campo->token;
-            foreach ($field['opcoes'] as $order => $option) $campo->opcoes()->create(['rotulo' => $option, 'valor_retorno' => $option, 'ordem' => $order + 1]);
+            $idByToken[strtolower((string) $field['token'])] = (int) $campo->id_input;
+            $campos[] = [$campo, $field];
+            foreach ($field['opcoes'] as $order => $option) {
+                $option = is_array($option) ? $option : ['rotulo' => $option, 'retornos' => [$option]];
+                $returns = array_values((array) ($option['retornos'] ?? []));
+                $extras = [];
+                foreach ([2, 3, 4, 5] as $number) {
+                    if (($returns[$number - 1] ?? '') !== '') $extras['return_' . $number] = $returns[$number - 1];
+                }
+                $campo->opcoes()->create(['rotulo' => $option['rotulo'], 'valor_retorno' => $returns[0] ?? '', 'valores_extras' => $extras ?: null, 'ordem' => $order + 1]);
+            }
         }
-            $replace = function ($value) use ($tokenMap) { return str_ireplace(array_keys($tokenMap), array_values($tokenMap), (string) $value); };
+            $this->applyAiDynamics($campos, $idByToken);
+            // @campoN@ da analise -> @campo<id>@ do banco, mantendo a forma do
+            // marcador (MAIUSCULAS/Iniciais/como digitado) e _pre/_pos.
+            $numberToId = [];
+            foreach ($idByToken as $token => $id) {
+                if (preg_match('/^@campo(\d+)@$/', $token, $m)) $numberToId[$m[1]] = $id;
+            }
+            $replace = function ($value) use ($numberToId) {
+                return preg_replace_callback('/@(campo)(\d+)(_pre|_pos)?@/i', function ($m) use ($numberToId) {
+                    return isset($numberToId[$m[2]]) ? '@' . $m[1] . $numberToId[$m[2]] . ($m[3] ?? '') . '@' : $m[0];
+                }, (string) $value);
+            };
+            foreach ($campos as $pair) {
+                foreach ($pair[0]->opcoes as $opcao) {
+                    $extras = $opcao->valores_extras ?: [];
+                    $opcao->valor_retorno = $replace($opcao->valor_retorno);
+                    foreach ($extras as $key => $value) $extras[$key] = $value === null ? null : $replace($value);
+                    $opcao->valores_extras = $extras ?: null;
+                    $opcao->save();
+                }
+            }
             $modelo->update(['cabecalho_html' => trim((string) $analysis['cabecalho_html']) !== '' ? $replace($analysis['cabecalho_html']) : $this->defaultHeaderHtml(), 'rodape_html' => $replace($analysis['rodape_html'])]);
             foreach ($analysis['paragrafos'] as $paragraph) $modelo->paragrafos()->create(['titulo' => mb_strtoupper($paragraph['titulo'], 'UTF-8'), 'conteudo_html' => $replace($paragraph['conteudo_html']), 'ordem' => $paragraph['ordem'], 'visivel' => true, 'ativo' => true]);
             return $modelo;
@@ -159,13 +189,107 @@ class NormalizedTipoController extends Controller
         return redirect()->route('admin.modelos-normalizados.edit', $modelo)->with('status', 'Modelo criado a partir da analise IA. Revise os campos e paragrafos.');
     }
 
-    protected function frontendEventsForBehavior($behavior)
+    protected function frontendEventsForBehavior($behavior, $extenso = '')
     {
         $events = ['focus' => null, 'load' => null, 'blur' => null];
         // Data fica so com a mascara: data_atual(this) troca o valor pela data de
         // hoje e, ao sair do campo, apagava a data digitada (ex.: data do contrato).
-        if ($behavior === 'decimal') $events['blur'] = 'fc_newstring(this);';
+        // So a "data da peticao" (data_atual_por_extenso) nasce com a data de hoje.
+        if ($behavior === 'decimal' || $extenso === 'valor_por_extenso') $events['blur'] = 'fc_newstring(this);';
+        if ($extenso === 'data_por_extenso') $events['blur'] = 'data_extenso_out(this);';
+        if ($extenso === 'data_atual_por_extenso') {
+            $events['load'] = 'data_atual(this); data_extenso_out(this);';
+            $events['blur'] = 'data_extenso_out(this);';
+        }
         return $events;
+    }
+
+    /**
+     * Grava nos campos as dinamicas propostas pela IA, no mesmo formato da tela
+     * de edicao (CampoDinamica). Campos que so aparecem por uma dinamica nascem
+     * ocultos, como no legado.
+     *
+     * @param array $campos    [[PeticaoModeloCampo, campo da analise], ...]
+     * @param array $idByToken token da analise (@campoN@) => id_input
+     */
+    protected function applyAiDynamics(array $campos, array $idByToken)
+    {
+        $id = function ($token) use ($idByToken) {
+            return $idByToken[strtolower((string) $token)] ?? 0;
+        };
+        $hidden = [];
+
+        foreach ($campos as $pair) {
+            list($campo, $field) = $pair;
+            $dynamic = $field['dinamica'] ?? [];
+            if (empty($dynamic['tipo'])) {
+                continue;
+            }
+
+            $targets = array_values(array_filter(array_map($id, $dynamic['alvos'] ?? [])));
+            $config = ['tipo' => $dynamic['tipo']];
+            switch ($dynamic['tipo']) {
+                case 'retorno_opcao':
+                    $config['preenche'] = [];
+                    foreach ($targets as $index => $target) {
+                        $config['preenche'][] = ['alvo' => $target, 'coluna' => $dynamic['colunas'][$index] ?? 'return_1'];
+                    }
+                    $config['mostrar_alvos'] = !empty($dynamic['mostrar_alvos']);
+                    if ($config['mostrar_alvos']) $hidden = array_merge($hidden, $targets);
+                    break;
+                case 'mostrar_sim_nao':
+                case 'copiar':
+                    $config['alvos'] = $targets;
+                    if ($dynamic['tipo'] === 'mostrar_sim_nao') $hidden = array_merge($hidden, $targets);
+                    break;
+                case 'quantidade':
+                    $config['alvos'] = $targets;
+                    $config['por_item'] = (int) ($dynamic['por_item'] ?? 1) === 2 ? 2 : 1;
+                    $hidden = array_merge($hidden, $targets);
+                    break;
+                case 'mostrar_por_valor':
+                    $config += ['valor' => $dynamic['valor'], 'alvos' => $targets, 'obrigatorio' => !empty($dynamic['obrigatorio'])];
+                    $hidden = array_merge($hidden, $targets);
+                    break;
+                case 'proxima_parcela':
+                    $config += ['alvo' => $targets[0] ?? 0, 'modo' => ($dynamic['modo'] ?? '') === 'valor' ? 'valor' : 'data'];
+                    break;
+                case 'tipo_pessoa':
+                    $config['alvo'] = $targets[0] ?? 0;
+                    break;
+                case 'qualificacao':
+                    $config += ['pessoa' => $id($dynamic['pessoa'] ?? ''), 'documento' => $id($dynamic['documento'] ?? '')];
+                    break;
+                case 'nao_ajuizar':
+                    $config['modo'] = ($dynamic['modo'] ?? '') === 'excecao' ? 'excecao' : 'nao';
+                    $campo->classe_css = trim($campo->classe_css . ' new_required');
+                    break;
+            }
+
+            $campo->load('opcoes');
+            $options = $campo->opcoes->map(function ($opcao) {
+                return ['id' => $opcao->id_dados, 'label' => $opcao->rotulo];
+            })->all();
+            $events = array_filter((array) $campo->eventos_frontend);
+            foreach (\App\Support\CampoDinamica::scripts($config, $campo->id_input, $options) as $event => $script) {
+                $events[$event] = trim($script . ' ' . ($events[$event] ?? ''));
+            }
+            if ($config['tipo'] === 'mostrar_por_valor') {
+                $events['conditional'] = ['value' => $config['valor'], 'target_ids' => $config['alvos'], 'required' => $config['obrigatorio']];
+            }
+            $events['dinamica'] = $config;
+            $campo->eventos_frontend = $events;
+            $campo->save();
+        }
+
+        if ($hidden) {
+            foreach ($campos as $pair) {
+                if (in_array((int) $pair[0]->id_input, $hidden, true)) {
+                    $pair[0]->visivel = false;
+                    $pair[0]->save();
+                }
+            }
+        }
     }
 
     protected function defaultHeaderHtml()
