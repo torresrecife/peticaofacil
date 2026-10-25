@@ -1,7 +1,16 @@
 # Checklist de deploy — branch `peticaofacil_ia`
 
-Cobre os commits de 05/10 a 20/10/2026 (achados 1–15, salvo o 4; motor dos
-formulários Safra e Volkswagen; correção do obrigatório). Detalhe de cada mudança em `docs/HANDOFF-peticaofacil-ia.md`.
+Cobre os commits de 05/10 a 24/10/2026 (achados 1–15, salvo o 4; motor dos
+formulários Safra, Volkswagen, sem cliente e Itaú; correção do obrigatório; montagem do
+texto com as regras do legado; painel de dinâmicas na tela de edição; importação com
+IA propondo dinâmicas). Detalhe em `docs/HANDOFF-peticaofacil-ia.md` e
+`docs/analise-dinamicas-formularios.md`.
+
+**Avise os usuários:** as peças novas passam a sair como saíam no legado. Por exemplo,
+"Ação de **Busca e Apreensão**" em vez de "Ação de **BUSCA E APREENSÃO EM ALIENAÇÃO
+FIDUCIÁRIA**", nomes em maiúsculas onde o marcador é `@CAMPO@`, e a tabela de parcelas
+só com as parcelas escolhidas. Os asteriscos de obrigatório mudam de campo (estavam
+invertidos). As peças já salvas não mudam.
 
 A produção recebe por `git pull`. Não há mudança em `composer.json`,
 `package.json` nem no renderizador de PDF: não é preciso `composer install`,
@@ -116,6 +125,28 @@ desfazer seria inverter de novo).
 - [ ] Modelo "Petição avulsa" não aparece na lista de modelos.
 - [ ] Erro proposital (URL inexistente) não mostra a tela de depuração.
 
+**Montagem do texto (fase 1)**
+- [ ] EXPEDIÇÃO DE NOVO MANDADO (o mais usado), com um código de processo: a prévia
+      traz "COMARCA DE <cidade> - <UF>" em maiúsculas e "Ação de Busca e Apreensão…"
+      com iniciais maiúsculas.
+- [ ] MINUTA Volkswagen: quantidade de parcelas = 3, preencher a 1ª: a tabela da prévia
+      tem só 3 linhas, sem `@campo…_pre@` nem tags à mostra.
+- [ ] AÇÃO DE EXECUÇÃO (#34): PESSOA = FÍSICA sai "pessoa FÍSICA" (antes saía "1").
+- [ ] REQUERIMENTO: com o código do processo, a QUALIFICAÇÃO vem preenchida ("pessoa
+      física, inscrita no CPF sob o nº …").
+
+**Tela de edição (fase 2)**
+- [ ] Admin → Modelos → INICIAL DE BUSCA (Safra) → campo "COM SEGREDO DE JUSTIÇA?": o
+      painel "Dinâmica do campo" mostra "A opção escolhida preenche outros campos" com
+      os dois alvos. Salvar o campo sem mudar nada e conferir na montagem que SIM ainda
+      preenche o título e o parágrafo (as opções e os retornos 2–5 não se perdem).
+- [ ] Inserir um marcador pelo ajudante acima dos parágrafos (num modelo de teste).
+
+**Importação com IA (fase 3)** — se o `OPENAI_API_KEY` estiver configurado
+- [ ] Criar com IA a partir de um Word curto: a revisão mostra "No texto", "Extenso",
+      opções com retorno e as dinâmicas propostas. Criar, conferir e inativar o modelo de
+      teste.
+
 ## 6. Se der errado
 
 ```bash
@@ -125,10 +156,11 @@ php artisan config:clear && php artisan route:clear && php artisan view:clear
 php artisan up
 ```
 
-As migrations 2 e 3 não precisam ser desfeitas (o código antigo ignora as mudanças).
-A 1 deixa a senha do NEO cifrada, que o código antigo **não** sabe ler: antes de voltar
-o código, rode `php artisan migrate:rollback --step=3` (decifra a senha) — ou restaure
-o backup do banco.
+As migrations 2, 3 e 4 não precisam ser desfeitas (o código antigo ignora as mudanças;
+a 4 só corrige o obrigatório, que continua certo). A 1 deixa a senha do NEO cifrada, que
+o código antigo **não** sabe ler: antes de voltar o código, rode
+`php artisan migrate:rollback --step=4` (desfaz as quatro desta entrega; só a 1 tem
+efeito ao desfazer: decifra a senha) — ou restaure o backup do banco.
 
 ## Depois que estabilizar
 
