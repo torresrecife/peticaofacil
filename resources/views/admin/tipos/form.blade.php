@@ -141,6 +141,33 @@
                 <div class="editor-note">{{ $modelo->paragrafos->count() }} item(ns) neste modelo.</div>
             </div>
 
+            @if($modelo->campos->count())
+                <div class="panel-muted js-token-helper" style="margin-bottom:16px;">
+                    <strong>Inserir marcador de campo no texto</strong>
+                    <div class="editor-note" style="margin:6px 0 10px;">
+                        Clique no texto (parágrafo, cabeçalho ou rodapé) onde o valor deve entrar e escolha o campo e a forma.
+                        A forma do marcador decide como o valor sai na peça: <code>@CAMPO1@</code> MAIÚSCULAS,
+                        <code>@Campo1@</code> Iniciais Maiúsculas, <code>@campo1@</code> como digitado.
+                        <code>@campo1_pre@</code>/<code>@campo1_pos@</code> trazem o prefixo/sufixo do campo e só aparecem quando ele tem valor (ex.: linhas da tabela de parcelas).
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <select class="js-token-field" style="max-width:360px;">
+                            @foreach($modelo->campos as $campoExistente)
+                                @if($campoExistente->input_tipo !== 'TITLE')
+                                    <option value="{{ $campoExistente->id_input }}">{{ $campoExistente->input_title }} (#{{ $campoExistente->id_input }})</option>
+                                @endif
+                            @endforeach
+                        </select>
+                        <button type="button" class="secondary js-token-insert" data-form="CAMPO">MAIÚSCULAS</button>
+                        <button type="button" class="secondary js-token-insert" data-form="Campo">Iniciais</button>
+                        <button type="button" class="secondary js-token-insert" data-form="campo">Como digitado</button>
+                        <button type="button" class="secondary js-token-insert" data-form="campo" data-part="_pre">Prefixo</button>
+                        <button type="button" class="secondary js-token-insert" data-form="campo" data-part="_pos">Sufixo</button>
+                        <span class="editor-note js-token-status"></span>
+                    </div>
+                </div>
+            @endif
+
             <details class="accordion-item" style="margin-bottom:20px;">
                 <summary>Adicionar novo paragrafo</summary>
                 <div class="accordion-body">
@@ -415,6 +442,7 @@
                                 </div>
                             </div>
                         </div>
+                        @include('admin.tipos.partials.dinamica', ['campo' => null, 'dinamica' => null])
                         <div class="form-group full js-date-preset-row" data-preset-row="focus" style="display:none;">
                             <label>Preset Ao Entrar</label>
                             <select name="input_focu_preset">
@@ -477,7 +505,10 @@
             <div class="stack">
                 @foreach($modelo->campos as $campo)
                     <details class="accordion-item">
-                        <summary>{{ $campo->input_order }}. {{ $campo->input_title }} ({{ $campo->input_tipo }})</summary>
+                        @php
+                            $resumoDinamica = \App\Support\CampoDinamica::summary(\App\Support\CampoDinamica::detect($campo->eventos_frontend ?: [], $campo->id_input));
+                        @endphp
+                        <summary>{{ $campo->input_order }}. {{ $campo->input_title }} ({{ $campo->input_tipo }})@if($resumoDinamica) <span class="editor-note" style="display:inline;margin-left:8px;">· {{ $resumoDinamica }}</span>@endif</summary>
                         <div class="accordion-body">
                             <div class="panel-muted" style="margin-bottom:16px;">
                                 <strong>Token:</strong> {{ $campo->placeholder }}
@@ -494,6 +525,7 @@
                                 $dependentConfig = $campo->dependent_fill_config;
                                 $conditionalConfig = $campo->conditional_config ?: [];
                                 $conditionalTargetIds = array_map('intval', $conditionalConfig['target_ids'] ?? []);
+                                $campoDinamica = \App\Support\CampoDinamica::detect($campo->eventos_frontend ?: [], $campo->id_input);
                             @endphp
                             <form method="post" action="{{ $updateCampoRoute }}">
                                 @csrf
@@ -652,6 +684,7 @@
                                             </div>
                                         </div>
                                     </div>
+                                    @include('admin.tipos.partials.dinamica', ['campo' => $campo, 'dinamica' => $campoDinamica])
                                     <div class="form-group full js-date-preset-row" data-preset-row="focus" style="display:none;">
                                         <label>Preset Ao Entrar</label>
                                         <select name="input_focu_preset">
@@ -700,9 +733,9 @@
                                     </div>
                                     <div class="form-group full js-options-config">
                                         <label>Opcoes do select</label>
-                                        <textarea name="opcoes">@foreach($campo->dados as $dado){{ $dado->nome_dados }}|{{ $dado->return_1 }}
+                                        <textarea name="opcoes">@foreach($campo->dados as $dado){{ \App\Support\CampoDinamica::optionLine($dado) }}
 @endforeach</textarea>
-                                        <div class="editor-note">Uma linha por opcao. Ex.: `Sim|SIM`.</div>
+                                        <div class="editor-note">Uma linha por opcao: `Rótulo|Retorno 1|Retorno 2|…|Retorno 5`. Ex.: `SIM|DO SEGREDO DE JUSTIÇA|&lt;p&gt;O trâmite…&lt;/p&gt;`. Os retornos alimentam a dinâmica "A opção escolhida preenche outros campos".</div>
                                     </div>
                                 </div>
                                 <div style="margin-top:12px;">
@@ -721,14 +754,13 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    if (typeof window.CKEDITOR === 'undefined') {
-        return;
-    }
-
+    // Sem CKEditor, so os editores ficam como texto simples; o resto da tela funciona.
+    var hasEditor = typeof window.CKEDITOR !== 'undefined';
     var ckfinderBaseUrl = @json(asset('ckfinder/'));
     var textareas = document.querySelectorAll('.js-rich-editor');
+    var lastEditor = null;
 
-    Array.prototype.forEach.call(textareas, function (textarea, index) {
+    Array.prototype.forEach.call(hasEditor ? textareas : [], function (textarea, index) {
         if (!textarea.id) {
             textarea.id = 'editor_' + index + '_' + Math.random().toString(36).slice(2, 8);
         }
@@ -798,6 +830,25 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.CKFinder && ckfinderBaseUrl) {
             CKFinder.setupCKEditor(instance, ckfinderBaseUrl);
         }
+
+        instance.on('focus', function () { lastEditor = instance; });
+    });
+
+    // Inserir marcador de campo no ultimo editor clicado.
+    Array.prototype.forEach.call(document.querySelectorAll('.js-token-insert'), function (button) {
+        button.addEventListener('click', function () {
+            var helper = button.closest('.js-token-helper');
+            var field = helper.querySelector('.js-token-field').value;
+            var status = helper.querySelector('.js-token-status');
+            var token = '@' + button.getAttribute('data-form') + field + (button.getAttribute('data-part') || '') + '@';
+            if (!lastEditor) {
+                status.textContent = 'Clique antes no texto onde o marcador deve entrar.';
+                return;
+            }
+            lastEditor.focus();
+            lastEditor.insertText(token);
+            status.textContent = 'Inserido ' + token + '.';
+        });
     });
 
     function syncFieldBehavior(form) {
@@ -812,7 +863,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var type = String(typeSelect.value || '').toUpperCase();
         var behavior = String(behaviorSelect.value || '');
         var canUseBehavior = type === 'TEXT' || type === 'TEXTAREA';
-        var showEventPresets = canUseBehavior && (behavior === 'date' || behavior === 'decimal');
+        // Data/valor por extenso valem para qualquer campo de texto: no legado ha
+        // campos sem mascara com data_extenso_out.
+        var showEventPresets = canUseBehavior;
         var focusPreset = form.querySelector('[name="input_focu_preset"]');
         var loadPreset = form.querySelector('[name="input_load_preset"]');
         var blurPreset = form.querySelector('[name="input_blur_preset"]');
@@ -829,15 +882,6 @@ document.addEventListener('DOMContentLoaded', function () {
             row.style.display = showEventPresets ? '' : 'none';
             Array.prototype.forEach.call(row.querySelectorAll('select'), function (select) {
                 select.disabled = !showEventPresets;
-                Array.prototype.forEach.call(select.options, function (option) {
-                    if (!option.value) return;
-                    var isValuePreset = option.value === 'valor_extenso';
-                    option.hidden = behavior === 'decimal' ? !isValuePreset : isValuePreset;
-                    option.disabled = option.hidden;
-                });
-                if (select.selectedOptions.length && select.selectedOptions[0].hidden) {
-                    select.value = '';
-                }
             });
         });
 
@@ -854,20 +898,8 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        if (behavior !== 'date') {
-            Array.prototype.forEach.call([focusTextarea, loadTextarea, blurTextarea], function (textarea) {
-                if (textarea && isSupportedDateScript(textarea.value)) {
-                    textarea.value = '';
-                }
-            });
-        }
-        if (behavior !== 'decimal') {
-            Array.prototype.forEach.call([focusTextarea, loadTextarea, blurTextarea], function (textarea) {
-                if (textarea && String(textarea.value || '').replace(/\s+/g, '').toLowerCase() === 'fc_newstring(this);') {
-                    textarea.value = '';
-                }
-            });
-        }
+        // Os scripts escritos nos campos "Ao Entrar/Carregar/Sair" nao sao mais
+        // apagados ao abrir a tela (antes, salvar o campo perdia o evento).
 
         if (!canUseBehavior && behavior !== '') {
             behaviorSelect.value = '';
@@ -915,6 +947,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Painel "Dinamica do campo": mostra so a secao da dinamica escolhida e
+    // desabilita as outras, para nao enviar campos com o mesmo nome.
+    function syncDinamica(form) {
+        var select = form.querySelector('.js-dinamica-select');
+        if (!select) return;
+        Array.prototype.forEach.call(form.querySelectorAll('.js-dinamica-section'), function (section) {
+            var active = section.getAttribute('data-dinamica') === select.value;
+            section.style.display = active ? '' : 'none';
+            Array.prototype.forEach.call(section.querySelectorAll('input, select, textarea'), function (control) {
+                control.disabled = !active;
+            });
+        });
+    }
+
     Array.prototype.forEach.call(document.querySelectorAll('form'), function (form) {
         if (!form.querySelector('.js-field-type-select')) {
             return;
@@ -922,6 +968,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         syncFieldBehavior(form);
         syncDynamicFieldConfiguration(form);
+        syncDinamica(form);
+        var dinamicaSelect = form.querySelector('.js-dinamica-select');
+        if (dinamicaSelect) {
+            dinamicaSelect.addEventListener('change', function () { syncDinamica(form); });
+        }
 
         var typeSelect = form.querySelector('.js-field-type-select');
         var behaviorSelect = form.querySelector('.js-field-behavior-select');
@@ -929,6 +980,7 @@ document.addEventListener('DOMContentLoaded', function () {
         typeSelect.addEventListener('change', function () {
             syncFieldBehavior(form);
             syncDynamicFieldConfiguration(form);
+            syncDinamica(form);
         });
 
         if (behaviorSelect) {

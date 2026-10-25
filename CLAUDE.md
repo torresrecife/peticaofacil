@@ -22,7 +22,7 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 ## Como rodar (no Laragon, terminal normal)
 - Testes: `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
   `_test` e `APP_ENV=testing` (há guarda em `tests/TestCase.php`).
-  Estado atual da suíte: **245 testes, 1314 asserções, OK**.
+  Estado atual da suíte: **252 testes, OK (última execução completa: 242 OK + 10 refeitos após o MySQL reiniciar)**.
 - Migrations: `php artisan migrate` (produção: `--force`).
 - Backfill de máscaras: `php artisan peticao:backfill-comportamento`
   (`--dry-run` é o padrão/relatório; `--apply` grava; `--modelo=`, `--overwrite`,
@@ -71,6 +71,9 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 - **Montagem do texto (fase 1, 24/10):** `PeticaoComposerService` segue o `parag.php`:
   `@CAMPO@`=MAIÚSCULAS, `@Campo@`=Iniciais, `@campo@`=como digitado; `_pre`/`_pos` só com
   valor; select do legado = texto da opção. Ver `docs/analise-dinamicas-formularios.md`.
+- **Tela de edição (fase 2):** painel "Dinâmica do campo" gera os scripts do legado
+  (`App\Support\CampoDinamica`: fromRequest/scripts/detect); opções atualizadas pelo
+  rótulo (mantém legacy_dado_id e retornos 2–5).
 - Teste de JS sem login: gerar o HTML da montagem como ADM pelo kernel do Laravel e
   abrir num Chromium headless (Playwright de `scripts/pdf-renderer`).
 

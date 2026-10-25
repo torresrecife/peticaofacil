@@ -136,6 +136,41 @@ esse retorno abastece o campo "inscrita no @campo1199@", que sai "inscrita no 1"
 legado fazia igual. O retorno deveria ser "CPF"/"CNPJ" (ou usar a qualificação
 automática do #17).
 
+## 4c. Fase 2 — feita em 24/10/2026 (tela de edição)
+
+Painel **"Dinâmica do campo"** ao criar e editar campo (`partials/dinamica.blade.php`,
+`App\Support\CampoDinamica`). Cada escolha gera o script que o motor já executa e
+guarda a configuração em `eventos_frontend['dinamica']`:
+
+| Dinâmica na tela | Script gerado |
+|---|---|
+| A opção escolhida preenche outros campos (até 3 alvos, Retorno 1–5, esconder com NÃO) | `fc_ajax_comp("tp_dados_tb",…)` + `mcampo` |
+| Mostrar campos quando a resposta for SIM | `mcampo` |
+| Mostrar campos quando o valor for… | regra condicional estruturada |
+| A quantidade mostra campos (1 por item = bens, 2 = parcelas) | `nbens` / `nparcelas` |
+| Copiar o valor para outros campos | `$("#campoN").val($(this).val())` |
+| Próxima parcela (data +1 mês / mesmo valor) | `addDataCampo` / `repeteValor` |
+| Tipo de pessoa troca CPF/CNPJ | `alteraInput` (com os códigos das opções FÍSICA/JURÍDICA) |
+| Qualificação automática | `merge_fields("pessoa |P|D",…)` |
+| "Não ajuizar" (NÃO, ou AUSENTE/MUDOU-SE/DESCONHECIDO) | `validate_peticao` + classe `new_required` |
+
+- **Campos do legado:** a tela reconhece a dinâmica pelo script (119 campos), mas só
+  quando o script inteiro é de uma dinâmica. Scripts mistos (lista associada, data
+  por extenso junto, duas dinâmicas) ficam como "personalizado" e não são reescritos.
+  Ao salvar, o script volta igual, nos mesmos eventos, com o mesmo seletor do `nbens` e
+  o mesmo argumento do "não ajuizar". Únicas diferenças: o #42 passa a usar os códigos
+  certos no tipo de pessoa, e o #173 preenche os dois alvos em todos os eventos.
+- **Opções:** linha `Rótulo|Retorno 1|Retorno 2|…|Retorno 5`. Salvar não recria mais as
+  opções: atualiza pelo rótulo e mantém o código do legado e os retornos 2–5 que a linha
+  não trouxer. Quebras de linha dos retornos (HTML) viram espaço na caixa.
+- **Eventos:** salvar não descarta mais data/valor por extenso em campo sem máscara; só
+  o incompatível com a máscara (data em campo de valor e vice-versa). Os presets de data
+  e valor aparecem para qualquer campo de texto.
+- **Inserir marcador:** acima dos parágrafos, escolhe o campo e insere `@CAMPOn@`,
+  `@Campon@`, `@campon@`, `@campon_pre@` ou `@campon_pos@` no editor clicado.
+- A tela funciona mesmo sem o CKEditor carregado (antes, o script parava inteiro).
+Testes: `AdminCampoDinamicaTest`.
+
 ## 5. Proposta (em ordem)
 
 **Fase 1 — corrigir a montagem do texto** (afeta peças de quase todos os modelos)

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\PeticaoModelo;
 use App\PeticaoModeloCampo;
 use App\PeticaoModeloCampoOpcao;
+use App\Support\CampoDinamica;
 use Illuminate\Http\Request;
 
 class NormalizedInputCampoController extends Controller
@@ -38,11 +39,13 @@ class NormalizedInputCampoController extends Controller
         ]);
 
         $campo->origem_alias = $this->resolveOrigemAlias($campo, $data);
-        $campo->eventos_frontend = $this->buildFrontendEvents($campo, $data);
         $campo->token = $campo->placeholder;
         $campo->save();
 
+        // As opcoes vem antes dos eventos: tipo de pessoa usa o codigo delas.
         $this->syncOpcoes($campo, $data['opcoes'] ?? '', $data);
+        $this->applyFrontendEvents($campo, $data);
+
         return redirect()->route('admin.modelos-normalizados.edit', $modeloNormalizado)->with('status', 'Campo criado.');
     }
 
@@ -73,10 +76,11 @@ class NormalizedInputCampoController extends Controller
         ])->save();
 
         $campo->origem_alias = $this->resolveOrigemAlias($campo, $data);
-        $campo->eventos_frontend = $this->buildFrontendEvents($campo, $data);
         $campo->save();
 
         $this->syncOpcoes($campo, $data['opcoes'] ?? '', $data);
+        $this->applyFrontendEvents($campo, $data);
+
         return redirect()->route('admin.modelos-normalizados.edit', $modeloNormalizado)->with('status', 'Campo atualizado.');
     }
 
@@ -116,36 +120,162 @@ class NormalizedInputCampoController extends Controller
             'conditional_targets' => 'nullable|array',
             'conditional_targets.*' => 'integer|min:1',
             'conditional_required' => 'nullable|in:0,1',
+            'dinamica_tipo' => 'nullable|in:' . implode(',', array_keys(CampoDinamica::TYPES)),
+            'dinamica_alvos' => 'nullable|array',
+            'dinamica_alvos.*' => 'nullable|integer|min:1',
+            'dinamica_colunas' => 'nullable|array',
+            'dinamica_colunas.*' => 'nullable|in:' . implode(',', CampoDinamica::RETURN_COLUMNS),
+            'dinamica_mostrar_alvos' => 'nullable|in:0,1',
+            'dinamica_campos' => 'nullable|array',
+            'dinamica_campos.*' => 'integer|min:1',
+            'dinamica_valor' => 'nullable|string|max:200',
+            'dinamica_obrigatorio' => 'nullable|in:0,1',
+            'dinamica_por_item' => 'nullable|in:1,2',
+            'dinamica_alvo' => 'nullable|integer|min:1',
+            'dinamica_modo' => 'nullable|in:data,valor,nao,excecao',
+            'dinamica_pessoa' => 'nullable|integer|min:1',
+            'dinamica_documento' => 'nullable|integer|min:1',
+            'dinamica_eventos' => 'nullable|string|max:40',
+            'dinamica_tipo_original' => 'nullable|string|max:40',
+            'dinamica_seletor' => 'nullable|string|max:20',
+            'dinamica_argumento' => 'nullable|string|max:60',
         ]);
     }
 
+    /**
+     * Grava os eventos do campo. Com uma dinamica escolhida na tela, os scripts
+     * dela substituem os escritos a mao; os presets de data/valor continuam.
+     */
+    protected function applyFrontendEvents(PeticaoModeloCampo $campo, array $data)
+    {
+        $campo->load('opcoes');
+        $events = $this->buildFrontendEvents($campo, $data);
+
+        $dinamica = CampoDinamica::fromRequest($data);
+        if ($dinamica) {
+            $dinamica = $this->keepOnlyModelFields($campo, $dinamica);
+            $options = $campo->opcoes->map(function ($opcao) {
+                return ['id' => $opcao->id_dados, 'label' => $opcao->rotulo];
+            })->all();
+            $generated = CampoDinamica::scripts($dinamica, $campo->id_input, $options);
+
+            foreach (['focus' => 'input_focu_preset', 'load' => 'input_load_preset', 'blur' => 'input_blur_preset'] as $event => $presetKey) {
+                $preset = $this->presetScript(trim((string) ($data[$presetKey] ?? '')));
+                $script = trim(($generated[$event] ?? '') . ' ' . $preset);
+                if ($script !== '') {
+                    $events[$event] = $script;
+                } else {
+                    unset($events[$event]);
+                }
+            }
+
+            if ($dinamica['tipo'] === 'mostrar_por_valor') {
+                $events['conditional'] = [
+                    'value' => $dinamica['valor'],
+                    'target_ids' => $dinamica['alvos'],
+                    'required' => (bool) $dinamica['obrigatorio'],
+                ];
+            }
+
+            // "Nao ajuizar": o motor procura os campos pela classe new_required.
+            if ($dinamica['tipo'] === 'nao_ajuizar' && stripos((string) $campo->classe_css, 'new_required') === false) {
+                $campo->classe_css = trim($campo->classe_css . ' new_required');
+            }
+
+            $events['dinamica'] = $dinamica;
+        }
+
+        $campo->eventos_frontend = $events;
+        $campo->save();
+    }
+
+    /**
+     * Descarta alvos que nao sao campos deste modelo.
+     */
+    protected function keepOnlyModelFields(PeticaoModeloCampo $campo, array $dinamica)
+    {
+        $valid = PeticaoModeloCampo::where('modelo_id', $campo->modelo_id)->get()->map(function ($item) {
+            return (int) $item->id_input;
+        })->all();
+        $isValid = function ($id) use ($valid, $campo) {
+            return in_array((int) $id, $valid, true) && (int) $id !== (int) $campo->id_input;
+        };
+
+        foreach (['alvos'] as $key) {
+            if (isset($dinamica[$key])) {
+                $dinamica[$key] = array_values(array_filter($dinamica[$key], $isValid));
+            }
+        }
+        if (isset($dinamica['preenche'])) {
+            $dinamica['preenche'] = array_values(array_filter($dinamica['preenche'], function ($fill) use ($isValid) {
+                return $isValid($fill['alvo']);
+            }));
+        }
+        foreach (['alvo', 'pessoa', 'documento'] as $key) {
+            if (isset($dinamica[$key]) && !$isValid($dinamica[$key])) {
+                $dinamica[$key] = 0;
+            }
+        }
+
+        return $dinamica;
+    }
+
+    /**
+     * Uma linha por opcao: "Rotulo|Retorno 1|Retorno 2|...|Retorno 5".
+     *
+     * As opcoes que ja existiam (mesmo rotulo) sao atualizadas, nao recriadas:
+     * assim o codigo do legado (usado pelo tipo de pessoa) e os retornos 2 a 5
+     * que a linha nao trouxer continuam valendo.
+     */
     protected function syncOpcoes(PeticaoModeloCampo $campo, $opcoes, array $data = [])
     {
-        PeticaoModeloCampoOpcao::where('campo_id', $campo->id)->delete();
+        $existing = PeticaoModeloCampoOpcao::where('campo_id', $campo->id)->orderBy('ordem')->get();
 
         if (!in_array($campo->input_tipo, ['SELECT', 'RADIO2'], true) || !empty($data['input_list_group_id'])) {
+            PeticaoModeloCampoOpcao::where('campo_id', $campo->id)->delete();
             return;
         }
 
         $lines = preg_split('/\r\n|\r|\n/', (string) $opcoes);
         $order = 1;
+        $kept = [];
         foreach ($lines as $line) {
             $line = trim($line);
             if ($line === '') {
                 continue;
             }
 
-            $parts = explode('|', $line, 2);
-            PeticaoModeloCampoOpcao::create([
-                'campo_id' => $campo->id,
-                'legacy_dado_id' => null,
-                'rotulo' => trim($parts[0]),
-                'valor_retorno' => trim($parts[1] ?? $parts[0]),
+            $parts = array_map('trim', explode('|', $line));
+            $rotulo = $parts[0];
+            $opcao = $existing->first(function ($item) use ($rotulo, $kept) {
+                return !in_array($item->id, $kept, true) && trim((string) $item->rotulo) === $rotulo;
+            });
+
+            $extras = $opcao && is_array($opcao->valores_extras) ? $opcao->valores_extras : [];
+            foreach ([2, 3, 4, 5] as $index => $number) {
+                if (array_key_exists($number, $parts)) {
+                    $extras['return_' . $number] = $parts[$number] !== '' ? $parts[$number] : null;
+                }
+            }
+
+            $values = [
+                'rotulo' => $rotulo,
+                'valor_retorno' => $parts[1] ?? ($opcao ? $opcao->valor_retorno : $rotulo),
+                'valores_extras' => $extras ?: null,
                 'ordem' => $order,
-            ]);
+            ];
+
+            if ($opcao) {
+                $opcao->fill($values)->save();
+                $kept[] = $opcao->id;
+            } else {
+                $kept[] = PeticaoModeloCampoOpcao::create($values + ['campo_id' => $campo->id, 'legacy_dado_id' => null])->id;
+            }
 
             $order++;
         }
+
+        PeticaoModeloCampoOpcao::where('campo_id', $campo->id)->whereNotIn('id', $kept ?: [0])->delete();
     }
 
     protected function resolveWidth($cols)
@@ -298,6 +428,10 @@ class NormalizedInputCampoController extends Controller
             return '';
         }
 
+        // So descarta o que e incompativel com a mascara (data num campo de
+        // valor e vice-versa). Campo sem mascara guarda os dois: no legado ha
+        // campos de texto sem mascara com data_extenso_out, e salvar o campo
+        // apagava o evento.
         if ($behavior === 'date') {
             return $this->isSupportedValueOnlyScript($script) ? '' : $script;
         }
@@ -305,7 +439,7 @@ class NormalizedInputCampoController extends Controller
             return $this->isSupportedDateOnlyScript($script) ? '' : $script;
         }
 
-        return ($this->isSupportedDateOnlyScript($script) || $this->isSupportedValueOnlyScript($script)) ? '' : $script;
+        return $script;
     }
 
     protected function isSupportedDateOnlyScript($script)

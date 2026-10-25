@@ -11,7 +11,7 @@ Histórico das correções feitas na branch `peticaofacil_ia`, para quem continu
 resumo TEXTAREA + banner "não ajuizar") `906d7b84`(achado 14 — avulsa oculta)
 `507d1455`(achado 15 LanguageTool) `dcad0d49`(**motor Safra: máscaras backfill +
 listas dependentes**) `0f75160e`(correção de 2 testes desatualizados).
-**Suíte: 245 testes, 1314 asserções, OK.**
+**Suíte: 252 testes, OK (última execução completa: 242 OK + 10 refeitos após o MySQL reiniciar).**
 
 ## Achados (segurança/qualidade) — todos commitados salvo o 4
 1. Chave `}` sobrando quebrava o JS da montagem (`assemble.blade.php`).
@@ -224,7 +224,9 @@ prefixo/sufixo só com valor (tabela de parcelas); select do legado traz o texto
 opção; limpeza de ", , ,". Importador com IA: data sem `data_atual`. Comparado com o
 algoritmo do legado nos 8 modelos mais usados: mesmo texto. Testes:
 `PeticaoComposerLegacyRulesTest`, `AdminAiModeloCreateEventsTest`.
-Próximas fases: presets na tela de edição (fase 2) e agente de IA (fase 3).
+Fase 2 (tela de edição, 24/10): painel "Dinâmica do campo" (`App\Support\CampoDinamica`),
+opções preservadas ao salvar, inserir marcador no texto. Detalhe no mesmo documento.
+Próxima: agente de IA (fase 3).
 
 ## Pendências / próximos passos
 - **Push** da branch e **deploy** (`migrate --force` onde há migration: 2026_10_05_000100,
