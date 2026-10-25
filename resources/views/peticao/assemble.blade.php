@@ -95,7 +95,7 @@
     /* Mesma tipografia do editor e do PDF (App\Support\PeticaoTipografia). */
     .preview-content {
         font-family: Arial, Helvetica, sans-serif;
-        font-size: 12pt;
+        font-size: 11pt;
         line-height: 1.15;
     }
     .preview-content p {

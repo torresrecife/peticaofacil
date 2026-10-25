@@ -245,9 +245,13 @@ FÍSICA limita a CPF. No #17, o CPF/CNPJ vem antes do PESSOA e também fica liga
 ## 4f. Tipografia das peças — 25/10/2026
 Pedido do Fabio: no editor e no PDF, letra pequena e espaços enormes entre parágrafos,
 comparando com o legado (peça MANUEL JUNIO SANTOS em produção).
-- **Causa da letra pequena:** os modelos do legado gravam o tamanho em px (Tahoma 10px), e
-  o legado gerava o PDF tratando esse número como pt (o PDF dele sai com 10pt e 11pt). O
-  sistema novo mostrava 10px de verdade, ou seja, 7,5pt.
+- **Causa da letra pequena:** os modelos gravam o tamanho em px (Tahoma 10px) e o novo
+  mostrava 10px de verdade, ou seja, 7,5pt. O html2pdf do legado também imprime px no
+  tamanho real (12px = 9pt); as peças do legado só saíam legíveis porque os usuários
+  aumentavam a letra para 11-12px no editor (os modelos continuam em 10px nos dois bancos).
+- **Decisão (Fabio, 25/10):** o número vale em pt (10px → 10pt), a proporção que o usuário
+  via no editor, sem alterar os 217 modelos. Texto sem tamanho definido: 11pt, como o
+  legado (`PeticaoTipografia::BASE_FONT_PT`, no editor, na prévia, no PDF e no Word).
 - **Causa dos espaços:** o novo usava entrelinha 1.6 e 12px de margem depois de cada
   parágrafo, inclusive nas linhas em branco `<p>&nbsp;</p>` que os modelos já trazem. O
   legado usava parágrafo sem margem e entrelinha de 115% (`inc/getpdf.php`).
@@ -268,3 +272,7 @@ comparando com o legado (peça MANUEL JUNIO SANTOS em produção).
 Medido na peça 1248 (processo 193673005): PDF de 13 para 9 páginas (legado: 10), corpo a
 10pt. No Word, 10pt, sem espaço depois e entrelinha 1.15. No editor, 10pt, entrelinha
 18,4px e margem 0.
+Varredura dos 25 modelos mais usados (peça mais recente de cada um no legado, PDF do legado
+pelo mesmo html2pdf × PDF novo): 22 com o mesmo número de páginas; #18 INICIAL DE BUSCA
+6 → 8, #89 INICIAL BUSCA 3 → 4 e #17 REQUERIMENTO 1 → 2, pela letra maior (11-12pt contra
+8-9pt no legado). Entrelinha e margens iguais às do legado.

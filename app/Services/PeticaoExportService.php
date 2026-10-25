@@ -211,7 +211,7 @@ class PeticaoExportService
 
         $phpWord = new PhpWord();
         $phpWord->setDefaultFontName('Arial');
-        $phpWord->setDefaultFontSize(12);
+        $phpWord->setDefaultFontSize((int) PeticaoTipografia::BASE_FONT_PT);
         $phpWord->setDefaultParagraphStyle([
             'spaceBefore' => 0,
             'spaceAfter' => 0,
@@ -1915,7 +1915,7 @@ class PeticaoExportService
             $quote = $matches[1];
             $style = html_entity_decode($matches[2], ENT_QUOTES, 'UTF-8');
             $style = preg_replace('/mso-[^:]+:[^;]+;?/i', '', $style);
-            $style = preg_replace('/font-size\s*:\s*11px/i', 'font-size:12pt', $style);
+            $style = preg_replace('/font-size\s*:\s*11px/i', 'font-size:11pt', $style);
             $style = preg_replace('/font-size\s*:\s*9px/i', 'font-size:9pt', $style);
 
             return 'style=' . $quote . trim($style) . $quote;

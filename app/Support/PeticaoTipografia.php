@@ -5,10 +5,12 @@ namespace App\Support;
 /**
  * Tipografia das pecas, igual a do sistema antigo.
  *
- * Os modelos do legado gravam o tamanho da letra em "px" (ex.: Tahoma 10px),
- * mas o legado gerava o PDF tratando esse numero como "pt" (o PDF dele sai com
- * 10pt e 11pt). Mostrado como px de verdade, o mesmo texto fica com 7,5pt:
- * letra pequena. A regra aqui e a do legado: o numero vale em pt.
+ * Os modelos do legado gravam o tamanho da letra em "px" (ex.: Tahoma 10px).
+ * O html2pdf do legado imprimia o px no tamanho real (12px = 9pt), e por isso
+ * os usuarios aumentavam a letra das pecas para 11-12px no editor. Decisao
+ * (Fabio, 2026-10-25): aqui o numero vale em pt (10px -> 10pt), a proporcao
+ * que o usuario via no editor, sem precisar alterar os modelos. Peticoes
+ * longas podem ganhar 1-2 paginas em relacao ao PDF do legado.
  *
  * Paragrafos sem margem e entrelinha de 115%, como o PDF do legado
  * (`p{margin:0px;line-height:115%}` em inc/getpdf.php): o espaco entre
@@ -16,6 +18,12 @@ namespace App\Support;
  */
 class PeticaoTipografia
 {
+    /**
+     * Letra do texto sem tamanho definido (101 dos 217 modelos ativos), em pt.
+     * O legado usava 11pt (`p{font-size:11pt}` no editor e no PDF).
+     */
+    const BASE_FONT_PT = '11';
+
     /** Entrelinha do corpo da peca. */
     const LINE_HEIGHT = '1.15';
 

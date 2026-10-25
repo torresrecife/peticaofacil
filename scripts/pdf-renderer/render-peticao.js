@@ -66,7 +66,7 @@ async function main() {
       background: #ffffff;
       color: #1f2933;
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 12pt;
+      font-size: 11pt; /* como o legado (App\Support\PeticaoTipografia::BASE_FONT_PT) */
       line-height: 1.15;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
