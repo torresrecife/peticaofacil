@@ -36,7 +36,7 @@ body
 {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: 12pt;
-	line-height: 1.6;
+	line-height: 1.15;
 	color: #1f2933;
 	background: #ffffff;
 	max-width: 794px;
@@ -52,7 +52,7 @@ body
 .cke_editable
 {
 	font-size: 12pt;
-	line-height: 1.6;
+	line-height: 1.15;
 	word-wrap: break-word;
 	background: transparent !important;
 }
@@ -101,9 +101,10 @@ h1,h2,h3,h4,h5,h6
 	margin: 0 0 12px;
 }
 
+/* Como o legado: paragrafo sem margem (o espaco vem das linhas em branco do modelo). */
 p
 {
-	margin: 0 0 12px;
+	margin: 0;
 	text-align: justify;
 }
 

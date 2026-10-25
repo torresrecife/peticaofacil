@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\PeticaoTipografia;
 use Illuminate\Http\Request;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
@@ -214,7 +215,7 @@ class PeticaoExportService
         $phpWord->setDefaultParagraphStyle([
             'spaceBefore' => 0,
             'spaceAfter' => 0,
-            'lineHeight' => 1.6,
+            'lineHeight' => (float) PeticaoTipografia::LINE_HEIGHT,
             'spacingLineRule' => \PhpOffice\PhpWord\SimpleType\LineSpacingRule::AUTO,
             'contextualSpacing' => false,
         ]);
@@ -700,15 +701,15 @@ class PeticaoExportService
             '.peticao-print-body { min-height: 0; }',
             '.peticao-print-sheet img { max-width: 100%; height: auto; display: inline-block; }',
             '.peticao-print-sheet table { max-width: 100%; table-layout: auto; }',
-            '.peticao-print-sheet p, .peticao-print-sheet div, .peticao-print-sheet td, .peticao-print-sheet th, .peticao-print-sheet li, .peticao-print-sheet span, .peticao-print-sheet strong, .peticao-print-sheet u { line-height: 1.6; }',
-            '.peticao-print-sheet p { margin: 0 0 12px; }',
+            '.peticao-print-sheet p, .peticao-print-sheet div, .peticao-print-sheet td, .peticao-print-sheet th, .peticao-print-sheet li, .peticao-print-sheet span, .peticao-print-sheet strong, .peticao-print-sheet u { line-height: 1.15; }',
+            '.peticao-print-sheet p { margin: 0; }',
             '.peticao-print-sheet .print-header-table { width: 100% !important; table-layout: fixed; border-collapse: collapse; }',
             '.peticao-print-sheet .print-header-table td { vertical-align: top; }',
             '.peticao-print-sheet .print-header-table td:first-child { width: 34%; text-align: left; }',
             '.peticao-print-sheet .print-header-table td:last-child { width: 66%; text-align: right; }',
             '.peticao-print-sheet .print-header-table img { display: block; max-width: 100%; height: auto; }',
             '.peticao-print-sheet .print-header-contact { width: 100%; margin: 0; font-size: 9pt; line-height: 1.2; text-align: right !important; white-space: normal; }',
-            '.peticao-print-sheet .peticao-empty-line { min-height: 1.6em; display: block; }',
+            '.peticao-print-sheet .peticao-empty-line { min-height: 1.15em; display: block; }',
             '@media print { @page { size: A4; margin: 16.9mm; } html, body { background: #fff !important; } .peticao-print-shell { padding: 0; background: #fff; } .peticao-print-sheet { width: auto; min-height: auto; margin: 0; box-shadow: none; background-image: none; overflow: visible; } .peticao-print-content { min-height: auto; padding: 0 !important; box-sizing: border-box; } .peticao-print-header, .peticao-print-footer { display: none !important; } .peticao-print-header-inline { margin-bottom: 24px; } .peticao-print-footer-inline { margin-top: 24px; } }',
         ]);
     }
@@ -725,8 +726,8 @@ class PeticaoExportService
             '.peticao-word-sheet { width: auto; margin: 0; padding: 0; box-sizing: border-box; background: #fff; }',
             '.peticao-word-sheet img { max-width: 100%; height: auto; display: inline-block; }',
             '.peticao-word-sheet table { width: auto; max-width: 100%; table-layout: auto; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }',
-            '.peticao-word-sheet p, .peticao-word-sheet div, .peticao-word-sheet td, .peticao-word-sheet th, .peticao-word-sheet li, .peticao-word-sheet span, .peticao-word-sheet strong, .peticao-word-sheet u { line-height: 1.6; }',
-            '.peticao-word-sheet p { margin: 0 0 9pt; mso-margin-top-alt: 0pt; mso-margin-bottom-alt: 9pt; line-height: 160%; mso-line-height-rule: at-least; text-align: justify; }',
+            '.peticao-word-sheet p, .peticao-word-sheet div, .peticao-word-sheet td, .peticao-word-sheet th, .peticao-word-sheet li, .peticao-word-sheet span, .peticao-word-sheet strong, .peticao-word-sheet u { line-height: 1.15; }',
+            '.peticao-word-sheet p { margin: 0; mso-margin-top-alt: 0pt; mso-margin-bottom-alt: 0pt; line-height: 115%; mso-line-height-rule: at-least; text-align: justify; }',
             '.peticao-word-sheet td p { margin: 0; mso-margin-top-alt: 0pt; mso-margin-bottom-alt: 0pt; }',
             '.word-header-table { width: 100%; table-layout: fixed; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }',
             '.word-header-table td { vertical-align: middle; padding: 0; }',
@@ -745,7 +746,7 @@ class PeticaoExportService
             '.peticao-word-sheet .peticao-tabela-compacta { width: 100%; border-collapse: collapse; font-size: 11pt; }',
             '.peticao-word-sheet .peticao-tabela-compacta th, .peticao-word-sheet .peticao-tabela-compacta td { border: 1px solid #cbd2d9; padding: 4.5pt 6pt; vertical-align: top; }',
             '.peticao-word-sheet .peticao-lista { padding-left: 18pt; }',
-            '.peticao-word-sheet .peticao-empty-line { min-height: 1.6em; display: block; }',
+            '.peticao-word-sheet .peticao-empty-line { min-height: 1.15em; display: block; }',
         ]);
     }
 
@@ -754,8 +755,8 @@ class PeticaoExportService
         return implode("\n", [
             'html, body { margin: 0; padding: 0; background: #ffffff; color: #1f2933; font-family: Arial, Helvetica, sans-serif; }',
             'body { word-wrap: break-word; }',
-            'p, div, td, th, li, span, strong, u { line-height: 1.6; }',
-            'p { margin: 0 0 12px; text-align: justify; }',
+            'p, div, td, th, li, span, strong, u { line-height: 1.15; }',
+            'p { margin: 0; text-align: justify; }',
             'td p { margin: 0; }',
             'img { max-width: 100%; height: auto; }',
             'table { border-collapse: collapse; border-spacing: 0; max-width: 100%; }',
@@ -1164,7 +1165,7 @@ class PeticaoExportService
 
     protected function appendNativeDocxEmptyParagraph($container, \DOMNode $node)
     {
-        $paragraphStyle = $this->resolveDocxParagraphStyle($node, 1.6, true);
+        $paragraphStyle = $this->resolveDocxParagraphStyle($node, (float) PeticaoTipografia::LINE_HEIGHT, true);
         $fontStyle = $this->extractDocxTextStyle($node)['font'] ?: $this->getDefaultDocxBodyFontStyle();
         $container->addText(' ', $fontStyle, $paragraphStyle);
     }
@@ -1267,10 +1268,11 @@ class PeticaoExportService
         $paragraphStyle = [
             'alignment' => $this->resolveNativePhpWordAlignment($node) ?: 'left',
             'spaceBefore' => 0,
-            'spaceAfter' => $isEmptyParagraph ? 0 : Converter::pixelToTwip(12),
+            // Como o legado: sem espaco depois do paragrafo (o espaco vem das linhas em branco).
+            'spaceAfter' => 0,
             'contextualSpacing' => false,
             'spacingLineRule' => \PhpOffice\PhpWord\SimpleType\LineSpacingRule::AUTO,
-            'lineHeight' => $lineHeight ?: 1.6,
+            'lineHeight' => $lineHeight ?: (float) PeticaoTipografia::LINE_HEIGHT,
         ];
 
         if ($node->attributes && $node->attributes->getNamedItem('style')) {
@@ -1798,8 +1800,8 @@ class PeticaoExportService
     {
         return implode("\n", [
             'body { font-family: Arial, Helvetica, sans-serif; color: #1f2933; }',
-            'p, div, td, th, li, span, strong, u { line-height: 160%; }',
-            'p { margin: 0 0 12px; }',
+            'p, div, td, th, li, span, strong, u { line-height: 115%; }',
+            'p { margin: 0; }',
             'ol, ul { margin: 0 0 12px; padding-left: 24px; }',
             'li { margin: 0 0 6px; }',
             'table { border-collapse: collapse; border-spacing: 0; }',
@@ -1815,7 +1817,7 @@ class PeticaoExportService
             '.peticao-observacao { margin: 12px 0; padding: 10px 12px; border-left: 4px solid #d9b95b; background: #fff7d6; color: #694f00; text-indent: 0; }',
             '.peticao-tabela-compacta { width: 100%; border-collapse: collapse; font-size: 11pt; }',
             '.peticao-tabela-compacta th, .peticao-tabela-compacta td { border: 1px solid #cbd2d9; padding: 6px 8px; vertical-align: top; }',
-            '.peticao-empty-line { min-height: 1.6em; display: block; }',
+            '.peticao-empty-line { min-height: 1.15em; display: block; }',
             'img { max-width: 100%; }',
         ]);
     }
@@ -1830,8 +1832,6 @@ class PeticaoExportService
                 return 'font-size:' . $fontMatches[1] . 'pt';
             }, $style);
 
-            $style = preg_replace('/line-height\s*:\s*115%/i', 'line-height:160%', $style);
-            $style = preg_replace('/line-height\s*:\s*1\.15\b/i', 'line-height:1.6', $style);
 
             if (stripos($style, 'word-wrap:') === false) {
                 $style .= ';word-wrap:break-word;';
@@ -1915,8 +1915,6 @@ class PeticaoExportService
             $quote = $matches[1];
             $style = html_entity_decode($matches[2], ENT_QUOTES, 'UTF-8');
             $style = preg_replace('/mso-[^:]+:[^;]+;?/i', '', $style);
-            $style = preg_replace('/line-height\s*:\s*115%/i', 'line-height:160%', $style);
-            $style = preg_replace('/line-height\s*:\s*1\.15\b/i', 'line-height:1.6', $style);
             $style = preg_replace('/font-size\s*:\s*11px/i', 'font-size:12pt', $style);
             $style = preg_replace('/font-size\s*:\s*9px/i', 'font-size:9pt', $style);
 
@@ -1929,7 +1927,7 @@ class PeticaoExportService
     protected function normalizeDocxMarkup($html, $forHeaderFooter = false)
     {
         if (!$forHeaderFooter) {
-            $html = $this->ensureDocxBodyLineHeight($html, '1.6');
+            $html = $this->ensureDocxBodyLineHeight($html, PeticaoTipografia::LINE_HEIGHT);
         }
 
         $html = preg_replace_callback('/<table\b[^>]*>.*?<img\b[^>]*src=.*?<\/table>/is', function ($matches) {

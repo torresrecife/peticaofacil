@@ -129,6 +129,11 @@ desfazer seria inverter de novo).
 - [ ] Modelo "Petição avulsa" não aparece na lista de modelos.
 - [ ] Erro proposital (URL inexistente) não mostra a tela de depuração.
 
+**Tipografia (25/10)**
+- [ ] Abrir uma peça salva antiga no editor: letra em tamanho normal (10/11pt) e
+      parágrafos compactos como no legado; exportar PDF e Word e comparar com o legado.
+- [ ] Cabeçalho antigo (logotipo + contato) sem quebra de linha no PDF.
+
 **Montagem do texto (fase 1)**
 - [ ] EXPEDIÇÃO DE NOVO MANDADO (o mais usado), com um código de processo: a prévia
       traz "COMARCA DE <cidade> - <UF>" em maiúsculas e "Ação de Busca e Apreensão…"

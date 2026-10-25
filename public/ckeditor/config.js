@@ -24,7 +24,7 @@ CKEDITOR.editorConfig = function( config ) {
 		'Times New Roman/Times New Roman, Times, serif;' +
 		'Georgia/Georgia, serif';
 	config.fontSize_defaultLabel = '12';
-	config.fontSize_sizes = '10/10px;12/12px;14/14px;16/16px;18/18px;20/20px';
+	config.fontSize_sizes = '8/8pt;9/9pt;10/10pt;11/11pt;12/12pt;14/14pt;16/16pt;18/18pt;20/20pt';
 	config.toolbar = [
 		{ name: 'clipboard', items: [ 'Undo', 'Redo', '-', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'SelectAll' ] },
 		{ name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat', 'CopyFormatting' ] },

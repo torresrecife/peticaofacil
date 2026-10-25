@@ -67,7 +67,7 @@ async function main() {
       color: #1f2933;
       font-family: Arial, Helvetica, sans-serif;
       font-size: 12pt;
-      line-height: 1.6;
+      line-height: 1.15;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
@@ -75,15 +75,16 @@ async function main() {
       word-wrap: break-word;
       counter-reset: page;
     }
+    /* Como o PDF do legado: paragrafo sem margem e entrelinha de 115%. */
     p, div, td, th, li, span, strong, u {
-      line-height: 1.6;
+      line-height: 1.15;
     }
     p {
-      margin: 0 0 12px;
+      margin: 0;
       text-align: justify;
     }
     .peticao-empty-line {
-      min-height: 1.6em;
+      min-height: 1.15em;
       display: block;
     }
     img {

@@ -6,6 +6,7 @@ use App\PeticaoModelo;
 use App\PeticaoNormalizada;
 use App\PeticaoVersao;
 use App\Support\HtmlSanitizer;
+use App\Support\PeticaoTipografia;
 
 class PeticaoDocumentLayoutService
 {
@@ -52,11 +53,14 @@ class PeticaoDocumentLayoutService
 
     protected function buildLayout($title, $bodyHtml, $modelo = null, array $meta = [])
     {
+        // Corpo com o tamanho de letra do legado (o numero em px vale em pt).
+        // Cabecalho e rodape ficam como estao: o institucional foi desenhado
+        // para 9px no sistema novo e quebra a linha se crescer.
         return [
             'title' => (string) $title,
-            'body_html' => HtmlSanitizer::clean((string) $bodyHtml),
-            'header_html' => $modelo ? (string) ($modelo->cabecalho_html ?: '') : '',
-            'footer_html' => $modelo ? (string) ($modelo->rodape_html ?: '') : '',
+            'body_html' => PeticaoTipografia::trimRightAlignedPadding(PeticaoTipografia::pxToPt(HtmlSanitizer::clean((string) $bodyHtml))),
+            'header_html' => $modelo ? PeticaoTipografia::trimRightAlignedPadding((string) ($modelo->cabecalho_html ?: '')) : '',
+            'footer_html' => $modelo ? PeticaoTipografia::trimRightAlignedPadding((string) ($modelo->rodape_html ?: '')) : '',
             'meta' => $meta,
         ];
     }

@@ -82,6 +82,8 @@ class PeticaoComposerService
         $composedHtml = implode("\n", array_filter($sections));
         // Resolve tokens that may exist inside a predefined TEXTAREA template.
         $composedHtml = $this->replacePlaceholders($composedHtml, $fields, $explicitAffixes);
+        // Tamanho da letra como no legado: o numero em px dos modelos vale em pt.
+        $composedHtml = \App\Support\PeticaoTipografia::pxToPt($composedHtml);
 
         return [
             'html' => $composedHtml,

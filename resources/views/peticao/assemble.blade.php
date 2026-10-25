@@ -9,7 +9,7 @@
 </div>
 
 @push('head')
-<script src="{{ asset('ckeditor/ckeditor.js') }}"></script>
+@include('partials.ckeditor')
 <script src="{{ asset('ckfinder/ckfinder.js') }}"></script>
 <style>
     .lookup-box {
@@ -92,6 +92,15 @@
         border-color: #b42318;
     }
     /* Tabelas da peticao ocupam uma linha propria no preview. */
+    /* Mesma tipografia do editor e do PDF (App\Support\PeticaoTipografia). */
+    .preview-content {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12pt;
+        line-height: 1.15;
+    }
+    .preview-content p {
+        margin: 0;
+    }
     .preview-content table {
         display: table;
         clear: both;

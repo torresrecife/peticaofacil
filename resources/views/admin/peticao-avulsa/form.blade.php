@@ -3,7 +3,7 @@
 @section('title', 'Configurar peticao avulsa')
 
 @push('head')
-<script src="{{ asset('ckeditor/ckeditor.js') }}"></script>
+@include('partials.ckeditor')
 <script src="{{ asset('ckfinder/ckfinder.js') }}"></script>
 @endpush
 

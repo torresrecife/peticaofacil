@@ -241,3 +241,30 @@ Pedido do Fabio (print do #34 AÇÃO DE EXECUÇÃO: CPF/CNPJ e CEP sem formato).
 - A formatação já roda ao carregar (dados do NEO) e ao digitar.
 Conferido no Chrome (#34, processo 32216005): CPF 346.238.504-63, CEP 54330-065;
 FÍSICA limita a CPF. No #17, o CPF/CNPJ vem antes do PESSOA e também fica ligado.
+
+## 4f. Tipografia das peças — 25/10/2026
+Pedido do Fabio: no editor e no PDF, letra pequena e espaços enormes entre parágrafos,
+comparando com o legado (peça MANUEL JUNIO SANTOS em produção).
+- **Causa da letra pequena:** os modelos do legado gravam o tamanho em px (Tahoma 10px), e
+  o legado gerava o PDF tratando esse número como pt (o PDF dele sai com 10pt e 11pt). O
+  sistema novo mostrava 10px de verdade, ou seja, 7,5pt.
+- **Causa dos espaços:** o novo usava entrelinha 1.6 e 12px de margem depois de cada
+  parágrafo, inclusive nas linhas em branco `<p>&nbsp;</p>` que os modelos já trazem. O
+  legado usava parágrafo sem margem e entrelinha de 115% (`inc/getpdf.php`).
+- **Correção (`App\Support\PeticaoTipografia`):** px vira pt a partir de 10px (os 9px do
+  contato do cabeçalho ficam); parágrafo sem margem; entrelinha 1.15 no editor
+  (`public/ckeditor/contents.css`), na prévia da montagem, na impressão, no PDF
+  (Playwright) e no Word (DOCX: `w:after=0`, `w:line=276`). Saíram as trocas que forçavam
+  115% → 160%. A conversão vale na montagem (peças novas), ao abrir no editor e na
+  exportação (peças antigas, sem regravar o banco).
+- **Cabeçalho antigo embutido na peça:** o contato era empurrado para a direita com
+  dezenas de `&nbsp;` e quebrava linha ("CEP: 52.030-" / "195"). Na exportação, esses
+  espaços do início das linhas saem e a célula de texto do cabeçalho fica alinhada à
+  direita (`trimRightAlignedPadding`).
+- **Cache do editor:** o CKEditor pedia o `contents.css` com um carimbo fixo, então o
+  navegador seguia com o CSS antigo. Agora o carimbo segue a data do arquivo
+  (`resources/views/partials/ckeditor.blade.php`).
+- Fonte do editor: a lista de tamanhos passou a ser em pt (8 a 20pt).
+Medido na peça 1248 (processo 193673005): PDF de 13 para 9 páginas (legado: 10), corpo a
+10pt. No Word, 10pt, sem espaço depois e entrelinha 1.15. No editor, 10pt, entrelinha
+18,4px e margem 0.

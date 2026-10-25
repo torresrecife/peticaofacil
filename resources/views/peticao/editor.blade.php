@@ -3,7 +3,7 @@
 @section('title', 'Editor de peca')
 
 @push('head')
-<script src="{{ asset('ckeditor/ckeditor.js') }}"></script>
+@include('partials.ckeditor')
 <script src="{{ asset('ckfinder/ckfinder.js') }}"></script>
 <style>
     .editor-shell {
@@ -377,8 +377,12 @@ document.addEventListener('DOMContentLoaded', function () {
         updateSaveStatus('clean', 'Sem alteracoes pendentes');
     }
 
+    // Como no legado, o numero em px dos modelos vale em pt (App\Support\PeticaoTipografia).
     function normalizeContentFontSize(html) {
-        return (html || '').replace(/font-size\s*:\s*11px\b/ig, 'font-size:12px');
+        // Abaixo de 10px (contato do cabecalho) fica como esta.
+        return (html || '').replace(/font-size\s*:\s*(\d+(?:\.\d+)?)\s*px/ig, function (match, size) {
+            return parseFloat(size) < 10 ? match : 'font-size:' + size + 'pt';
+        });
     }
 
     textarea.value = normalizeContentFontSize(textarea.value);
