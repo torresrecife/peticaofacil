@@ -305,4 +305,11 @@ e as notas de rodapé são o maior desafio. Os modelos do legado não têm notas
 Medido no DOCX do #243, com a IA de verdade: 23 a 33 campos por rodada, todos colocados
 no texto, com negrito, 52 parágrafos centralizados, recuos, tabela e as 9 notas no fim.
 O #243 já gravado continua sem estilo: é preciso importar o DOCX de novo.
+- **Espaços em branco (25/10, modelo #244):** a tabela do veículo do DOCX tem só os
+  rótulos (MARCA:, PLACA:...) e as células de valor vazias; sem texto para trocar, a IA
+  pulava esses dados. Antes da análise, a célula vazia ao lado de um rótulo terminado em
+  ":" e as linhas `____` viram marcadores `[[EM_BRANCO_N]]`. A IA cria o campo usando o
+  marcador como `texto_original` (com o alias NEO: marca, ano, modelo, chassi, cor, placa,
+  renavam). O valor entra com a letra do rótulo, e os marcadores que não viram campo voltam
+  a ser espaço vazio ou `____`. Medido: os 7 dados do veículo saem como campos, ligados ao NEO.
 

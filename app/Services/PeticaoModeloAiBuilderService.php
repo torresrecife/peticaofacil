@@ -8,6 +8,8 @@ class PeticaoModeloAiBuilderService
 {
     protected $wordImport;
     protected $client;
+    /** Texto original de cada marcador [[EM_BRANCO_N]] ('' = celula vazia). */
+    protected $blankSlots = [];
 
     public function __construct(WordImportService $wordImport, OpenAIResponsesClient $client)
     {
@@ -17,12 +19,12 @@ class PeticaoModeloAiBuilderService
 
     public function analyze($file)
     {
-        $html = $this->wordImport->importUploadedFile($file);
+        $html = $this->markBlankSlots($this->wordImport->importUploadedFile($file));
         $sourceHtml = $html;
         $html = $this->prepareAiInput($html);
         $neoGuide = $this->neoGuide();
         $result = $this->client->createStructuredResponse([
-            ['role' => 'system', 'content' => 'Voce analisa modelos juridicos brasileiros. Nao copie o corpo do documento: retorne corpo_html vazio e paragrafos como lista vazia. O sistema usa o HTML original do Word (com toda a formatacao e as notas de rodape) e troca, ele mesmo, cada texto_original pelo token do campo. Por isso texto_original deve ser o trecho exato do documento, como aparece no texto (mesmas maiusculas, acentos e pontuacao), sem tags HTML e dentro de um unico paragrafo. texto_original e so a parte que muda de uma peca para outra, nunca a frase inteira: no enderecamento "EXCELENTISSIMO(A) SENHOR(A) ... DA COMARCA DE RECIFE-PE", o campo da comarca e "RECIFE" (e a UF "PE", se for outro campo); o texto fixo em volta continua no documento. As notas de rodape do documento (lista no fim, numeradas) sao texto fixo: nao crie campos nelas. Ignore completamente cabecalhos e rodapes nativos do arquivo Word: nao copie conteudo deles para cabecalho_html ou rodape_html e nunca coloque tokens nesses campos. Todo enderecamento juridico deve permanecer como primeiro paragrafo do corpo. Retorne cabecalho_html e rodape_html vazios; o sistema aplicara o cabecalho institucional padrao separadamente. Nao crie campos para dados institucionais fixos do escritorio, incluindo endereco profissional do advogado, telefone profissional, site, e-mail institucional, logotipo, nome do escritorio ou dados de contato presentes no cabecalho/rodape. Esses dados devem ser preservados apenas como texto fixo ou ignorados quando vierem do cabecalho/rodape. Identifique no corpo os trechos que devem receber dados externos e crie um campo para cada trecho variavel. Para cada campo, preencha origem_coluna usando exclusivamente um alias do dicionario NEO abaixo quando houver correspondencia semantica. Nunca invente aliases. Se nao houver correspondencia segura, deixe origem_coluna vazia para revisao manual. Nao associe automaticamente autor e reu apenas pela posicao: considere o sentido da acao, o papel processual e o contexto do trecho. Quando o texto representar uma entidade reutilizavel cadastrada, use lista_grupo e lista_retorno: CLIENTES (id 2, nome_lista como rotulo e return_1 como qualificacao/endereco do cliente), LOCALIZADORES (id 1, return_1 a return_6 para dados do localizador), OAB POR ESTADO (id 3, return_1 para a inscricao), TIPO DE ACORDO (id 4), DIA DA SEMANA (id 5) e DADOS BANCARIOS (id 6). Para autor em acao ativa, prefira CLIENTES; crie o campo principal como SELECT e indique lista_retorno=return_1 quando o texto exigir a qualificacao/endereco cadastrado. Nao use lista para reu, salvo se houver evidencia de que o reu pertence a um cadastro reutilizavel. Use tokens temporarios como @VAR_NOME@. Dicionario NEO: ' . $neoGuide . ' ' . $this->dynamicsGuide()],
+            ['role' => 'system', 'content' => 'Voce analisa modelos juridicos brasileiros. Nao copie o corpo do documento: retorne corpo_html vazio e paragrafos como lista vazia. O sistema usa o HTML original do Word (com toda a formatacao e as notas de rodape) e troca, ele mesmo, cada texto_original pelo token do campo. Por isso texto_original deve ser o trecho exato do documento, como aparece no texto (mesmas maiusculas, acentos e pontuacao), sem tags HTML e dentro de um unico paragrafo. texto_original e so a parte que muda de uma peca para outra, nunca a frase inteira: no enderecamento "EXCELENTISSIMO(A) SENHOR(A) ... DA COMARCA DE RECIFE-PE", o campo da comarca e "RECIFE" (e a UF "PE", se for outro campo); o texto fixo em volta continua no documento. Os espacos em branco do documento, onde o usuario preencheria um dado (celula vazia ao lado de um rotulo como "PLACA:", ou linha ____), aparecem como marcadores [[EM_BRANCO_N]]: quando o espaco for para um dado, crie o campo (com o rotulo e o alias NEO correspondentes, ex.: PLACA -> placa) e use exatamente o marcador como texto_original. As notas de rodape do documento (lista no fim, numeradas) sao texto fixo: nao crie campos nelas. Ignore completamente cabecalhos e rodapes nativos do arquivo Word: nao copie conteudo deles para cabecalho_html ou rodape_html e nunca coloque tokens nesses campos. Todo enderecamento juridico deve permanecer como primeiro paragrafo do corpo. Retorne cabecalho_html e rodape_html vazios; o sistema aplicara o cabecalho institucional padrao separadamente. Nao crie campos para dados institucionais fixos do escritorio, incluindo endereco profissional do advogado, telefone profissional, site, e-mail institucional, logotipo, nome do escritorio ou dados de contato presentes no cabecalho/rodape. Esses dados devem ser preservados apenas como texto fixo ou ignorados quando vierem do cabecalho/rodape. Identifique no corpo os trechos que devem receber dados externos e crie um campo para cada trecho variavel. Para cada campo, preencha origem_coluna usando exclusivamente um alias do dicionario NEO abaixo quando houver correspondencia semantica. Nunca invente aliases. Se nao houver correspondencia segura, deixe origem_coluna vazia para revisao manual. Nao associe automaticamente autor e reu apenas pela posicao: considere o sentido da acao, o papel processual e o contexto do trecho. Quando o texto representar uma entidade reutilizavel cadastrada, use lista_grupo e lista_retorno: CLIENTES (id 2, nome_lista como rotulo e return_1 como qualificacao/endereco do cliente), LOCALIZADORES (id 1, return_1 a return_6 para dados do localizador), OAB POR ESTADO (id 3, return_1 para a inscricao), TIPO DE ACORDO (id 4), DIA DA SEMANA (id 5) e DADOS BANCARIOS (id 6). Para autor em acao ativa, prefira CLIENTES; crie o campo principal como SELECT e indique lista_retorno=return_1 quando o texto exigir a qualificacao/endereco cadastrado. Nao use lista para reu, salvo se houver evidencia de que o reu pertence a um cadastro reutilizavel. Use tokens temporarios como @VAR_NOME@. Dicionario NEO: ' . $neoGuide . ' ' . $this->dynamicsGuide()],
             ['role' => 'user', 'content' => "Analise o documento Word abaixo e estruture um modelo de peticao.\n\n" . $html],
         ], $this->schema(), 'peticao_modelo_analysis');
 
@@ -32,6 +34,92 @@ class PeticaoModeloAiBuilderService
 
         $result['data']['_source_html'] = $sourceHtml;
         return $this->normalize($result['data']);
+    }
+
+    /**
+     * Espacos em branco do Word viram marcadores [[EM_BRANCO_N]], para a IA
+     * poder apontar um campo ali (ex.: tabela do veiculo com "PLACA:" e a
+     * celula do lado vazia). Os que nao viram campo saem no normalize().
+     *
+     * - celula vazia logo depois de uma celula cujo texto termina em ":";
+     * - linha de sublinhados (____).
+     */
+    protected function markBlankSlots($html)
+    {
+        $html = (string) $html;
+        $this->blankSlots = [];
+        if (trim($html) === '' || (stripos($html, '<td') === false && strpos($html, '___') === false)) {
+            return $html;
+        }
+
+        libxml_use_internal_errors(true);
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->loadHTML('<?xml encoding="UTF-8"><body>' . $html . '</body>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET);
+        libxml_clear_errors();
+        $body = $dom->getElementsByTagName('body')->item(0);
+        if (!$body) {
+            return $html;
+        }
+        $xpath = new \DOMXPath($dom);
+        $number = 0;
+        $blank = function ($node) {
+            return trim(str_replace("\xC2\xA0", ' ', $node->textContent)) === '';
+        };
+
+        foreach (iterator_to_array($xpath->query('//td | //th')) as $cell) {
+            $previous = $cell->previousSibling;
+            while ($previous && !($previous instanceof \DOMElement)) {
+                $previous = $previous->previousSibling;
+            }
+            if (!$previous || !$blank($cell) || $cell->getElementsByTagName('img')->length) {
+                continue;
+            }
+            $label = trim(str_replace("\xC2\xA0", ' ', $previous->textContent));
+            if ($label === '' || substr($label, -1) !== ':') {
+                continue;
+            }
+            $marker = $dom->createTextNode('[[EM_BRANCO_' . (++$number) . ']]');
+            $this->blankSlots[$number] = '';
+            $target = $xpath->query('.//p', $cell)->item(0) ?: $cell;
+            while ($target->firstChild) {
+                $target->removeChild($target->firstChild);
+            }
+            // O valor sai com a letra do rotulo vizinho (ex.: 10pt).
+            $labelSpan = $xpath->query('.//span[contains(@style, "font-size")]', $previous)->item(0);
+            if ($labelSpan) {
+                $span = $dom->createElement('span');
+                $span->setAttribute('style', $labelSpan->getAttribute('style'));
+                $span->appendChild($marker);
+                $marker = $span;
+            }
+            $target->appendChild($marker);
+        }
+
+        foreach (iterator_to_array($xpath->query('//text()[contains(., "___")]')) as $text) {
+            $text->nodeValue = preg_replace_callback('/_{3,}/', function ($line) use (&$number) {
+                $this->blankSlots[++$number] = $line[0];
+                return '[[EM_BRANCO_' . $number . ']]';
+            }, $text->nodeValue);
+        }
+
+        if ($number === 0) {
+            return $html;
+        }
+        $out = '';
+        foreach ($body->childNodes as $child) {
+            $out .= $dom->saveHTML($child);
+        }
+
+        return $out;
+    }
+
+    /** Marcador que nao virou campo volta ao que era (celula vazia ou ____). */
+    protected function clearBlankSlots($html)
+    {
+        $slots = $this->blankSlots;
+        return preg_replace_callback('/\[\[EM_BRANCO_(\d+)\]\]/', function ($m) use ($slots) {
+            return isset($slots[$m[1]]) ? $slots[$m[1]] : '';
+        }, (string) $html);
     }
 
     protected function prepareAiInput($html)
@@ -179,7 +267,7 @@ class PeticaoModeloAiBuilderService
             ? $sourceHtml
             : trim((string) ($data['corpo_html'] ?? ''));
         if ($bodyHtml !== '') {
-            $paragraphs[] = ['titulo' => 'CORPO DA PETICAO', 'conteudo_html' => $replace($bodyHtml), 'ordem' => 1];
+            $paragraphs[] = ['titulo' => 'CORPO DA PETICAO', 'conteudo_html' => $this->clearBlankSlots($replace($bodyHtml)), 'ordem' => 1];
         }
         if ($bodyHtml !== '') {
             return ['nome' => trim($data['nome']), 'descricao' => trim($data['descricao']), 'cabecalho_html' => '', 'rodape_html' => '', 'campos' => $fields, 'paragrafos' => $paragraphs];

@@ -73,6 +73,33 @@ class PeticaoModeloAiBuilderServiceTest extends TestCase
         $this->assertSame('<p><span style="font-size: 10pt"><b>@campo3@</b>, por seu advogado</span></p>', $result);
     }
 
+    public function test_blank_cells_and_lines_become_fields_or_return_to_blank()
+    {
+        $service = new class(new WordImportService(), new OpenAIResponsesClient()) extends PeticaoModeloAiBuilderService {
+            public function markForTest($html) { return $this->markBlankSlots($html); }
+            public function normalizeForTest(array $data) { return $this->normalize($data); }
+        };
+        $html = '<table><tr><td><p><b>PLACA:</b></p></td><td><p></p></td><td><p><b>COR:</b></p></td><td><p> </p></td></tr>'
+            . '<tr><td><p>OBS</p></td><td><p></p></td></tr></table><p>Assinatura: ______</p>';
+
+        $marked = str_replace(["\r", "\n"], '', $service->markForTest($html)); // saveHTML quebra linha entre blocos
+        $this->assertStringContainsString('<td><p>[[EM_BRANCO_1]]</p></td>', $marked);
+        $this->assertStringContainsString('<td><p>[[EM_BRANCO_2]]</p></td>', $marked);
+        $this->assertStringContainsString('<td><p>OBS</p></td><td><p></p></td>', $marked); // sem ":" no rotulo
+        $this->assertStringContainsString('Assinatura: [[EM_BRANCO_3]]', $marked);
+
+        $result = $service->normalizeForTest([
+            'nome' => 'Inicial', 'descricao' => '', 'cabecalho_html' => '', 'rodape_html' => '', 'corpo_html' => '', 'paragrafos' => [],
+            'campos' => [['rotulo' => 'Placa', 'token' => '@VAR_PLACA@', 'tipo' => 'TEXT', 'obrigatorio' => true, 'opcoes' => [], 'texto_original' => '[[EM_BRANCO_1]]', 'marcador' => 'MAIUSCULAS']],
+            '_source_html' => $marked,
+        ]);
+        $body = $result['paragrafos'][0]['conteudo_html'];
+        $this->assertStringContainsString('<p><b>PLACA:</b></p></td><td><p>@CAMPO1@</p>', $body);
+        $this->assertStringContainsString('<p><b>COR:</b></p></td><td><p></p>', $body);
+        $this->assertStringContainsString('Assinatura: ______', $body);
+        $this->assertStringNotContainsString('EM_BRANCO', $body);
+    }
+
     public function test_body_is_the_word_html_even_without_tables()
     {
         $service = new class(new WordImportService(), new OpenAIResponsesClient()) extends PeticaoModeloAiBuilderService {
