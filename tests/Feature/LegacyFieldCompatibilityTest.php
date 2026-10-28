@@ -45,6 +45,12 @@ class LegacyFieldCompatibilityTest extends TestCase
             'tipo' => 'TEXTAREA', 'comportamento' => '', 'ordem' => 4,
             'valor_padrao' => '<p>Texto predefinido</p>', 'eventos_frontend' => '[]',
         ]));
+        // Campo de texto com valor padrao (ex.: ESTADO CIVIL = "nao informado").
+        DB::table('peticao_modelo_campos')->insert(array_merge($base, [
+            'id' => 8005, 'legacy_input_id' => 8005, 'rotulo' => 'ESTADO CIVIL', 'token' => '@campo8005@',
+            'tipo' => 'TEXT', 'comportamento' => '', 'ordem' => 5,
+            'valor_padrao' => 'não informado', 'eventos_frontend' => '[]',
+        ]));
         DB::table('peticao_modelo_campo_opcoes')->insert([
             ['campo_id' => 8003, 'rotulo' => 'SIM', 'valor_retorno' => 'DEFERIDO', 'ordem' => 1, 'created_at' => now(), 'updated_at' => now()],
             ['campo_id' => 8003, 'rotulo' => 'NÃO', 'valor_retorno' => 'INDEFERIDO', 'ordem' => 2, 'created_at' => now(), 'updated_at' => now()],
@@ -65,6 +71,8 @@ class LegacyFieldCompatibilityTest extends TestCase
             ->assertSee('type="radio"', false)
             ->assertSee('class="secondary js-open-rich-editor"', false)
             ->assertSee('Texto predefinido', false)
+            ->assertSee('name="campo_8005"', false)
+            ->assertSee('value="não informado"', false)
             ->assertSee('function formatProcess(value)', false)
             ->assertSee("raw.indexOf('diasemana(this)')", false);
         $model = PeticaoModelo::findOrFail(80);

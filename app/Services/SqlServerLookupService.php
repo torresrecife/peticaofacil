@@ -155,6 +155,9 @@ class SqlServerLookupService
             'PWD' => $config->senha_db,
             'Database' => $config->data_db,
             'CharacterSet' => 'UTF-8',
+            // Sem limite, o driver espera ~15s por tentativa quando o servidor
+            // esta fora do ar, e a tela de montagem conecta mais de uma vez.
+            'LoginTimeout' => (int) config('database.sqlsrv_login_timeout', 5),
         ]);
     }
 }

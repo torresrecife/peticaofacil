@@ -394,7 +394,8 @@
                             <input
                                 id="campo{{ $campo->id_input }}"
                                 name="campo_{{ $campo->id_input }}"
-                                value="{{ $values['campo_'.$campo->id_input] ?? '' }}"
+                                {{-- Sem valor ainda (formulario novo), vale o texto padrao do campo (ex.: "nao informado"). --}}
+                                value="{{ array_key_exists('campo_'.$campo->id_input, $values) ? ($values['campo_'.$campo->id_input] ?? '') : ($campo->texto_padrao ?? '') }}"
                                 @if($campo->input_focu || $campo->input_load || $campo->input_blur)
                                     class="js-frontend-event-field"
                                     data-event-focus="{{ e($campo->input_focu) }}"
