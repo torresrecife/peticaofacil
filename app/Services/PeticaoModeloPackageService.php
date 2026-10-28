@@ -47,7 +47,12 @@ class PeticaoModeloPackageService
             $row['prefixo'] = $this->portableText($campo->prefixo, $keys);
             $row['sufixo'] = $this->portableText($campo->sufixo, $keys);
             $row['valor_padrao'] = $this->portableText($campo->valor_padrao, $keys);
-            $row['eventos_frontend'] = $this->portableEvents((array) ($campo->eventos_frontend ?: []), $keys);
+            // Opcao citada por numero num script (alteraInput): {{option_id:campo:posicao}}.
+            $optionRefs = [];
+            foreach (array_values($campo->opcoes->all()) as $position => $opcao) {
+                $optionRefs[(int) $opcao->id_dados] = '{{option_id:' . $row['key'] . ':' . $position . '}}';
+            }
+            $row['eventos_frontend'] = $this->portableEvents((array) ($campo->eventos_frontend ?: []), $keys, $optionRefs);
 
             $listName = $this->listName($campo);
             if ($listName !== null) {
@@ -142,11 +147,49 @@ class PeticaoModeloPackageService
             return $text;
         }
 
-        return preg_replace_callback('/@campo(\d+)@/i', function ($matches) use ($keys) {
-            $id = (int) $matches[1];
+        // A forma do marcador decide maiusculas/iniciais (@CAMPO1@, @Campo1@) e
+        // _pre/_pos traz o prefixo/sufixo: nesses casos so o numero vira
+        // referencia, para a forma chegar igual no destino.
+        return preg_replace_callback('/@(campo)(\d+)(_pre|_pos)?@/i', function ($matches) use ($keys) {
+            $id = (int) $matches[2];
+            if (!isset($keys[$id])) {
+                return $matches[0];
+            }
+            $suffix = isset($matches[3]) ? $matches[3] : '';
+            if ($matches[1] === 'campo' && $suffix === '') {
+                return '{{field:' . $keys[$id] . '}}';
+            }
 
-            return isset($keys[$id]) ? '{{field:' . $keys[$id] . '}}' : $matches[0];
+            return '@' . $matches[1] . '{{field_id:' . $keys[$id] . '}}' . $suffix . '@';
         }, $text);
+    }
+
+    /**
+     * Configuracao da dinamica (tela de edicao) guarda os campos pelo numero:
+     * alvo, pessoa, documento, alvos[] e preenche[].alvo.
+     */
+    protected function portableDynamic(array $config, array $keys)
+    {
+        $reference = function ($id) use ($keys) {
+            return isset($keys[(int) $id]) ? '{{field_id:' . $keys[(int) $id] . '}}' : $id;
+        };
+        foreach (['alvo', 'pessoa', 'documento'] as $name) {
+            if (isset($config[$name]) && is_numeric($config[$name])) {
+                $config[$name] = $reference($config[$name]);
+            }
+        }
+        if (isset($config['alvos']) && is_array($config['alvos'])) {
+            $config['alvos'] = array_map($reference, $config['alvos']);
+        }
+        if (isset($config['preenche']) && is_array($config['preenche'])) {
+            foreach ($config['preenche'] as $index => $fill) {
+                if (is_array($fill) && isset($fill['alvo'])) {
+                    $config['preenche'][$index]['alvo'] = $reference($fill['alvo']);
+                }
+            }
+        }
+
+        return $config;
     }
 
     protected function portableDeep($value, array $keys)
@@ -162,9 +205,13 @@ class PeticaoModeloPackageService
         return $this->portableText($value, $keys);
     }
 
-    protected function portableEvents(array $events, array $keys)
+    protected function portableEvents(array $events, array $keys, array $optionRefs = [])
     {
         foreach ($events as $name => $value) {
+            if ($name === 'dinamica' && is_array($value)) {
+                $events[$name] = $this->portableDynamic($value, $keys);
+                continue;
+            }
             if ($name === 'conditional' && is_array($value)) {
                 $targets = [];
                 foreach ((array) ($value['target_ids'] ?? []) as $targetId) {
@@ -177,7 +224,7 @@ class PeticaoModeloPackageService
             }
 
             $events[$name] = is_string($value)
-                ? $this->portableScript($value, $keys)
+                ? $this->portableScript($value, $keys, $optionRefs)
                 : $this->portableDeep($value, $keys);
         }
 
@@ -188,13 +235,30 @@ class PeticaoModeloPackageService
      * Os eventos legados citam campos de tres formas: campoN (em seletores e
      * listas), numeros soltos em funcoes conhecidas e o marcador @campoN@.
      */
-    protected function portableScript($script, array $keys)
+    protected function portableScript($script, array $keys, array $optionRefs = [])
     {
         $reference = function ($id) use ($keys) {
             $id = (int) $id;
 
             return isset($keys[$id]) ? '{{field_id:' . $keys[$id] . '}}' : (string) $id;
         };
+
+        // Qualificacao automatica: merge_fields("pessoa |PESSOA|DOCUMENTO","ALVO").
+        $script = preg_replace_callback('/\bmerge_fields\(([^)]*)\)/i', function ($matches) use ($reference) {
+            return 'merge_fields(' . preg_replace_callback('/(?<![\w{])(\d+)(?![\w}])/', function ($number) use ($reference) {
+                return $reference($number[1]);
+            }, $matches[1]) . ')';
+        }, $script);
+
+        // Tipo de pessoa: alteraInput(this, CAMPO_DOCUMENTO, OPCAO_FISICA, OPCAO_JURIDICA).
+        // As opcoes tambem ganham outro numero no destino.
+        $script = preg_replace_callback('/\balteraInput\(\s*this\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i', function ($matches) use ($reference, $optionRefs) {
+            $option = function ($id) use ($optionRefs) {
+                return isset($optionRefs[(int) $id]) ? $optionRefs[(int) $id] : $id;
+            };
+
+            return 'alteraInput(this,' . $reference($matches[1]) . ',' . $option($matches[2]) . ',' . $option($matches[3]) . ')';
+        }, $script);
 
         // "campo12" como o formulario o conhece: em seletores (#campo12, .dis_campo12)
         // e em listas ("campo12_|_campo13"). Ficam de fora os marcadores (@campo12@,

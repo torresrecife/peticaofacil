@@ -169,6 +169,65 @@ class ModeloPackageTransferTest extends TestCase
         $this->assertStringContainsString('Cabecalho JOAO', $html);
     }
 
+    public function test_marker_case_qualification_and_person_type_survive_the_transfer()
+    {
+        $this->seedDependencies();
+        DB::table('peticao_modelos')->insert([
+            'id' => 501, 'legacy_cliente_id' => 3, 'legacy_setor_id' => 4, 'legacy_sql_config_id' => 54,
+            'nome' => 'INICIAL TESTE', 'slug' => 'inicial-teste', 'status' => 'ativo', 'arquivo_padrao' => 'pdf',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('peticao_modelo_paragrafos')->insert([
+            'id' => 901, 'modelo_id' => 501, 'titulo' => 'Corpo', 'ordem' => 1, 'visivel' => 1, 'ativo' => 1,
+            'conteudo_html' => '<p>Em face de @CAMPO2103@, @campo2102@ @Campo2103@@campo2103_pos@</p>',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $base = ['modelo_id' => 501, 'legacy_input_id' => null, 'sufixo' => null, 'colunas_layout' => 1, 'linhas_layout' => 0, 'obrigatorio' => 1,
+            'visivel' => 1, 'gera_nome_arquivo' => 0, 'created_at' => now(), 'updated_at' => now()];
+        DB::table('peticao_modelo_campos')->insert([
+            array_merge($base, ['id' => 2100, 'rotulo' => 'TIPO DE PESSOA', 'token' => '@campo2100@', 'tipo' => 'SELECT', 'ordem' => 1,
+                'eventos_frontend' => json_encode(['focus' => 'alteraInput(this,2101,80,81);', 'dinamica' => ['tipo' => 'tipo_pessoa', 'alvo' => 2101]])]),
+            array_merge($base, ['id' => 2101, 'rotulo' => 'CPF/CNPJ', 'token' => '@campo2101@', 'tipo' => 'TEXT', 'ordem' => 2, 'eventos_frontend' => '[]']),
+            array_merge($base, ['id' => 2102, 'rotulo' => 'QUALIFICACAO', 'token' => '@campo2102@', 'tipo' => 'TEXT', 'ordem' => 3,
+                'eventos_frontend' => json_encode(['focus' => 'merge_fields("pessoa |2100|2101","2102");', 'dinamica' => ['tipo' => 'qualificacao', 'pessoa' => 2100, 'documento' => 2101]])]),
+            array_merge($base, ['id' => 2103, 'rotulo' => 'REU', 'token' => '@campo2103@', 'tipo' => 'TEXT', 'ordem' => 4, 'sufixo' => ' (reu)', 'eventos_frontend' => '[]']),
+        ]);
+        DB::table('peticao_modelo_campo_opcoes')->insert([
+            ['id' => 80, 'campo_id' => 2100, 'legacy_dado_id' => null, 'rotulo' => 'FÍSICA', 'valor_retorno' => '', 'ordem' => 1, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 81, 'campo_id' => 2100, 'legacy_dado_id' => null, 'rotulo' => 'JURÍDICA', 'valor_retorno' => '', 'ordem' => 2, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        $package = app(PeticaoModeloPackageService::class)->export(PeticaoModelo::findOrFail(501));
+        $this->assertSame('<p>Em face de @CAMPO{{field_id:reu}}@, {{field:qualificacao}} @Campo{{field_id:reu}}@@campo{{field_id:reu}}_pos@</p>', $package['paragraphs'][0]['conteudo_html']);
+        $this->assertSame('alteraInput(this,{{field_id:cpfcnpj}},{{option_id:tipo_de_pessoa:0}},{{option_id:tipo_de_pessoa:1}});', $package['fields'][0]['eventos_frontend']['focus']);
+        $this->assertSame('merge_fields("pessoa |{{field_id:tipo_de_pessoa}}|{{field_id:cpfcnpj}}","{{field_id:qualificacao}}");', $package['fields'][2]['eventos_frontend']['focus']);
+        $json = json_encode($package);
+        foreach (['2100', '2101', '2102', '2103', '"80"', '"81"', ',80,', ',81)'] as $origin) {
+            $this->assertStringNotContainsString($origin, $json);
+        }
+
+        $path = $this->writePackage($package);
+        $this->turnIntoDestination();
+        $this->assertSame(0, Artisan::call('peticao:modelo-stone-import', ['--path' => $path, '--activate' => true]), Artisan::output());
+
+        $model = PeticaoModelo::where('slug', 'inicial-teste')->firstOrFail();
+        list($pessoa, $documento, $qualificacao, $reu) = PeticaoModeloCampo::where('modelo_id', $model->id)->orderBy('ordem')->get()->all();
+        $options = $pessoa->opcoes()->orderBy('ordem')->get();
+
+        $this->assertSame('<p>Em face de @CAMPO' . $reu->id . '@, @campo' . $qualificacao->id . '@ @Campo' . $reu->id . '@@campo' . $reu->id . '_pos@</p>', $model->paragrafos()->firstOrFail()->conteudo_html);
+        $this->assertSame('alteraInput(this,' . $documento->id . ',' . $options[0]->id_dados . ',' . $options[1]->id_dados . ');', $pessoa->eventos_frontend['focus']);
+        $this->assertSame(['tipo' => 'tipo_pessoa', 'alvo' => (int) $documento->id], $pessoa->eventos_frontend['dinamica']);
+        $this->assertSame('merge_fields("pessoa |' . $pessoa->id . '|' . $documento->id . '","' . $qualificacao->id . '");', $qualificacao->eventos_frontend['focus']);
+        $this->assertSame(['tipo' => 'qualificacao', 'pessoa' => (int) $pessoa->id, 'documento' => (int) $documento->id], $qualificacao->eventos_frontend['dinamica']);
+
+        // A forma do marcador continua valendo no destino.
+        $html = app(PeticaoComposerService::class)->compose($model->fresh(), [
+            'campo_' . $reu->id => 'joao da silva',
+            'campo_' . $qualificacao->id => 'pessoa física',
+        ])['html'];
+        $this->assertStringContainsString('Em face de JOAO DA SILVA, pessoa física Joao da Silva (reu)', $html);
+    }
+
     public function test_importing_again_updates_the_same_model_without_leaving_old_fields_behind()
     {
         $this->seedOrigin();

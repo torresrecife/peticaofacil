@@ -431,21 +431,17 @@ class ImportStoneExecutionModel extends Command
             $created[] = [$field, is_array($options) ? $options : []];
         }
 
-        // 2a passada: com todos os IDs conhecidos, troca as referencias.
+        // 2a passada: opcoes (os scripts tambem citam o numero delas).
         foreach ($created as $pair) {
             list($field, $options) = $pair;
-
-            $field->eventos_frontend = $this->resolveEvents($field->eventos_frontend, $map);
-            $field->prefixo = $this->resolveReferences($field->prefixo, $map);
-            $field->sufixo = $this->resolveReferences($field->sufixo, $map);
-            $field->valor_padrao = $this->resolveReferences($field->valor_padrao, $map);
-            $field->save();
+            $key = array_search('@campo' . $field->id . '@', $map, true);
+            $key = $key ? substr($key, strlen('{{field:'), -2) : null;
 
             foreach (array_values($options) as $index => $option) {
                 if (!is_array($option)) {
                     continue;
                 }
-                PeticaoModeloCampoOpcao::create([
+                $opcao = PeticaoModeloCampoOpcao::create([
                     'campo_id' => $field->id,
                     'legacy_dado_id' => null,
                     'rotulo' => (string) ($option['rotulo'] ?? ''),
@@ -453,7 +449,21 @@ class ImportStoneExecutionModel extends Command
                     'valores_extras' => $option['valores_extras'] ?? null,
                     'ordem' => (int) ($option['ordem'] ?? $index),
                 ]);
+                if ($key !== null) {
+                    $map['{{option_id:' . $key . ':' . $index . '}}'] = (string) $opcao->id_dados;
+                }
             }
+        }
+
+        // 3a passada: com todos os IDs conhecidos, troca as referencias.
+        foreach ($created as $pair) {
+            list($field) = $pair;
+
+            $field->eventos_frontend = $this->resolveEvents($field->eventos_frontend, $map);
+            $field->prefixo = $this->resolveReferences($field->prefixo, $map);
+            $field->sufixo = $this->resolveReferences($field->sufixo, $map);
+            $field->valor_padrao = $this->resolveReferences($field->valor_padrao, $map);
+            $field->save();
         }
 
         $model->cabecalho_html = $this->resolveReferences($model->cabecalho_html, $map);
@@ -483,6 +493,22 @@ class ImportStoneExecutionModel extends Command
         $events = $this->resolveReferences($events, $map);
         if (isset($events['conditional']['target_ids']) && is_array($events['conditional']['target_ids'])) {
             $events['conditional']['target_ids'] = array_values(array_filter(array_map('intval', $events['conditional']['target_ids'])));
+        }
+        // A configuracao da dinamica guarda os campos como numero.
+        if (isset($events['dinamica']) && is_array($events['dinamica'])) {
+            foreach (['alvo', 'pessoa', 'documento'] as $name) {
+                if (isset($events['dinamica'][$name]) && is_numeric($events['dinamica'][$name])) {
+                    $events['dinamica'][$name] = (int) $events['dinamica'][$name];
+                }
+            }
+            if (isset($events['dinamica']['alvos']) && is_array($events['dinamica']['alvos'])) {
+                $events['dinamica']['alvos'] = array_map('intval', $events['dinamica']['alvos']);
+            }
+            foreach ((array) ($events['dinamica']['preenche'] ?? []) as $index => $fill) {
+                if (is_array($fill) && isset($fill['alvo'])) {
+                    $events['dinamica']['preenche'][$index]['alvo'] = (int) $fill['alvo'];
+                }
+            }
         }
 
         return $events;
