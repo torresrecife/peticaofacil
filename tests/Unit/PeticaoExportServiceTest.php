@@ -75,4 +75,56 @@ class PeticaoExportServiceTest extends TestCase
         $this->assertTrue($style['font']['italic']);
         $this->assertSame('cccccc', $style['font']['color']);
     }
+
+    public function test_logo_header_embedded_in_the_body_is_removed_once()
+    {
+        $service = new class extends PeticaoExportService {
+            public function stripForTest($body, $header)
+            {
+                return $this->stripEmbeddedHeaderFooter($body, $header);
+            }
+        };
+        // Cabecalho dos modelos VOLKSWAGEN: so o logotipo. O corpo chega saneado.
+        $header = '<div style="text-align:right"><img alt="" src="/peticaofacil/img/cabecalho.jpg" style="height:87px; width:196px" /></div>';
+        $body = '<div style="text-align:right"><img alt="" src="/peticaofacil/img/cabecalho.jpg" style="height:87px; width:196px"></div><p>EXCELENTISSIMO</p>';
+
+        $this->assertSame('<p>EXCELENTISSIMO</p>', $service->stripForTest($body, $header));
+        // Imagem diferente no inicio do corpo continua.
+        $other = '<p><img src="/outra.jpg"></p><p>Texto</p>';
+        $this->assertSame($other, $service->stripForTest($other, $header));
+    }
+
+    public function test_word_export_keeps_numbered_lists_and_blocks_inside_divs()
+    {
+        $service = new class extends PeticaoExportService {
+            public function documentXmlForTest($html)
+            {
+                $docx = $this->renderWordDocumentFromLayout(['title' => 't', 'body_html' => $html, 'header_html' => '', 'footer_html' => '']);
+                $path = tempnam(sys_get_temp_dir(), 'docx');
+                file_put_contents($path, $docx);
+                $zip = new \ZipArchive();
+                $zip->open($path);
+                $xml = $zip->getFromName('word/document.xml');
+                $zip->close();
+                @unlink($path);
+
+                return $xml;
+            }
+        };
+
+        $xml = $service->documentXmlForTest(
+            '<p>Antes</p><ol start="3"><li><p>Item tres</p></li><li>Item quatro</li></ol><ol type="i"><li>romano</li></ol>'
+            . '<ul><li>bala</li></ul><div class="peticao-notas"><hr><p>Nota um</p><p>Nota dois</p></div><p>Depois</p>'
+        );
+        preg_match_all('/<w:p[ >].*?<\/w:p>/s', $xml, $paragraphs);
+        $texts = array_values(array_filter(array_map(function ($paragraph) {
+            preg_match_all('/<w:t[^>]*>([^<]*)<\/w:t>/', $paragraph, $runs);
+
+            return trim(preg_replace('/\s+/', ' ', implode('', $runs[1])));
+        }, $paragraphs[0])));
+
+        $this->assertSame(['Antes', '3. Item tres', '4. Item quatro', 'i. romano', '• bala', 'Nota um', 'Nota dois', 'Depois'], $texts);
+        $this->assertStringContainsString('w:hanging="360"', $xml);
+        $this->assertStringContainsString('<w:bottom', $xml); // linha (hr) antes das notas
+    }
 }

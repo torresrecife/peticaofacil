@@ -838,50 +838,173 @@ class PeticaoExportService
             return false;
         }
 
+        return $this->appendNativeDocxBlocks($container, $scope, $dom);
+    }
+
+    /** Blocos que podem conter outros blocos (a peca importada do Word usa div/center). */
+    const DOCX_CONTAINER_TAGS = ['div', 'center', 'section', 'article', 'blockquote', 'main', 'header', 'footer'];
+
+    /** Tags que abrem um bloco proprio no Word. */
+    const DOCX_BLOCK_TAGS = ['p', 'div', 'table', 'ol', 'ul', 'li', 'hr', 'center', 'section', 'article', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+
+    /**
+     * Escreve no Word cada bloco do HTML, na ordem. Antes, lista (ol/ul), linha
+     * (hr) e titulo (h1..h6) eram pulados, e um div com varios paragrafos virava
+     * um paragrafo so (notas de rodape, tabela do veiculo dentro de <center>).
+     */
+    protected function appendNativeDocxBlocks($container, \DOMNode $scope, \DOMDocument $dom)
+    {
         $handled = false;
 
-        foreach ($scope->childNodes as $childNode) {
-            if ($childNode->nodeType === XML_TEXT_NODE && trim($childNode->nodeValue) === '') {
+        foreach (iterator_to_array($scope->childNodes) as $childNode) {
+            if ($childNode->nodeType === XML_TEXT_NODE) {
+                $text = trim(str_replace("\xC2\xA0", ' ', (string) $childNode->nodeValue));
+                if ($text !== '') {
+                    $wrapper = $dom->createElement('p');
+                    $wrapper->appendChild($childNode->cloneNode(true));
+                    $this->appendNativeDocxTextBlock($container, $wrapper);
+                    $handled = true;
+                }
                 continue;
             }
 
             if ($childNode->nodeType !== XML_ELEMENT_NODE) {
-                $handled = false;
                 continue;
             }
 
             $tag = strtolower($childNode->nodeName);
 
             if ($tag === 'table') {
-                $handled = $this->appendNativePhpWordTable($container, $dom->saveHTML($childNode)) || $handled;
-                continue;
-            }
-
-            if (in_array($tag, ['p', 'div', 'li'], true)) {
-                if ($this->nodeContainsOnlyImage($childNode)) {
-                    $imageNode = $this->getFirstDescendantByTagName($childNode, 'img');
-                    if ($imageNode instanceof \DOMElement) {
-                        $this->appendNativeDocxImage($container, $imageNode, $childNode);
-                        $handled = true;
-                        continue;
-                    }
-                }
-
-                if ($this->isDocxEmptyParagraphNode($childNode)) {
-                    $this->appendNativeDocxEmptyParagraph($container, $childNode);
-                    $handled = true;
-                    continue;
-                }
-
-                $this->appendNativeDocxTextBlock($container, $childNode);
+                $this->appendNativePhpWordTable($container, $dom->saveHTML($childNode));
                 $handled = true;
                 continue;
             }
 
-            $handled = false;
+            if ($tag === 'ol' || $tag === 'ul') {
+                $this->appendNativeDocxList($container, $childNode, $dom);
+                $handled = true;
+                continue;
+            }
+
+            if ($tag === 'hr') {
+                $container->addText('', $this->getDefaultDocxBodyFontStyle(), [
+                    'spaceBefore' => 0, 'spaceAfter' => 0, 'borderBottomSize' => 6, 'borderBottomColor' => '000000',
+                ]);
+                $handled = true;
+                continue;
+            }
+
+            if (in_array($tag, self::DOCX_CONTAINER_TAGS, true) && $this->hasDocxBlockChildren($childNode)) {
+                $handled = $this->appendNativeDocxBlocks($container, $childNode, $dom) || $handled;
+                continue;
+            }
+
+            if ($this->nodeContainsOnlyImage($childNode)) {
+                $imageNode = $this->getFirstDescendantByTagName($childNode, 'img');
+                if ($imageNode instanceof \DOMElement) {
+                    $this->appendNativeDocxImage($container, $imageNode, $childNode);
+                    $handled = true;
+                    continue;
+                }
+            }
+
+            if ($this->isDocxEmptyParagraphNode($childNode)) {
+                $this->appendNativeDocxEmptyParagraph($container, $childNode);
+                $handled = true;
+                continue;
+            }
+
+            // p, li, h1..h6, div simples e o que mais vier solto: um paragrafo.
+            $this->appendNativeDocxTextBlock($container, $childNode);
+            $handled = true;
         }
 
         return $handled;
+    }
+
+    protected function hasDocxBlockChildren(\DOMNode $node)
+    {
+        foreach ($node->childNodes as $child) {
+            if ($child->nodeType === XML_ELEMENT_NODE && in_array(strtolower($child->nodeName), self::DOCX_BLOCK_TAGS, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Lista numerada ou com marcador: cada item vira paragrafo com recuo e o
+     * numero (1., a., i.) ou o marcador na frente, como no Word.
+     */
+    protected function appendNativeDocxList($container, \DOMElement $list, \DOMDocument $dom, $level = 0)
+    {
+        $ordered = strtolower($list->nodeName) === 'ol';
+        $number = $list->hasAttribute('start') ? max(1, (int) $list->getAttribute('start')) : 1;
+        $type = $list->getAttribute('type') ?: '1';
+        $indent = 720 * ($level + 1);
+
+        foreach (iterator_to_array($list->childNodes) as $item) {
+            if ($item->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+            if (in_array(strtolower($item->nodeName), ['ol', 'ul'], true)) {
+                $this->appendNativeDocxList($container, $item, $dom, $level + 1);
+                continue;
+            }
+
+            $marker = $ordered ? $this->docxListMarker($number++, $type) . '.' : '•';
+            $blocks = [];
+            $nested = [];
+            foreach ($item->childNodes as $child) {
+                if ($child->nodeType !== XML_ELEMENT_NODE) {
+                    continue;
+                }
+                $childTag = strtolower($child->nodeName);
+                if ($childTag === 'ol' || $childTag === 'ul') {
+                    $nested[] = $child;
+                } elseif (in_array($childTag, ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true)) {
+                    $blocks[] = $child;
+                }
+            }
+            if (!$blocks) {
+                $blocks = [$item];
+            }
+
+            foreach ($blocks as $index => $block) {
+                $this->appendNativeDocxTextBlock($container, $block, $index === 0 ? $marker : null, $indent);
+            }
+            foreach ($nested as $nestedList) {
+                $this->appendNativeDocxList($container, $nestedList, $dom, $level + 1);
+            }
+        }
+    }
+
+    protected function docxListMarker($number, $type)
+    {
+        if ($type === 'a' || $type === 'A') {
+            $letters = '';
+            for ($n = $number; $n > 0; $n = intdiv($n - 1, 26)) {
+                $letters = chr(97 + (($n - 1) % 26)) . $letters;
+            }
+
+            return $type === 'A' ? strtoupper($letters) : $letters;
+        }
+        if ($type === 'i' || $type === 'I') {
+            $map = ['m' => 1000, 'cm' => 900, 'd' => 500, 'cd' => 400, 'c' => 100, 'xc' => 90, 'l' => 50, 'xl' => 40, 'x' => 10, 'ix' => 9, 'v' => 5, 'iv' => 4, 'i' => 1];
+            $roman = '';
+            $n = $number;
+            foreach ($map as $symbol => $value) {
+                while ($n >= $value) {
+                    $roman .= $symbol;
+                    $n -= $value;
+                }
+            }
+
+            return $type === 'I' ? strtoupper($roman) : $roman;
+        }
+
+        return (string) $number;
     }
 
     protected function appendNativeDocxHeaderFooter($container, $html)
@@ -1150,12 +1273,21 @@ class PeticaoExportService
         $container->addImage($src, $style);
     }
 
-    protected function appendNativeDocxTextBlock($container, \DOMNode $node)
+    protected function appendNativeDocxTextBlock($container, \DOMNode $node, $listMarker = null, $listIndentTwip = null)
     {
         $textStyle = $this->extractDocxTextStyle($node);
         $paragraphStyle = $this->resolveDocxParagraphStyle($node, $textStyle['lineHeight'] ?? null, false);
+        if ($listIndentTwip !== null) {
+            // Item de lista: recuo do item; o numero fica pendurado a esquerda.
+            $paragraphStyle['indentation'] = $listMarker !== null
+                ? ['left' => $listIndentTwip, 'firstLine' => null, 'hanging' => 360]
+                : ['left' => $listIndentTwip];
+        }
         $textRun = $container->addTextRun($paragraphStyle);
         $baseFontStyle = !empty($textStyle['font']) ? $textStyle['font'] : $this->getDefaultDocxBodyFontStyle();
+        if ($listMarker !== null) {
+            $textRun->addText($listMarker . "\t", $baseFontStyle);
+        }
         $hasContent = $this->appendNativeDocxInlineContent($textRun, $node, $baseFontStyle);
 
         if (!$hasContent) {
@@ -1209,6 +1341,12 @@ class PeticaoExportService
 
             $childFontStyle = $this->mergeDocxFontStyles($inheritedFontStyle, $this->extractDocxOwnFontStyle($child));
             $hasContent = $this->appendNativeDocxInlineContent($container, $child, $childFontStyle) || $hasContent;
+
+            // Rotulo de item de lista (<span style="display: inline-block; min-width: ...">a)</span>):
+            // no Word, a tabulacao leva o texto ate o recuo do item.
+            if ($tag === 'span' && $child instanceof \DOMElement && preg_match('/inline-block/i', $child->getAttribute('style')) && preg_match('/min-width/i', $child->getAttribute('style'))) {
+                $container->addText("\t", $childFontStyle);
+            }
         }
 
         return $hasContent;
@@ -1287,7 +1425,14 @@ class PeticaoExportService
 
             if ($textIndent !== null) {
                 $paragraphStyle['indentation'] = $paragraphStyle['indentation'] ?? [];
-                $paragraphStyle['indentation']['firstLine'] = $this->cssSizeToTwip($textIndent);
+                $indentTwip = $this->cssSizeToTwip(ltrim(trim($textIndent), '-'));
+                if (strpos(trim($textIndent), '-') === 0) {
+                    // Recuo negativo = rotulo pendurado (item de lista: "a)", "d.1)").
+                    $paragraphStyle['indentation']['firstLine'] = null;
+                    $paragraphStyle['indentation']['hanging'] = $indentTwip;
+                } else {
+                    $paragraphStyle['indentation']['firstLine'] = $indentTwip;
+                }
             }
         }
 
@@ -2343,8 +2488,20 @@ class PeticaoExportService
         $conteudoHtml = (string) $conteudoHtml;
 
         if (trim((string) $cabecalhoHtml) !== '') {
-            $conteudoHtml = preg_replace('/^\s*' . preg_quote(trim((string) $cabecalhoHtml), '/') . '\s*/s', '', $conteudoHtml, 1);
+            // O corpo chega ja saneado (HtmlSanitizer); o cabecalho do modelo, nao.
+            // Compara com as duas formas para o cabecalho embutido sair do corpo.
+            $header = trim((string) $cabecalhoHtml);
+            foreach (array_unique([$header, trim(\App\Support\HtmlSanitizer::clean($header))]) as $candidate) {
+                if ($candidate === '') {
+                    continue;
+                }
+                $conteudoHtml = preg_replace('/^\s*' . preg_quote($candidate, '/') . '\s*/s', '', $conteudoHtml, 1, $count);
+                if ($count > 0) {
+                    break;
+                }
+            }
             $conteudoHtml = $this->stripLeadingImageHeaderBlock($conteudoHtml);
+            $conteudoHtml = $this->stripLeadingHeaderImage($conteudoHtml, $header);
         }
 
         if (trim((string) $rodapeHtml) !== '') {
@@ -2354,6 +2511,27 @@ class PeticaoExportService
         }
 
         return $conteudoHtml;
+    }
+
+    /**
+     * Cabecalho que e so o logotipo num bloco (modelos VOLKSWAGEN:
+     * <div style="text-align:right"><img src=".../cabecalho.jpg"></div>): se o
+     * corpo comeca com um bloco que so tem essa mesma imagem, ele sai, porque o
+     * PDF/Word ja poe o cabecalho em toda pagina (o logotipo saia duas vezes).
+     */
+    protected function stripLeadingHeaderImage($html, $headerHtml)
+    {
+        if (!preg_match('/<img\b[^>]*\bsrc\s*=\s*["\']([^"\']+)["\']/i', (string) $headerHtml, $image)) {
+            return $html;
+        }
+        if (trim(strip_tags((string) $headerHtml)) !== '') {
+            return $html; // cabecalho com texto: so a comparacao exata vale
+        }
+
+        $src = preg_quote($image[1], '/');
+        $pattern = '/^\s*<(div|p)\b[^>]*>\s*(?:<(?:span|a|strong|b)\b[^>]*>\s*)*<img\b[^>]*\bsrc\s*=\s*["\']' . $src . '["\'][^>]*>\s*(?:<\/(?:span|a|strong|b)>\s*)*<\/\1>\s*/is';
+
+        return preg_replace($pattern, '', (string) $html, 1);
     }
 
     protected function stripLeadingImageHeaderBlock($html)
