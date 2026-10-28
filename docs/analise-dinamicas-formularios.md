@@ -313,3 +313,51 @@ O #243 já gravado continua sem estilo: é preciso importar o DOCX de novo.
   renavam). O valor entra com a letra do rótulo, e os marcadores que não viram campo voltam
   a ser espaço vazio ou `____`. Medido: os 7 dados do veículo saem como campos, ligados ao NEO.
 
+## 4h. Modelos VOLKSWAGEN – iniciais de busca e apreensão (4 DOCX) — 26/10/2026
+Pedido do Fabio: entregar prontos os modelos dos DOCX "INICIAL POSITIVA 1 CONTRATO",
+"MUDOU-SE/DESCONHECIDO/…/RECUSADO", "DEVEDOR AUSENTE/ENDEREÇO NÃO ATENDIDO" e "NÃO PROCURADO".
+- **Montagem dos modelos (#253 a #256 no local):** corpo = HTML do Word pelo importador (formatação,
+  caixas de texto, tabela do veículo, notas no fim). Os trechos com marca-texto amarelo no DOCX
+  (os dados de exemplo) viraram os campos. Os 4 modelos têm o mesmo conjunto de campos, em seções
+  (PROCESSO, RÉU, CONTRATO, INADIMPLEMENTO, VEÍCULO, ADVOGADO E DATA):
+  - NEO: comarca, réu, CPF/CNPJ (máscara), endereço/bairro/cidade/UF/CEP, veículo, código;
+  - QUALIFICAÇÃO automática pelo CPF/CNPJ ("pessoa física, inscrita no CPF sob o nº …"),
+    com TIPO DE PESSOA opcional (troca a máscara para CPF ou CNPJ);
+  - ESTADO CIVIL e PROFISSÃO já vêm "não informado" (o padrão do DOCX);
+  - valores com extenso automático (crédito, parcela, débito; o débito também é o valor da causa);
+  - UF DA OAB (lista OAB POR ESTADO) preenche a OAB das publicações e da assinatura;
+  - local da assinatura = comarca; data = hoje por extenso;
+  - "doc. xx" do demonstrativo e da notificação viraram campos;
+  - MUDOU-SE e AUSENTE: MOTIVO DA DEVOLUÇÃO é uma lista (no DOCX as opções vinham todas no texto
+    para apagar à mão); NÃO PROCURADO fica fixo.
+  - E-mail e bairro vazios não deixam vírgula solta.
+- **Correções de digitação dos DOCX:** "YEXCELENTÍSSIMO" (AUSENTE), "estado cívil", "cada mês..",
+  "CPF/CNPF" (substituído pela qualificação).
+- **Problemas do sistema encontrados e corrigidos no caminho:**
+  - PDF/Word com o **logotipo duas vezes** em todos os modelos cujo cabeçalho é só a imagem
+    (todos os VOLKSWAGEN, ex.: #19): o corpo já traz o cabeçalho e a exportação não o reconhecia.
+  - **Word sem as listas:** itens de `<ol>/<ul>` eram descartados (26 modelos ativos e 30 peças
+    salvas têm listas); blocos dentro de `div` viravam um parágrafo só. A exportação Word agora
+    percorre os blocos (listas com número/letra/romano e recuo, linha, títulos, blocos aninhados).
+  - Valor padrão só valia em TEXTAREA; agora vale também em campo de texto.
+  - NEO fora do ar travava a montagem ~20 s: `LoginTimeout` de 5 s na conexão.
+  - **Pacote de exportação de modelo** (levar para produção): perdia MAIÚSCULAS/Iniciais dos
+    marcadores e quebrava qualificação e tipo de pessoa (números de campo e de opção nos scripts).
+    O pacote passou a citar tudo por chave e a importação recria com os números do destino.
+  - Importação de DOCX: listas sem a margem do navegador (espichava a peça), sem fontes internas
+    do Word ("TimesNewRomanNormal"), sem linhas em branco no fim; campo que caía num exemplo em
+    letra miúda (7pt) usa a letra do parágrafo; repetições do mesmo trecho com formatação diferente
+    também viram o campo.
+- **Páginas (PDF do sistema × DOCX):** 6×5, 7×7, 6×7, 8×8. A diferença vem do cabeçalho/rodapé
+  padrão do escritório, maiores que os do DOCX.
+- **Produção:** os modelos foram exportados do local (Admin → Modelos → Exportar) e importados em
+  produção (#224 a #227) antes do deploy deste código. Depois do deploy, ver o checklist: o TIPO DE
+  PESSOA desses modelos precisa ser salvo de novo (o importador antigo não converteu as opções).
+- **Listas de vários níveis (27/10):** o LibreOffice exporta o item "a)" do 3º nível como
+  lista > item vazio > lista > item vazio > lista > item, e cada nível vazio desenhava o
+  próprio número ("1. 3. a." onde o Word mostra "a)"); o HTML também não guarda o formato do
+  número ("a)", "d.1)", "(i)"). Agora o importador converte o DOCX também para texto, onde cada
+  item vem com o rótulo e o nível do Word, e as listas viram parágrafos com o rótulo escrito e
+  recuo pendurado (no Word: tabulação + recuo pendurado). Os modelos #253–#256 foram corrigidos
+  no texto atual (mantendo as edições e os campos).
+

@@ -22,7 +22,7 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 ## Como rodar (no Laragon, terminal normal)
 - Testes: `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
   `_test` e `APP_ENV=testing` (há guarda em `tests/TestCase.php`).
-  Estado atual da suíte: **277 testes, OK**.
+  Estado atual da suíte: **287 testes, OK**.
 - Migrations: `php artisan migrate` (produção: `--force`).
 - Backfill de máscaras: `php artisan peticao:backfill-comportamento`
   (`--dry-run` é o padrão/relatório; `--apply` grava; `--modelo=`, `--overwrite`,
@@ -83,6 +83,12 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 - **Importação DOCX (25/10):** LibreOffice (caminho do perfil corrigido no Windows) +
   `App\Support\WordHtmlCleaner` (limpa o HTML, notas de rodapé no fim da peça); a IA só
   aponta os campos e o corpo é o HTML do Word.
+- **Modelos VOLKSWAGEN – iniciais de busca (26/10):** 4 modelos (#253–#256 no local) a partir
+  dos DOCX; já importados em produção (#224–#227) pela tela Exportar/Importar modelo. Correções
+  junto: logotipo duplicado, listas no Word, pacote de exportação portável (marcadores/qualificação/
+  tipo de pessoa), valor padrão em campo de texto.
+- **Cabeçalho padrão dos modelos (27/10):** tabela `configuracoes` (`App\Configuracao`), tela
+  Admin → Modelos → Cabeçalho padrão; vale para "Novo modelo" e importação com IA.
 - Teste de JS sem login: gerar o HTML da montagem como ADM pelo kernel do Laravel e
   abrir num Chromium headless (Playwright de `scripts/pdf-renderer`).
 

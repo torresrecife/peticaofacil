@@ -74,6 +74,10 @@ Migrations desta entrega (todas podem rodar mais de uma vez):
    máscara e campos "CPF/CNPJ" com máscara só de CPF, que cortava o CNPJ vindo do NEO
    em 11 dígitos. Só altera a máscara ausente ou incompatível.
 
+6. `2026_10_27_000100_create_configuracoes_table` — cria a tabela `configuracoes` e grava o
+   cabeçalho padrão dos modelos novos (o mesmo que estava fixo no código). Editável em
+   Admin → Modelos → **Cabeçalho padrão**.
+
 ## 4. Obrigatório e máscaras dos campos — **importante**
 
 A migração do legado gravou o "obrigatório" invertido (no legado `input_req = 2` é
@@ -157,6 +161,22 @@ desfazer seria inverter de novo).
 - [ ] Criar com IA a partir de um Word curto: a revisão mostra "No texto", "Extenso",
       opções com retorno e as dinâmicas propostas. Criar, conferir e inativar o modelo de
       teste.
+
+**Cabeçalho padrão (27/10)**
+- [ ] Admin → Modelos → Cabeçalho padrão: aparece o logotipo com o endereço do escritório.
+- [ ] "Novo modelo" já abre com esse cabeçalho.
+
+**Modelos VOLKSWAGEN – iniciais de busca (já importados em produção: #224 a #227)**
+- [ ] Foram importados com o importador antigo, que não converteu as opções do TIPO DE PESSOA
+      (o script ficou com `{{option_id:…}}`). Em cada um dos 4 modelos: Admin → Modelos → Editar →
+      campo **TIPO DE PESSOA** → conferir a dinâmica "Tipo de pessoa troca o campo do documento"
+      (alvo: CPF/CNPJ) → **Salvar** o campo. Os scripts são gerados de novo com os números certos.
+- [ ] ESTADO CIVIL e PROFISSÃO abrem com "não informado" (valor padrão em campo de texto).
+- [ ] Montar um deles com um código de processo VW: réu, CPF/CNPJ, endereço, comarca e veículo
+      vêm do NEO; escolher a UF da OAB preenche a OAB; QUALIFICAÇÃO sai "pessoa física, inscrita no CPF…".
+- [ ] Exportar em PDF e em Word: logotipo uma vez só no topo; no Word, os itens numerados
+      ("Da Necessidade de Decretação de Segredo de Justiça", 1., 2., …) aparecem.
+- [ ] Inativar as importações antigas do mesmo DOCX, se existirem em produção.
 
 ## 6. Se der errado
 
