@@ -31,5 +31,10 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('access-admin', function (User $user) {
             return $user->isAdmin();
         });
+
+        // Exportar/Importar modelo (pacote JSON): so o ADM, que cria no local e leva para producao.
+        Gate::define('transfer-models', function (User $user) {
+            return $user->nivel_usu === 'ADM';
+        });
     }
 }

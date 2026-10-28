@@ -398,6 +398,29 @@ class ModeloPackageTransferTest extends TestCase
         $this->assertSame(0, PeticaoModelo::count());
     }
 
+    public function test_only_adm_sees_and_uses_model_export_and_import()
+    {
+        $this->seedOrigin();
+        $manager = factory(User::class)->create(['nivel_usu' => 'GER', 'acesso_usu' => now()]);
+
+        $page = $this->actingAs($manager)->get('/admin/modelos-normalizados');
+        $page->assertStatus(200);
+        $page->assertDontSee('Importar modelo');
+        $page->assertDontSee('/exportar');
+        $this->actingAs($manager)->get('/admin/modelos-normalizados/500/exportar')->assertStatus(403);
+        $this->actingAs($manager)->post('/admin/modelos-normalizados/importar')->assertStatus(403);
+    }
+
+    public function test_adm_sees_model_export_and_import()
+    {
+        $this->seedOrigin();
+        $admin = factory(User::class)->create(['nivel_usu' => 'ADM', 'acesso_usu' => now()]);
+
+        $page = $this->actingAs($admin)->get('/admin/modelos-normalizados');
+        $page->assertSee('Importar modelo');
+        $page->assertSee('/exportar');
+    }
+
     private function postPackage(User $admin, array $package)
     {
         $directory = storage_path('app/modelo-pacotes');

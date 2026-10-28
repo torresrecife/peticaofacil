@@ -6,7 +6,9 @@
 <div class="topbar" style="margin-bottom:16px;">
     <h2 style="margin:0;">Modelos de peticao</h2>
     <div style="display:flex; align-items:center; justify-content:flex-end; gap:12px; margin-left:auto;">
+        @can('transfer-models')
         <form method="post" action="{{ route('admin.modelos-normalizados.import') }}" enctype="multipart/form-data" style="display:flex;gap:8px;align-items:center;">@csrf<input type="file" name="pacote" accept=".json,application/json" required><button type="submit">Importar modelo</button></form>
+        @endcan
         <a class="button secondary link" href="{{ route('admin.modelos-normalizados.padrao.edit') }}">Cabeçalho padrão</a>
         <a class="button link" href="{{ route('admin.modelos-normalizados.create') }}">Novo modelo</a>
     </div>
@@ -76,7 +78,7 @@
                         <div><strong>#{{ $modelo->id }}</strong> {{ $modelo->slug }}</div>
                         <div class="editor-note">{{ $modelo->paragrafos_count }} paragrafos, {{ $modelo->campos_count }} campos</div>
                     </td>
-                    <td><div style="display:inline-flex; align-items:center; gap:12px;"><a href="{{ route('admin.modelos-normalizados.edit', $modelo) }}">Editar</a><a href="{{ route('admin.modelos-normalizados.export', $modelo) }}">Exportar</a></div></td>
+                    <td><div style="display:inline-flex; align-items:center; gap:12px;"><a href="{{ route('admin.modelos-normalizados.edit', $modelo) }}">Editar</a>@can('transfer-models')<a href="{{ route('admin.modelos-normalizados.export', $modelo) }}">Exportar</a>@endcan</div></td>
                 </tr>
             @empty
                 <tr>
