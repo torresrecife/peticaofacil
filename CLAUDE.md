@@ -22,7 +22,7 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 ## Como rodar (no Laragon, terminal normal)
 - Testes: `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
   `_test` e `APP_ENV=testing` (há guarda em `tests/TestCase.php`).
-  Estado atual da suíte: **287 testes, OK**.
+  Estado atual da suíte: **291 testes, OK**.
 - Migrations: `php artisan migrate` (produção: `--force`).
 - Backfill de máscaras: `php artisan peticao:backfill-comportamento`
   (`--dry-run` é o padrão/relatório; `--apply` grava; `--modelo=`, `--overwrite`,
@@ -89,6 +89,9 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
   tipo de pessoa), valor padrão em campo de texto.
 - **Cabeçalho padrão dos modelos (27/10):** tabela `configuracoes` (`App\Configuracao`), tela
   Admin → Modelos → Cabeçalho padrão; vale para "Novo modelo" e importação com IA.
+- **Botão "Reportar bug" (28/10):** widget do Kanban (`C:\Users\fabio\Projetos\kanban`, projeto à parte)
+  incluído por `partials/bug-reporter.blade.php` no layout para quem está logado; liga com
+  `BUG_REPORTER_SCRIPT` + `BUG_REPORTER_TOKEN` no `.env` (vazio = sem botão). Envia nome/login/nível do usuário.
 - Teste de JS sem login: gerar o HTML da montagem como ADM pelo kernel do Laravel e
   abrir num Chromium headless (Playwright de `scripts/pdf-renderer`).
 
@@ -98,6 +101,8 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 - Auto-máscara feita (25/10): migration `2026_10_25_000100` (CPF/CNPJ/CEP pelo rótulo,
   `App\Support\CampoMascaraPorRotulo`) e PESSOA FÍSICA/JURÍDICA liga a máscara do
   documento mais próximo (`linkPersonTypeToDocument` na montagem). Telefone: nenhum campo.
+- Publicar o Kanban no servidor de produção (exige PHP 8.3+, o Petição Fácil roda em 7.2) e então
+  preencher `BUG_REPORTER_*` no `.env` de produção.
 - Varredura dos formulários dos demais clientes (motor já é genérico).
 - Excluir tabelas arquivadas `*_archive_*` (13) quando o sistema estiver estável.
 - Achado 4 (o que o nível GER pode na administração) — decisão do Fabio.

@@ -506,6 +506,7 @@
 @stack('scripts')
 @auth
 <script src="{{ asset('vendor/lucide/lucide.js') }}"></script>
+@include('partials.bug-reporter')
 @endauth
 @auth
 <script>

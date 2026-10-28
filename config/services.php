@@ -30,4 +30,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Botao "Reportar bug" (widget do Kanban): captura a tela e cria a tarefa no Kanban.
+    // Vazio = botao desligado. O token fica em Kanban > Configuracoes do projeto > Widget de bugs.
+    'bug_reporter' => [
+        'script' => env('BUG_REPORTER_SCRIPT'),
+        'token' => env('BUG_REPORTER_TOKEN'),
+    ],
+
 ];
