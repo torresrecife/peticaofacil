@@ -59,6 +59,7 @@ abstract class TestCase extends BaseTestCase
             'tp_tipo_tb',
             'clientes',
             'setores',
+            'configuracoes',
         ];
 
         Schema::disableForeignKeyConstraints();
@@ -71,6 +72,20 @@ abstract class TestCase extends BaseTestCase
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1');
         Schema::enableForeignKeyConstraints();
+
+        // Configuracoes gerais, com o valor inicial da migration 2026_10_27_000100.
+        $this->createOrResetTable('configuracoes', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('chave', 120)->unique();
+            $table->longText('valor')->nullable();
+            $table->timestamps();
+        });
+        DB::table('configuracoes')->insert([
+            'chave' => \App\Configuracao::CABECALHO_MODELO,
+            'valor' => \App\Configuracao::CABECALHO_PADRAO_INICIAL,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $this->createOrResetTable('setores', function (Blueprint $table) {
             $table->increments('id_setor');

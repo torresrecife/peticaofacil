@@ -81,6 +81,8 @@ Route::middleware(['auth', 'password.initial'])->group(function () {
         Route::redirect('modelos', 'admin/modelos-normalizados')->name('modelos.index');
         Route::get('modelos-normalizados', 'Admin\NormalizedTipoController@index')->name('modelos-normalizados.index');
         Route::get('modelos-normalizados/create', 'Admin\NormalizedTipoController@create')->name('modelos-normalizados.create');
+        Route::get('modelos-normalizados/cabecalho-padrao', 'Admin\ModeloPadraoController@edit')->name('modelos-normalizados.padrao.edit');
+        Route::put('modelos-normalizados/cabecalho-padrao', 'Admin\ModeloPadraoController@update')->name('modelos-normalizados.padrao.update');
         Route::post('modelos-normalizados/analisar-word', 'Admin\NormalizedTipoController@analyzeWord')->name('modelos-normalizados.analyze-word');
         Route::post('modelos-normalizados/criar-com-ia', 'Admin\NormalizedTipoController@createFromAi')->name('modelos-normalizados.create-ai');
         Route::post('modelos-normalizados', 'Admin\NormalizedTipoController@store')->name('modelos-normalizados.store');

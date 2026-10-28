@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Cliente;
+use App\Configuracao;
 use App\Http\Controllers\Controller;
 use App\ListaGrupo;
 use App\PeticaoModelo;
@@ -67,6 +68,7 @@ class NormalizedTipoController extends Controller
             'status' => 'ativo',
             'arquivo_padrao' => 'pdf',
             'cabecalho_html' => $this->defaultHeaderHtml(),
+            'rodape_html' => $this->defaultFooterHtml(),
             'metadata' => [],
         ]);
 
@@ -181,7 +183,7 @@ class NormalizedTipoController extends Controller
                     $opcao->save();
                 }
             }
-            $modelo->update(['cabecalho_html' => trim((string) $analysis['cabecalho_html']) !== '' ? $replace($analysis['cabecalho_html']) : $this->defaultHeaderHtml(), 'rodape_html' => $replace($analysis['rodape_html'])]);
+            $modelo->update(['cabecalho_html' => trim((string) $analysis['cabecalho_html']) !== '' ? $replace($analysis['cabecalho_html']) : $this->defaultHeaderHtml(), 'rodape_html' => trim((string) $analysis['rodape_html']) !== '' ? $replace($analysis['rodape_html']) : $this->defaultFooterHtml()]);
             foreach ($analysis['paragrafos'] as $paragraph) $modelo->paragrafos()->create(['titulo' => mb_strtoupper($paragraph['titulo'], 'UTF-8'), 'conteudo_html' => $replace($paragraph['conteudo_html']), 'ordem' => $paragraph['ordem'], 'visivel' => true, 'ativo' => true]);
             return $modelo;
         });
@@ -292,9 +294,15 @@ class NormalizedTipoController extends Controller
         }
     }
 
+    /** Cabecalho padrao salvo em Admin > Modelos > Cabecalho padrao. */
     protected function defaultHeaderHtml()
     {
-        return '<div style="text-align:right"><table border="0" style="border:0;height:100px;width:100%;padding:0;margin:0;"><tbody><tr><td style="border:0;vertical-align:middle;"><p><img alt="" src="/peticaofacil/img/userfiles/fabiotorres/images/cabecalho.jpg" style="float:left;" /></p></td><td style="border:0;vertical-align:middle;"><p style="text-align:right;margin-bottom:0;font-family:Tahoma,Geneva,sans-serif;font-size:9px">Rua Djalma Farias, 159, Torre&atilde;o - Recife - PE, CEP: 52.030-195</p><p style="text-align:right;margin-bottom:0;font-family:Tahoma,Geneva,sans-serif;font-size:9px">Fone: 55 (81) 3222.2159 | www.brunovanderlei.adv.br</p><p style="text-align:right;margin-bottom:0;font-family:Tahoma,Geneva,sans-serif;font-size:9px">E-mail: contato@bvaa.adv.br</p></td></tr></tbody></table></div>';
+        return Configuracao::cabecalhoModelo();
+    }
+
+    protected function defaultFooterHtml()
+    {
+        return Configuracao::rodapeModelo();
     }
 
     protected function uniqueAiToken($inputId, $campoId)
