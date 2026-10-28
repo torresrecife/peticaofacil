@@ -293,6 +293,13 @@ class PeticaoModeloAiBuilderService
      */
     protected function replaceOriginals($html, array $originals)
     {
+        // As notas de rodape (lista do fim) sao texto fixo: um numero de exemplo
+        // como "03" virava campo dentro do endereco de um site citado na nota.
+        $notesAt = strpos((string) $html, '<div class="peticao-notas"');
+        if ($notesAt !== false) {
+            return $this->replaceOriginals(substr($html, 0, $notesAt), $originals) . substr($html, $notesAt);
+        }
+
         $tagRanges = [];
         if (preg_match_all('/<[^>]*>/', $html, $tags, PREG_OFFSET_CAPTURE)) {
             foreach ($tags[0] as $tag) {
@@ -315,22 +322,20 @@ class PeticaoModeloAiBuilderService
             if (!preg_match_all($pattern, $html, $matches, PREG_OFFSET_CAPTURE)) {
                 preg_match_all($pattern . 'i', $html, $matches, PREG_OFFSET_CAPTURE);
             }
-            $found = false;
+            $plainStarts = [];
             foreach ($matches[0] ?? [] as $match) {
                 $start = $match[1];
                 $end = $start + strlen($match[0]);
                 if (!$insideTag($start, $end)) {
                     $candidates[] = ['start' => $start, 'end' => $end, 'field' => $index, 'order' => $original['order'], 'tags' => ''];
-                    $found = true;
+                    $plainStarts[$start] = true;
                 }
-            }
-            if ($found) {
-                continue;
             }
             // Trecho que atravessa formatacao (ex.: "<b>BANCO X</b>, pessoa
             // juridica..."): aceita tags de letra no meio. O token entra no
             // lugar do texto e as tags do meio ficam depois dele, vazias, para
-            // o HTML continuar fechado do mesmo jeito.
+            // o HTML continuar fechado do mesmo jeito. Vale tambem para as
+            // outras mencoes de um trecho ja achado sem formatacao no meio.
             $inlineTags = '(?:<\/?(?:b|strong|i|em|u|span|font|sup|sub|a)\b[^>]*>)*';
             $characters = preg_split('//u', $original['text'], -1, PREG_SPLIT_NO_EMPTY);
             if (count($characters) < 4 || count($characters) > 600) {
@@ -345,7 +350,7 @@ class PeticaoModeloAiBuilderService
             foreach ($matches[0] ?? [] as $match) {
                 $start = $match[1];
                 $end = $start + strlen($match[0]);
-                if (!$insideTag($start, $start + 1) && !$insideTag($end - 1, $end)) {
+                if (!isset($plainStarts[$start]) && !$insideTag($start, $start + 1) && !$insideTag($end - 1, $end)) {
                     preg_match_all('/<[^>]*>/', $match[0], $innerTags);
                     $candidates[] = ['start' => $start, 'end' => $end, 'field' => $index, 'order' => $original['order'], 'tags' => implode('', $innerTags[0])];
                 }
@@ -387,6 +392,50 @@ class PeticaoModeloAiBuilderService
         foreach ($chosen as $span) {
             $html = substr_replace($html, $originals[$span['field']]['token'] . $span['tags'], $span['start'], $span['end'] - $span['start']);
         }
+
+        // As tags que sobram vazias depois do token (<b></b>) nao servem para nada.
+        if ($chosen) {
+            do {
+                $html = preg_replace('/<(b|strong|i|em|u|span)\b[^>]*>\s*<\/\1>/i', '', $html, -1, $count);
+            } while ($count > 0);
+        }
+
+        // Exemplo digitado em letra miuda no Word (ex.: o numero do contrato em
+        // 7pt): o campo que ficou sozinho nesse trecho usa a letra do texto em volta.
+        $tokens = array_unique(array_map(function ($span) use ($originals) {
+            return $originals[$span['field']]['token'];
+        }, $chosen));
+        foreach ($tokens as $token) {
+            $html = preg_replace_callback(
+                '/<span\b([^>]*?)style="([^"]*)"([^>]*)>((?:\s*<(?:b|strong|i|em|u)\b[^>]*>)*\s*' . preg_quote($token, '/') . '\s*(?:<\/(?:b|strong|i|em|u)>\s*)*)<\/span>/i',
+                function ($m) {
+                    if (!preg_match('/font-size\s*:\s*([\d.]+)\s*pt/i', $m[2], $size) || (float) $size[1] >= 9) {
+                        return $m[0];
+                    }
+                    // Marca para trocar pelo tamanho do texto que vem antes (abaixo).
+                    $style = trim(preg_replace('/\s*font-size\s*:[^;]*;?/i', '', $m[2]), '; ');
+                    $style = trim($style . '; font-size: __VIZINHO__', '; ');
+
+                    return '<span' . $m[1] . ($style !== '' ? 'style="' . $style . '"' : '') . $m[3] . '>' . $m[4] . '</span>';
+                },
+                $html
+            );
+        }
+        // O campo usa o tamanho do ultimo texto antes dele (ex.: 10pt), nao o do paragrafo.
+        while (preg_match('/font-size: __VIZINHO__/', $html, $marker, PREG_OFFSET_CAPTURE)) {
+            $before = substr($html, 0, $marker[0][1]);
+            $size = null;
+            if (preg_match_all('/font-size\s*:\s*([\d.]+)\s*pt/i', $before, $sizes)) {
+                foreach (array_reverse($sizes[1]) as $candidate) {
+                    if ((float) $candidate >= 9) {
+                        $size = $candidate;
+                        break;
+                    }
+                }
+            }
+            $html = substr_replace($html, $size !== null ? 'font-size: ' . $size . 'pt' : '', $marker[0][1], strlen($marker[0][0]));
+        }
+        $html = preg_replace('/<span style="\s*;?\s*">((?:(?!<\/?span\b).)*)<\/span>/s', '$1', $html);
 
         return $html;
     }

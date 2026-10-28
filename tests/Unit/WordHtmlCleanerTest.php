@@ -42,6 +42,54 @@ class WordHtmlCleanerTest extends TestCase
         );
     }
 
+    public function test_lists_have_no_browser_margin_and_word_internal_fonts_and_trailing_blank_lines_go_away()
+    {
+        $html = '<ol start="2"><li><p>Item</p></li></ol>'
+            . '<p><span style="font-family: TimesNewRomanNormal, sans-serif; font-size: 10pt">55496080</span>'
+            . '<span style="font-family: Times New Roman, serif">citacao</span></p>'
+            . '<p>Assinatura</p><p><br></p><p>&nbsp;</p>'
+            . '<div id="sdfootnote1"><p><a class="sdfootnotesym" href="#x">1</a> Nota</p></div>';
+
+        $out = str_replace(["\r", "\n"], '', WordHtmlCleaner::clean($html));
+
+        // Sem os rotulos do Word, o numero vem do inicio da lista.
+        $this->assertStringContainsString('<p style="margin-left: 0.75cm; text-indent: -0.75cm"><span style="display: inline-block; min-width: 0.75cm; text-indent: 0">2.</span>Item</p>', $out);
+        $this->assertStringContainsString('<span style="font-size: 10pt">55496080</span>', $out);
+        $this->assertStringContainsString('<span style="font-family: Times New Roman, serif">citacao</span>', $out);
+        $this->assertStringContainsString('<p>Assinatura</p><div class="peticao-notas">', $out);
+    }
+
+    public function test_multilevel_word_list_keeps_only_the_word_label_of_each_item()
+    {
+        // Como o LibreOffice exporta "a)" e "d.1)": niveis vazios antes do item.
+        $html = '<ol start="3"><li><p><b>DOS PEDIDOS.</b></p></li></ol>'
+            . '<ol><li><ol start="3"><li><ol type="a"><li><p>O deferimento da liminar</p></li></ol></li></ol></li></ol>'
+            . '<ol><li><ol start="3"><li><ol start="4" type="a"><li><p>A citação da parte ré:</p></li></ol></li></ol></li></ol>'
+            . '<ol><li><ol start="3"><li><ol type="a"><li><ol><li><p>no prazo de 05 dias</p></li></ol></li></ol></li></ol></li></ol>';
+        $labels = \App\Services\WordImportService::parseListLabels(
+            "        3. DOS PEDIDOS.\n            a) O deferimento da liminar\n            d) A citação da parte ré:\n                d.1) no prazo de 05 dias\n"
+        );
+
+        $out = str_replace(["\r", "\n"], '', WordHtmlCleaner::clean($html, $labels));
+
+        $this->assertStringNotContainsString('<ol', $out);
+        $label = function ($text) {
+            return '<span style="display: inline-block; min-width: 0.75cm; text-indent: 0">' . $text . '</span>';
+        };
+        $this->assertStringContainsString('<p style="margin-left: 0.75cm; text-indent: -0.75cm">' . $label('3.') . '<b>DOS PEDIDOS.</b></p>', $out);
+        $this->assertStringContainsString('<p style="margin-left: 1.38cm; text-indent: -0.75cm">' . $label('a)') . 'O deferimento da liminar</p>', $out);
+        $this->assertStringContainsString('<p style="margin-left: 1.38cm; text-indent: -0.75cm">' . $label('d)') . 'A citação da parte ré:</p>', $out);
+        $this->assertStringContainsString('<p style="margin-left: 2.01cm; text-indent: -0.75cm">' . $label('d.1)') . 'no prazo de 05 dias</p>', $out);
+    }
+
+    public function test_html_codes_typed_as_text_in_word_become_characters()
+    {
+        // No Word o texto era literalmente: DJe 20/10/2023: &quot;RECURSO ESPECIAL&quot;
+        $out = WordHtmlCleaner::clean('<p>DJe 20/10/2023: &amp;quot;RECURSO ESPECIAL&amp;quot; &amp; outros</p>');
+
+        $this->assertSame('<p>DJe 20/10/2023: "RECURSO ESPECIAL" &amp; outros</p>', $out);
+    }
+
     public function test_text_boxes_become_bordered_blocks_without_absolute_position()
     {
         $html = '<p style="text-indent: 1.25cm"><a></a><span style="position: absolute; top: 0.26cm; left: 12cm; width: 222px">'

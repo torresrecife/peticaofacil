@@ -73,6 +73,49 @@ class PeticaoModeloAiBuilderServiceTest extends TestCase
         $this->assertSame('<p><span style="font-size: 10pt"><b>@campo3@</b>, por seu advogado</span></p>', $result);
     }
 
+    public function test_footnotes_are_never_replaced_by_fields()
+    {
+        $service = new class(new WordImportService(), new OpenAIResponsesClient()) extends PeticaoModeloAiBuilderService {
+            public function replaceForTest($html, array $originals) { return $this->replaceOriginals($html, $originals); }
+        };
+        $html = '<p>notificado (doc. 03) para regularizar</p>'
+            . '<div class="peticao-notas"><hr><p><sup>1</sup> <a href="https://x.com/2022/03/25/a">https://x.com/2022/03/25/a</a></p></div>';
+
+        $result = $service->replaceForTest($html, [['text' => '03', 'token' => '@campo1@', 'order' => 1]]);
+
+        $this->assertStringContainsString('(doc. @campo1@)', $result);
+        $this->assertStringContainsString('https://x.com/2022/03/25/a</a>', $result);
+    }
+
+    public function test_repeated_mention_across_formatting_tiny_sample_font_and_empty_tags()
+    {
+        $service = new class(new WordImportService(), new OpenAIResponsesClient()) extends PeticaoModeloAiBuilderService {
+            public function replaceForTest($html, array $originals) { return $this->replaceOriginals($html, $originals); }
+        };
+        $html = '<p>OAB/RJ 228627-S</p><p>Dr. FULANO, OAB/</span></b><i><b>RJ </b></i><b>228627-S</b> independente</p>'
+            . '<p>contrato n. <span style="font-size: 7pt"><b>55496080</b></span>, valor</p>';
+
+        $result = $service->replaceForTest($html, [
+            ['text' => 'OAB/RJ 228627-S', 'token' => '@campo1@', 'order' => 1],
+            ['text' => '55496080', 'token' => '@campo2@', 'order' => 2],
+        ]);
+
+        // As duas mencoes da OAB viram o campo (a 2a atravessa negrito/italico).
+        $this->assertSame(2, substr_count($result, '@campo1@'));
+        $this->assertStringNotContainsString('228627', $result);
+        // O exemplo em 7pt nao deixa o campo miudo; tags vazias saem.
+        $this->assertStringContainsString('contrato n. <b>@campo2@</b>, valor', $result);
+
+        // Com texto em 10pt antes, o campo fica em 10pt (e nao na letra maior do paragrafo).
+        $sized = $service->replaceForTest(
+            '<p style="font-size: 12pt"><span style="font-size: 10pt">contrato n. </span><span style="font-size: 7pt"><b>55496080</b></span><span style="font-size: 10pt">, oriundo</span></p>',
+            [['text' => '55496080', 'token' => '@campo2@', 'order' => 1]]
+        );
+        $this->assertStringContainsString('<span style="font-size: 10pt"><b>@campo2@</b></span>', $sized);
+        $this->assertStringNotContainsString('<b></b>', $result);
+        $this->assertStringNotContainsString('<i></i>', $result);
+    }
+
     public function test_blank_cells_and_lines_become_fields_or_return_to_blank()
     {
         $service = new class(new WordImportService(), new OpenAIResponsesClient()) extends PeticaoModeloAiBuilderService {

@@ -68,7 +68,12 @@ class WordImportService
                 $html = $this->appendDocxFootnotes($html, $sourcePath);
             }
 
-            return $this->prepareImportedHtml($html, dirname($htmlPath));
+            // Rotulos das listas como o Word mostra ("a)", "d.1)", "(i)").
+            $listLabels = preg_match('/<(ol|ul)\b/i', $html)
+                ? $this->extractListLabels($binary, $sourcePath, $jobDir)
+                : [];
+
+            return $this->prepareImportedHtml($html, dirname($htmlPath), $listLabels);
         } finally {
             $this->deleteDirectory($jobDir);
         }
@@ -322,7 +327,55 @@ class WordImportService
             . $baseCommand;
     }
 
-    protected function prepareImportedHtml($html, $assetsDir)
+    /**
+     * Converte o Word para texto pelo LibreOffice: nessa saida cada item de
+     * lista vem com o numero escrito do jeito do Word ("a)", "d.1)", "(i)",
+     * "•"). Devolve [['label' => ..., 'text' => ...], ...] na ordem do documento.
+     */
+    protected function extractListLabels($binary, $sourcePath, $outputDir)
+    {
+        $dir = $outputDir . DIRECTORY_SEPARATOR . 'texto';
+        if (!is_dir($dir) && !@mkdir($dir, 0777, true) && !is_dir($dir)) {
+            return [];
+        }
+
+        $command = $this->quoteShellArgument($binary)
+            . ' --headless --nologo --nodefault --nolockcheck --norestore'
+            . ' -env:UserInstallation=' . $this->quoteShellArgument($this->pathToFileUri($dir . DIRECTORY_SEPARATOR . 'perfil'))
+            . ' --convert-to ' . $this->quoteShellArgument('txt:Text (encoded):UTF8')
+            . ' --outdir ' . $this->quoteShellArgument($dir)
+            . ' ' . $this->quoteShellArgument($sourcePath);
+        $output = [];
+        $exitCode = 0;
+        @exec($command . ' 2>&1', $output, $exitCode);
+
+        $path = $dir . DIRECTORY_SEPARATOR . pathinfo($sourcePath, PATHINFO_FILENAME) . '.txt';
+        $text = $exitCode === 0 && is_file($path) ? file_get_contents($path) : false;
+        if ($text === false) {
+            Log::warning('Importacao Word: conversao para texto (rotulos das listas) falhou.', ['exit' => $exitCode]);
+            return [];
+        }
+
+        return self::parseListLabels($text);
+    }
+
+    /** Linhas de texto que comecam com rotulo de lista: "a) ...", "d.1) ...", "(i) ...", "3. ...", "• ...". */
+    public static function parseListLabels($text)
+    {
+        $text = preg_replace('/^\xEF\xBB\xBF/', '', (string) $text);
+        $labels = [];
+        foreach (preg_split('/\r\n|\r|\n/', $text) as $line) {
+            // O recuo da linha (4 espacos por nivel) diz o nivel do item na lista do Word.
+            if (preg_match('/^(\s*)(\(?[0-9]{1,3}(?:\.[0-9]{1,3})*[.)]|\(?[A-Za-z]{1,4}(?:\.[0-9]{1,3})*[.)]|[\x{2022}\x{25AA}\x{25CF}\x{25E6}\x{25A0}\x{27A2}\x{2013}\x{F0B7}\x{F0A7}o-])\s+(\S.*)$/u', $line, $match)) {
+                $indent = strlen(str_replace("\t", '    ', $match[1]));
+                $labels[] = ['label' => $match[2], 'text' => trim($match[3]), 'level' => max(1, (int) floor($indent / 4))];
+            }
+        }
+
+        return $labels;
+    }
+
+    protected function prepareImportedHtml($html, $assetsDir, array $listLabels = [])
     {
         $html = preg_replace('/<meta[^>]+charset=[^>]+>/i', '', $html);
         $html = preg_replace('/<meta[^>]+content=["\'][^"\']*charset=[^"\']*["\'][^>]*>/i', '', $html);
@@ -344,7 +397,7 @@ class WordImportService
         $html = $this->innerHtml($body);
         $html = preg_replace('/<(?:meta|title|link)[^>]*>/i', '', $html);
 
-        return WordHtmlCleaner::clean(trim((string) $html));
+        return WordHtmlCleaner::clean(trim((string) $html), $listLabels);
     }
 
     protected function inlineStyles($html)
