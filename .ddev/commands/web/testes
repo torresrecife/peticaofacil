@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+## Description: Roda o PHPUnit no DDEV (banco peticaofacil_laravel_test no servico db)
+## Usage: testes [argumentos do phpunit]
+## Example: "ddev testes" ou "ddev testes --filter ComposerTest"
+
+set -e
+cd /var/www/html
+
+# O phpunit.xml aponta o banco para 127.0.0.1 (Laragon/servidor); aqui o banco e o servico "db".
+mysql -h db -uroot -proot -e "CREATE DATABASE IF NOT EXISTS peticaofacil_laravel_test CHARACTER SET latin1 COLLATE latin1_swedish_ci"
+sed 's|name="DB_HOST" value="127.0.0.1"|name="DB_HOST" value="db"|' phpunit.xml > phpunit.ddev.xml
+
+php vendor/bin/phpunit -c phpunit.ddev.xml "$@"

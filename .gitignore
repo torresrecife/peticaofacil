@@ -20,3 +20,8 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 /.htaccess
+
+# DDEV local
+/phpunit.ddev.xml
+/.env.ddev-original
+/*.sql

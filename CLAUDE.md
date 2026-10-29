@@ -6,10 +6,18 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
 
 ## Stack e ambiente
 - Laravel 6.20, **PHP 7.2.34** (alvo real; não usar sintaxe 8+), MySQL (latin1),
-  Blade com JS embutido, CKEditor 4 + CKFinder em `public/`. Roda em Laragon/Windows.
-- App novo: `http://bvaa.test/peticaofacil` · banco `peticaofacil_laravel`.
+  Blade com JS embutido, CKEditor 4 + CKFinder em `public/`.
+- **Local (desde 28/10): DDEV no WSL** (distro `DDEV`, `~/projetos/peticaofacil`, ao lado do
+  Kanban em `~/projetos/kanban`): `http://peticaofacil.ddev.site:8080`, na raiz do domínio,
+  banco `db` (usuário/senha `db`). Comandos via `ddev artisan …`, `ddev mysql`.
+  - `.ddev/nginx/caminhos-antigos.conf` (só DDEV): imagens salvas no banco com
+    `/peticaofacil/…`, `/peticaofacil2/…` ou `/peticaofacil2/public/…` saem de `public/`;
+    outros endereços antigos redirecionam para a raiz.
+  - Laragon (antigo): `http://bvaa.test/peticaofacil` (Alias para `public/`), banco `peticaofacil_laravel`.
+- **Produção:** `http://10.81.11.202/peticaofacil2/` (subpasta). O código não fixa caminho: as
+  URLs saem da requisição e o caminho do CKFinder/PDF do `APP_URL` de cada ambiente.
 - Sistema antigo (referência): `http://peticaofacil.test/index.php` · banco
-  **`peticaofacil_old`** (mesmo MySQL). Código do legado fora deste repo
+  **`peticaofacil_old`** (MySQL do Laragon; não está no DDEV). Código do legado fora deste repo
   (`C:\laragon\www\peticaofacil`).
 - NEO (SQL Server, dados do processo): perfil em `sql_server_profiles`
   (ID 1, legacy 54), banco `Neo_Juridico_replica`. Código de processo p/ teste: `32216005`.
@@ -19,8 +27,10 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
   (vários commits locais **SEM push** — o push é decisão do Fabio).
 - **Convenção de mensagem de commit: prefixo `peticafacil_ia - `** (sim, "peticafacil").
 
-## Como rodar (no Laragon, terminal normal)
-- Testes: `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
+## Como rodar
+- Testes no DDEV: `ddev testes` (cria `peticaofacil_laravel_test` e roda o PHPUnit com o banco
+  no serviço `db`; aceita argumentos, ex. `ddev testes --filter X`). Fora do DDEV:
+  `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
   `_test` e `APP_ENV=testing` (há guarda em `tests/TestCase.php`).
   Estado atual da suíte: **291 testes, OK**.
 - Migrations: `php artisan migrate` (produção: `--force`).
@@ -89,7 +99,7 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
   tipo de pessoa), valor padrão em campo de texto.
 - **Cabeçalho padrão dos modelos (27/10):** tabela `configuracoes` (`App\Configuracao`), tela
   Admin → Modelos → Cabeçalho padrão; vale para "Novo modelo" e importação com IA.
-- **Botão "Reportar bug" (28/10):** widget do Kanban (`C:\Users\fabio\Projetos\kanban`, projeto à parte)
+- **Botão "Reportar bug" (28/10):** widget do Kanban (`~/projetos/kanban` no DDEV do WSL, `http://kanban.ddev.site:8080`, projeto à parte)
   incluído por `partials/bug-reporter.blade.php` no layout para quem está logado; liga com
   `BUG_REPORTER_SCRIPT` + `BUG_REPORTER_TOKEN` no `.env` (vazio = sem botão). Envia nome/login/nível do usuário.
 - Teste de JS sem login: gerar o HTML da montagem como ADM pelo kernel do Laravel e
