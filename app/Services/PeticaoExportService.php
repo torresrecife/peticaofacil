@@ -589,6 +589,12 @@ class PeticaoExportService
                 }
             }
 
+            // Texto salvo em outra instalacao traz o prefixo dela (/peticaofacil/img/...,
+            // /peticaofacil2/public/img/...): por ultimo, procura em public/ sem esse prefixo.
+            if ($publicRoot !== false && preg_match('#^/[^/]+/(?:public/)?(.+)$#', $clean, $prefixed)) {
+                $candidates[] = $publicRoot . '/' . $prefixed[1];
+            }
+
             foreach ($candidates as $candidate) {
                 $candidate = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $candidate);
                 $real = realpath($candidate);

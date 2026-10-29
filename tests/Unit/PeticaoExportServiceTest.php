@@ -94,6 +94,27 @@ class PeticaoExportServiceTest extends TestCase
         $this->assertSame($other, $service->stripForTest($other, $header));
     }
 
+    public function test_inline_images_saved_with_another_install_prefix_are_found_in_public()
+    {
+        $service = new class extends PeticaoExportService {
+            public function normalizeForTest($html)
+            {
+                return $this->normalizeAssetImageSrc($html, 'inline');
+            }
+        };
+
+        foreach (['http://peticaofacil.ddev.site:8080', 'http://10.81.11.202/peticaofacil2'] as $appUrl) {
+            config(['app.url' => $appUrl]);
+            foreach (['/peticaofacil/img/fundo.jpg', '/peticaofacil2/img/fundo.jpg', '/peticaofacil2/public/img/fundo.jpg', '/img/fundo.jpg'] as $src) {
+                $html = $service->normalizeForTest('<img src="' . $src . '">');
+                $this->assertStringStartsWith('<img src="data:image/jpeg;base64,', $html, $appUrl . ' ' . $src);
+            }
+        }
+
+        // Arquivo que nao existe continua com o endereco original.
+        $this->assertSame('<img src="/peticaofacil/img/nao-existe.jpg">', $service->normalizeForTest('<img src="/peticaofacil/img/nao-existe.jpg">'));
+    }
+
     public function test_word_export_keeps_numbered_lists_and_blocks_inside_divs()
     {
         $service = new class extends PeticaoExportService {

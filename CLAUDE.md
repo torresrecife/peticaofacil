@@ -13,6 +13,10 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
   - `.ddev/nginx/caminhos-antigos.conf` (só DDEV): imagens salvas no banco com
     `/peticaofacil/…`, `/peticaofacil2/…` ou `/peticaofacil2/public/…` saem de `public/`;
     outros endereços antigos redirecionam para a raiz.
+  - PDF no DDEV: `PDF_ENGINE=playwright` com o Chromium do Debian
+    (`PDF_PLAYWRIGHT_BROWSER_BINARY=/usr/bin/chromium`) e fontes Liberation/Carlito (mesmas
+    métricas de Times/Arial/Calibri); pacotes em `webimage_extra_packages` e `npm ci` do
+    `scripts/pdf-renderer` no `post-start` do `.ddev/config.yaml`. LibreOffice em `/usr/bin/soffice`.
   - Laragon (antigo): `http://bvaa.test/peticaofacil` (Alias para `public/`), banco `peticaofacil_laravel`.
 - **Produção:** `http://10.81.11.202/peticaofacil2/` (subpasta). O código não fixa caminho: as
   URLs saem da requisição e o caminho do CKFinder/PDF do `APP_URL` de cada ambiente.
@@ -32,7 +36,7 @@ projeto Laravel. Este arquivo é lido automaticamente pelo Claude Code.
   no serviço `db`; aceita argumentos, ex. `ddev testes --filter X`). Fora do DDEV:
   `php vendor/bin/phpunit` (PHPUnit 8.5). Banco de teste deve terminar em
   `_test` e `APP_ENV=testing` (há guarda em `tests/TestCase.php`).
-  Estado atual da suíte: **291 testes, OK**.
+  Estado atual da suíte: **292 testes, OK**.
 - Migrations: `php artisan migrate` (produção: `--force`).
 - Backfill de máscaras: `php artisan peticao:backfill-comportamento`
   (`--dry-run` é o padrão/relatório; `--apply` grava; `--modelo=`, `--overwrite`,

@@ -9,12 +9,18 @@ additional_fqdns: []
 database:
     type: mariadb
     version: "11.8"
-webimage_extra_packages: [libreoffice]
+# LibreOffice (importar DOCX); Chromium + fontes para o PDF (Playwright).
+# Fontes Liberation/Carlito/Caladea = mesmas metricas de Arial/Times/Calibri/Cambria.
+webimage_extra_packages: [libreoffice, chromium, fonts-liberation, fonts-dejavu-core, fonts-crosextra-carlito, fonts-crosextra-caladea]
 use_dns_when_possible: true
 composer_version: "2"
 web_environment: []
 nodejs_version: "24"
 corepack_enable: false
+hooks:
+    post-start:
+        # dependencias do renderizador de PDF (scripts/pdf-renderer)
+        - exec: "test -d scripts/pdf-renderer/node_modules/playwright || (cd scripts/pdf-renderer && npm ci --no-audit --no-fund)"
 
 # Key features of DDEV's config.yaml:
 
